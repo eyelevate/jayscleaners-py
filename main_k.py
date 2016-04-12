@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/local/python
 # import json
 import requests
 import companies

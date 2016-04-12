@@ -1,7 +1,7 @@
+#!/usr/local/lib/python3.4/dist-packages
 
 import datetime
 from peewee import *
-#!/usr/bin/env python3
 
 db = SqliteDatabase('db/companies.db')
 
