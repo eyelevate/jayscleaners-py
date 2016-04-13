@@ -1,7 +1,8 @@
 # import json
+
 import requests
 
-
+from companies import Company
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager
@@ -35,32 +36,36 @@ class MainScreen(Screen):
             pass
 
     def test_create(self):
-        # company = {
-        #     'company_id': 1,
-        #     'name': 'Jays Cleaners Montlake',
-        #     'street': '2350 24th Ave E',
-        #     'suite': 'A',
-        #     'city': 'Seattle',
-        #     'state': 'WA',
-        #     'zipcode': '98112',
-        #     'email': 'wondo@jayscleaners.com',
-        #     'phone': '2063288158',
-        #     'api_key': '2063288158-1',
-        # }
-        #
-        # if companies.add(company):
-        #     popup = Popup(title='Company Registration',
-        #                   content=Label(text='Successfully saved company!'),
-        #                   size_hint=(None, None), size=(400, 400))
-        # else:
-        #     popup = Popup(title='Company Registration',
-        #                   content=Label(text='Company Registration Failed'),
-        #                   size_hint=(None, None), size=(400, 400))
+        company = Company()
+
+        data = {
+            'company_id': 1,
+            'name': 'Jays Cleaners Montlake',
+            'street': '2350 24th Ave E',
+            'suite': 'A',
+            'city': 'Seattle',
+            'state': 'WA',
+            'zipcode': '98112',
+            'email': 'wondo@jayscleaners.com',
+            'phone': '2063288158',
+            'api_key': '2063288158-1',
+        }
+
+        if company.add(data):
+            popup = Popup(title='Company Registration',
+                          content=Label(text='Successfully saved company!'),
+                          size_hint=(None, None), size=(400, 400))
+        else:
+            popup = Popup(title='Company Registration',
+                          content=Label(text='Company Registration Failed'),
+                          size_hint=(None, None), size=(400, 400))
+
+        company.close_connection()
         # popup.open()
-        popup = Popup(title='Company Registration',
-                      content=Label(text='Company Registration test'),
-                      size_hint=(None, None), size=(400, 400))
-        popup.open()
+        # popup = Popup(title='Company Registration',
+        #               content=Label(text='Company Registration test'),
+        #               size_hint=(None, None), size=(400, 400))
+        # popup.open()
 
 
 class DeliveryScreen(Screen):
