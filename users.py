@@ -1,130 +1,254 @@
 import datetime
-from peewee import *
+import time
+import sqlite3
+from model import *
 
-db = SqliteDatabase('db/users.db')
-
-
-class User(Model):
-    id = PrimaryKeyField()
-    user_id = IntegerField(null=True)
-    company_id = IntegerField(null=True)
-    username = CharField(max_length=50, null=True)
-    first_name = CharField(max_length=50, null=True)
-    last_name = CharField(max_length=50, null=True)
-    street = CharField(max_length=200, null=True)
-    suite = CharField(max_length=50, null=True)
-    city = CharField(max_length=50, null=True)
-    state = CharField(max_length=2, null=True)
-    zipcode = CharField(max_length=10, null=True)
-    email = CharField(max_length=255, null=True)
-    phone = CharField(max_length=15, null=True)
-    intercom = CharField(max_length=20, null=True)
-    concierge_name = CharField(max_length=50, null=True)
-    concierge_number = CharField(max_length=20, null=True)
-    special_instructions = TextField(null=True)
-    shirt_old = CharField(max_length=10, null=True)
-    shirt = IntegerField(null=True)
-    delivery = IntegerField(null=True)
-    profile_id = CharField(null=True)
-    payment_status = IntegerField(null=True)
-    payment_id = CharField(max_length=11, null=True)
-    token = CharField(max_length=8, null=True)
-    api_token = CharField(max_length=20, null=True)
-    reward_status = IntegerField(null=True)
-    reward_points = IntegerField(null=True)
-    account = BooleanField(default=False)
-    starch = IntegerField(null=True)
-    important_memo = TextField(null=True)
-    invoice_memo = TextField(null=True)
-    password = CharField(max_length=60, null=True)
-    role_id = IntegerField(null=True)
-    deleted_at = DateTimeField(null=True)
-    remember_token = CharField(max_length=100, null=True)
-    created_at = DateTimeField(default=datetime.datetime.now)
-    updated_at = DateTimeField(default=datetime.datetime.now)
-
-    class Meta:
-        database = db
+unix = time.time()
+now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+table = 'users'
 
 
-def initialize():
-    """Connects to database and/or Create the database and the table if they do not exist"""
-    db.connect()
-    db.create_tables([User], safe=True)
+class User:
+    id = None
+    user_id = None
+    company_id = None
+    username = None
+    first_name = None
+    last_name = None
+    street = None
+    suite = None
+    city = None
+    state = None
+    zipcode = None
+    email = None
+    phone = None
+    intercom = None
+    concierge_name = None
+    concierge_number = None
+    special_instructions = None
+    shirt_old = None
+    shirt = None
+    delivery = None
+    profile_id = None
+    payment_status = None
+    payment_id = None
+    token = None
+    api_token = None
+    reward_status = None
+    reward_points = None
+    account = None
+    starch = None
+    important_memo = None
+    invoice_memo = None
+    password = None
+    role_id = None
+    deleted_at = None
+    remember_token = None
+    created_at = now
+    updated_at = now
 
+    def __init__(self):
+        """Create the database and the table if they do not exist"""
+        self.conn = sqlite3.connect('./db/jayscleaners.db')
+        self.conn.row_factory = dict_factory
+        self.c = self.conn.cursor()
 
-def add(data):
-    """Add a user"""
+    def create_table(self):
+        table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
+                                  IntegerField(column='user_id').data_type(),
+                                  IntegerField(column='company_id').data_type(),
+                                  CharField(column='username', max_length=100).data_type(),
+                                  CharField(column='first_name', max_length=100).data_type(),
+                                  CharField(column='last_name', max_length=100).data_type(),
+                                  CharField(column='street', max_length=200).data_type(),
+                                  CharField(column='suite', max_length=20).data_type(),
+                                  CharField(column='city', max_length=100).data_type(),
+                                  CharField(column='state', max_length=20).data_type(),
+                                  CharField(column='zipcode', max_length=10).data_type(),
+                                  CharField(column='email', max_length=255).data_type(),
+                                  CharField(column='phone', max_length=20).data_type(),
+                                  CharField(column='intercom', max_length=20).data_type(),
+                                  CharField(column='concierge_name', max_length=100).data_type(),
+                                  CharField(column='concierge_number', max_length=100).data_type(),
+                                  TextField(column='special_instructions').data_type(),
+                                  CharField(column='shirt_old', max_length=10).data_type(),
+                                  IntegerField(column='shirt').data_type(),
+                                  IntegerField(column='delivery').data_type(),
+                                  CharField(column='profile_id', max_length=100).data_type(),
+                                  CharField(column='payment_id', max_length=100).data_type(),
+                                  IntegerField(column='payment_status').data_type(),
+                                  CharField(column='token', max_length=8).data_type(),
+                                  CharField(column='api_token', max_length=20).data_type(),
+                                  IntegerField(column='reward_status').data_type(),
+                                  IntegerField(column='reward_points').data_type(),
+                                  IntegerField(column='account').data_type(),
+                                  IntegerField(column='starch').data_type(),
+                                  TextField(column='important_memo').data_type(),
+                                  TextField(column='invoice_memo').data_type(),
+                                  CharField(column='password', max_length=60).data_type(),
+                                  IntegerField(column='role_id').data_type(),
+                                  CharField(column='remember_token', max_length=60).data_type(),
+                                  TextField(column='deleted_at').data_type(),
+                                  TextField(column='created_at').data_type(),
+                                  TextField(column='updated_at').data_type(),
+                                  ])
 
-    if data:
-        initialize()
-        User.create(
-            # username=data['username'] if data['username'] else None,
-            company_id = data['company_id'] if data['company_id'] else None,
-            first_name=data['first_name'] if data['first_name'] else None,
-            last_name=data['last_name'] if data['last_name'] else None,
-            # street=data['street'] if data['street'] else None,
-            # suite=data['suite'] if data['suite'] else None,
-            # city=data['city'] if data['city'] else None,
-            # state=data['state'] if data['state'] else None,
-            # zipcode=data['zipcode'] if data['zipcode'] else None,
-            email=data['email'] if data['email'] else None,
-            phone=data['phone'] if data['phone'] else None,
-            # intercom=data['intercom'] if data['intercom'] else None,
-            # concierge_name=data['concierge_name'] if data['concierge_name'] else None,
-            # concierge_number=data['concierge_number'] if data['concierge_number'] else None,
-            # special_instructions=data['special_instructions'] if data['special_instructions'] else None,
-            # shirt_old=data['shirt_old'] if data['shirt_old'] else None,
-            # shirt=data['shirt'] if data['shirt'] else None,
-            # delivery=data['delivery'] if data['delivery'] else None,
-            # profile_id=data['profile_id'] if data['profile_id'] else None,
-            # payment_status=data['payment_status'] if data['payment_status'] else None,
-            # payment_id=data['payment_id'] if data['payment_id'] else None,
-            # token=data['token'] if data['token'] else None,
-            # api_token=data['api_token'] if data['api_token'] else None,
-            # reward_status=data['reward_status'] if data['reward_status'] else None,
-            # reward_points=data['reward_points'] if data['reward_points'] else None,
-            # account=data['delivery'] if data['delivery'] else None,
-            # starch=data['delivery'] if data['delivery'] else None,
-            # important_memo=data['delivery'] if data['delivery'] else None,
-            # invoice_memo=data['delivery'] if data['delivery'] else None,
-            # password=data['delivery'] if data['delivery'] else None,
-            # role_id=data['delivery'] if data['delivery'] else None,
-            # deleted_at=data['delivery'] if data['delivery'] else None,
-            # remember_token=data['delivery'] if data['delivery'] else None,
-            # created_at=created_at,
-            # updated_at=updated_at
-        )
+        self.c.execute('''CREATE TABLE IF NOT EXISTS {t} ({ts})'''.format(t=table, ts=table_schema))
+        self.conn.commit()
 
+    def add(self):
+
+        self.c.execute('''INSERT INTO {t}(user_id,company_id,username,first_name,last_name,street,suite,city,state,
+zipcode,email,phone,intercom,concierge_name,concierge_number,special_instructions,shirt_old,shirt,delivery,profile_id,
+payment_id,payment_status,token,api_token,reward_status,reward_points,account,starch,important_memo,invoice_memo,
+password,role_id,remember_token,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table),
+                       (self.user_id,
+                        self.company_id,
+                        self.username,
+                        self.first_name,
+                        self.last_name,
+                        self.street,
+                        self.suite,
+                        self.city,
+                        self.state,
+                        self.zipcode,
+                        self.email,
+                        self.phone,
+                        self.intercom,
+                        self.concierge_name,
+                        self.concierge_number,
+                        self.special_instructions,
+                        self.shirt_old,
+                        self.shirt,
+                        self.delivery,
+                        self.profile_id,
+                        self.payment_id,
+                        self.payment_status,
+                        self.token,
+                        self.api_token,
+                        self.reward_status,
+                        self.reward_points,
+                        self.account,
+                        self.starch,
+                        self.important_memo,
+                        self.invoice_memo,
+                        self.password,
+                        self.role_id,
+                        self.remember_token,
+                        self.created_at,
+                        self.updated_at)
+                       )
+
+        self.conn.commit()
         return True
-    else:
+
+    def update(self):
+
+        self.c.execute('''UPDATE {t} SET user_id = ?, company_id = ?, username = ?, first_name = ?, last_name = ?,
+street = ?, suite = ?, city = ?, state = ?, zipcode = ?, email = ?, phone = ?, intercom = ?, concierge_name = ?,
+concierge_number = ?, special_instructions = ?, shirt_old = ?, shirt = ?, delivery = ?, profile_id = ?, payment_id = ?,
+payment_status = ?, token = ?, api_token = ?, reward_status = ?, reward_points = ?, account = ?, starch = ?,
+important_memo = ?, invoice_memo = ?, password = ?, role_id = ?, remember_token = ?, updated_at = ?
+WHERE user_id = ?'''.format(t=table), (self.user_id,
+                                       self.company_id,
+                                       self.username,
+                                       self.first_name,
+                                       self.last_name,
+                                       self.street,
+                                       self.suite,
+                                       self.city,
+                                       self.state,
+                                       self.zipcode,
+                                       self.email,
+                                       self.phone,
+                                       self.intercom,
+                                       self.concierge_name,
+                                       self.concierge_number,
+                                       self.special_instructions,
+                                       self.shirt_old,
+                                       self.shirt,
+                                       self.delivery,
+                                       self.profile_id,
+                                       self.payment_id,
+                                       self.payment_status,
+                                       self.token,
+                                       self.api_token,
+                                       self.reward_status,
+                                       self.reward_points,
+                                       self.account,
+                                       self.starch,
+                                       self.important_memo,
+                                       self.invoice_memo,
+                                       self.password,
+                                       self.role_id,
+                                       self.remember_token,
+                                       self.updated_at,
+                                       self.user_id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def find(self):
+        try:
+            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(table), (str(self.id)))
+            self.conn.commit()
+        except ValueError:
+            return "Could not find the company with that id"
+        finally:
+            return self.c.fetchone()
+
         return False
 
+    def first(self, data=False):
+        if data:
+            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            idx = 0
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                elif idx < len(data):
+                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+            self.c.execute(sql)
+            self.conn.commit()
+            return self.c.fetchone()
+        else:
+            return False
 
+    def where(self, data=False):
+        if data:
+            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            idx = 0
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                elif idx < len(data):
+                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+            self.c.execute(sql)
+            self.conn.commit()
+            return self.c.fetchall()
+        else:
+            return False
 
-def edit(data):
-    """Edit a user"""
+    def delete(self):
 
-    if data:
-        initialize()
-        User.update(content=data)
+        if self.id:
 
+            self.c.execute("""UPDATE {t} SET deleted_at = ?, updated_at = ? WHERE id = ?""".format(table),
+                           (self.updated_at,
+                            self.updated_at,
+                            self.id)
+                           )
 
-def delete(data):
-    """Deletes an instance of a user"""
-    if data:
-        initialize()
-        User.delete_instance(data)
-    else:
-        return False
+            self.conn.commit()
 
+            return True
+        else:
+            return False
 
-def retrieve(self, search_query=None):
-    """View all users or by query"""
-    self.initialize()
-    users = User.select().order_by(User.id.desc())
-
-    if search_query:
-        users = users.where(User.content.contains(search_query))
-
-    return users
+    def close_connection(self):
+        self.c.close()
+        self.conn.close()
