@@ -80,11 +80,13 @@ class MainScreen(Screen):
         company_api = "2063288158-1"
         url = 'http://74.207.240.88/admins/api/update'
         data = {"id": company_id, "api_token": company_api}
-        r = requests.post(url, json={data})
-        if (r.status_code == 200):
-            return r
-        else:
-            pass
+        r = requests.post(url, json=data)
+        print(r)
+        # if r.status_code == 200:
+        #     print(r)
+        #     return r
+        # else:
+        #     pass
 
     def test_create(self):
         company = Company()
