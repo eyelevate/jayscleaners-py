@@ -161,6 +161,3 @@ WHERE discount_id = ?'''.format(t=table),(self.discount_id,
     def close_connection(self):
         self.c.close()
         self.conn.close()
-
-    class Meta:
-        database = db

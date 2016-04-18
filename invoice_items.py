@@ -8,7 +8,7 @@ now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 table = 'invoice_items'
 
 
-class InvoiceItem(Model):
+class InvoiceItem:
     id = None
     invoice_items_id = None
     invoice_id = None

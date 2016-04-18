@@ -19,16 +19,6 @@ class Reward:
     deleted_at = None
     created_at = now
     updated_at = now
-    id = PrimaryKeyField()
-    reward_id = IntegerField(null=True)
-    company_id = IntegerField(null=True)
-    name = CharField(max_length=100, null=True)
-    points = IntegerField(null=True)
-    discount = DecimalField(max_digits=11, decimal_places=2, null=True)
-    status = IntegerField(null=True)
-    deleted_at = DateTimeField(null=True)
-    created_at = DateTimeField(null=True)
-    updated_at = DateTimeField(null=True)
 
     def __init__(self):
         """Create the database and the table if they do not exist"""

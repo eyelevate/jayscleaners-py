@@ -14,7 +14,7 @@ class Delivery:
     company_id = None
     route_name = None
     day = None
-    limit = None
+    delivery_limit = None
     start_time = None
     end_time = None
     zipcode = None
@@ -36,7 +36,7 @@ class Delivery:
                                   IntegerField(column='company_id').data_type(),
                                   CharField(column='route_name', max_length=100).data_type(),
                                   CharField(column='day', max_length=100).data_type(),
-                                  CharField(column='limit', max_length=20).data_type(),
+                                  CharField(column='delivery_limit', max_length=20).data_type(),
                                   CharField(column='start_time', max_length=25).data_type(),
                                   CharField(column='end_time', max_length=25).data_type(),
                                   TextField(column='zipcode').data_type(),
