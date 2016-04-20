@@ -34,7 +34,8 @@ from urllib import error
 from urllib import request
 from urllib import parse
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import urlopen
+
 
 
 class MainScreen(Screen):
@@ -172,7 +173,7 @@ class MainScreen(Screen):
         company.api_key = "2063288158-1"
 
         url = 'http://74.207.240.88/admins/api/update/{}/{}/{}'.format(company.id, company.api_key,to_upload)
-        r = request.urlopen(url)
+        r = urlopen(url)
         data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
         if data['status'] is 200:
             self.update_label.text = 'Success. Returned {} rows to update locally. Saved {} rows to server.'.format(

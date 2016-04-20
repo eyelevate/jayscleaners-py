@@ -2,27 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="44fffa09-638c-484a-90f8-bbe28d93b5f2" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/colors.py" afterPath="$PROJECT_DIR$/colors.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/companies.py" afterPath="$PROJECT_DIR$/companies.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/custids.py" afterPath="$PROJECT_DIR$/custids.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db/jayscleaners.db" afterPath="$PROJECT_DIR$/db/jayscleaners.db" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deliveries.py" afterPath="$PROJECT_DIR$/deliveries.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/discounts.py" afterPath="$PROJECT_DIR$/discounts.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/inventories.py" afterPath="$PROJECT_DIR$/inventories.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/inventory_items.py" afterPath="$PROJECT_DIR$/inventory_items.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/invoice_items.py" afterPath="$PROJECT_DIR$/invoice_items.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/invoices.py" afterPath="$PROJECT_DIR$/invoices.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/style.kv" afterPath="$PROJECT_DIR$/kv/style.kv" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main_k.py" afterPath="$PROJECT_DIR$/main_k.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/memos.py" afterPath="$PROJECT_DIR$/memos.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/model.py" afterPath="$PROJECT_DIR$/model.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/printers.py" afterPath="$PROJECT_DIR$/printers.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/reward_transactions.py" afterPath="$PROJECT_DIR$/reward_transactions.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/rewards.py" afterPath="$PROJECT_DIR$/rewards.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/schedules.py" afterPath="$PROJECT_DIR$/schedules.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/taxes.py" afterPath="$PROJECT_DIR$/taxes.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/transactions.py" afterPath="$PROJECT_DIR$/transactions.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/users.py" afterPath="$PROJECT_DIR$/users.py" />
     </list>
     <ignored path="jayscleaners.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -46,8 +26,8 @@
       <file leaf-file-name="main_k.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main_k.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="297">
-              <caret line="176" column="23" selection-start-line="176" selection-start-column="23" selection-end-line="176" selection-end-column="23" />
+            <state relative-caret-position="2325">
+              <caret line="177" column="33" selection-start-line="177" selection-start-column="33" selection-end-line="177" selection-end-column="33" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -851,8 +831,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/main_k.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="297">
-          <caret line="176" column="23" selection-start-line="176" selection-start-column="23" selection-end-line="176" selection-end-column="23" />
+        <state relative-caret-position="2325">
+          <caret line="177" column="33" selection-start-line="177" selection-start-column="33" selection-end-line="177" selection-end-column="33" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
