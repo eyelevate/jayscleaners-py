@@ -25,6 +25,7 @@ class Company:
     deleted_at = None
     created_at = now
     updated_at = now
+    server_time = unix
     server_at = None
 
     def __init__(self):
@@ -137,9 +138,16 @@ phone = ?, store_hours = ?, turn_around = ?, api_key = ?, updated_at = ? WHERE c
             for key, value in data.items():
                 idx += 1
                 if idx == len(data):
-                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                    if value is None:
+                        sql += '''{k} is null'''.format(k=key)
+                    else:
+                        sql += '''{k} = {v}'''.format(k=key, v=value)
                 elif idx < len(data):
-                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+                    if value is None:
+                        sql += '''{k} is null AND '''.format(k=key)
+                    else:
+                        sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchall()

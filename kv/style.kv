@@ -12,6 +12,7 @@ ScreenManagement:
 
 
 <MainScreen>:
+    update_label:update_data_label
     name:"main"
 
     ActionBar:
@@ -42,7 +43,7 @@ ScreenManagement:
 
 
     Label:
-        id: label1
+        id: update_data_label
         text:root.update_info()
         size_hint_y: None
         text_size: self.width, None
@@ -77,7 +78,7 @@ ScreenManagement:
         pos_hint: {'x':0.28,'y':0.22}
     Button:
         text: "Login/Logout"
-        on_release: root.update_database()
+        on_release: root.migrate()
         font_size: 25
         size_hint: 0.15,0.15
         pos_hint: {'x':0.78,'y':0.22}

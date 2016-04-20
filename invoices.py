@@ -25,8 +25,8 @@ class Invoice:
     memo = None
     status = None
     deleted_at = None
-    created_at = None
-    updated_at = None
+    created_at = now
+    updated_at = now
 
     def __init__(self):
         """Create the database and the table if they do not exist"""
@@ -142,9 +142,16 @@ updated_at = ? WHERE invoice_id = ?'''.format(t=table), (self.invoice_id,
             for key, value in data.items():
                 idx += 1
                 if idx == len(data):
-                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                    if value is None:
+                        sql += '''{k} is null'''.format(k=key)
+                    else:
+                        sql += '''{k} = {v}'''.format(k=key, v=value)
                 elif idx < len(data):
-                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+                    if value is None:
+                        sql += '''{k} is null AND '''.format(k=key)
+                    else:
+                        sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchall()

@@ -86,7 +86,7 @@ WHERE invoice_items_id = ?'''.format(t=table), (self.invoice_items_id,
                                                 self.quantity,
                                                 self.color,
                                                 self.memo,
-                                                self.pretx,
+                                                self.pretax,
                                                 self.tax,
                                                 self.total,
                                                 self.status,
@@ -99,7 +99,7 @@ WHERE invoice_items_id = ?'''.format(t=table), (self.invoice_items_id,
 
     def find(self):
         try:
-            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(table), (str(self.id)))
+            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(t=table), (str(self.id)))
             self.conn.commit()
         except ValueError:
             return "Could not find the company with that id"
@@ -131,9 +131,16 @@ WHERE invoice_items_id = ?'''.format(t=table), (self.invoice_items_id,
             for key, value in data.items():
                 idx += 1
                 if idx == len(data):
-                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                    if value is None:
+                        sql += '''{k} is null'''.format(k=key)
+                    else:
+                        sql += '''{k} = {v}'''.format(k=key, v=value)
                 elif idx < len(data):
-                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+                    if value is None:
+                        sql += '''{k} is null AND '''.format(k=key)
+                    else:
+                        sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchall()

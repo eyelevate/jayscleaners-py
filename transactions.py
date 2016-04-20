@@ -143,9 +143,16 @@ status = ?, updated_at = ? WHERE transaction_id = ?'''.format(t=table), (self.tr
             for key, value in data.items():
                 idx += 1
                 if idx == len(data):
-                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                    if value is None:
+                        sql += '''{k} is null'''.format(k=key)
+                    else:
+                        sql += '''{k} = {v}'''.format(k=key, v=value)
                 elif idx < len(data):
-                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+                    if value is None:
+                        sql += '''{k} is null AND '''.format(k=key)
+                    else:
+                        sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchall()
