@@ -88,22 +88,22 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.transaction_
 
         self.c.execute('''UPDATE {t} SET transaction_id = ?, company_id = ?, customer_id = ?, schedule_id = ?,
 pretax = ?, tax = ?, aftertax = ?, discount = ?, total = ?, invoices = ?, type = ?, last_four = ?, tendered = ?,
-status = ?, updated_at = ? WHERE transaction_id = ?'''.format(t=table), (self.transaction_id,
-                                                                         self.company_id,
-                                                                         self.customer_id,
-                                                                         self.schedule_id,
-                                                                         self.pretax,
-                                                                         self.tax,
-                                                                         self.aftertax,
-                                                                         self.discount,
-                                                                         self.total,
-                                                                         self.invoices,
-                                                                         self.type,
-                                                                         self.last_four,
-                                                                         self.tendered,
-                                                                         self.status,
-                                                                         self.updated_at,
-                                                                         self.transaction_id)
+status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.transaction_id,
+                                                             self.company_id,
+                                                             self.customer_id,
+                                                             self.schedule_id,
+                                                             self.pretax,
+                                                             self.tax,
+                                                             self.aftertax,
+                                                             self.discount,
+                                                             self.total,
+                                                             self.invoices,
+                                                             self.type,
+                                                             self.last_four,
+                                                             self.tendered,
+                                                             self.status,
+                                                             self.updated_at,
+                                                             self.id)
                        )
 
         self.conn.commit()

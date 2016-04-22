@@ -61,14 +61,14 @@ VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.inventory_id,
     def update(self):
 
         self.c.execute('''UPDATE {t} SET inventory_id = ?, company_id = ?, name = ?, description = ?, ordered = ?,
-status = ?, updated_at = ? WHERE inventory_id = ?'''.format(t=table), (self.inventory_id,
-                                                                  self.company_id,
-                                                                  self.name,
-                                                                  self.description,
-                                                                  self.ordered,
-                                                                  self.status,
-                                                                  self.updated_at,
-                                                                  self.inventory_id)
+status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
+                                                             self.company_id,
+                                                             self.name,
+                                                             self.description,
+                                                             self.ordered,
+                                                             self.status,
+                                                             self.updated_at,
+                                                             self.id)
                        )
 
         self.conn.commit()

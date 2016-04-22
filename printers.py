@@ -64,15 +64,15 @@ updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.printer_id,
     def update(self):
 
         self.c.execute('''UPDATE {t} SET printer_id = ?, company_id = ?, name = ?, model = ?, nick_name = ?,
-type = ?, status = ?, updated_at = ? WHERE printer_id = ?'''.format(t=table), (self.printer_id,
-                                                                               self.company_id,
-                                                                               self.name,
-                                                                               self.model,
-                                                                               self.nick_name,
-                                                                               self.type,
-                                                                               self.status,
-                                                                               self.updated_at,
-                                                                               self.printer_id)
+type = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.printer_id,
+                                                                       self.company_id,
+                                                                       self.name,
+                                                                       self.model,
+                                                                       self.nick_name,
+                                                                       self.type,
+                                                                       self.status,
+                                                                       self.updated_at,
+                                                                       self.id)
                        )
 
         self.conn.commit()

@@ -77,19 +77,19 @@ price,image,status,created_at,updated_at)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)'''.fo
 
         self.c.execute('''UPDATE {t} SET item_id = ?, inventory_id = ?, company_id = ?, name = ?, description = ?,
 tags = ?, quantity = ?, ordered = ?, price = ?, image = ?, status = ?, updated_at = ?
-WHERE item_id = ?'''.format(t=table), (self.item_id,
-                                       self.inventory_id,
-                                       self.company_id,
-                                       self.name,
-                                       self.description,
-                                       self.tags,
-                                       self.quantity,
-                                       self.ordered,
-                                       self.price,
-                                       self.image,
-                                       self.status,
-                                       self.updated_at,
-                                       self.item_id)
+WHERE id = ?'''.format(t=table), (self.item_id,
+                                  self.inventory_id,
+                                  self.company_id,
+                                  self.name,
+                                  self.description,
+                                  self.tags,
+                                  self.quantity,
+                                  self.ordered,
+                                  self.price,
+                                  self.image,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
                        )
 
         self.conn.commit()

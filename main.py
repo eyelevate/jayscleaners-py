@@ -1,143 +1,362 @@
-import users as users
-
-from tkinter import *
-from tkinter import ttk
-
-# Global Variables
-HEADER1 = ("Verdana",40)
-LARGE_FONT = ("Verdana", 12)
-REGULAR_FONT = ("Verdana", 10)
-SMALL_FONT = ("Verdana", 8)
+import json
+import time
+import requests
+import urllib
 
 
-def popup_msg(msg):
-    # generate the popup
-    popup = Tk()
-    # add a title
-    popup.wm_title("!")
-    # create the label
-    label = ttk.Label(popup, text=msg, font=REGULAR_FONT)
-    label.pack(side="top", fill="x", pady=10)
-    # make the button
-    b1 = ttk.Button(popup, text="OK", command=popup.destroy)
-    b1.pack()
+from colors import Color
+from companies import Company
+from custids import Custid
+from deliveries import Delivery
+from discounts import Discount
+from inventories import Inventory
+from inventory_items import InventoryItem
+from invoices import Invoice
+from invoice_items import InvoiceItem
+from memos import Memo
+from server import sync_from_server
+from server import update_database
+from printers import Printer
+from reward_transactions import RewardTransaction
+from rewards import Reward
+from schedules import Schedule
+from taxes import Tax
+from transactions import Transaction
+from users import User
 
-    # run the popup
-    popup.mainloop()
-
-
-class JaysCleaners(Tk):
-    """Opening class"""
-
-    def __init__(self, *args, **kwargs):
-        Tk.__init__(self, *args, **kwargs)
-        Tk.iconbitmap(self, default="")
-        Tk.wm_title(self, string="Jays Cleaners")
-
-        # Build the frame(s)
-        frame_main = Frame(self, bg="yellow")
-        # frame_main.pack(side="top",fill="both",expand = True)
-        for r in range(6):
-            frame_main.rowconfigure(r, weight=1)
-        for c in range(6):
-            frame_main.columnconfigure(c, weight=1)
-        frame_main.grid()
-
-        # frame_main.grid_rowconfigure(0,weight =1)
-        # frame_main.grid_columnconfigure(0,weight=1)
-        # start menu bar
-        menubar = Menu(self)
-        file_menu = Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Save Settings")
-        file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=quit)
-        menubar.add_cascade(label="File", menu=file_menu)
-
-        Tk.config(self, menu=menubar)
-
-        # frame - main content
-        self.frames = {}
-        for F in (Main, PageTwo):
-            frame = F(frame_main, self)
-
-            self.frames[F] = frame
-
-            frame.grid(row=0, column=0, sticky=N+E+W+S)
-            # frame.pack(side="top",fill="both",expand = True)
-            # frame.grid_rowconfigure(0,weight =1)
-            # frame.grid_columnconfigure(0,weight=1)
-        self.show_frame(Main)
-
-    def show_frame(self, cont):
-        frame = self.frames[cont]
-        frame.tkraise()
-
-# Pages
-class Main(Frame):
-    def __init__(self, parent, controller):
-        Frame.__init__(self, parent)
-        username_label = Label(self, text="Username: ")
-        password_label = Label(self, text="Password: ")
-        username_input = Entry(self)
-        password_input = Entry(self)
-        remember_me_checkbox = Checkbutton(self, text="Remember me?")
-
-        username_label.grid(row=0, sticky=E)
-        password_label.grid(row=1, sticky=E)
-        username_input.grid(row=0, column=1, sticky=E+W)
-        password_input.grid(row=1, column=1, sticky=E+W)
-        remember_me_checkbox.grid(columnspan=2)
+from kivy.app import App
+from kivy.lang import Builder
+from kivy.properties import ObjectProperty
+from kivy.uix.screenmanager import ScreenManager
+from kivy.uix.screenmanager import Screen
+from kivy.uix.screenmanager import FadeTransition
+from kivy.core.window import Window
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from urllib import error
+from urllib import request
+from urllib import parse
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 
-        # button2 = ttk.Button(self, text="Agree", command=lambda: controller.show_frame(PageTwo))
-        # button2.pack()
-        # button0 = ttk.Button(self, text="Disagree", command=lambda: controller.show_frame(Main))
-        # button0.pack()
+class MainScreen(Screen):
+    update_label = ObjectProperty(None)
 
+    def update_info(self):
+        info = "Last updated {}".format("today")
+        return info
 
-class PageTwo(Frame):
-    def __init__(self, parent, controller):
-        Frame.__init__(self, parent)
-        label = ttk.Label(self, text="Page Two", font=LARGE_FONT)
-        label.pack(pady=10, padx=10)
-        button3 = ttk.Button(self, text="Create User", command=self.test_create)
-        button3.pack()
-        button4 = ttk.Button(self, text="View Users", command=self.test_select)
-        button4.pack()
-        button0 = ttk.Button(self, text="Back", command=lambda: controller.show_frame(Main))
-        button0.pack()
+    def login(self):
+        pass
+
+    def logout(self):
+        pass
+
+    def migrate(self):
+        color = Color()
+        company = Company()
+        custid = Custid()
+        delivery = Delivery()
+        discount = Discount()
+        inventory = Inventory()
+        inventory_item = InventoryItem()
+        invoice = Invoice()
+        invoice_item = InvoiceItem()
+        memo = Memo()
+        printer = Printer()
+        reward_transaction = RewardTransaction()
+        reward = Reward()
+        schedule = Schedule()
+        tax = Tax()
+        transaction = Transaction()
+        user = User()
+        color.create_table()
+        company.create_table()
+        custid.create_table()
+        delivery.create_table()
+        discount.create_table()
+        inventory.create_table()
+        inventory_item.create_table()
+        invoice.create_table()
+        invoice_item.create_table()
+        memo.create_table()
+        printer.create_table()
+        reward_transaction.create_table()
+        reward.create_table()
+        schedule.create_table()
+        tax.create_table()
+        transaction.create_table()
+        user.create_table()
+
+    def db_sync(self):
+        # start upload text
+        self.update_label.text = 'Connecting to server...'
+
+        # create an array of data that need to be uploaded to the server
+        to_upload = {}
+        to_upload_rows = 0
+
+        colors_1 = Color()
+        to_upload['colors'] = colors_1.where({'color_id': None})
+        to_upload_rows += len(to_upload['colors'])
+
+        companies_1 = Company()
+        to_upload['companies'] = companies_1.where({'company_id': None})
+        to_upload_rows += len(to_upload['companies'])
+
+        custids_1 = Custid()
+        to_upload['custids'] = custids_1.where({'cust_id': None})
+        to_upload_rows += len(to_upload['custids'])
+
+        deliveries_1 = Delivery()
+        to_upload['deliveries'] = deliveries_1.where({'delivery_id': None})
+        to_upload_rows += len(to_upload['deliveries'])
+
+        discounts_1 = Discount()
+        to_upload['discounts'] = discounts_1.where({'discount_id': None})
+        to_upload_rows += len(to_upload['discounts'])
+
+        invoices_1 = Invoice()
+        to_upload['invoices'] = invoices_1.where({'invoice_id': None})
+        to_upload_rows += len(to_upload['invoices'])
+
+        invoice_items_1 = InvoiceItem()
+        to_upload['invoice_items'] = invoice_items_1.where({'invoice_items_id': None})
+        to_upload_rows += len(to_upload['invoice_items'])
+
+        inventories_1 = Inventory()
+        to_upload['inventories'] = inventories_1.where({'inventory_id': None})
+        to_upload_rows += len(to_upload['inventories'])
+
+        inventory_items_1 = InventoryItem()
+        to_upload['inventory_items'] = inventory_items_1.where({'item_id': None})
+        to_upload_rows += len(to_upload['inventory_items'])
+
+        memos_1 = Memo()
+        to_upload['memos'] = memos_1.where({'memo_id': None})
+        to_upload_rows += len(to_upload['memos'])
+
+        printers_1 = Printer()
+        to_upload['printers'] = printers_1.where({'printer_id': None})
+        to_upload_rows += len(to_upload['colors'])
+
+        reward_transactions_1 = RewardTransaction()
+        to_upload['reward_transactions'] = reward_transactions_1.where({'reward_id': None})
+        to_upload_rows += len(to_upload['reward_transactions'])
+
+        rewards_1 = Reward()
+        to_upload['rewards'] = rewards_1.where({'reward_id': None})
+        to_upload_rows += len(to_upload['rewards'])
+
+        schedules_1 = Schedule()
+        to_upload['schedules'] = schedules_1.where({'schedule_id': None})
+        to_upload_rows += len(to_upload['schedules'])
+
+        taxes_1 = Tax()
+        to_upload['taxes'] = taxes_1.where({'tax_id': None})
+        to_upload_rows += len(to_upload['taxes'])
+
+        transactions_1 = Transaction()
+        to_upload['transactions'] = transactions_1.where({'transaction_id': None})
+        to_upload_rows += len(to_upload['transactions'])
+
+        users_1 = User()
+        to_upload['users'] = users_1.where({'user_id': None})
+        to_upload_rows += len(to_upload['users'])
+        self.update_label.text = 'Sending {} rows to server.'.format(to_upload_rows)
+
+        company = Company()
+        company.id = 1
+        company.api_token = "2063288158-1"
+        url = 'http://74.207.240.88/admins/api/update/{}/{}/up={}'.format(
+            company.id,
+            company.api_token,
+            json.dumps(to_upload).replace(" ", "")
+        )
+        r = request.urlopen(url)
+        data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+
+        if data['status'] is 200:
+            # Save the local data
+            sync_from_server(data=data)
+            # update ids with saved data
+            update_database(data=data)
+            
+            self.update_label.text = 'Success. Returned {} rows to update locally. Saved {} rows to server.'.format(
+                data['rows_to_create'], data['rows_saved']
+            )
 
     def test_create(self):
-        user = {
-            'id': 1,
-            'company_id': 1,
-            'first_name': 'Wondo',
-            'last_name': 'Choung',
-            'email': 'wondo@eyelevate.com',
-            'phone': '2069315327'
+        # company = Company()
+        # company.id = 1
+        # company.company_id = 1
+        # company.name = 'Jays Cleaners Montlake'
+        # company.street = '2350 24th Ave E'
+        # company.suite = 'A'
+        # company.city = 'Seattle'
+        # company.state = 'WA'
+        # company.zipcode = '98125'
+        # company.email = 'wondo@eyelevate.com'
+        # company.phone = '2063288158'
+        # company.api_key = company.phone + '-1'
+
+        # if company.add():
+        #     popup = Popup(title='Company Registration',
+        #                   content=Label(text='Successfully saved company!'),
+        #                   size_hint=(None, None), size=(400, 400))
+        #
+        # company.close_connection()
+
+        invoice = Invoice()
+        invoice.company_id = 1
+        invoice.customer_id = 1
+        invoice.quantity = 1
+        invoice.pretax = 12.50
+        invoice.tax = 2.37
+        invoice.total = 14.87
+        invoice.due_date = '2016-04-20 16:00:00'
+        invoice.memo = 'test'
+        invoice.status = 1
+
+        if invoice.add():
+            popup = Popup(title='Invoice Added',
+                              content=Label(text='Successfully added an invoice!'),
+                              size_hint=(None, None), size=(400, 400))
+
+            invoice.close_connection()
+
+        popup.open()
+
+    def test_edit(self):
+        # company = Company()
+        # company.id = 1
+        # company.company_id = 1
+        # company.name = 'Jays Cleaners Montlake'
+        # company.street = '2350 24th Ave E'
+        # company.suite = 'A'
+        # company.city = 'Seattle'
+        # company.state = 'WA'
+        # company.zip = '98112'
+        # company.email = 'wondo@eyelevate.com'
+        # company.phone = '2063288158'
+        # company.api_token = company.phone + '-1'
+
+        invoice = Invoice()
+        invoice.id = 1
+        invoice.invoice_id = 1
+        invoice.company_id = 1
+        invoice.customer_id = 1
+        invoice.quantity = 1
+        invoice.pretax = 1
+        invoice.tax = 0.1
+        invoice.reward_id = 1
+        invoice.discount_id = 1
+        invoice.total = 1.1
+        invoice.status = 1
+
+        if invoice.update():
+            popup = Popup(title='Invoice updated',
+                          content=Label(text='Successfully edited invoice!'),
+                          size_hint=(None, None), size=(400, 400))
+            popup.open()
+
+        invoice.close_connection()
+
+    def test_delete(self):
+        company = Company()
+
+        data = {
+            'company_id': 1
         }
 
-        if users.add(user):
-            popup_msg("Successfully added a new user!")
+        if company.delete(data):
+            popup = Popup(title='Company Registration',
+                          content=Label(text='Successfully deleted company!'),
+                          size_hint=(None, None), size=(400, 400))
         else:
-            popup_msg("Was not able to save user!")
+            popup = Popup(title='Company Registration',
+                          content=Label(text='Could not delete Company'),
+                          size_hint=(None, None), size=(400, 400))
 
-    def test_select(self):
-        try:
-            data = users.User.select().order_by(users.User.id.desc())
-        except AttributeError:
-            popup_msg("There was an attribute error")
-        except TypeError:
-            popup_msg('There was an error with your request')
+        company.close_connection()
+        popup.open()
 
-        for user in data:
+    def test_find(self):
+        company = Company()
 
-            print("{} {} with id = {}".format(user.first_name,user.last_name,user.id))
+        company.company_id = 1
+        c1 = company.find()
+        if c1:
+            popup = Popup(title='Company Registration',
+                          content=Label(text='found company! {}'.format(c1)),
+                          size_hint=(None, None), size=(400, 400))
+
+        else:
+            popup = Popup(title='Company Registration',
+                          content=Label(text='Could not delete Company'),
+                          size_hint=(None, None), size=(400, 400))
+
+        company.close_connection()
+        popup.open()
+
+    def test_where(self):
+        company = Company()
+
+        data = {
+            'company_id': 1
+        }
+        c1 = company.where(data)
+        if c1:
+            popup = Popup(title='Company Registration',
+                          content=Label(text='found company! {}'.format(c1)),
+                          size_hint=(None, None), size=(400, 400))
+        else:
+            popup = Popup(title='Company Registration',
+                          content=Label(text='Could not delete Company'),
+                          size_hint=(None, None), size=(400, 400))
+
+        company.close_connection()
+        popup.open()
 
 
+class DeliveryScreen(Screen):
+    pass
 
 
-app = JaysCleaners()
-app.geometry("1270x780")
-# ani = animation.FuncAnimation(f,animate, interval=3000)
-app.mainloop()
+class DropoffScreen(Screen):
+    pass
+
+
+class ReportsScreen(Screen):
+    pass
+
+
+class LoginScreen(Screen):
+    pass
+
+
+class SettingsScreen(Screen):
+    pass
+
+
+class ScreenManagement(ScreenManager):
+    pass
+
+
+presentation = Builder.load_file("kv/style.kv")
+
+
+class MainApp(App):
+    def build(self):
+        # Instantiate logged in user data
+        self.user = None
+        self.company_id = None
+        return presentation
+
+
+if __name__ == "__main__":
+    # Window.clearcolor = (1, 1, 1, 1)
+    # Window.size = (1366, 768)
+    # Window.fullscreen = True
+    MainApp().run()

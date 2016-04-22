@@ -78,7 +78,7 @@ ScreenManagement:
         pos_hint: {'x':0.28,'y':0.22}
     Button:
         text: "Login/Logout"
-        on_release: root.migrate()
+        on_release: root.db_sync()
         font_size: 25
         size_hint: 0.15,0.15
         pos_hint: {'x':0.78,'y':0.22}

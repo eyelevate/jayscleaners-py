@@ -61,14 +61,14 @@ class Reward:
     def update(self):
 
         self.c.execute('''UPDATE {t} SET reward_id = ?, company_id = ?, name = ?, points = ?, discount = ?,
-status = ?, updated_at = ? WHERE reward_id = ?'''.format(t=table), (self.reward_id,
-                                                                    self.company_id,
-                                                                    self.name,
-                                                                    self.points,
-                                                                    self.discount,
-                                                                    self.status,
-                                                                    self.updated_at,
-                                                                    self.reward_id)
+status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.reward_id,
+                                                             self.company_id,
+                                                             self.name,
+                                                             self.points,
+                                                             self.discount,
+                                                             self.status,
+                                                             self.updated_at,
+                                                             self.id)
                        )
 
         self.conn.commit()

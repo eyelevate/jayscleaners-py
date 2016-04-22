@@ -10,8 +10,9 @@ table = 'custids'
 
 class Custid:
     id = None
+    custid = None
     mark_id = None
-    cust_id = None
+    customer_id = None
     status = None
     mark = None
     deleted_at = None
@@ -26,8 +27,9 @@ class Custid:
 
     def create_table(self):
         table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
-                                  IntegerField(column='mark_id').data_type(),
                                   IntegerField(column='cust_id').data_type(),
+                                  IntegerField(column='mark_id').data_type(),
+                                  IntegerField(column='customer_id').data_type(),
                                   IntegerField(column='status').data_type(),
                                   CharField(column='mark', max_length=50).data_type(),
                                   TextField(column='deleted_at').data_type(),
@@ -40,13 +42,14 @@ class Custid:
 
     def add(self):
 
-        self.c.execute('''INSERT INTO {t}(mark_id,cust_id,status,mark,created_at,updated_at)
-VALUES(?,?,?,?,?,?)'''.format(t=table), (self.mark_id,
-                                         self.cust_id,
-                                         self.status,
-                                         self.mark,
-                                         self.created_at,
-                                         self.updated_at)
+        self.c.execute('''INSERT INTO {t}(cust_id,mark_id,customer_id,status,mark,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.custid,
+                                           self.mark_id,
+                                           self.customer_id,
+                                           self.status,
+                                           self.mark,
+                                           self.created_at,
+                                           self.updated_at)
                        )
 
         self.conn.commit()
@@ -54,9 +57,10 @@ VALUES(?,?,?,?,?,?)'''.format(t=table), (self.mark_id,
 
     def update(self):
 
-        self.c.execute('''UPDATE {t} SET mark_id = ?, cust_id = ?, status = ?,mark = ?, updated_at = ?
-WHERE id = ?'''.format(t=table), (self.mark_id,
-                                  self.cust_id,
+        self.c.execute('''UPDATE {t} SET cust_id=?, mark_id = ?, customer_id = ?, status = ?,mark = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.custid,
+                                  self.mark_id,
+                                  self.customer_id,
                                   self.status,
                                   self.mark,
                                   self.updated_at,
@@ -68,7 +72,7 @@ WHERE id = ?'''.format(t=table), (self.mark_id,
 
     def find(self):
         try:
-            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(table), (str(self.id)))
+            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(t=table), (str(self.id)))
             self.conn.commit()
         except ValueError:
             return "Could not find the company with that id"

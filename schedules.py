@@ -75,18 +75,18 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
 
         self.c.execute('''UPDATE {t} SET schedule_id = ?, company_id = ?, pickup_delivery_id = ?, pickup_date = ?,
 dropoff_delivery_id = ?, dropoff_date = ?, special_instructions = ?, type = ?, token = ?, status = ?, updated_at = ?
-WHERE schedule_id = ?'''.format(t=table), (self.schedule_id,
-                                           self.company_id,
-                                           self.pickup_delivery_id,
-                                           self.pickup_date,
-                                           self.dropoff_delivery_id,
-                                           self.dropoff_date,
-                                           self.special_instructions,
-                                           self.type,
-                                           self.token,
-                                           self.status,
-                                           self.updated_at,
-                                           self.schedule_id)
+WHERE id = ?'''.format(t=table), (self.schedule_id,
+                                  self.company_id,
+                                  self.pickup_delivery_id,
+                                  self.pickup_date,
+                                  self.dropoff_delivery_id,
+                                  self.dropoff_date,
+                                  self.special_instructions,
+                                  self.type,
+                                  self.token,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
                        )
 
         self.conn.commit()

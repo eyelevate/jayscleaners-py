@@ -14,14 +14,15 @@ class Company:
     company_id = None
     name = None
     street = None
+    suite = None
     city = None
     state = None
-    zipcode = None
+    zip = None
     email = None
     phone = None
     store_hours = None
     turn_around = None
-    api_key = None
+    api_token = None
     deleted_at = None
     created_at = now
     updated_at = now
@@ -43,12 +44,12 @@ class Company:
                                   CharField(column='suite', max_length=20).data_type(),
                                   CharField(column='city', max_length=20).data_type(),
                                   CharField(column='state', max_length=20).data_type(),
-                                  CharField(column='zipcode', max_length=10).data_type(),
+                                  CharField(column='zip', max_length=10).data_type(),
                                   CharField(column='email', max_length=200).data_type(),
                                   CharField(column='phone', max_length=20).data_type(),
                                   TextField(column='store_hours').data_type(),
                                   TextField(column='turn_around').data_type(),
-                                  CharField(column='api_key', max_length=100).data_type(),
+                                  CharField(column='api_token', max_length=100).data_type(),
                                   TextField(column='deleted_at').data_type(),
                                   TextField(column='created_at').data_type(),
                                   TextField(column='updated_at').data_type(),
@@ -61,19 +62,19 @@ class Company:
     def add(self):
 
         self.c.execute('''INSERT INTO {t}
-(company_id,name,street,suite,city,state,zipcode,email,phone,store_hours,turn_around,api_key,created_at,updated_at) VALUES
+(company_id,name,street,suite,city,state,zip,email,phone,store_hours,turn_around,api_token,created_at,updated_at) VALUES
 (?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.company_id,
                                                    self.name,
                                                    self.street,
                                                    self.suite,
                                                    self.city,
                                                    self.state,
-                                                   self.zipcode,
+                                                   self.zip,
                                                    self.email,
                                                    self.phone,
                                                    self.store_hours,
                                                    self.turn_around,
-                                                   self.api_key,
+                                                   self.api_token,
                                                    self.created_at,
                                                    self.updated_at)
                        )
@@ -83,20 +84,20 @@ class Company:
 
     def update(self):
 
-        self.c.execute('''UPDATE {t} SET company_id = ?, name = ?, street = ?, suite = ?, city = ?, state = ?, zipcode = ?, email = ?,
-phone = ?, store_hours = ?, turn_around = ?, api_key = ?, updated_at = ? WHERE company_id = ?'''.format(t=table),
+        self.c.execute('''UPDATE {t} SET company_id = ?, name = ?, street = ?, suite = ?, city = ?, state = ?, zip = ?,
+email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_at = ? WHERE id = ?'''.format(t=table),
                        (self.company_id,
                         self.name,
                         self.street,
                         self.suite,
                         self.city,
                         self.state,
-                        self.zipcode,
+                        self.zip,
                         self.email,
                         self.phone,
                         self.store_hours,
                         self.turn_around,
-                        self.api_key,
+                        self.api_token,
                         self.updated_at,
                         self.id)
                        )

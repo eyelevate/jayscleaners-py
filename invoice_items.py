@@ -79,19 +79,19 @@ pretax,tax,total,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
 
         self.c.execute('''UPDATE {t} SET invoice_items_id = ?, invoice_id = ?, company_id = ?, customer_id = ?,
 quantity = ?, color = ?, memo = ?, pretax = ?, tax = ?, total = ?, status = ?, updated_at = ?
-WHERE invoice_items_id = ?'''.format(t=table), (self.invoice_items_id,
-                                                self.invoice_id,
-                                                self.company_id,
-                                                self.customer_id,
-                                                self.quantity,
-                                                self.color,
-                                                self.memo,
-                                                self.pretax,
-                                                self.tax,
-                                                self.total,
-                                                self.status,
-                                                self.updated_at,
-                                                self.invoice_items_id)
+WHERE id = ?'''.format(t=table), (self.invoice_items_id,
+                                  self.invoice_id,
+                                  self.company_id,
+                                  self.customer_id,
+                                  self.quantity,
+                                  self.color,
+                                  self.memo,
+                                  self.pretax,
+                                  self.tax,
+                                  self.total,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
                        )
 
         self.conn.commit()

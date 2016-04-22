@@ -7,6 +7,7 @@ unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 table = 'discounts'
 
+
 class Discount:
     id = None
     discount_id = None
@@ -80,20 +81,20 @@ end_time,start_date,end_date,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,
 
         self.c.execute('''UPDATE {t} SET discount_id = ?, company_id = ?, inventory_id = ?, inventory_item_id = ?,
 name = ?, type = ?, discount = ?, rate = ?, end_time = ?, start_date = ?, end_date = ?, status = ?, updated_at = ?
-WHERE discount_id = ?'''.format(t=table),(self.discount_id,
-                                          self.company_id,
-                                          self.inventory_id,
-                                          self.inventory_item_id,
-                                          self.name,
-                                          self.type,
-                                          self.discount,
-                                          self.rate,
-                                          self.end_time,
-                                          self.start_date,
-                                          self.end_date,
-                                          self.status,
-                                          self.updated_at,
-                                          self.discount_id)
+WHERE id = ?'''.format(t=table), (self.discount_id,
+                                  self.company_id,
+                                  self.inventory_id,
+                                  self.inventory_item_id,
+                                  self.name,
+                                  self.type,
+                                  self.discount,
+                                  self.rate,
+                                  self.end_time,
+                                  self.start_date,
+                                  self.end_date,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
                        )
 
         self.conn.commit()

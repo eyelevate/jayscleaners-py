@@ -40,14 +40,14 @@ class Tax:
 
     def add(self):
 
-        self.c.execute('''INSERT INTO {t}(tax_id,company_id,rate,status,deleted_at,created_at,updated_at
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.tax_id,
-                                                                                                   self.company_id,
-                                                                                                   self.rate,
-                                                                                                   self.status,
-                                                                                                   self.deleted_at,
-                                                                                                   self.created_at,
-                                                                                                   self.updated_at)
+        self.c.execute('''INSERT INTO {t}(tax_id,company_id,rate,status,deleted_at,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.tax_id,
+                                           self.company_id,
+                                           self.rate,
+                                           self.status,
+                                           self.deleted_at,
+                                           self.created_at,
+                                           self.updated_at)
                        )
 
         self.conn.commit()
@@ -56,14 +56,14 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
     def update(self):
 
         self.c.execute('''UPDATE {t} SET tax_id = ?, company_id = ?, rate = ?, status = ?, deleted_at = ?,
-created_at = ?, updated_at = ? WHERE tax_id = ?'''.format(t=table), (self.tax_id,
-                                                                     self.company_id,
-                                                                     self.rate,
-                                                                     self.status,
-                                                                     self.deleted_at,
-                                                                     self.created_at,
-                                                                     self.updated_at,
-                                                                     self.tax_id)
+created_at = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.tax_id,
+                                                                 self.company_id,
+                                                                 self.rate,
+                                                                 self.status,
+                                                                 self.deleted_at,
+                                                                 self.created_at,
+                                                                 self.updated_at,
+                                                                 self.id)
                        )
 
         self.conn.commit()

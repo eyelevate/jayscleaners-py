@@ -52,12 +52,12 @@ class Delivery:
 
     def add(self):
 
-        self.c.execute('''INSERT INTO {t}(delivery_id,company_id,route_name,day,limit,start_time,end_time,zipcode,
+        self.c.execute('''INSERT INTO {t}(delivery_id,company_id,route_name,day,delivery_limit,start_time,end_time,zipcode,
 blackout,reward_points,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.delivery_id,
                                                                                                      self.company_id,
                                                                                                      self.route_name,
                                                                                                      self.day,
-                                                                                                     self.limit,
+                                                                                                     self.delivery_limit,
                                                                                                      self.start_time,
                                                                                                      self.end_time,
                                                                                                      self.zipcode,
@@ -72,20 +72,20 @@ blackout,reward_points,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)'
 
     def update(self):
 
-        self.c.execute('''UPDATE {t} SET delivery_id = ?, company_id = ?, route_name = ?, day = ?, limit = ?,
+        self.c.execute('''UPDATE {t} SET delivery_id = ?, company_id = ?, route_name = ?, day = ?, delivery_limit = ?,
 start_time = ?, end_time = ?, zipcode = ?, blackout = ?, reward_points = ?, updated_at = ?
-WHERE delivery_id = ?'''.format(t=table), (self.delivery_id,
-                                           self.company_id,
-                                           self.route_name,
-                                           self.day,
-                                           self.limit,
-                                           self.start_time,
-                                           self.end_time,
-                                           self.zipcode,
-                                           self.blackout,
-                                           self.reward_points,
-                                           self.updated_at,
-                                           self.delivery_id)
+WHERE id = ?'''.format(t=table), (self.delivery_id,
+                                  self.company_id,
+                                  self.route_name,
+                                  self.day,
+                                  self.delivery_limit,
+                                  self.start_time,
+                                  self.end_time,
+                                  self.zipcode,
+                                  self.blackout,
+                                  self.reward_points,
+                                  self.updated_at,
+                                  self.id)
                        )
 
         self.conn.commit()
@@ -93,7 +93,7 @@ WHERE delivery_id = ?'''.format(t=table), (self.delivery_id,
 
     def find(self):
         try:
-            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(table), (str(self.id)))
+            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(t=table), (str(self.id)))
             self.conn.commit()
         except ValueError:
             return "Could not find the company with that id"
