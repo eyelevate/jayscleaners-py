@@ -1,5 +1,5 @@
 #: import FadeTransition kivy.uix.screenmanager.FadeTransition
-
+#: import Popup kivy.uix.popup.Popup
 
 
 ScreenManagement:
@@ -10,10 +10,19 @@ ScreenManagement:
     ReportsScreen:
     SettingsScreen:
 
-
 <MainScreen>:
-    labe
+    id:screen_main
+    update_label:update_data_label
+    username: username
+    password: password
     name:"main"
+    login_popup: login_popup
+    login_button: login_button
+    settings_button: settings_button
+    reports_button: reports_button
+    delivery_button: delivery_button
+    dropoff_button: dropoff_button
+    update_button: update_button
 
     ActionBar:
         id: _action_main
@@ -40,49 +49,94 @@ ScreenManagement:
                     text: 'Save As'
                 ActionButton:
                     text: 'Quit'
+    GridLayout:
+        cols: 2
+        size_hint: 1,0.8
+        pos_hint: {'top':0.9}
+
+        GridLayout:
+            cols: 2
+            size_hint_y: 3
+            Button:
+                id: settings_button
+                on_release: app.root.current = "settings"
+                text: "Settings"
+                disabled: True
+
+            Button:
+                id: reports_button
+                on_release: app.root.current = "reports"
+                text: "Reports"
+                disabled: True
+
+            Button:
+                id: delivery_button
+                on_release: app.root.current = "delivery"
+                text: "Delivery"
+                disabled: True
+
+            Button:
+                id: login_button
+                text: "Login"
+                on_release: root.login_popup.open()
 
 
+
+        Button:
+            id: dropoff_button
+            disabled: True
+            on_release: app.root.current = "dropoff"
+            text: "Drop / Pickup"
+
+    Popup:
+        id: login_popup
+        on_parent: if self.parent == screen_main: screen_main.remove_widget(self)
+        title: "Login Screen"
+        content: authenticate_grid
+        GridLayout:
+            id: authenticate_grid
+            cols: 2
+            Label:
+                text: "username"
+                size_hint_y: None
+            TextInput:
+                id: username
+                size_hint_y: None
+                hint_text: "Enter username"
+                height: '32dp'
+                multiline: False
+                text: ''
+            Label:
+                text: "password"
+                size_hint_y: None
+            TextInput:
+                id: password
+                size_hint_y: None
+                hint_text: "Enter password"
+                password:True
+                height: '32dp'
+                multiline: False
+                text: ''
+            Button:
+                text: "Cancel"
+                on_release: login_popup.dismiss()
+            Button:
+                text: "Login"
+                on_release: root.login()
+    Button:
+        id: update_button
+        text:"Update"
+        disabled:True
+        on_release: root.test_print()
+        size_hint: 0.1,0.1
+        pos_hint: {'x':0, 'y':0}
     Label:
         id: update_data_label
         text:root.update_info()
         size_hint_y: None
         text_size: self.width, None
         height: self.texture_size[1]
-
-
-
-
-    Button:
-        on_release: app.root.current = "settings"
-        text: "Settings"
-        font_size: 25
-        size_hint: 0.15,0.15
-        pos_hint: {'x':0.28,'y':0.72}
-    Button:
-        on_release: app.root.current = "reports"
-        text: "Reports"
-        font_size: 25
-        size_hint: 0.15,0.15
-        pos_hint: {'x':0.78,'y':0.72}
-    Button:
-        on_release: app.root.current = "dropoff"
-        text: "Drop / Pickup"
-        font_size: 25
-        size_hint: 0.15,0.15
-        pos_hint: {'x':0.53,'y':0.47}
-    Button:
-        on_release: app.root.current = "delivery"
-        text: "Delivery"
-        font_size: 25
-        size_hint: 0.15,0.15
-        pos_hint: {'x':0.28,'y':0.22}
-    Button:
-        text: "Login/Logout"
-        on_release: root.update_database()
-        font_size: 25
-        size_hint: 0.15,0.15
-        pos_hint: {'x':0.78,'y':0.22}
-
+        pos_hint: {'x':0.1, 'y':0}
 
 <DropoffScreen>:
     name:"dropoff"
@@ -226,3 +280,4 @@ ScreenManagement:
         font_size: 20
         size_hint: 0.1,0.1
         pos_hint: {'x':0,'y':0}
+

@@ -240,6 +240,18 @@ WHERE id = ?'''.format(t=table), (self.user_id,
         else:
             return False
 
+    def auth(self, username = False, password = False):
+        self.c.execute('''SELECT * FROM USERS WHERE username = ? and password = ?''',(username,password))
+        self.conn.commit()
+        if len(self.c.fetchall()) > 0:
+            # check to see if role_is admin
+            for key, value in self.c.fetchall().items():
+                print(value)
+
+            return True
+        else:
+            return False
+
     def delete(self):
 
         if self.id:

@@ -1,8 +1,14 @@
 import json
-import time
-import requests
-import urllib
-
+import sys
+import platform
+print(platform.system())
+print("test")
+if platform.system() == 'Darwin':
+    sys.path.append('/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
+elif platform.system() == 'Linux':
+    sys.path.append('/')
+elif platform.system() == 'Windows':
+    sys.path.append('/')
 
 from colors import Color
 from companies import Company
@@ -24,6 +30,11 @@ from taxes import Tax
 from transactions import Transaction
 from users import User
 
+
+from escpos import *
+from escpos.printer import Network
+
+
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.properties import ObjectProperty
@@ -39,21 +50,118 @@ from urllib import parse
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
+auth_user = User()
+ERROR_COLOR = 0.94,0.33,0.33,1
+DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
+
 
 class MainScreen(Screen):
     update_label = ObjectProperty(None)
+    login_button = ObjectProperty(None)
+    settings_button = ObjectProperty(None)
+    reports_button = ObjectProperty(None)
+    delivery_button = ObjectProperty(None)
+    dropoff_button = ObjectProperty(None)
+    update_button = ObjectProperty(None)
+    username = ObjectProperty(None)
+    password = ObjectProperty(None)
+    login_popup = ObjectProperty(None)
 
     def update_info(self):
         info = "Last updated {}".format("today")
         return info
 
-    def login(self):
-        pass
+    def login(self, *args, **kwargs):
 
-    def logout(self):
-        pass
+        user = User()
+        user.username = self.username.text
+        user.password = self.password.text  # cipher and salt later
 
-    def migrate(self):
+        # validate the form data
+        if not user.username:
+            self.username.hint_text = "Username must exist"
+            self.username.hint_text_color = ERROR_COLOR
+        if not user.password:
+            self.password.hint_text = "Password cannot be left empty"
+            self.password.hint_text_color = ERROR_COLOR
+
+        # authenticate
+        if user.username and user.password:
+            self.username.hint_text = "Enter username"
+            self.username.hint_text_color = DEFAULT_COLOR
+            self.password.hint_text = "Enter password"
+            self.password.hint_text_color = DEFAULT_COLOR
+            # first check to see if you can authenticate locally
+            u1 = user.auth(username=user.username,password=user.password)
+            if u1: # found user register variables, sync data, and show links
+
+                self.login_button.text = "Logout"
+                self.login_button.bind(on_release=self.logout)
+                self.update_button.disabled = False
+                self.settings_button.disabled = False
+                self.reports_button.disabled = False
+                self.dropoff_button.disabled = False
+                self.delivery_button.disabled = False
+                self.settings_button.disabled = False
+                self.settings_button.disabled = False
+
+                auth_user.username = user.username
+                auth_user.company_id = user.company_id
+                popup_1 = Popup(title='Authentication Success',
+                              content=Label(text='Welcome! You are now logged in as {}!'.format(user.username)),
+                              size_hint=(None, None), size=(1000, 600))
+                self.login_popup.dismiss()
+            else: # did not find user in local db, look for user on server
+                url = 'http://74.207.240.88/admins/api/authenticate/{}/{}'.format(
+                    user.username,
+                    user.password
+                )
+                r = request.urlopen(url)
+                data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+
+                if data['status'] is True:
+                    self.login_button.text = "Logout"
+                    self.login_button.bind(on_release=self.logout)
+                    self.update_button.disabled = False
+                    self.settings_button.disabled = False
+                    self.reports_button.disabled = False
+                    self.dropoff_button.disabled = False
+                    self.delivery_button.disabled= False
+                    self.settings_button.disabled = False
+                    self.settings_button.disabled = False
+
+                    auth_user.username = user.username
+                    auth_user.company_id = data['company_id']
+                    popup_1 = Popup(title='Authentication Success',
+                                  content=Label(text='Welcome! You are now logged in as {}!'.format(user.username)),
+                                  size_hint=(None, None), size=(1000, 600))
+                    self.login_popup.dismiss()
+                else:
+
+                    popup_1 = Popup(title='Authentication Failed',
+                                  content=Label(text='Could not find any user with these credentials. Please try again!'),
+                                  size_hint=(None, None), size=(1000, 600))
+
+            user.close_connection()
+            popup_1.open()
+
+    def logout(self, *args, **kwargs):
+        self.username.text = ''
+        self.password.text  = ''
+        auth_user.username = None
+        auth_user.company_id = None
+        self.login_button.text = "Login"
+        self.login_button.bind(on_release=self.login)
+        self.update_button.disabled = True
+        self.settings_button.disabled = True
+        self.reports_button.disabled = True
+        self.dropoff_button.disabled = True
+        self.delivery_button.disabled = True
+        self.settings_button.disabled = True
+        self.settings_button.disabled = True
+
+
+    def migrate(self, *args, **kwargs):
         color = Color()
         company = Company()
         custid = Custid()
@@ -182,31 +290,18 @@ class MainScreen(Screen):
             sync_from_server(data=data)
             # update ids with saved data
             update_database(data=data)
-            
+
             self.update_label.text = 'Success. Returned {} rows to update locally. Saved {} rows to server.'.format(
                 data['rows_to_create'], data['rows_saved']
             )
 
-    def test_create(self):
-        # company = Company()
-        # company.id = 1
-        # company.company_id = 1
-        # company.name = 'Jays Cleaners Montlake'
-        # company.street = '2350 24th Ave E'
-        # company.suite = 'A'
-        # company.city = 'Seattle'
-        # company.state = 'WA'
-        # company.zipcode = '98125'
-        # company.email = 'wondo@eyelevate.com'
-        # company.phone = '2063288158'
-        # company.api_key = company.phone + '-1'
+    def test_sys(self):
+        print(sys.path)
 
-        # if company.add():
-        #     popup = Popup(title='Company Registration',
-        #                   content=Label(text='Successfully saved company!'),
-        #                   size_hint=(None, None), size=(400, 400))
-        #
-        # company.close_connection()
+    def test_crypt(self):
+        pass
+
+    def test_create(self):
 
         invoice = Invoice()
         invoice.company_id = 1
@@ -221,8 +316,8 @@ class MainScreen(Screen):
 
         if invoice.add():
             popup = Popup(title='Invoice Added',
-                              content=Label(text='Successfully added an invoice!'),
-                              size_hint=(None, None), size=(400, 400))
+                          content=Label(text='Successfully added an invoice!'),
+                          size_hint=(None, None), size=(400, 400))
 
             invoice.close_connection()
 
@@ -319,6 +414,21 @@ class MainScreen(Screen):
         company.close_connection()
         popup.open()
 
+    def authenticate(self):
+        print('authenticated');
+
+    def test_print(self, *args, **kwargs):
+
+        Epson = Network("10.1.10.10")
+        Epson.text("Hello World\n")
+        # Print QR Code
+        # Epson.qr("You can readme from your smartphone")
+        # Print barcode
+        # Epson.barcode('1324354657687','EAN13',64,2,'','')
+        # Cut paper
+        Epson.cut()
+        print("done")
+
 
 class DeliveryScreen(Screen):
     pass
@@ -344,7 +454,8 @@ class ScreenManagement(ScreenManager):
     pass
 
 
-presentation = Builder.load_file("kv/style.kv")
+# presentation = Builder.load_file("kv/style.kv")
+presentation = Builder.load_file("kv/playground.kv")
 
 
 class MainApp(App):
