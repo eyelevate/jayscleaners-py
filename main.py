@@ -1,16 +1,17 @@
 import json
 import sys
 import platform
-print(platform.system())
-print("test")
-if platform.system() == 'Darwin':
-    sys.path.append('/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
-elif platform.system() == 'Linux':
-    sys.path.append('/')
-elif platform.system() == 'Windows':
-    sys.path.append('/')
+import time
+import datetime
 
-from colors import Color
+if platform.system() == 'Darwin':  # Mac
+    sys.path.append('/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
+elif platform.system() == 'Linux':  # Linux
+    sys.path.append('/')  # TODO
+elif platform.system() == 'Windows':  # Windows
+    sys.path.append('/')  # TODO
+
+from colors import Colored
 from companies import Company
 from custids import Custid
 from deliveries import Delivery
@@ -30,10 +31,8 @@ from taxes import Tax
 from transactions import Transaction
 from users import User
 
-
 from escpos import *
 from escpos.printer import Network
-
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -44,6 +43,10 @@ from kivy.uix.screenmanager import FadeTransition
 from kivy.core.window import Window
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
+from kivy.graphics.instructions import Canvas
+from kivy.graphics import Rectangle, Color
+
+from threading import Thread
 from urllib import error
 from urllib import request
 from urllib import parse
@@ -51,8 +54,10 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 
 auth_user = User()
-ERROR_COLOR = 0.94,0.33,0.33,1
+ERROR_COLOR = 0.94, 0.33, 0.33, 1
 DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
+unix = time.time()
+NOW = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
 
 class MainScreen(Screen):
@@ -92,8 +97,8 @@ class MainScreen(Screen):
             self.password.hint_text = "Enter password"
             self.password.hint_text_color = DEFAULT_COLOR
             # first check to see if you can authenticate locally
-            u1 = user.auth(username=user.username,password=user.password)
-            if u1: # found user register variables, sync data, and show links
+            u1 = user.auth(username=user.username, password=user.password)
+            if u1:  # found user register variables, sync data, and show links
 
                 self.login_button.text = "Logout"
                 self.login_button.bind(on_release=self.logout)
@@ -108,10 +113,10 @@ class MainScreen(Screen):
                 auth_user.username = user.username
                 auth_user.company_id = user.company_id
                 popup_1 = Popup(title='Authentication Success',
-                              content=Label(text='Welcome! You are now logged in as {}!'.format(user.username)),
-                              size_hint=(None, None), size=(1000, 600))
+                                content=Label(text='Welcome! You are now logged in as {}!'.format(user.username)),
+                                size_hint=(None, None), size=(1000, 600))
                 self.login_popup.dismiss()
-            else: # did not find user in local db, look for user on server
+            else:  # did not find user in local db, look for user on server
                 url = 'http://74.207.240.88/admins/api/authenticate/{}/{}'.format(
                     user.username,
                     user.password
@@ -126,28 +131,29 @@ class MainScreen(Screen):
                     self.settings_button.disabled = False
                     self.reports_button.disabled = False
                     self.dropoff_button.disabled = False
-                    self.delivery_button.disabled= False
+                    self.delivery_button.disabled = False
                     self.settings_button.disabled = False
                     self.settings_button.disabled = False
 
                     auth_user.username = user.username
                     auth_user.company_id = data['company_id']
                     popup_1 = Popup(title='Authentication Success',
-                                  content=Label(text='Welcome! You are now logged in as {}!'.format(user.username)),
-                                  size_hint=(None, None), size=(1000, 600))
+                                    content=Label(text='Welcome! You are now logged in as {}!'.format(user.username)),
+                                    size_hint=(None, None), size=(1000, 600))
                     self.login_popup.dismiss()
                 else:
 
                     popup_1 = Popup(title='Authentication Failed',
-                                  content=Label(text='Could not find any user with these credentials. Please try again!'),
-                                  size_hint=(None, None), size=(1000, 600))
+                                    content=Label(
+                                        text='Could not find any user with these credentials. Please try again!'),
+                                    size_hint=(None, None), size=(1000, 600))
 
             user.close_connection()
             popup_1.open()
 
     def logout(self, *args, **kwargs):
         self.username.text = ''
-        self.password.text  = ''
+        self.password.text = ''
         auth_user.username = None
         auth_user.company_id = None
         self.login_button.text = "Login"
@@ -160,9 +166,8 @@ class MainScreen(Screen):
         self.settings_button.disabled = True
         self.settings_button.disabled = True
 
-
     def migrate(self, *args, **kwargs):
-        color = Color()
+        color = Colored()
         company = Company()
         custid = Custid()
         delivery = Delivery()
@@ -205,7 +210,7 @@ class MainScreen(Screen):
         to_upload = {}
         to_upload_rows = 0
 
-        colors_1 = Color()
+        colors_1 = Colored()
         to_upload['colors'] = colors_1.where({'color_id': None})
         to_upload_rows += len(to_upload['colors'])
 
@@ -273,13 +278,24 @@ class MainScreen(Screen):
         to_upload['users'] = users_1.where({'user_id': None})
         to_upload_rows += len(to_upload['users'])
         self.update_label.text = 'Sending {} rows to server.'.format(to_upload_rows)
-
         company = Company()
-        company.id = 1
-        company.api_token = "2063288158-1"
-        url = 'http://74.207.240.88/admins/api/update/{}/{}/up={}'.format(
+        company.id = auth_user.company_id
+        data = {'company_id': auth_user.company_id}
+        c1 = company.where(data)
+
+        if len(c1) > 0:
+            for comp in c1:
+                dt = datetime.datetime.strptime(comp['server_at'], "%Y-%m-%d %H:%M:%S") if comp['server_at'] is not None else datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+                company.server_at = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+                company.api_token = comp['api_token']
+        else:
+            company.server_at = 0
+            company.api_token = '2063288158-1'
+
+        url = 'http://74.207.240.88/admins/api/update/{}/{}/{}/up={}'.format(
             company.id,
             company.api_token,
+            company.server_at,
             json.dumps(to_upload).replace(" ", "")
         )
         r = request.urlopen(url)
@@ -288,12 +304,24 @@ class MainScreen(Screen):
         if data['status'] is 200:
             # Save the local data
             sync_from_server(data=data)
-            # update ids with saved data
+            # update ids with saved data & update company table with server_at timestamp
             update_database(data=data)
+            # update server_at in companies with most current timestamp
+
+            where = {'company_id': auth_user.company_id}
+            data = {'server_at': NOW}
+            company.put(where, data)
+            rows_to_create = data['rows_to_create'] if 'rows_to_create' in data else 0
+            rows_saved = data['rows_saved'] if 'rows_saved' in data else 0
 
             self.update_label.text = 'Success. Returned {} rows to update locally. Saved {} rows to server.'.format(
-                data['rows_to_create'], data['rows_saved']
+                rows_to_create, rows_saved
             )
+
+    def search_pre(self):
+        search = SearchScreen()
+        search.reset()
+        Thread(target=self.db_sync()).start()
 
     def test_sys(self):
         print(sys.path)
@@ -324,18 +352,6 @@ class MainScreen(Screen):
         popup.open()
 
     def test_edit(self):
-        # company = Company()
-        # company.id = 1
-        # company.company_id = 1
-        # company.name = 'Jays Cleaners Montlake'
-        # company.street = '2350 24th Ave E'
-        # company.suite = 'A'
-        # company.city = 'Seattle'
-        # company.state = 'WA'
-        # company.zip = '98112'
-        # company.email = 'wondo@eyelevate.com'
-        # company.phone = '2063288158'
-        # company.api_token = company.phone + '-1'
 
         invoice = Invoice()
         invoice.id = 1
@@ -402,6 +418,10 @@ class MainScreen(Screen):
             'company_id': 1
         }
         c1 = company.where(data)
+        print(c1)
+        for comp in c1:
+            print(comp['name'])
+
         if c1:
             popup = Popup(title='Company Registration',
                           content=Label(text='found company! {}'.format(c1)),
@@ -415,7 +435,7 @@ class MainScreen(Screen):
         popup.open()
 
     def authenticate(self):
-        print('authenticated');
+        print('authenticated')
 
     def test_print(self, *args, **kwargs):
 
@@ -434,9 +454,229 @@ class DeliveryScreen(Screen):
     pass
 
 
-class DropoffScreen(Screen):
-    pass
+class SearchScreen(Screen):
+    customer_id = None
+    invoice_table = ObjectProperty(None)
+    search = ObjectProperty(None)
+    cust_last_name = ObjectProperty(None)
+    cust_first_name = ObjectProperty(None)
+    cust_phone = ObjectProperty(None)
+    cust_last_drop = ObjectProperty(None)
+    cust_starch = ObjectProperty(None)
+    cust_credit = ObjectProperty(None)
+    cust_invoice_memo = ObjectProperty(None)
+    cust_important_memo = ObjectProperty(None)
 
+    def reset(self):
+        self.search.text = ''
+        self.cust_last_name.text = ''
+        self.cust_first_name.text = ''
+        self.cust_phone.text = ''
+        self.cust_last_drop.text = ''
+        self.cust_starch.text = ''
+        self.cust_credit.text = ''
+        self.cust_invoice_memo.text = ''
+        self.cust_important_memo.text = ''
+
+    def search_customer(self, *args, **kwargs):
+        search_text = self.search.text
+        customers = User()
+        if self.is_int(search_text):
+            # check to see if length is 7 or greater
+            if len(search_text) >= 7:  # This is a phone number
+                # First check to see if the number is exact
+                data = {
+                    'phone': '"%{}%"'.format(self.search.text)
+                }
+                cust1 = customers.like(data)
+                # Found customer via where, now display data to screen
+                if len(cust1) == 1:
+
+                    for result in cust1:
+                        # clear the current widget
+                        self.invoice_table.clear_widgets()
+                        # add the table headers
+                        self.create_invoice_headers()
+                        # get the invoice data
+                        data = {
+                            'customer_id' : result['user_id'],
+                            'status': {'<':3}
+                        }
+
+                        invoices = Invoice()
+                        invs = invoices.where(data)
+                        # set the new invoice table
+                        if len(invs) > 0:
+                            for inv in invs:
+                                self.create_invoice_row(inv)
+                        # get the custid data
+
+                        # display data
+                        self.cust_last_name.text = result['last_name']
+                        self.cust_first_name.text = result['first_name']
+                        self.cust_phone.text = result['phone']
+                        self.cust_last_drop.text = ''
+                        self.cust_starch.text = self.get_starch_by_id(result['starch'])
+                        self.cust_credit.text = '0.00'
+                        try:
+                            self.cust_invoice_memo.text = result['invoice_memo']
+                        except AttributeError:
+                            self.cust_invoice_memo.text = ''
+
+                        try:
+                            self.cust_important_memo.text = result['important_memo']
+                        except AttributeError:
+                            self.cust_important_memo.text = ''
+
+                    # show the proper buttons
+
+                    # clear the search text input
+                    self.search.text = ''
+
+                elif len(cust1) > 1:
+                    # create popup instance and show customers as a list
+                    pass
+                else:
+                    # If not exact number then use like statements
+                    pass
+
+            elif len(search_text) == 6:  # this is an invoice number
+                # data = {
+                #     'invoice_id' : self.search
+                # }
+                # inv = Invoice()
+                # inv_1 = inv.where(data)
+                # if inv_1:
+                #
+                # else:
+                pass
+            else:
+                pass
+        else:  # Lookup by last name || mark
+            pass
+
+    def is_int(self, s):
+        try:
+            int(s)
+            return True
+        except ValueError:
+            return False
+
+    def create_invoice_headers(self):
+        h1 = self.build_tr(0,'Inv')
+        h3 = self.build_tr(0,'Due')
+        h4 = self.build_tr(0,'Rack')
+        h5 = self.build_tr(0,'Qty')
+        h6 = self.build_tr(0,'Total')
+        self.invoice_table.add_widget(Builder.load_string(h1))
+        self.invoice_table.add_widget(Builder.load_string(h3))
+        self.invoice_table.add_widget(Builder.load_string(h4))
+        self.invoice_table.add_widget(Builder.load_string(h5))
+        self.invoice_table.add_widget(Builder.load_string(h6))
+        return True
+
+    def create_invoice_row(self, row, *args, **kwargs):
+        """ Creates invoice table row and displays it to screen """
+        invoice_id = row['invoice_id']
+        quantity = row['quantity']
+        rack = row['rack']
+        total = row['total']
+        due = row['due_date']
+        dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S") if due is not None else datetime.datetime.strptime(
+            '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+        due_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+        due_date = dt.strftime('%m/%d')
+        dt = datetime.datetime.strptime(NOW, "%Y-%m-%d %H:%M:%S") if NOW is not None else datetime.datetime.strptime(
+            '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+        now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+        # check to see if invoice is overdue
+
+        if rack: # racked and ready
+            state = 3
+        elif due_strtotime < now_strtotime: # overdue
+            state = 2
+        else: # Not ready yet
+            state = 1
+
+        tr_1 = self.build_tr(state,invoice_id)
+        tr_3 = self.build_tr(state,due_date)
+        tr_4 = self.build_tr(state,rack)
+        tr_5 = self.build_tr(state,quantity)
+        tr_6 = self.build_tr(state,total)
+        self.invoice_table.add_widget(Builder.load_string(tr_1))
+        self.invoice_table.add_widget(Builder.load_string(tr_3))
+        self.invoice_table.add_widget(Builder.load_string(tr_4))
+        self.invoice_table.add_widget(Builder.load_string(tr_5))
+        self.invoice_table.add_widget(Builder.load_string(tr_6))
+
+        return True
+
+    def build_tr(self, state, data):
+        if state == 0:
+            tr = '''
+Label:
+    size_hint_y: None
+    markup: True
+    text: "[color=000000][b]{}[/b][/color]"
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+'''.format(data)
+        elif state == 3: # Racked and Ready
+            tr = '''
+Label:
+    size_hint_y: None
+    markup: True
+    text: "[color=3FBF3F][b]{}[/b][/color]"
+    canvas.before:
+        Color:
+            rgba: 0.847, 0.968, 0.847, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+'''.format(data)
+        elif state == 2: # Overdue
+            tr = '''
+Label:
+    size_hint_y: None
+    markup: True
+    text: "[color=0F47FF][b]{}[/b][/color]"
+    canvas.before:
+        Color:
+            rgba: 0.816, 0.847, 0.961, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+'''.format(data)
+        else: # Not ready yet
+            tr = '''
+Label:
+    size_hint_y: None
+    markup: True
+    text: "[color=5e5e5e]{}[/color]"
+    canvas.before:
+        Color:
+            rgba: 0.826, 0.826, 0.826, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+'''.format(data)
+        return tr
+
+    def get_starch_by_id(self, starch):
+        if starch == 1:
+            return 'None'
+        elif starch == 2:
+            return 'Light'
+        elif starch == 3:
+            return 'Medium'
+        elif starch == 4:
+            return 'Heavy'
+        else:
+            return 'Not Set'
 
 class ReportsScreen(Screen):
     pass
@@ -450,19 +690,33 @@ class SettingsScreen(Screen):
     pass
 
 
+class DropoffScreen(Screen):
+    pass
+
+
+class PickupScreen(Screen):
+    pass
+
+class NewCustomerScreen(Screen):
+    pass
+
+class EditCustomerScreen(Screen):
+    pass
+
+class HistoryScreen(Screen):
+    pass
+
+
+
 class ScreenManagement(ScreenManager):
     pass
 
 
-# presentation = Builder.load_file("kv/style.kv")
-presentation = Builder.load_file("kv/playground.kv")
-
+# load kv files
+presentation = Builder.load_file("kv/main.kv")
 
 class MainApp(App):
     def build(self):
-        # Instantiate logged in user data
-        self.user = None
-        self.company_id = None
         return presentation
 
 

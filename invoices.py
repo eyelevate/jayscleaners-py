@@ -141,16 +141,48 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
             idx = 0
             for key, value in data.items():
                 idx += 1
+                if isinstance(value, dict):
+                    for oper, val in value.items():
+                        if idx == len(data):
+                            sql += '''{k} {o} {v}'''.format(k=key, o=oper, v=val)
+
+                        elif idx < len(data):
+                            sql += '''{k} {o} {v} AND '''.format(k=key, o=oper, v=val)
+
+                else:
+                    if idx == len(data):
+                        if value is None:
+                            sql += '''{k} is null'''.format(k=key)
+                        else:
+                            sql += '''{k} = {v}'''.format(k=key, v=value)
+                    elif idx < len(data):
+                        if value is None:
+                            sql += '''{k} is null AND '''.format(k=key)
+                        else:
+                            sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+            self.c.execute(sql)
+            self.conn.commit()
+            return self.c.fetchall()
+        else:
+            return False
+
+    def like(self, data=False):
+        if data:
+            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            idx = 0
+            for key, value in data.items():
+                idx += 1
                 if idx == len(data):
                     if value is None:
                         sql += '''{k} is null'''.format(k=key)
                     else:
-                        sql += '''{k} = {v}'''.format(k=key, v=value)
+                        sql += '''{k} LIKE {v}'''.format(k=key, v=value)
                 elif idx < len(data):
                     if value is None:
                         sql += '''{k} is null AND '''.format(k=key)
                     else:
-                        sql += '''{k} = {v} AND '''.format(k=key, v=value)
+                        sql += '''{k} LIKE {v} AND '''.format(k=key, v=value)
 
             self.c.execute(sql)
             self.conn.commit()

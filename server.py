@@ -1,4 +1,7 @@
-from colors import Color
+import datetime
+import time
+
+from colors import Colored
 from companies import Company
 from custids import Custid
 from deliveries import Delivery
@@ -16,13 +19,17 @@ from taxes import Tax
 from transactions import Transaction
 from users import User
 
+unix = time.time()
+now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
 def sync_from_server(data):
+
     # start upload text
     if int(data['rows_to_create']) > 0:
-        if 'colors' in data['updates']:
-            for colors in data['updates']['colors']:
-                color = Color()
+        updates = data['updates']
+        if 'colors' in updates:
+            for colors in updates['colors']:
+                color = Colored()
                 color.color_id = colors['id']
                 color.company_id = colors['company_id']
                 color.color = colors['color']
@@ -32,10 +39,18 @@ def sync_from_server(data):
                 color.deleted_at = colors['deleted_at']
                 color.created_at = colors['created_at']
                 color.updated_at = colors['updated_at']
-                color.add()
+                # check to see if color_id already exists and update
 
-        if 'companies' in data['updates']:
-            for companies in data['updates']['companies']:
+                count_color = color.where({'color_id':color.color_id})
+                if len(count_color) > 0:
+                    for data in count_color:
+                        color.id = data['id']  
+                        color.update()
+                else:
+                    color.add()
+
+        if 'companies' in updates:
+            for companies in updates['companies']:
                 company = Company()
                 company.company_id = companies['id']
                 company.name = companies['name']
@@ -51,11 +66,17 @@ def sync_from_server(data):
                 company.deleted_at = companies['deleted_at']
                 company.created_at = companies['created_at']
                 company.updated_at = companies['updated_at']
-                company.server_at = companies['server_at']
-                company.add()
+                company.server_at = now
+                count_company = company.where({'company_id':company.company_id})
+                if len(count_company) > 0:
+                    for data in count_company:
+                        company.id = data['id']  
+                        company.update()
+                else:
+                    company.add()
 
-        if 'custids' in data['updates']:
-            for custids in data['updates']['custids']:
+        if 'custids' in updates:
+            for custids in updates['custids']:
                 custid = Custid()
                 custid.cust_id = custids['id']
                 custid.mark_id = custids['mark_id']
@@ -65,10 +86,16 @@ def sync_from_server(data):
                 custid.deleted_at = custids['deleted_at']
                 custid.created_at = custids['created_at']
                 custid.updated_at = custids['updated_at']
-                custid.add()
+                count_custid = custid.where({'cust_id':custid.cust_id})
+                if len(count_custid) > 0:
+                    for data in count_custid:
+                        custid.id = data['id']  
+                        custid.update()
+                else:
+                    custid.add()
 
-        if 'deliveries' in data['updates']:
-            for deliveries in data['updates']['deliveries']:
+        if 'deliveries' in updates:
+            for deliveries in updates['deliveries']:
                 delivery = Delivery()
                 delivery.delivery_id = deliveries['id']
                 delivery.company_id = deliveries['company_id']
@@ -83,10 +110,16 @@ def sync_from_server(data):
                 delivery.deleted_at = deliveries['deleted_at']
                 delivery.created_at = deliveries['created_at']
                 delivery.updated_at = deliveries['updated_at']
-                delivery.add()
+                count_delivery = custid.where({'delivery_id':delivery.delivery_id})
+                if len(count_delivery) > 0:
+                    for data in count_delivery:
+                        delivery.id = data['id']  
+                        delivery.update()
+                else:
+                    delivery.add()
 
-        if 'discounts' in data['updates']:
-            for discounts in data['updates']['discounts']:
+        if 'discounts' in updates:
+            for discounts in updates['discounts']:
                 discount = Discount()
                 discount.discount_id = discounts['id']
                 discount.company_id = discounts['company_id']
@@ -103,10 +136,16 @@ def sync_from_server(data):
                 discount.deleted_at = discounts['deleted_at']
                 discount.created_at = discounts['created_at']
                 discount.updated_at = discounts['updated_at']
-                discount.add()
+                count_discount = discount.where({'discount_id':discount.discount_id})
+                if len(count_discount) > 0:
+                    for data in count_discount:
+                        discount.id = data['id']  
+                        discount.update()
+                else:
+                    discount.add()
 
-        if 'inventories' in data['updates']:
-            for inventories in data['updates']['inventories']:
+        if 'inventories' in updates:
+            for inventories in updates['inventories']:
                 inventory = Inventory()
                 inventory.inventory_id = inventories['id']
                 inventory.company_id = inventories['company_id']
@@ -117,10 +156,16 @@ def sync_from_server(data):
                 inventory.deleted_at = inventories['deleted_at']
                 inventory.create_at = inventories['created_at']
                 inventory.updated_at = inventories['updated_at']
-                inventory.add()
+                count_inventory = inventory.where({'inventory_id':inventory.inventory_id})
+                if len(count_inventory) > 0:
+                    for data in count_inventory:
+                        inventory.id = data['id']  
+                        inventory.update()
+                else:
+                    inventory.add()
 
-        if 'inventory_items' in data['updates']:
-            for inventory_items in data['updates']['inventory_items']:
+        if 'inventory_items' in updates:
+            for inventory_items in updates['inventory_items']:
                 inventory_item = InventoryItem()
                 inventory_item.item_id = inventory_items['id']
                 inventory_item.inventory_id = inventory_items['inventory_id']
@@ -136,10 +181,16 @@ def sync_from_server(data):
                 inventory_item.deleted_at = inventory_items['deleted_at']
                 inventory_item.created_at = inventory_items['created_at']
                 inventory_item.updated_at = inventory_items['updated_at']
-                inventory_item.add()
+                count_inventory_item = inventory_item.where({'item_id':inventory_item.item_id})
+                if len(count_inventory_item) > 0:
+                    for data in count_inventory_item:
+                        inventory_item.id = data['id']  
+                        inventory_item.update()
+                else:
+                    inventory_item.add()
 
-        if 'invoices' in data['updates']:
-            for invoices in data['updates']['invoices']:
+        if 'invoices' in updates:
+            for invoices in updates['invoices']:
                 invoice = Invoice()
                 invoice.invoice_id = invoices['id']
                 invoice.company_id = invoices['company_id']
@@ -158,10 +209,16 @@ def sync_from_server(data):
                 invoice.deleted_at = invoices['deleted_at']
                 invoice.created_at = invoices['created_at']
                 invoice.updated_at = invoices['updated_at']
-                invoice.add()
-
-        if 'invoice_items' in data['updates']:
-            for invoice_items in data['updates']['invoice_items']:
+                count_invoice = invoice.where({'invoice_id':invoice.invoice_id})
+                if len(count_invoice) > 0:
+                    for data in count_invoice:
+                        invoice.id = data['id']
+                        invoice.update()
+                else:
+                    invoice.add()
+                    
+        if 'invoice_items' in updates:
+            for invoice_items in updates['invoice_items']:
                 invoice_item = InvoiceItem()
                 invoice_item.invoice_items_id = invoice_items['id']
                 invoice_item.invoice_id = invoice_items['invoice_id']
@@ -178,10 +235,16 @@ def sync_from_server(data):
                 invoice_item.deleted_at = invoice_items['deleted_at']
                 invoice_item.created_at = invoice_items['created_at']
                 invoice_item.updated_at = invoice_items['updated_at']
-                invoice_item.add()
+                count_invoice_item = invoice_item.where({'invoice_items_id':invoice_item.invoice_items_id})
+                if len(count_invoice_item) > 0:
+                    for data in count_invoice_item:
+                        invoice_item.id = data['id']  
+                        invoice_item.update()
+                else:
+                    invoice_item.add()
 
-        if 'memos' in data['updates']:
-            for memos in data['updates']['memos']:
+        if 'memos' in updates:
+            for memos in updates['memos']:
                 memo = Memo()
                 memo.memo_id = memos['id']
                 memo.company_id = memos['company_id']
@@ -191,10 +254,16 @@ def sync_from_server(data):
                 memo.deleted_at = memos['deleted_at']
                 memo.created_at = memos['created_at']
                 memo.updated_at = memos['updated_at']
-                memo.add()
+                count_memo = memo.where({'memo_id':memo.memo_id})
+                if len(count_memo) > 0:
+                    for data in count_memo:
+                        memo.id = data['id']  
+                        memo.update()
+                else:
+                    memo.add()
 
-        if 'printers' in data['updates']:
-            for printers in data['updates']['printers']:
+        if 'printers' in updates:
+            for printers in updates['printers']:
                 printer = Printer()
                 printer.printer_id = printers['id']
                 printer.company_id = printers['company_id']
@@ -206,10 +275,16 @@ def sync_from_server(data):
                 printer.deleted_at = printers['deleted_at']
                 printer.created_at = printers['created_at']
                 printer.updated_at = printers['updated_at']
-                printer.add()
+                count_printer = printer.where({'printer_id':printer.printer_id})
+                if len(count_printer) > 0:
+                    for data in count_printer:
+                        printer.id = data['id']  
+                        printer.update()
+                else:
+                    printer.add()
 
-        if 'reward_transactions' in data['updates']:
-            for reward_transactions in data['updates']['reward_transactions']:
+        if 'reward_transactions' in updates:
+            for reward_transactions in updates['reward_transactions']:
                 reward_transaction = RewardTransaction()
                 reward_transaction.reward_id = reward_transactions['reward_id']
                 reward_transaction.transaction_id = reward_transactions['transaction_id']
@@ -227,10 +302,16 @@ def sync_from_server(data):
                 reward_transaction.deleted_at = reward_transactions['deleted_at']
                 reward_transaction.created_at = reward_transactions['created_at']
                 reward_transaction.updated_at = reward_transactions['updated_at']
-                reward_transaction.add()
+                count_reward_transaction = reward_transaction.where({'reward_id':reward_transaction.reward_id})
+                if len(count_reward_transaction) > 0:
+                    for data in count_reward_transaction:
+                        reward_transaction.id = data['id']  
+                        reward_transaction.update()
+                else:
+                    reward_transaction.add()
 
-        if 'rewards' in data['updates']:
-            for rewards in data['updates']['rewards']:
+        if 'rewards' in updates:
+            for rewards in updates['rewards']:
                 reward = Reward()
                 reward.reward_id = rewards['id']
                 reward.company_id = rewards['company_id']
@@ -241,10 +322,16 @@ def sync_from_server(data):
                 reward.deleted_at = rewards['deleted_at']
                 reward.created_at = rewards['created_at']
                 reward.updated_at = rewards['updated_at']
-                reward.add()
+                count_reward = reward.where({'reward_id':reward.reward_id})
+                if len(count_reward) > 0:
+                    for data in count_reward:
+                        reward.id = data['id']  
+                        reward.update()
+                else:
+                    reward.add()
 
-        if 'schedules' in data['updates']:
-            for schedules in data['updates']['schedules']:
+        if 'schedules' in updates:
+            for schedules in updates['schedules']:
                 schedule = Schedule()
                 schedule.schedule_id = schedules['id']
                 schedule.company_id = schedules['company_id']
@@ -259,10 +346,16 @@ def sync_from_server(data):
                 schedule.deleted_at = schedules['deleted_at']
                 schedule.created_at = schedules['created_at']
                 schedule.updated_at = schedules['updated_at']
-                schedule.add()
+                count_schedule = schedule.where({'schedule_id':schedule.schedule_id})
+                if len(count_schedule) > 0:
+                    for data in count_schedule:
+                        schedule.id = data['id']  
+                        schedule.update()
+                else:
+                    schedule.add()
 
-        if 'taxes' in data['updates']:
-            for taxes in data['updates']['taxes']:
+        if 'taxes' in updates:
+            for taxes in updates['taxes']:
                 tax = Tax()
                 tax.tax_id = taxes['id']
                 tax.company_id = taxes['company_id']
@@ -271,10 +364,16 @@ def sync_from_server(data):
                 tax.deleted_at = taxes['deleted_at']
                 tax.created_at = taxes['created_at']
                 tax.updated_at = taxes['updated_at']
-                tax.add()
+                count_tax = tax.where({'tax_id':tax.tax_id})
+                if len(count_tax) > 0:
+                    for data in count_tax:
+                        tax.id = data['id']  
+                        tax.update()
+                else:
+                    tax.add()
 
-        if 'transactions' in data['updates']:
-            for transactions in data['updates']['transactions']:
+        if 'transactions' in updates:
+            for transactions in updates['transactions']:
                 transaction = Transaction()
                 transaction.transaction_id = transactions['id']
                 transaction.company_id = transactions['company_id']
@@ -293,10 +392,16 @@ def sync_from_server(data):
                 transaction.deleted_at = transactions['deleted_at']
                 transaction.created_at = transactions['created_at']
                 transaction.updated_at = transactions['updated_at']
-                transaction.add()
+                count_transaction = transaction.where({'transaction_id':transaction.transaction_id})
+                if len(count_transaction) > 0:
+                    for data in count_transaction:
+                        transaction.id = data['id']  
+                        transaction.update()
+                else:
+                    transaction.add()
 
-        if 'users' in data['updates']:
-            for users in data['updates']['users']:
+        if 'users' in updates:
+            for users in updates['users']:
                 user = User()
                 user.user_id = users['id']
                 user.company_id = users['company_id']
@@ -332,7 +437,13 @@ def sync_from_server(data):
                 user.deleted_at = users['deleted_at']
                 user.created_at = users['created_at']
                 user.updated_at = users['updated_at']
-                user.add()
+                count_user = user.where({'user_id':user.user_id})
+                if len(count_user) > 0:
+                    for data in count_user:
+                        user.id = data['id']  
+                        user.update()
+                else:
+                    user.add()
 
 
 def update_database(data):
@@ -340,7 +451,7 @@ def update_database(data):
     if int(data['rows_saved']) > 0:
         if 'colors' in data['saved']:
             for colors in data['saved']['colors']:
-                color = Color()
+                color = Colored()
                 color.id = colors['id']
                 color.color_id = colors['color_id']
                 color.company_id = colors['company_id']
@@ -367,7 +478,7 @@ def update_database(data):
                 company.turn_around = companies['turn_around']
                 company.api_token = companies['api_token']
                 company.updated_at = companies['updated_at']
-                company.server_at = companies['server_at']
+                company.server_at = now
                 company.update()
 
         if 'custids' in data['saved']:

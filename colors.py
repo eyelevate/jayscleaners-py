@@ -8,7 +8,7 @@ now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 table = 'colors'
 
 
-class Color:
+class Colored:
     id = None
     color_id = None
     company_id = None

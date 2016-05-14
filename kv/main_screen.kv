@@ -1,0 +1,130 @@
+<MainScreen>:
+    id:screen_main
+    update_label:update_data_label
+    username: username
+    password: password
+    name:"main"
+    login_popup: login_popup
+    login_button: login_button
+    settings_button: settings_button
+    reports_button: reports_button
+    delivery_button: delivery_button
+    dropoff_button: dropoff_button
+    update_button: update_button
+
+    ActionBar:
+        id: _action_main
+        size_hint: 1,0.1
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                title: 'Jays Cleaners POS'
+                with_previous: False
+                on_release: root.manager.current = "main"
+            ActionGroup:
+                text: 'File'
+                mode: 'spinner'
+                size_hint_x: None
+                width: 250
+                ActionButton:
+                    text: 'New'
+                ActionButton:
+                    text: 'Open'
+                ActionButton:
+                    text: 'Save'
+                ActionButton:
+                    text: 'Save As'
+                ActionButton:
+                    text: 'Quit'
+    GridLayout:
+        cols: 2
+        size_hint: 1,0.8
+        pos_hint: {'top':0.9}
+
+        GridLayout:
+            cols: 2
+            size_hint_y: 3
+            Button:
+                id: settings_button
+                on_release: app.root.current = "settings"
+                text: "Settings"
+                disabled: True
+
+            Button:
+                id: reports_button
+                on_release: app.root.current = "reports"
+                text: "Reports"
+                disabled: True
+
+            Button:
+                id: delivery_button
+                on_release: app.root.current = "delivery"
+                text: "Delivery"
+                disabled: True
+
+            Button:
+                id: login_button
+                text: "Login"
+                on_release: root.login_popup.open()
+
+        Button:
+            id: dropoff_button
+            disabled: True
+            on_release: app.root.current = "search"
+            on_press: root.search_pre()
+            text: "Drop / Pickup"
+
+    Popup:
+        id: login_popup
+        on_parent: if self.parent == screen_main: screen_main.remove_widget(self)
+        title: "Login Screen"
+        content: authenticate_grid
+        size_hint:(None,None)
+        size:(800, 400)
+        GridLayout:
+            id: authenticate_grid
+            cols: 2
+            Label:
+                text: "username"
+                size_hint_y: None
+            TextInput:
+                id: username
+                size_hint_y: None
+                hint_text: "Enter username"
+                height: '32dp'
+                multiline: False
+                padding: [5,25,5,25]
+                text: ''
+            Label:
+                text: "password"
+                size_hint_y: None
+            TextInput:
+                id: password
+                size_hint_y: None
+                hint_text: "Enter password"
+                password:True
+                height: '32dp'
+                multiline: False
+                padding: [5,30,5,30]
+                text: ''
+            Button:
+                text: "Cancel"
+                on_release: login_popup.dismiss()
+            Button:
+                text: "Login"
+                on_release: root.login()
+    Button:
+        id: update_button
+        text:"Update"
+        disabled:True
+        on_release: root.db_sync()
+        size_hint: 0.1,0.1
+        pos_hint: {'x':0, 'y':0}
+    Label:
+        id: update_data_label
+        text:root.update_info()
+        size_hint_y: None
+        text_size: self.width, None
+        height: self.texture_size[1]
+        pos_hint: {'x':0.1, 'y':0}

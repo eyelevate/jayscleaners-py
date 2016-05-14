@@ -5,7 +5,7 @@ from model import *
 
 unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-print(now)
+
 table = 'companies'
 
 
@@ -82,10 +82,35 @@ class Company:
         self.conn.commit()
         return True
 
+    def put(self, where = False, data = False):
+        sql = '''UPDATE {t} SET '''.format(t=table)
+        idx = 0
+        if len(data) > 0:
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    sql += '''{k} = "{v}" '''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = "{v}", '''.format(k=key, v=value)
+        sql += '''WHERE '''
+        idx = 0
+        if len(where) > 0:
+            for key, value in where.items():
+                idx += 1
+                if idx == len(where):
+                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+        self.c.execute(sql)
+        self.conn.commit()
+
+        return True
+
     def update(self):
 
         self.c.execute('''UPDATE {t} SET company_id = ?, name = ?, street = ?, suite = ?, city = ?, state = ?, zip = ?,
-email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_at = ? WHERE id = ?'''.format(t=table),
+email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_at = ?, server_at = ? WHERE id = ?'''.format(t=table),
                        (self.company_id,
                         self.name,
                         self.street,
@@ -99,6 +124,7 @@ email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_a
                         self.turn_around,
                         self.api_token,
                         self.updated_at,
+                        self.server_at,
                         self.id)
                        )
 
@@ -107,7 +133,7 @@ email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_a
 
     def find(self):
         try:
-            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(table), (str(self.id)))
+            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(t=table), (str(self.id)))
             self.conn.commit()
         except ValueError:
             return "Could not find the company with that id"
@@ -154,6 +180,30 @@ email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_a
             return self.c.fetchall()
         else:
             return False
+
+    def like(self, data=False):
+        if data:
+            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            idx = 0
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    if value is None:
+                        sql += '''{k} is null'''.format(k=key)
+                    else:
+                        sql += '''{k} LIKE {v}'''.format(k=key, v=value)
+                elif idx < len(data):
+                    if value is None:
+                        sql += '''{k} is null AND '''.format(k=key)
+                    else:
+                        sql += '''{k} LIKE {v} AND '''.format(k=key, v=value)
+
+            self.c.execute(sql)
+            self.conn.commit()
+            return self.c.fetchall()
+        else:
+            return False
+
 
     def delete(self):
 
