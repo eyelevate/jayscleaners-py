@@ -36,8 +36,8 @@ from users import User
 from kv_generator import KvString
 from static import Static
 
-from escpos import *
-from escpos.printer import Network
+# from escpos import *
+# from escpos.printer import Network
 
 from kivy.app import App
 from kivy.lang import Builder
