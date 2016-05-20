@@ -1,0 +1,25 @@
+<Last10Screen>:
+    id: screen_last10
+    name: "last10"
+    last10_table: last10_table
+    last10_footer: last10_footer
+    on_enter: root.get_last10()
+    BoxLayout:
+        orientation: 'vertical'
+        pos_hint: {'top':1}
+        GridLayout:
+            id: last10_table
+            size_hint: 1,0.8
+            cols:6
+            rows:11
+            row_force_default: True
+            row_default_height:75
+
+        BoxLayout:
+            id: last10_footer
+            size_hint: 1,0.1
+            Button:
+                size_hint_y: None
+                markup: True
+                text: 'Cancel'
+                on_press: app.root.current = 'search'

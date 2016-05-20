@@ -139,6 +139,15 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
+            order_by = False
+            limit = False
+            if 'ORDER_BY' in data:
+                order_by = data['ORDER_BY']
+                del(data['ORDER_BY'])
+            if 'LIMIT' in data:
+                limit = data['LIMIT']
+                del(data['LIMIT'])
+
             for key, value in data.items():
                 idx += 1
                 if isinstance(value, dict):
@@ -160,6 +169,12 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
                             sql += '''{k} is null AND '''.format(k=key)
                         else:
                             sql += '''{k} = {v} AND '''.format(k=key, v=value)
+            if order_by:
+                sql += ''' ORDER BY {} '''.format(order_by)
+
+
+            if limit:
+                sql += '''LIMIT {}'''.format(limit)
 
             self.c.execute(sql)
             self.conn.commit()

@@ -48,6 +48,7 @@ def sync_from_server(data):
                         color.update()
                 else:
                     color.add()
+            color.close_connection()
 
         if 'companies' in updates:
             for companies in updates['companies']:
@@ -74,6 +75,7 @@ def sync_from_server(data):
                         company.update()
                 else:
                     company.add()
+            company.close_connection()
 
         if 'custids' in updates:
             for custids in updates['custids']:
@@ -93,6 +95,7 @@ def sync_from_server(data):
                         custid.update()
                 else:
                     custid.add()
+            custid.close_connection()
 
         if 'deliveries' in updates:
             for deliveries in updates['deliveries']:
@@ -117,6 +120,7 @@ def sync_from_server(data):
                         delivery.update()
                 else:
                     delivery.add()
+            delivery.close_connection()
 
         if 'discounts' in updates:
             for discounts in updates['discounts']:
@@ -143,6 +147,7 @@ def sync_from_server(data):
                         discount.update()
                 else:
                     discount.add()
+            discount.close_connection()
 
         if 'inventories' in updates:
             for inventories in updates['inventories']:
@@ -163,6 +168,7 @@ def sync_from_server(data):
                         inventory.update()
                 else:
                     inventory.add()
+            inventory.close_connection()
 
         if 'inventory_items' in updates:
             for inventory_items in updates['inventory_items']:
@@ -188,6 +194,7 @@ def sync_from_server(data):
                         inventory_item.update()
                 else:
                     inventory_item.add()
+            inventory_item.close_connection()
 
         if 'invoices' in updates:
             for invoices in updates['invoices']:
@@ -216,7 +223,8 @@ def sync_from_server(data):
                         invoice.update()
                 else:
                     invoice.add()
-                    
+            invoice.close_connection()
+
         if 'invoice_items' in updates:
             for invoice_items in updates['invoice_items']:
                 invoice_item = InvoiceItem()
@@ -242,6 +250,7 @@ def sync_from_server(data):
                         invoice_item.update()
                 else:
                     invoice_item.add()
+            invoice_item.close_connection()
 
         if 'memos' in updates:
             for memos in updates['memos']:
@@ -261,6 +270,7 @@ def sync_from_server(data):
                         memo.update()
                 else:
                     memo.add()
+            memo.close_connection()
 
         if 'printers' in updates:
             for printers in updates['printers']:
@@ -282,6 +292,7 @@ def sync_from_server(data):
                         printer.update()
                 else:
                     printer.add()
+            printer.close_connection()
 
         if 'reward_transactions' in updates:
             for reward_transactions in updates['reward_transactions']:
@@ -309,6 +320,7 @@ def sync_from_server(data):
                         reward_transaction.update()
                 else:
                     reward_transaction.add()
+            reward_transaction.close_connection()
 
         if 'rewards' in updates:
             for rewards in updates['rewards']:
@@ -329,6 +341,7 @@ def sync_from_server(data):
                         reward.update()
                 else:
                     reward.add()
+            reward.close_connection()
 
         if 'schedules' in updates:
             for schedules in updates['schedules']:
@@ -353,6 +366,7 @@ def sync_from_server(data):
                         schedule.update()
                 else:
                     schedule.add()
+            schedule.close_connection()
 
         if 'taxes' in updates:
             for taxes in updates['taxes']:
@@ -371,6 +385,7 @@ def sync_from_server(data):
                         tax.update()
                 else:
                     tax.add()
+            tax.close_connection()
 
         if 'transactions' in updates:
             for transactions in updates['transactions']:
@@ -399,6 +414,7 @@ def sync_from_server(data):
                         transaction.update()
                 else:
                     transaction.add()
+            transaction.close_connection()
 
         if 'users' in updates:
             for users in updates['users']:
@@ -444,6 +460,7 @@ def sync_from_server(data):
                         user.update()
                 else:
                     user.add()
+            user.close_connection()
 
 
 def update_database(data):
@@ -461,6 +478,7 @@ def update_database(data):
                 color.status = colors['status']
                 color.updated_at = colors['updated_at']
                 color.update()
+            color.close_connection()
 
         if 'companies' in data['saved']:
             for companies in data['saved']['companies']:
@@ -480,6 +498,7 @@ def update_database(data):
                 company.updated_at = companies['updated_at']
                 company.server_at = now
                 company.update()
+            company.close_connection()
 
         if 'custids' in data['saved']:
             for custids in data['saved']['custids']:
@@ -494,6 +513,7 @@ def update_database(data):
                 custid.created_at = custids['created_at']
                 custid.updated_at = custids['updated_at']
                 custid.update()
+            custid.close_connection()
 
         if 'deliveries' in data['saved']:
             for deliveries in data['saved']['deliveries']:
@@ -511,6 +531,7 @@ def update_database(data):
                 delivery.reward_points = deliveries['reward_points']
                 delivery.updated_at = deliveries['updated_at']
                 delivery.update()
+            delivery.close_connection()
 
         if 'discounts' in data['saved']:
             for discounts in data['saved']['discounts']:
@@ -530,6 +551,7 @@ def update_database(data):
                 discount.status = discounts['status']
                 discount.updated_at = discounts['updated_at']
                 discount.update()
+            discount.close_connection()
 
         if 'inventories' in data['saved']:
             for inventories in data['saved']['inventories']:
@@ -545,6 +567,7 @@ def update_database(data):
                 inventory.create_at = inventories['created_at']
                 inventory.updated_at = inventories['updated_at']
                 inventory.update()
+            inventory.close_connection()
 
         if 'inventory_items' in data['saved']:
             for inventory_items in data['saved']['inventory_items']:
@@ -563,6 +586,7 @@ def update_database(data):
                 inventory_item.status = inventory_items['status']
                 inventory_item.updated_at = inventory_items['updated_at']
                 inventory_item.update()
+            inventory_item.close_connection()
 
         if 'invoices' in data['saved']:
             for invoices in data['saved']['invoices']:
@@ -584,7 +608,7 @@ def update_database(data):
                 invoice.status = invoices['status']
                 invoice.updated_at = invoices['updated_at']
                 invoice.update()
-                print("updating invoice #{}".format(invoice.id))
+            invoice.close_connection()
 
         if 'invoice_items' in data['saved']:
             for invoice_items in data['saved']['invoice_items']:
@@ -604,6 +628,7 @@ def update_database(data):
                 invoice_item.status = invoice_items['status']
                 invoice_item.updated_at = invoice_items['updated_at']
                 invoice_item.update()
+            invoice_item.close_connection()
 
         if 'memos' in data['saved']:
             for memos in data['saved']['memos']:
@@ -616,6 +641,7 @@ def update_database(data):
                 memo.status = memos['status']
                 memo.updated_at = memos['updated_at']
                 memo.update()
+            memo.close_connection()
 
         if 'printers' in data['saved']:
             for printers in data['saved']['printers']:
@@ -630,6 +656,7 @@ def update_database(data):
                 printer.status = printers['status']
                 printer.updated_at = printers['updated_at']
                 printer.update()
+            printer.close_connection()
 
         if 'reward_transactions' in data['saved']:
             for reward_transactions in data['saved']['reward_transactions']:
@@ -650,6 +677,7 @@ def update_database(data):
                 reward_transaction.status = reward_transactions['status']
                 reward_transaction.updated_at = reward_transactions['updated_at']
                 reward_transaction.update()
+            reward_transaction.close_connection()
 
         if 'rewards' in data['saved']:
             for rewards in data['saved']['rewards']:
@@ -663,6 +691,7 @@ def update_database(data):
                 reward.status = rewards['status']
                 reward.updated_at = rewards['updated_at']
                 reward.update()
+            reward.close_connection()
 
         if 'schedules' in data['saved']:
             for schedules in data['saved']['schedules']:
@@ -680,6 +709,7 @@ def update_database(data):
                 schedule.status = schedules['status']
                 schedule.updated_at = schedules['updated_at']
                 schedule.update()
+            schedule.close_connection()
 
         if 'taxes' in data['saved']:
             for taxes in data['saved']['taxes']:
@@ -691,6 +721,7 @@ def update_database(data):
                 tax.status = taxes['status']
                 tax.updated_at = taxes['updated_at']
                 tax.update()
+            tax.close_connection()
 
         if 'transactions' in data['saved']:
             for transactions in data['saved']['transactions']:
@@ -712,6 +743,7 @@ def update_database(data):
                 transaction.status = transactions['status']
                 transaction.updated_at = transactions['updated_at']
                 transaction.update()
+            transaction.close_connection()
 
         if 'users' in data['saved']:
             for users in data['saved']['users']:
@@ -750,3 +782,4 @@ def update_database(data):
                 user.role_id = users['role_id']
                 user.updated_at = users['updated_at']
                 user.update()
+            user.close_connection()

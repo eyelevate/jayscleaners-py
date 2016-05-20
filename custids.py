@@ -101,18 +101,43 @@ WHERE id = ?'''.format(t=table), (self.custid,
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
+            order_by = False
+            limit = False
+            if 'ORDER_BY' in data:
+                order_by = data['ORDER_BY']
+                del (data['ORDER_BY'])
+                print('removed order_by {}'.format(order_by))
+            if 'LIMIT' in data:
+                limit = data['LIMIT']
+                del (data['LIMIT'])
+                print('removed limit {}'.format(limit))
+
             for key, value in data.items():
                 idx += 1
-                if idx == len(data):
-                    if value is None:
-                        sql += '''{k} is null'''.format(k=key)
-                    else:
-                        sql += '''{k} = {v}'''.format(k=key, v=value)
-                elif idx < len(data):
-                    if value is None:
-                        sql += '''{k} is null AND '''.format(k=key)
-                    else:
-                        sql += '''{k} = {v} AND '''.format(k=key, v=value)
+                if isinstance(value, dict):
+                    for oper, val in value.items():
+                        if idx == len(data):
+                            sql += '''{k} {o} {v}'''.format(k=key, o=oper, v=val)
+
+                        elif idx < len(data):
+                            sql += '''{k} {o} {v} AND '''.format(k=key, o=oper, v=val)
+
+                else:
+                    if idx == len(data):
+                        if value is None:
+                            sql += '''{k} is null'''.format(k=key)
+                        else:
+                            sql += '''{k} = {v}'''.format(k=key, v=value)
+                    elif idx < len(data):
+                        if value is None:
+                            sql += '''{k} is null AND '''.format(k=key)
+                        else:
+                            sql += '''{k} = {v} AND '''.format(k=key, v=value)
+            if order_by:
+                sql += ''' ORDER BY {} '''.format(order_by)
+
+            if limit:
+                sql += '''LIMIT {}'''.format(limit)
 
             self.c.execute(sql)
             self.conn.commit()
@@ -139,3 +164,13 @@ WHERE id = ?'''.format(t=table), (self.custid,
     def close_connection(self):
         self.c.close()
         self.conn.close()
+
+
+    def make_string(self, data):
+        marks = []
+        if len(data) > 0:
+            for mark in data:
+                marks.append(mark)
+
+        return ', '.join(marks)
+

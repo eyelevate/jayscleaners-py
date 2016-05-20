@@ -1,4 +1,5 @@
 <SearchScreen>:
+    id: screen_search
     search: search
     cust_last_name: customer_last_name_ti
     cust_first_name: customer_first_name_ti
@@ -9,9 +10,20 @@
     cust_invoice_memo: customer_invoice_memo_ti
     cust_important_memo: customer_important_memo_ti
     invoice_table: invoice_table
-
-
+    cust_mark_label: customer_mark_l
+    history_btn: history_btn
+    edit_invoice_btn: edit_invoice_btn
+    edit_customer_btn: edit_customer_btn
+    print_card_btn: print_card_btn
+    reprint_btn: reprint_btn
+    quick_btn: quick_btn
+    pickup_btn: pickup_btn
+    dropoff_btn: dropoff_btn
+    search_popup: search_popup
+    search_results_table: search_results_table
+    search_results_footer: search_results_footer
     name:"search"
+    on_enter: root.reset()
     BoxLayout:
         orientation: 'horizontal'
         size_hint: 1,0.1
@@ -33,6 +45,26 @@
         Button:
             on_release: app.root.current = "main"
             text: "Main"
+    Popup:
+        id: search_popup
+        on_parent: if self.parent == screen_search: screen_search.remove_widget(self)
+        BoxLayout:
+            orientation: 'vertical'
+            GridLayout:
+                id:search_results_table
+                size_hint: 1,0.9
+                cols:5
+                rows:10
+                row_force_default: True
+                row_default_height:50
+            BoxLayout:
+                id:search_results_footer
+                size_hint: 1,0.1
+                Button:
+                    size_hint_y:None
+                    markup: True
+                    text: 'Cancel'
+                    on_press: search_popup.dismiss()
 
     BoxLayout:
         orientation: 'horizontal'
@@ -46,8 +78,8 @@
                 text: "Customer Info"
                 size_hint_y: None
             Label:
-                id: cust_mark
-                text: "B1232M"
+                id: customer_mark_l
+                text: ""
                 size_hint_y: None
             Label:
                 text: "Last Name"
@@ -181,6 +213,8 @@
                 id:invoice_table
                 cols: 5
                 spacing: 2
+                row_force_default:True
+                row_default_height:70
                 canvas.before:
                     Color:
                         rgba: 0, 0, 0, 1
@@ -243,22 +277,22 @@
                 size_hint: 0.20,1
                 Button:
                     id: up_btn
-                    on_release: app.root.current = "invoice"
+                    on_release: root.up()
                     text: "Up"
                     disabled: True
                 Button:
                     id: down_btn
-                    on_release: app.root.current = "invoice"
+                    on_release: root.down()
                     text: "Down"
                     disabled: True
                 Button:
                     id: edit_invoice_btn
-                    on_release: app.root.current = "invoice"
+                    on_release: root.edit()
                     text: "Edit"
                     disabled: True
                 Button:
                     id: history_btn
-                    on_release: app.root.current = "invoice"
+                    on_release: root.history()
                     text: "History"
                     disabled: True
     GridLayout:
@@ -270,30 +304,35 @@
             on_release: app.root.current = "invoice"
             text: "New"
         Button:
-            id: edit_customer
-            on_release: app.root.current = "edit_customer"
+            id: edit_customer_btn
+            on_release: root.edit_customer()
             text: "Edit"
             disabled: True
         Button:
+            id: print_card_btn
             on_release: app.root.current = "rack"
             text: "Print Card"
             disabled: True
         Button:
-            on_release: app.root.current = "main"
+            on_release: app.root.current = 'last10'
             text: "Last 10"
         Button:
+            id: reprint_btn
             on_release: app.root.current = "invoice"
             text: "Reprint"
             disabled: True
         Button:
+            id: quick_btn
             on_release: app.root.current = "calc"
             text: "Quick"
             disabled: True
         Button:
+            id: pickup_btn
             on_release: app.root.current = "rack"
             text: "Pickup"
             disabled: True
         Button:
+            id: dropoff_btn
             on_release: app.root.current = "main"
             text: "Dropoff"
             disabled: True
