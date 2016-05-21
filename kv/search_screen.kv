@@ -30,20 +30,25 @@
         pos_hint: {'top':1}
         TextInput:
             id: search
+            font_size:'30sp'
             hint_text: "Search Customers"
             multiline: False
             text: ''
         Button:
             on_release: root.search_customer()
+            font_size:'20sp'
             text: "Search"
         Button:
             on_release: app.root.current = "calc"
+            font_size:'20sp'
             text: "Calculator"
         Button:
             on_release: app.root.current = "rack"
+            font_size:'20sp'
             text: "Rack"
         Button:
             on_release: app.root.current = "main"
+            font_size:'20sp'
             text: "Main"
     Popup:
         id: search_popup
@@ -74,8 +79,7 @@
             size_hint: 0.6, 1
             cols: 2
             rows: 11
-            row_force_default: True
-            row_default_height:75
+            font_size:'20sp'
             Label:
                 text: "Customer Info"
                 size_hint_y: None
@@ -217,6 +221,7 @@
                 spacing: 2
                 row_force_default:True
                 row_default_height:70
+                font_size:'20sp'
                 canvas.before:
                     Color:
                         rgba: 0, 0, 0, 1
