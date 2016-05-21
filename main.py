@@ -18,7 +18,9 @@ else:
     os.environ['KIVY_METRICS_DENSITY'] = '1'
     os.environ['KIVY_DPI'] = '800'
     os.environ['KIVY_METRICS_FONTSCALE'] = '0.8'
-
+os.environ['KIVY_METRICS_DENSITY'] = '1'
+os.environ['KIVY_DPI'] = '1900'
+os.environ['KIVY_METRICS_FONTSCALE'] = '0.8'
 # Models
 from colors import Colored
 from companies import Company
