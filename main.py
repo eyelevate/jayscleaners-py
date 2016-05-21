@@ -41,7 +41,7 @@ from users import User
 
 # Helpers
 from kv_generator import KvString
-from static import Static
+from SStatic import Static
 
 # from escpos import *
 # from escpos.printer import Network
