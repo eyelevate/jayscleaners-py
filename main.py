@@ -7,9 +7,9 @@ import os
 
 if platform.system() == 'Darwin':  # Mac
     sys.path.append('/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
-    # os.environ['KIVY_METRICS_DENSITY'] = '0.8'
-    # os.environ['KIVY_DPI'] = '320'
-    # os.environ['KIVY_METRICS_FONTSCALE'] = '1.2'
+    os.environ['KIVY_METRICS_DENSITY'] = '0.8'
+    os.environ['KIVY_DPI'] = '320'
+    os.environ['KIVY_METRICS_FONTSCALE'] = '1.2'
 elif platform.system() == 'Linux':  # Linux
     sys.path.append('/')  # TODO
 elif platform.system() == 'Windows':  # Windows
