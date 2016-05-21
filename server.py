@@ -81,14 +81,13 @@ def sync_from_server(data):
             for custids in updates['custids']:
                 custid = Custid()
                 custid.cust_id = custids['id']
-                custid.mark_id = custids['mark_id']
                 custid.customer_id = custids['customer_id']
-                custid.status = custids['status']
                 custid.mark = custids['mark']
+                custid.status = custids['status']
                 custid.deleted_at = custids['deleted_at']
                 custid.created_at = custids['created_at']
                 custid.updated_at = custids['updated_at']
-                count_custid = custid.where({'cust_id':custid.cust_id})
+                count_custid = custid.where({'cust_id':custids['id']})
                 if len(count_custid) > 0:
                     for data in count_custid:
                         custid.id = data['id']  
@@ -505,10 +504,9 @@ def update_database(data):
                 custid = Custid()
                 custid.id = custids['id']
                 custid.cust_id = custids['cust_id']
-                custid.mark_id = custids['mark_id']
                 custid.customer_id = custids['customer_id']
-                custid.status = custids['status']
                 custid.mark = custids['mark']
+                custid.status = custids['status']
                 custid.deleted_at = custids['deleted_at']
                 custid.created_at = custids['created_at']
                 custid.updated_at = custids['updated_at']

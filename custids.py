@@ -10,11 +10,10 @@ table = 'custids'
 
 class Custid:
     id = None
-    custid = None
-    mark_id = None
+    cust_id = None
     customer_id = None
-    status = None
     mark = None
+    status = None
     deleted_at = None
     created_at = now
     updated_at = now
@@ -28,10 +27,9 @@ class Custid:
     def create_table(self):
         table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
                                   IntegerField(column='cust_id').data_type(),
-                                  IntegerField(column='mark_id').data_type(),
                                   IntegerField(column='customer_id').data_type(),
-                                  IntegerField(column='status').data_type(),
                                   CharField(column='mark', max_length=50).data_type(),
+                                  IntegerField(column='status').data_type(),
                                   TextField(column='deleted_at').data_type(),
                                   TextField(column='created_at').data_type(),
                                   TextField(column='updated_at').data_type(),
@@ -42,14 +40,13 @@ class Custid:
 
     def add(self):
 
-        self.c.execute('''INSERT INTO {t}(cust_id,mark_id,customer_id,status,mark,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.custid,
-                                           self.mark_id,
-                                           self.customer_id,
-                                           self.status,
-                                           self.mark,
-                                           self.created_at,
-                                           self.updated_at)
+        self.c.execute('''INSERT INTO {t}(cust_id,customer_id,mark,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?)'''.format(t=table), (self.cust_id,
+                                         self.customer_id,
+                                         self.mark,
+                                         self.status,
+                                         self.created_at,
+                                         self.updated_at)
                        )
 
         self.conn.commit()
@@ -57,12 +54,11 @@ VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.custid,
 
     def update(self):
 
-        self.c.execute('''UPDATE {t} SET cust_id=?, mark_id = ?, customer_id = ?, status = ?,mark = ?, updated_at = ?
-WHERE id = ?'''.format(t=table), (self.custid,
-                                  self.mark_id,
+        self.c.execute('''UPDATE {t} SET cust_id = ?, customer_id = ?, mark = ?, status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.cust_id,
                                   self.customer_id,
-                                  self.status,
                                   self.mark,
+                                  self.status,
                                   self.updated_at,
                                   self.id)
                        )
@@ -165,7 +161,6 @@ WHERE id = ?'''.format(t=table), (self.custid,
         self.c.close()
         self.conn.close()
 
-
     def make_string(self, data):
         marks = []
         if len(data) > 0:
@@ -173,4 +168,3 @@ WHERE id = ?'''.format(t=table), (self.custid,
                 marks.append(mark)
 
         return ', '.join(marks)
-
