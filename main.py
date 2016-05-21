@@ -3,13 +3,20 @@ import sys
 import platform
 import time
 import datetime
+import os
 
 if platform.system() == 'Darwin':  # Mac
     sys.path.append('/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
+    # os.environ['KIVY_METRICS_DENSITY'] = '0.8'
+    # os.environ['KIVY_DPI'] = '320'
+    # os.environ['KIVY_METRICS_FONTSCALE'] = '1.2'
 elif platform.system() == 'Linux':  # Linux
     sys.path.append('/')  # TODO
 elif platform.system() == 'Windows':  # Windows
     sys.path.append('/')  # TODO
+    os.environ['KIVY_METRICS_DENSITY'] = '2'
+    os.environ['KIVY_DPI'] = '320'
+    os.environ['KIVY_METRICS_FONTSCALE'] = '0.8'
 
 # Models
 from colors import Colored
@@ -728,7 +735,7 @@ class MainApp(App):
                     invoices.close_connection()
 
                     # get the custid data
-                    data = {'cust_id': vars.CUSTOMER_ID}
+                    data = {'customer_id': vars.CUSTOMER_ID}
                     custids = Custid()
                     custid_string = custids.make_string(custids.where(data))
 
@@ -937,6 +944,7 @@ class MainApp(App):
 
 
 if __name__ == "__main__":
+
     # Window.clearcolor = (1, 1, 1, 1)
     # Window.size = (1366, 768)
     # Window.fullscreen = True

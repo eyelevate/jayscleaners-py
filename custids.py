@@ -164,7 +164,7 @@ WHERE id = ?'''.format(t=table), (self.cust_id,
     def make_string(self, data):
         marks = []
         if len(data) > 0:
-            for mark in data:
-                marks.append(mark)
+            for mrk in data:
+                marks.append(mrk['mark'])
 
         return ', '.join(marks)
