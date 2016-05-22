@@ -81,7 +81,6 @@
             cols: 2
             rows: 11
             font_size:'20sp'
-            row_force_default: True
             row_default_height: '50sp'
             Label:
                 text: "Customer Info"
@@ -97,10 +96,10 @@
                 font_size:'20sp'
                 halign: 'right'
                 valign: 'middle'
-                size_hint_y: None
+
             TextInput:
                 id: customer_last_name_ti
-                size_hint_y: None
+
                 hint_text: "Last Name"
                 height: '32sp'
                 font_size:'20sp'
@@ -115,10 +114,10 @@
                 halign: 'right'
                 valign: 'middle'
                 text_size: self.size
-                size_hint_y: None
+
             TextInput:
                 id: customer_first_name_ti
-                size_hint_y: None
+
                 font_size:'20sp'
                 hint_text: "First Name"
                 height: '32sp'
@@ -133,10 +132,10 @@
                 halign: 'right'
                 valign: 'middle'
                 text_size: self.size
-                size_hint_y: None
+
             TextInput:
                 id: customer_phone_ti
-                size_hint_y: None
+
                 font_size:'20sp'
                 hint_text: "(xxx) xxx-xxxx"
                 height: '32sp'
@@ -151,10 +150,10 @@
                 halign: 'right'
                 valign: 'middle'
                 text_size: self.size
-                size_hint_y: None
+
             TextInput:
                 id: customer_last_drop_ti
-                size_hint_y: None
+
                 font_size:'20sp'
                 hint_text: "Last Drop"
                 height: '32sp'
@@ -172,7 +171,7 @@
                 size_hint_y: None
             TextInput:
                 id: customer_starch_ti
-                size_hint_y: None
+
                 font_size:'20sp'
                 hint_text: "Starch"
                 height: '32sp'
@@ -187,10 +186,10 @@
                 halign: 'right'
                 valign: 'middle'
                 text_size: self.size
-                size_hint_y: None
+
             TextInput:
                 id: customer_credit_ti
-                size_hint_y: None
+
                 font_size:'20sp'
                 hint_text: "Credit"
                 height: '32sp'
@@ -205,12 +204,11 @@
                 halign: 'right'
                 valign: 'middle'
                 text_size: self.size
-                size_hint_y: None
             TextInput:
                 id: customer_invoice_memo_ti
                 hint_text: "Invoice Memo"
                 font_size:'20sp'
-                height: '64sp'
+                height: '72sp'
                 multiline: True
                 readonly: True
                 padding: [5,5,5,5]
@@ -222,12 +220,11 @@
                 halign: 'right'
                 valign: 'middle'
                 text_size: self.size
-                size_hint_y: None
             TextInput:
                 id: customer_important_memo_ti
                 hint_text: "Important Memo"
                 font_size:'20sp'
-                height: '64sp'
+                height: '72sp'
                 multiline: True
                 readonly: True
                 padding: [5,5,5,5]
@@ -238,7 +235,6 @@
                 id:invoice_table
                 cols: 5
                 spacing: 2
-                row_force_default:True
                 row_default_height:50
                 canvas.before:
                     Color:
