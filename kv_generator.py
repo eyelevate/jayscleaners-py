@@ -20,6 +20,7 @@ GridLayout:
         return '''
     Label:
         size_hint_y: None
+        font_size:'15sp'
         markup: True
         text: "[color=000000][b]{text}[/b][/color]"
         canvas.before:
@@ -101,6 +102,7 @@ BoxLayout:
         return '''
         Button:
             size_hint_y:None
+            font_size:'15sp'
             markup: True
             text: 'Cancel'
             on_press: root.parent.parent.parent.dismiss()
@@ -160,6 +162,7 @@ BoxLayout:
         size_hint: 1,0.1
         Button:
             size_hint_y:None
+            font_size:'15sp'
             markup: True
             text: 'Okay'
             on_press: root.parent.parent.parent.dismiss()
@@ -170,6 +173,7 @@ BoxLayout:
         item = '''
 {type}:
     size_hint_y:None
+    font_size:'15sp'
     markup: True
 '''.format(type=type)
         text_string = ''
@@ -217,6 +221,7 @@ Label:
     size_hint_y: None
     markup: True
     text: "[color=000000][b]{}[/b][/color]"
+    font_size:'15sp'
     canvas.before:
         Color:
             rgba: 1, 1, 1, 1
@@ -241,6 +246,7 @@ Label:
 Button:
     size_hint_y: None
     markup: True
+    font_size:'15sp'
     text: "[color={text_color}][b]{text}[/b][/color]"
     background_color:[{background_rgba}]
     on_release: self.parent.parent.parent.parent.invoice_selected({inv_id})

@@ -33,6 +33,7 @@
             font_size:'30sp'
             hint_text: "Search Customers"
             multiline: False
+            on_text_validate: root.search_customer()
             text: ''
         Button:
             on_release: root.search_customer()
@@ -98,7 +99,7 @@
                 id: customer_last_name_ti
                 size_hint_y: None
                 hint_text: "Last Name"
-                height: '32dp'
+                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,32,5,25]
@@ -114,7 +115,7 @@
                 id: customer_first_name_ti
                 size_hint_y: None
                 hint_text: "First Name"
-                height: '32dp'
+                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,32,5,25]
@@ -130,7 +131,7 @@
                 id: customer_phone_ti
                 size_hint_y: None
                 hint_text: "(xxx) xxx-xxxx"
-                height: '32dp'
+                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,32,5,25]
@@ -146,7 +147,7 @@
                 id: customer_last_drop_ti
                 size_hint_y: None
                 hint_text: "Last Drop"
-                height: '32dp'
+                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,32,5,25]
@@ -162,7 +163,7 @@
                 id: customer_starch_ti
                 size_hint_y: None
                 hint_text: "Starch"
-                height: '32dp'
+                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,32,5,25]
@@ -178,7 +179,7 @@
                 id: customer_credit_ti
                 size_hint_y: None
                 hint_text: "Credit"
-                height: '32dp'
+                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,32,5,25]
@@ -193,7 +194,7 @@
             TextInput:
                 id: customer_invoice_memo_ti
                 hint_text: "Invoice Memo"
-                height: '64dp'
+                height: '64sp'
                 multiline: True
                 readonly: True
                 padding: [5,5,5,5]
@@ -208,7 +209,7 @@
             TextInput:
                 id: customer_important_memo_ti
                 hint_text: "Important Memo"
-                height: '64dp'
+                height: '64sp'
                 multiline: True
                 readonly: True
                 padding: [5,5,5,5]
@@ -308,12 +309,12 @@
         pos_hint: {'bottom':1}
 
         Button:
-            on_release: app.root.current = "invoice"
+            on_release: app.root.current = "new_customer"
             text: "New"
         Button:
             id: edit_customer_btn
-            on_release: root.edit_customer()
-            text: "Edit"
+            on_release: app.root.current = "edit_customer"
+            text: "Edit Customer"
             disabled: True
         Button:
             id: print_card_btn
