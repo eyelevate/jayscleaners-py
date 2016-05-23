@@ -85,45 +85,50 @@
         title: "Login Screen"
         content: authenticate_grid
         size_hint:(None,None)
-        size:(800, 400)
-        GridLayout:
+        size: '400sp', '200sp'
+        BoxLayout:
             id: authenticate_grid
-            cols: 2
-            Label:
-                text: "username"
-                size_hint_y: None
-                font_size:'20sp'
-            TextInput:
-                id: username
-                size_hint_y: None
-                font_size:'20sp'
-                hint_text: "Enter username"
-                height: '25sp'
-                multiline: False
-                padding: [5,25,5,25]
-                text: ''
-            Label:
-                text: "password"
-                size_hint_y: None
-                font_size:'20sp'
-            TextInput:
-                id: password
-                size_hint_y: None
-                font_size:'20sp'
-                hint_text: "Enter password"
-                password:True
-                height: '25sp'
-                multiline: False
-                padding: [5,25,5,25]
-                text: ''
-            Button:
-                text: "Cancel"
-                font_size:'20sp'
-                on_release: login_popup.dismiss()
-            Button:
-                text: "Login"
-                font_size:'20sp'
-                on_release: root.login()
+            orientation: 'vertical'
+            GridLayout:
+                cols: 2
+                rows: 2
+                row_force_default: True
+                row_default_height: '40sp'
+                size_hint:1,0.7
+                Label:
+                    text: "username"
+                    size_hint_y: None
+                    font_size:'20sp'
+                TextInput:
+                    id: username
+                    font_size:'20sp'
+                    hint_text: "Enter username"
+                    multiline: False
+                    padding: [5,5,5,5]
+                    text: ''
+                Label:
+                    text: "password"
+                    size_hint_y: None
+                    font_size:'20sp'
+                TextInput:
+                    id: password
+                    font_size:'20sp'
+                    hint_text: "Enter password"
+                    password:True
+                    multiline: False
+                    padding: [5,5,5,5]
+                    text: ''
+            GridLayout:
+                cols: 2
+                size_hint:1,0.3
+                Button:
+                    text: "Cancel"
+                    font_size:'20sp'
+                    on_release: login_popup.dismiss()
+                Button:
+                    text: "Login"
+                    font_size:'20sp'
+                    on_release: root.login()
     Button:
         id: update_button
         text:"Update"

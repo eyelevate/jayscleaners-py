@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="44fffa09-638c-484a-90f8-bbe28d93b5f2" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db/jayscleaners.db" afterPath="$PROJECT_DIR$/db/jayscleaners.db" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/main_screen.kv" afterPath="$PROJECT_DIR$/kv/main_screen.kv" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/search_screen.kv" afterPath="$PROJECT_DIR$/kv/search_screen.kv" />
     </list>
     <ignored path="jayscleaners.iws" />
@@ -75,21 +77,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="search_screen.kv" pinned="false" current-in-tab="true">
+      <file leaf-file-name="search_screen.kv" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/kv/search_screen.kv">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="330">
-              <caret line="223" column="33" selection-start-line="223" selection-start-column="33" selection-end-line="223" selection-end-column="33" />
+            <state relative-caret-position="375">
+              <caret line="227" column="40" selection-start-line="227" selection-start-column="40" selection-end-line="227" selection-end-column="40" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main_screen.kv" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main_screen.kv" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1287">
-              <caret line="86" column="0" selection-start-line="86" selection-start-column="0" selection-end-line="87" selection-end-column="23" />
+            <state relative-caret-position="300">
+              <caret line="95" column="39" selection-start-line="95" selection-start-column="39" selection-end-line="95" selection-end-column="39" />
               <folding />
             </state>
           </provider>
@@ -108,7 +110,7 @@
       <file leaf-file-name="kv_generator.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/kv_generator.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2172">
+            <state relative-caret-position="1137">
               <caret line="220" column="21" selection-start-line="220" selection-start-column="4" selection-end-line="220" selection-end-column="21" />
               <folding />
             </state>
@@ -179,12 +181,12 @@
         <option value="$PROJECT_DIR$/kv/last10.kv" />
         <option value="$PROJECT_DIR$/server.py" />
         <option value="$PROJECT_DIR$/custids.py" />
-        <option value="$PROJECT_DIR$/kv/main_screen.kv" />
         <option value="$PROJECT_DIR$/main.py" />
         <option value="$PROJECT_DIR$/kv_generator.py" />
         <option value="$PROJECT_DIR$/kv/main.kv" />
         <option value="$PROJECT_DIR$/kv/new_customer_screen.kv" />
         <option value="$PROJECT_DIR$/kv/search_screen.kv" />
+        <option value="$PROJECT_DIR$/kv/main_screen.kv" />
       </list>
     </option>
   </component>
@@ -768,14 +770,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/kv_generator.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2172">
-          <caret line="220" column="21" selection-start-line="220" selection-start-column="4" selection-end-line="220" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/static.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="180">
@@ -784,26 +778,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/kv/main.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" column="36" selection-start-line="1" selection-start-column="36" selection-end-line="1" selection-end-column="36" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/custids.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="417">
           <caret line="167" column="38" selection-start-line="167" selection-start-column="38" selection-end-line="167" selection-end-column="38" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1287">
-          <caret line="86" column="0" selection-start-line="86" selection-start-column="0" selection-end-line="87" selection-end-column="23" />
           <folding />
         </state>
       </provider>
@@ -826,8 +804,32 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/kv/search_screen.kv">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="223" column="33" selection-start-line="223" selection-start-column="33" selection-end-line="223" selection-end-column="33" />
+        <state relative-caret-position="375">
+          <caret line="227" column="40" selection-start-line="227" selection-start-column="40" selection-end-line="227" selection-end-column="40" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/main.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15">
+          <caret line="1" column="36" selection-start-line="1" selection-start-column="36" selection-end-line="1" selection-end-column="36" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv_generator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1137">
+          <caret line="220" column="21" selection-start-line="220" selection-start-column="4" selection-end-line="220" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="300">
+          <caret line="95" column="39" selection-start-line="95" selection-start-column="39" selection-end-line="95" selection-end-column="39" />
           <folding />
         </state>
       </provider>

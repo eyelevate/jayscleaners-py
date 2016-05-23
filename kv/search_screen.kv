@@ -80,10 +80,11 @@
             size_hint: 0.6, 1
             cols: 2
             rows: 11
-            row_default_height: '50sp'
+            row_default_height: '32sp'
             Label:
                 text: "Customer Info"
                 size_hint_y: None
+
             Label:
                 id: customer_mark_l
                 text: ""
@@ -98,9 +99,7 @@
 
             TextInput:
                 id: customer_last_name_ti
-
                 hint_text: "Last Name"
-                height: '32sp'
                 font_size:'20sp'
                 multiline: False
                 readonly: True
@@ -116,10 +115,8 @@
 
             TextInput:
                 id: customer_first_name_ti
-
                 font_size:'20sp'
                 hint_text: "First Name"
-                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,5,5,5]
@@ -134,10 +131,8 @@
 
             TextInput:
                 id: customer_phone_ti
-
                 font_size:'20sp'
                 hint_text: "(xxx) xxx-xxxx"
-                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,5,5,5]
@@ -154,7 +149,6 @@
                 id: customer_last_drop_ti
                 font_size:'20sp'
                 hint_text: "Last Drop"
-                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,5,5,5]
@@ -170,7 +164,6 @@
                 id: customer_starch_ti
                 font_size:'20sp'
                 hint_text: "Starch"
-                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,5,5,5]
@@ -185,10 +178,8 @@
 
             TextInput:
                 id: customer_credit_ti
-
                 font_size:'20sp'
                 hint_text: "Credit"
-                height: '32sp'
                 multiline: False
                 readonly: True
                 padding: [5,5,5,5]
@@ -203,7 +194,7 @@
             TextInput:
                 id: customer_invoice_memo_ti
                 hint_text: "Invoice Memo"
-                font_size:'20sp'
+                font_size:'17sp'
                 size_hint_y: None
                 height: '72sp'
                 multiline: True
@@ -220,7 +211,7 @@
             TextInput:
                 id: customer_important_memo_ti
                 hint_text: "Important Memo"
-                font_size:'20sp'
+                font_size:'17sp'
                 size_hint_y: None
                 height: '72sp'
                 multiline: True
@@ -233,7 +224,8 @@
                 id:invoice_table
                 cols: 5
                 spacing: 2
-                row_default_height:50
+                row_force_default: True
+                row_default_height:'32sp'
                 canvas.before:
                     Color:
                         rgba: 0, 0, 0, 1
