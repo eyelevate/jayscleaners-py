@@ -56,7 +56,7 @@ if platform.system() == 'Darwin':  # Mac
     sys.path.append('/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
 elif platform.system() == 'Linux':  # Linux
     sys.path.append('/')  # TODO
-    Window.size = (800, 480)
+    # Window.size = (800, 480)
     Window.fullscreen = True
 elif platform.system() == 'Windows':  # Windows
     sys.path.append('/')  # TODO
