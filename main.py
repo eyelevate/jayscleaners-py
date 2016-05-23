@@ -103,7 +103,7 @@ class MainApp(App):
             user.password = self.password.text  # cipher and salt later
             popup = Popup()
             popup.size_hint = (None, None)
-            popup.size = (1000, 600)
+            popup.size = '600sp','300sp'
 
             # validate the form data
             if not user.username:
