@@ -154,14 +154,13 @@ BoxLayout:
 BoxLayout:
     orientation: 'vertical'
     BoxLayout:
-        size_hint: 1,0.9
+        size_hint: 1,0.8
         Label:
             text:"{text}"
     BoxLayout:
         orientation: 'horizontal'
-        size_hint: 1,0.1
+        size_hint: 1,0.2
         Button:
-            size_hint_y:None
             font_size:'15sp'
             markup: True
             text: 'Okay'
