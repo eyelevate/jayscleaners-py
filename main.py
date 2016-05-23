@@ -54,10 +54,8 @@ from urllib.request import urlopen
 
 if platform.system() == 'Darwin':  # Mac
     sys.path.append('/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
-elif platform.system() == 'Linux':  # Linux
-    sys.path.append('/')  # TODO
-    # Window.size = (800, 480)
-    Window.fullscreen = True
+# elif platform.system() == 'Linux':  # Linux
+#     sys.path.append('/')  # TODO
 elif platform.system() == 'Windows':  # Windows
     sys.path.append('/')  # TODO
 
@@ -942,5 +940,4 @@ class MainApp(App):
 
 if __name__ == "__main__":
 
-    # Window.clearcolor = (1, 1, 1, 1)
     MainApp().run()
