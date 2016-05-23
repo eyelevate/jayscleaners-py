@@ -11,13 +11,7 @@ elif platform.system() == 'Linux':  # Linux
     sys.path.append('/')  # TODO
 elif platform.system() == 'Windows':  # Windows
     sys.path.append('/')  # TODO
-    os.environ['KIVY_METRICS_DENSITY'] = '1'
-    os.environ['KIVY_DPI'] = '320'
-    os.environ['KIVY_METRICS_FONTSCALE'] = '0.8'
-else:
-    os.environ['KIVY_METRICS_DENSITY'] = '1'
-    os.environ['KIVY_DPI'] = '320'
-    os.environ['KIVY_METRICS_FONTSCALE'] = '0.8'
+
 # Models
 from colors import Colored
 from companies import Company
