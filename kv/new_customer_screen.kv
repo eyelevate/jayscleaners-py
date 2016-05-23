@@ -2,6 +2,13 @@
     id: screen_new_customer
     name: "new_customer"
 
+    last_name: last_name
+    first_name: first_name
+    phone: phone
+    email: email
+    important_memo: important_memo
+    invoice_memo: invoice_memo
+
     TabbedPanel:
         id: new_customer_panel
         do_default_tab: False
@@ -139,18 +146,13 @@
                             halign: 'right'
                             valign: 'middle'
                             font_size:'20sp'
-                            size_hint_y: None
                             size_hint_x: None
-                            width: '175sp'
+                            width: '150sp'
                             padding_x: '20sp'
                         GridLayout:
                             cols:2
                             rows:4
-                            row_force_default: True
-                            row_default_height: 70
                             padding: [25,25,25,25]
-                            size_hint_y: None
-                            height: '80sp'
                             canvas.before:
                                 Color:
                                     rgba: .75, .75, .75, .75
@@ -161,9 +163,10 @@
                                 size_hint_y: None
                                 size_hint_x: None
                                 width:'10sp'
-                                height: '48dp'
+                                height: '20sp'
                                 group: 'shirts_finish'
                                 active: True
+                                on_release: root.set_shirt_finish('hanger')
                             Label:
                                 text: "Hanger"
                                 text_size: self.size
@@ -175,8 +178,9 @@
                                 size_hint_y: None
                                 size_hint_x: None
                                 width:'10sp'
-                                height: '48dp'
+                                height: '60sp'
                                 group: 'shirts_finish'
+                                on_release: root.set_shirt_finish('box')
                             Label:
                                 text: "Box / Folded"
                                 text_size: self.size
@@ -191,18 +195,15 @@
                             halign: 'right'
                             valign: 'middle'
                             font_size:'20sp'
-                            size_hint_y: None
                             size_hint_x: None
-                            width: '175sp'
+                            width: '150sp'
                             padding_x: '20sp'
                         GridLayout:
                             cols:2
                             rows:4
-                            row_force_default: True
-                            row_default_height: 70
                             padding: [25,25,25,25]
                             size_hint_y: None
-                            height: '170sp'
+                            height: '160sp'
                             canvas.before:
                                 Color:
                                     rgba: .75, .75, .75, .75
@@ -213,9 +214,10 @@
                                 size_hint_y: None
                                 size_hint_x: None
                                 width:'10sp'
-                                height: '48dp'
+                                height: '30sp'
                                 group: 'shirts_preference'
                                 active: True
+                                on_release: root.set_shirt_preference('none')
                             Label:
                                 text: "None"
                                 text_size: self.size
@@ -227,22 +229,23 @@
                                 size_hint_y: None
                                 size_hint_x: None
                                 width:'10sp'
-                                height: '48dp'
+                                height: '30sp'
                                 group: 'shirts_preference'
+                                on_release: root.set_shirt_preference('light')
                             Label:
                                 text: "Light"
                                 text_size: self.size
                                 halign: 'left'
                                 valign: 'middle'
                                 font_size:'20sp'
-
                                 padding_x: '20sp'
                             CheckBox:
                                 size_hint_y: None
                                 size_hint_x: None
                                 width:'10sp'
-                                height: '48dp'
+                                height: '30sp'
                                 group: 'shirts_preference'
+                                on_release: root.set_shirt_preference('medium')
                             Label:
                                 text: "Medium"
                                 text_size: self.size
@@ -254,8 +257,9 @@
                                 size_hint_y: None
                                 size_hint_x: None
                                 width:'10sp'
-                                height: '48dp'
+                                height: '30sp'
                                 group: 'shirts_preference'
+                                on_release: root.set_shirt_preference('heavy')
                             Label:
                                 text: "Heavy"
                                 text_size: self.size
@@ -273,7 +277,7 @@
                         disabled: False
                     Button:
                         id: save
-                        on_release: root.save_new_customer()
+                        on_release: root.validate()
                         text: "Save"
                         font_size:'20sp'
                         disabled: False

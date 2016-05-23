@@ -29,6 +29,7 @@ from users import User
 # Helpers
 from kv_generator import KvString
 from static import Static
+from sync import Sync
 
 # from escpos import *
 # from escpos.printer import Network
@@ -183,178 +184,14 @@ class MainScreen(Screen):
         self.settings_button.disabled = True
         self.settings_button.disabled = True
 
-    def migrate(self, *args, **kwargs):
-        color = Colored()
-        company = Company()
-        custid = Custid()
-        delivery = Delivery()
-        discount = Discount()
-        inventory = Inventory()
-        inventory_item = InventoryItem()
-        invoice = Invoice()
-        invoice_item = InvoiceItem()
-        memo = Memo()
-        printer = Printer()
-        reward_transaction = RewardTransaction()
-        reward = Reward()
-        schedule = Schedule()
-        tax = Tax()
-        transaction = Transaction()
-        user = User()
-        color.create_table()
-        company.create_table()
-        custid.create_table()
-        delivery.create_table()
-        discount.create_table()
-        inventory.create_table()
-        inventory_item.create_table()
-        invoice.create_table()
-        invoice_item.create_table()
-        memo.create_table()
-        printer.create_table()
-        reward_transaction.create_table()
-        reward.create_table()
-        schedule.create_table()
-        tax.create_table()
-        transaction.create_table()
-        user.create_table()
-
     def db_sync(self, *args, **kwargs):
-        # start upload text
-        self.update_label.text = 'Connecting to server...'
+        # self.update_label.text = 'Connecting to server...'
+        sync = Sync()
+        sync.db_sync()
 
-        # create an array of data that need to be uploaded to the server
-        to_upload = {}
-        to_upload_rows = 0
+        # self.update_label.text = 'Server updated at {}'.format()
 
-        colors_1 = Colored()
-        to_upload['colors'] = colors_1.where({'color_id': None})
-        to_upload_rows += len(to_upload['colors'])
-        colors_1.close_connection()
 
-        companies_1 = Company()
-        to_upload['companies'] = companies_1.where({'company_id': None})
-        to_upload_rows += len(to_upload['companies'])
-        companies_1.close_connection()
-
-        custids_1 = Custid()
-        to_upload['custids'] = custids_1.where({'cust_id': None})
-        to_upload_rows += len(to_upload['custids'])
-        custids_1.close_connection()
-
-        deliveries_1 = Delivery()
-        to_upload['deliveries'] = deliveries_1.where({'delivery_id': None})
-        to_upload_rows += len(to_upload['deliveries'])
-        deliveries_1.close_connection()
-
-        discounts_1 = Discount()
-        to_upload['discounts'] = discounts_1.where({'discount_id': None})
-        to_upload_rows += len(to_upload['discounts'])
-        discounts_1.close_connection()
-
-        invoices_1 = Invoice()
-        to_upload['invoices'] = invoices_1.where({'invoice_id': None})
-        to_upload_rows += len(to_upload['invoices'])
-        invoices_1.close_connection()
-
-        invoice_items_1 = InvoiceItem()
-        to_upload['invoice_items'] = invoice_items_1.where({'invoice_items_id': None})
-        to_upload_rows += len(to_upload['invoice_items'])
-        invoice_items_1.close_connection()
-
-        inventories_1 = Inventory()
-        to_upload['inventories'] = inventories_1.where({'inventory_id': None})
-        to_upload_rows += len(to_upload['inventories'])
-        inventories_1.close_connection()
-
-        inventory_items_1 = InventoryItem()
-        to_upload['inventory_items'] = inventory_items_1.where({'item_id': None})
-        to_upload_rows += len(to_upload['inventory_items'])
-        inventory_items_1.close_connection()
-
-        memos_1 = Memo()
-        to_upload['memos'] = memos_1.where({'memo_id': None})
-        to_upload_rows += len(to_upload['memos'])
-        memos_1.close_connection()
-
-        printers_1 = Printer()
-        to_upload['printers'] = printers_1.where({'printer_id': None})
-        to_upload_rows += len(to_upload['colors'])
-        printers_1.close_connection()
-
-        reward_transactions_1 = RewardTransaction()
-        to_upload['reward_transactions'] = reward_transactions_1.where({'reward_id': None})
-        to_upload_rows += len(to_upload['reward_transactions'])
-        reward_transactions_1.close_connection()
-
-        rewards_1 = Reward()
-        to_upload['rewards'] = rewards_1.where({'reward_id': None})
-        to_upload_rows += len(to_upload['rewards'])
-        rewards_1.close_connection()
-
-        schedules_1 = Schedule()
-        to_upload['schedules'] = schedules_1.where({'schedule_id': None})
-        to_upload_rows += len(to_upload['schedules'])
-        schedules_1.close_connection()
-
-        taxes_1 = Tax()
-        to_upload['taxes'] = taxes_1.where({'tax_id': None})
-        to_upload_rows += len(to_upload['taxes'])
-        taxes_1.close_connection()
-
-        transactions_1 = Transaction()
-        to_upload['transactions'] = transactions_1.where({'transaction_id': None})
-        to_upload_rows += len(to_upload['transactions'])
-        transactions_1.close_connection()
-
-        users_1 = User()
-        to_upload['users'] = users_1.where({'user_id': None})
-        to_upload_rows += len(to_upload['users'])
-        users_1.close_connection()
-
-        self.update_label.text = 'Sending {} rows to server.'.format(to_upload_rows)
-        company = Company()
-        company.id = auth_user.company_id
-        data = {'company_id': auth_user.company_id}
-        c1 = company.where(data)
-
-        if len(c1) > 0:
-            for comp in c1:
-                dt = datetime.datetime.strptime(comp['server_at'], "%Y-%m-%d %H:%M:%S") if comp[
-                                                                                               'server_at'] is not None else datetime.datetime.strptime(
-                    '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
-                company.server_at = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-                company.api_token = comp['api_token']
-        else:
-            company.server_at = 0
-            company.api_token = '2063288158-1'
-
-        url = 'http://74.207.240.88/admins/api/update/{}/{}/{}/up={}'.format(
-            company.id,
-            company.api_token,
-            company.server_at,
-            json.dumps(to_upload).replace(" ", "")
-        )
-        r = request.urlopen(url)
-        data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-
-        if data['status'] is 200:
-            # Save the local data
-            sync_from_server(data=data)
-            # update ids with saved data & update company table with server_at timestamp
-            update_database(data=data)
-            # update server_at in companies with most current timestamp
-
-            where = {'company_id': auth_user.company_id}
-            data = {'server_at': NOW}
-            company.put(where, data)
-            rows_to_create = data['rows_to_create'] if 'rows_to_create' in data else 0
-            rows_saved = data['rows_saved'] if 'rows_saved' in data else 0
-
-            self.update_label.text = 'Success. Returned {} rows to update locally. Saved {} rows to server.'.format(
-                rows_to_create, rows_saved
-            )
-        company.close_connection()
 
     def search_pre(self):
 
@@ -470,7 +307,72 @@ class LoginScreen(Screen):
 
 
 class NewCustomerScreen(Screen):
-    pass
+    last_name = ObjectProperty(None)
+    first_name = ObjectProperty(None)
+    phone = ObjectProperty(None)
+    email = ObjectProperty(None)
+    important_memo = ObjectProperty(None)
+    invoice_memo = ObjectProperty(None)
+    shirt_finish = None
+    shirt_preference = None
+
+    def set_shirt_finish(self, value):
+        self.shirt_finish = value
+
+    def set_shirt_preference(self, value):
+        self.shirt_preference = value
+
+    def validate(self):
+        popup = Popup()
+        popup.size_hint = (None, None)
+        popup.size = '600sp', '300sp'
+        # sync database first
+        sync = Sync()
+        sync.db_sync()
+
+        # check for errors
+        errors = 0
+        if self.phone.text == '':
+            errors += 1
+        if self.last_name.text == '':
+            errors += 1
+        if self.first_name.text == '':
+            errors += 1
+
+        if errors == 0: # if no errors then save
+            customers = User()
+            customers.role_id = 3
+            customers.phone = self.phone.text
+            customers.last_name = self.last_name.text
+            customers.first_name = self.first_name.text
+            customers.email = self.email.text if self.email.text else None
+            customers.important_memo = self.important_memo.text if self.important_memo.text else None
+            customers.invoice_memo = self.invoice_memo.text if self.invoice_memo.text else None
+            customers.shirt = self.shirt_finish
+            customers.starch = self.shirt_preference
+
+            if customers.add():
+                sync.db_sync() # send the data to the server and get back the updated user id
+                # send user to search
+
+                self.customer_select(customers.user_id)
+
+                # create popup
+                content = KV.popup_alert("You have successfully created a new customer.")
+                popup.content = Builder.load_string(content)
+                popup.open()
+
+    def customer_select(self, customer_id, *args, **kwargs):
+        vars.SEARCH_RESULTS_STATUS = True
+        vars.ROW_CAP = 0
+        vars.CUSTOMER_ID = customer_id
+        vars.INVOICE_ID = None
+        vars.ROW_SEARCH = 0, 9
+        self.parent.current = 'search'
+        # last 10 setup
+        vars.update_last_10()
+
+
 
 
 class PickupScreen(Screen):
