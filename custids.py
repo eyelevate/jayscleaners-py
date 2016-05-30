@@ -1,6 +1,8 @@
 import datetime
 import time
 import sqlite3
+from random import choice
+from string import digits
 from model import *
 
 unix = time.time()
@@ -12,6 +14,7 @@ class Custid:
     id = None
     cust_id = None
     customer_id = None
+    company_id = None
     mark = None
     status = None
     deleted_at = None
@@ -28,7 +31,8 @@ class Custid:
         table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
                                   IntegerField(column='cust_id').data_type(),
                                   IntegerField(column='customer_id').data_type(),
-                                  CharField(column='mark', max_length=50).data_type(),
+                                  IntegerField(column='company_id').data_type(),
+                                  TextField(column='mark').data_type(),
                                   IntegerField(column='status').data_type(),
                                   TextField(column='deleted_at').data_type(),
                                   TextField(column='created_at').data_type(),
@@ -40,27 +44,54 @@ class Custid:
 
     def add(self):
 
-        self.c.execute('''INSERT INTO {t}(cust_id,customer_id,mark,status,created_at,updated_at)
-VALUES(?,?,?,?,?,?)'''.format(t=table), (self.cust_id,
-                                         self.customer_id,
-                                         self.mark,
-                                         self.status,
-                                         self.created_at,
-                                         self.updated_at)
+        self.c.execute('''INSERT INTO {t}(cust_id,customer_id,company_id,mark,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.cust_id,
+                                           self.customer_id,
+                                           self.company_id,
+                                           self.mark,
+                                           self.status,
+                                           self.created_at,
+                                           self.updated_at)
                        )
 
         self.conn.commit()
         return True
 
+    def put(self, where=False, data=False):
+        sql = '''UPDATE {t} SET '''.format(t=table)
+        idx = 0
+        if len(data) > 0:
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    sql += '''{k} = "{v}" '''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = "{v}", '''.format(k=key, v=value)
+        sql += '''WHERE '''
+        idx = 0
+        if len(where) > 0:
+            for key, value in where.items():
+                idx += 1
+                if idx == len(where):
+                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+        self.c.execute(sql)
+        self.conn.commit()
+
+        return True
+
     def update(self):
 
-        self.c.execute('''UPDATE {t} SET cust_id = ?, customer_id = ?, mark = ?, status = ?, updated_at = ?
-WHERE id = ?'''.format(t=table), (self.cust_id,
-                                  self.customer_id,
-                                  self.mark,
-                                  self.status,
-                                  self.updated_at,
-                                  self.id)
+        self.c.execute('''UPDATE {t} SET cust_id = ?, customer_id = ?, company_id = ?, mark = ?, status = ?,
+updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
+                                                 self.customer_id,
+                                                 self.company_id,
+                                                 self.mark,
+                                                 self.status,
+                                                 self.updated_at,
+                                                 self.id)
                        )
 
         self.conn.commit()
@@ -68,7 +99,7 @@ WHERE id = ?'''.format(t=table), (self.cust_id,
 
     def find(self):
         try:
-            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(t=table), (str(self.id)))
+            self.c.execute("""SELECT * FROM {t} WHERE deleted_at is null AND id = ?""".format(table), (str(self.id)))
             self.conn.commit()
         except ValueError:
             return "Could not find the company with that id"
@@ -79,7 +110,7 @@ WHERE id = ?'''.format(t=table), (self.cust_id,
 
     def first(self, data=False):
         if data:
-            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            sql = '''SELECT * FROM {t} WHERE deleted_at is null AND '''.format(t=table)
             idx = 0
             for key, value in data.items():
                 idx += 1
@@ -87,6 +118,7 @@ WHERE id = ?'''.format(t=table), (self.cust_id,
                     sql += '''{k} = {v}'''.format(k=key, v=value)
                 elif idx < len(data):
                     sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchone()
@@ -102,11 +134,9 @@ WHERE id = ?'''.format(t=table), (self.cust_id,
             if 'ORDER_BY' in data:
                 order_by = data['ORDER_BY']
                 del (data['ORDER_BY'])
-                print('removed order_by {}'.format(order_by))
             if 'LIMIT' in data:
                 limit = data['LIMIT']
                 del (data['LIMIT'])
-                print('removed limit {}'.format(limit))
 
             for key, value in data.items():
                 idx += 1
@@ -129,6 +159,47 @@ WHERE id = ?'''.format(t=table), (self.cust_id,
                             sql += '''{k} is null AND '''.format(k=key)
                         else:
                             sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+                sql += ' AND deleted_at is null'
+
+            if order_by:
+                sql += ''' ORDER BY {} '''.format(order_by)
+
+            if limit:
+                sql += '''LIMIT {}'''.format(limit)
+
+            self.c.execute(sql)
+            self.conn.commit()
+            return self.c.fetchall()
+        else:
+            return False
+
+    def like(self, data=False):
+        if data:
+            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            idx = 0
+            order_by = False
+            limit = False
+            if 'ORDER_BY' in data:
+                order_by = data['ORDER_BY']
+                del (data['ORDER_BY'])
+            if 'LIMIT' in data:
+                limit = data['LIMIT']
+                del (data['LIMIT'])
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    if value is None:
+                        sql += '''{k} is null'''.format(k=key)
+                    else:
+                        sql += '''{k} LIKE {v}'''.format(k=key, v=value)
+                elif idx < len(data):
+                    if value is None:
+                        sql += '''{k} is null AND '''.format(k=key)
+                    else:
+                        sql += '''{k} LIKE {v} AND '''.format(k=key, v=value)
+
+            sql += ' AND deleted_at is null '
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
 
@@ -145,7 +216,7 @@ WHERE id = ?'''.format(t=table), (self.cust_id,
 
         if self.id:
 
-            self.c.execute("""UPDATE {t} SET deleted_at = ?, updated_at = ? WHERE id = ?""".format(table),
+            self.c.execute("""UPDATE {t} SET deleted_at = ?, updated_at = ? WHERE id = ?""".format(t=table),
                            (self.updated_at,
                             self.updated_at,
                             self.id)
@@ -167,4 +238,26 @@ WHERE id = ?'''.format(t=table), (self.cust_id,
             for mrk in data:
                 marks.append(mrk['mark'])
 
-        return ', '.join(marks)
+            return ', '.join(marks)
+        else:
+            return ''
+
+    def create_customer_mark(self, last_name=False, customer_id=False, starch=False, random=False):
+        mark = ''
+        if last_name and customer_id and starch:
+            # get the first character of the last name and capitalize it
+            mark += last_name[:1].capitalize()
+            # add in the customer_id
+            mark += customer_id
+            # get the first character of the starch preference and capitalize it
+            mark += starch[:1].capitalize()
+
+            # check to see if mark exists
+            data = {'mark': '"{}"'.format(mark)}
+            custid = self.where(data)
+            if len(custid) > 0:
+                make_random = ''.join(choice(digits) for i in range(5))
+                mark_random = self.create_customer_mark(last_name=last_name, customer_id=make_random, starch=starch)
+                return mark_random
+            else:
+                return mark

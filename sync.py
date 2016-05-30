@@ -23,32 +23,22 @@ from taxes import Tax
 from transactions import Transaction
 from users import User
 
+import urllib
 from urllib import error
 from urllib import request
 from urllib import parse
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-from kv_generator import KvString
-from static import Static
-
-auth_user = User()
 ERROR_COLOR = 0.94, 0.33, 0.33, 1
 DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
 unix = time.time()
 NOW = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-vars = Static()
-CUSTOMER_ID = vars.CUSTOMER_ID
-INVOICE_ID = vars.INVOICE_ID
-SEARCH_NEW = vars.SEARCH_NEW
-LAST10 = vars.LAST10
-SEARCH_RESULTS = vars.SEARCH_RESULTS
-KV = KvString()
 
 
 class Sync:
-    def db_sync(self):
-        self.migrate()
+    def db_sync(self, company_id):
+        # self.migrate()
         # start upload text
 
         # create an array of data that need to be uploaded to the server
@@ -141,20 +131,21 @@ class Sync:
         users_1.close_connection()
 
         company = Company()
-        company.id = auth_user.company_id
-        data = {'company_id': auth_user.company_id}
+        company.id = company_id
+        data = {'company_id': company_id}
         c1 = company.where(data)
 
         if len(c1) > 0:
             for comp in c1:
-                dt = datetime.datetime.strptime(comp['server_at'], "%Y-%m-%d %H:%M:%S") if comp[
-                    'server_at'] is not None else datetime.datetime.strptime(
+                dt = datetime.datetime.strptime(comp['server_at'], "%Y-%m-%d %H:%M:%S") if comp['server_at'] is not None else datetime.datetime.strptime(
                     '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
-                company.server_at = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+                company.server_at = str(dt).replace(" ", "_")
+                # company.server_at = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
                 company.api_token = comp['api_token']
         else:
+            company.id = 1
             company.server_at = 0
-            company.api_token = '2063288158-1'
+            company.api_token = '2064535930-1'
 
         url = 'http://74.207.240.88/admins/api/update/{}/{}/{}/up={}'.format(
             company.id,
@@ -162,23 +153,52 @@ class Sync:
             company.server_at,
             json.dumps(to_upload).replace(" ", "")
         )
-        r = request.urlopen(url)
-        data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
 
-        if data['status'] is 200:
-            # Save the local data
-            sync_from_server(data=data)
-            # update ids with saved data & update company table with server_at timestamp
-            update_database(data=data)
-            # update server_at in companies with most current timestamp
 
-            where = {'company_id': auth_user.company_id}
-            data = {'server_at': NOW}
-            company.put(where, data)
+        # attempt to connect to server
+        try:
+            r = request.urlopen(url)
+            data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
 
-        company.close_connection()
+            if data['status'] is 200:
+                # Save the local data
+                sync_from_server(data=data)
+                # update ids with saved data & update company table with server_at timestamp
+                update_database(data=data)
+                # update server_at in companies with most current timestamp
 
-        return True
+                where = {'company_id': company_id}
+                dt = datetime.datetime.strptime(NOW, "%Y-%m-%d %H:%M:%S") if NOW is not None else datetime.datetime.strptime(
+                    '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+                data = {'server_at': dt}
+                company.put(where, data)
+                company.close_connection()
+
+        except urllib.error.URLError as e:
+            print(e.reason) # could not save this time around because no internet, move on
+
+    def get_chunk(self, table=False, start=False, end=False):
+        company_id = 1
+        api_token = '2064535930-1'
+
+        url = 'http://74.207.240.88/admins/api/chunk/{}/{}/{}/{}/{}'.format(
+            company_id,
+            api_token,
+            table,
+            start,
+            end
+        )
+        print(url)
+        try:
+            r = request.urlopen(url)
+            data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+
+            if data['status'] is True:
+                # Save the local data
+                sync_from_server(data=data)
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
 
     def migrate(self, *args, **kwargs):
         color = Colored()
@@ -232,3 +252,29 @@ class Sync:
         tax.close_connection()
         transaction.close_connection()
         user.close_connection()
+
+    def server_login(self, username, password):
+        users = User()
+        url = 'http://74.207.240.88/admins/api/authenticate/{}/{}'.format(
+            username,
+            password
+        )
+
+        try:
+            req = request.urlopen(url)
+            results = json.loads(req.read().decode(req.info().get_param('charset') or 'utf-8'))
+            if results:
+                data = {'password': str(password)}
+                where = {'username': '"{}"'.format(username)}
+                users.put(where=where, data=data)
+                users.close_connection()
+                return results
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)
+            # there is no internet connection so check the local sqlite db
+            authenticated = users.auth(username=username,password=password)
+            users.close_connection()
+            return authenticated

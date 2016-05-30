@@ -132,8 +132,8 @@
     Button:
         id: update_button
         text:"Update"
-        disabled:True
-        on_release: root.db_sync()
+        disabled:False
+        on_release: root.test_crypt()
         size_hint: 0.1,0.1
         pos_hint: {'x':0, 'y':0}
         font_size:'20sp'

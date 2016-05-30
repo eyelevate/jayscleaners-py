@@ -143,6 +143,31 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
         self.conn.commit()
         return True
 
+    def put(self, where=False, data=False):
+        sql = '''UPDATE {t} SET '''.format(t=table)
+        idx = 0
+        if len(data) > 0:
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    sql += '''{k} = "{v}" '''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = "{v}", '''.format(k=key, v=value)
+        sql += '''WHERE '''
+        idx = 0
+        if len(where) > 0:
+            for key, value in where.items():
+                idx += 1
+                if idx == len(where):
+                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+        self.c.execute(sql)
+        self.conn.commit()
+
+        return True
+
     def update(self):
 
         self.c.execute('''UPDATE {t} SET user_id = ?, company_id = ?, username = ?, first_name = ?, last_name = ?,
@@ -192,7 +217,7 @@ WHERE id = ?'''.format(t=table), (self.user_id,
 
     def find(self):
         try:
-            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(table), (str(self.id)))
+            self.c.execute("""SELECT * FROM {t} WHERE deleted_at is null AND id = ?""".format(table), (str(self.id)))
             self.conn.commit()
         except ValueError:
             return "Could not find the company with that id"
@@ -203,7 +228,7 @@ WHERE id = ?'''.format(t=table), (self.user_id,
 
     def first(self, data=False):
         if data:
-            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            sql = '''SELECT * FROM {t} WHERE deleted_at is null AND '''.format(t=table)
             idx = 0
             for key, value in data.items():
                 idx += 1
@@ -211,6 +236,7 @@ WHERE id = ?'''.format(t=table), (self.user_id,
                     sql += '''{k} = {v}'''.format(k=key, v=value)
                 elif idx < len(data):
                     sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchone()
@@ -251,6 +277,9 @@ WHERE id = ?'''.format(t=table), (self.user_id,
                             sql += '''{k} is null AND '''.format(k=key)
                         else:
                             sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+                sql += ' AND deleted_at is null'
+
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
 
@@ -287,26 +316,40 @@ WHERE id = ?'''.format(t=table), (self.user_id,
                         sql += '''{k} is null AND '''.format(k=key)
                     else:
                         sql += '''{k} LIKE {v} AND '''.format(k=key, v=value)
+
+            sql += ' AND deleted_at is null '
+
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
 
             if limit:
                 sql += '''LIMIT {}'''.format(limit)
+
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchall()
         else:
             return False
 
-    def auth(self, username = False, password = False):
-        self.c.execute('''SELECT * FROM USERS WHERE username = ? and password = ?''',(username,password))
-        self.conn.commit()
-        if len(self.c.fetchall()) > 0:
-            # check to see if role_is admin
-            for key, value in self.c.fetchall().items():
-                print(value)
+    def or_search(self, where = False):
+        if where:
+            sql = 'SELECT * FROM {} WHERE deleted_at is null AND '.format(table)
+            idx = 0
+            for search in where:
+                idx += 1
+                sql += 'user_id = {} '.format(search) if idx == len(where) else 'user_id = {} OR '.format(search)
+            self.c.execute(sql)
+            self.conn.commit()
+            return self.c.fetchall()
+        else:
+            return False
 
-            return True
+    def auth(self, username=False, password=False):
+        if password and username:
+            self.c.execute('''SELECT * FROM USERS WHERE deleted_at is null AND username = ? and password = ?''', (username,password))
+            self.conn.commit()
+            return self.c.fetchall()
+
         else:
             return False
 
@@ -325,6 +368,31 @@ WHERE id = ?'''.format(t=table), (self.user_id,
             return True
         else:
             return False
+
+    def get_last_inserted_row(self):
+
+        self.c.execute("""SELECT last_insert_rowid()""")
+        self.conn.commit()
+        for key, value in self.c.fetchone().items():
+            self.id = value
+            user = self.find()
+
+            return value
+
+        return False
+
+    def get_starch(self, starch):
+
+        if starch is '1':
+            return 'None'
+        elif starch is '2':
+            return 'Light'
+        elif starch is '3':
+            return 'Medium'
+        elif starch is '4':
+            return 'Heavy'
+        else:
+            return 'None'
 
     def close_connection(self):
         self.c.close()

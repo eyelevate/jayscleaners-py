@@ -1,6 +1,7 @@
 <SearchScreen>:
     id: screen_search
     search: search
+    customer_mark_l: customer_mark_l
     cust_last_name: customer_last_name_ti
     cust_first_name: customer_first_name_ti
     cust_phone: customer_phone_ti
@@ -30,8 +31,8 @@
         pos_hint: {'top':1}
         TextInput:
             id: search
-            font_size:'30sp'
-            hint_text: "Search Customers"
+            font_size:'20sp'
+            hint_text: "Search"
             multiline: False
             on_text_validate: root.search_customer()
             text: ''
@@ -222,7 +223,7 @@
             cols: 2
             GridLayout:
                 id:invoice_table
-                cols: 5
+                cols: 6
                 spacing: 2
                 row_force_default: True
                 row_default_height:'32sp'
@@ -236,6 +237,16 @@
                     size_hint_y: None
                     markup: True
                     text: "[color=000000][b]Inv[/b][/color]"
+                    canvas.before:
+                        Color:
+                            rgba: 1, 1, 1, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                Label:
+                    size_hint_y: None
+                    markup: True
+                    text: "[color=000000][b]Loc[/b][/color]"
                     canvas.before:
                         Color:
                             rgba: 1, 1, 1, 1
@@ -288,21 +299,25 @@
                 size_hint: 0.20,1
                 Button:
                     id: up_btn
+                    font_size:'20sp'
                     on_release: root.up()
                     text: "Up"
                     disabled: True
                 Button:
                     id: down_btn
+                    font_size:'20sp'
                     on_release: root.down()
                     text: "Down"
                     disabled: True
                 Button:
                     id: edit_invoice_btn
+                    font_size:'20sp'
                     on_release: root.edit()
                     text: "Edit"
                     disabled: True
                 Button:
                     id: history_btn
+                    font_size:'20sp'
                     on_release: root.history()
                     text: "History"
                     disabled: True
@@ -313,37 +328,45 @@
 
         Button:
             on_release: app.root.current = "new_customer"
+            font_size:'20sp'
             text: "New"
         Button:
             id: edit_customer_btn
             on_release: app.root.current = "edit_customer"
+            font_size:'15sp'
             text: "Edit Customer"
             disabled: True
         Button:
             id: print_card_btn
             on_release: app.root.current = "rack"
+            font_size:'15sp'
             text: "Print Card"
             disabled: True
         Button:
             on_release: app.root.current = 'last10'
+            font_size:'20sp'
             text: "Last 10"
         Button:
             id: reprint_btn
             on_release: app.root.current = "invoice"
+            font_size:'20sp'
             text: "Reprint"
             disabled: True
         Button:
             id: quick_btn
             on_release: app.root.current = "calc"
+            font_size:'20sp'
             text: "Quick"
             disabled: True
         Button:
             id: pickup_btn
             on_release: app.root.current = "rack"
+            font_size:'20sp'
             text: "Pickup"
             disabled: True
         Button:
             id: dropoff_btn
             on_release: app.root.current = "main"
+            font_size:'20sp'
             text: "Dropoff"
             disabled: True

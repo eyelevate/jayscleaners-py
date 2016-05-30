@@ -4,6 +4,7 @@ import platform
 import time
 import datetime
 import os
+import calendar
 
 # Models
 from colors import Colored
@@ -28,6 +29,7 @@ from users import User
 
 # Helpers
 from kv_generator import KvString
+from jobs import Job
 from static import Static
 from sync import Sync
 
@@ -60,8 +62,8 @@ elif platform.system() == 'Linux':  # Linux
 elif platform.system() == 'Windows':  # Windows
     sys.path.append('/')  # TODO
 
-
 auth_user = User()
+Job = Job()
 ERROR_COLOR = 0.94, 0.33, 0.33, 1
 DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
 unix = time.time()
@@ -116,8 +118,8 @@ class MainScreen(Screen):
             self.password.hint_text_color = DEFAULT_COLOR
             # first check to see if you can authenticate locally
             u1 = user.auth(username=user.username, password=user.password)
-            if u1:  # found user register variables, sync data, and show links
 
+            if u1:  # found user register variables, sync data, and show links
                 self.login_button.text = "Logout"
                 self.login_button.bind(on_release=self.logout)
                 self.update_button.disabled = False
@@ -127,22 +129,21 @@ class MainScreen(Screen):
                 self.delivery_button.disabled = False
                 self.settings_button.disabled = False
                 self.settings_button.disabled = False
+                for user1 in u1:
+                    auth_user.id = user1['id']
+                    auth_user.user_id = user1['user_id']
+                    auth_user.username = user1['username']
+                    auth_user.company_id = user1['company_id']
 
-                auth_user.username = user.username
-                auth_user.company_id = user.company_id
                 popup.title = 'Authentication Success!'
                 popup.content = Builder.load_string(
                     KV.popup_alert('You are now logged in as {}!'.format(user.username)))
                 self.login_popup.dismiss()
             else:  # did not find user in local db, look for user on server
-                url = 'http://74.207.240.88/admins/api/authenticate/{}/{}'.format(
-                    user.username,
-                    user.password
-                )
-                r = request.urlopen(url)
-                data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+                sync = Sync()
+                data = sync.server_login(username=user.username, password=user.password)
 
-                if data['status'] is True:
+                if data['status']:
                     self.login_button.text = "Logout"
                     self.login_button.bind(on_release=self.logout)
                     self.update_button.disabled = False
@@ -187,11 +188,11 @@ class MainScreen(Screen):
     def db_sync(self, *args, **kwargs):
         # self.update_label.text = 'Connecting to server...'
         sync = Sync()
-        sync.db_sync()
+        # sync.migrate()
+        sync.db_sync(auth_user.company_id)
+        # sync.get_chunk(table='custids',start=5001,end=15000)
 
         # self.update_label.text = 'Server updated at {}'.format()
-
-
 
     def search_pre(self):
 
@@ -200,7 +201,23 @@ class MainScreen(Screen):
     def test_sys(self):
         print(sys.path)
 
+    def test_mark(self):
+        marks = Custid()
+        customers = User()
+        starch = customers.get_starch(3)
+        custid = marks.create_customer_mark(last_name='Tim',
+                                            customer_id=str(6251) if Job.is_int(6251) else '6251',
+                                            starch='Medium')
+        print(starch)
+        print(custid)
+
     def test_crypt(self):
+        dt = datetime.datetime.strptime(NOW, "%Y-%m-%d %H:%M:%S") if NOW is not None else datetime.datetime.strptime(
+            '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+
+        print(str(dt).replace(" ", "_"))
+        server_at = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+        print(server_at)
         pass
 
     def test_print(self, *args, **kwargs):
@@ -226,7 +243,470 @@ class DropoffScreen(Screen):
 
 
 class EditCustomerScreen(Screen):
-    pass
+    last_name = ObjectProperty(None)
+    first_name = ObjectProperty(None)
+    phone = ObjectProperty(None)
+    email = ObjectProperty(None)
+    important_memo = ObjectProperty(None)
+    invoice_memo = ObjectProperty(None)
+    shirt_finish = 1
+    shirt_preference = 1
+    shirts_finish_hanger = ObjectProperty(None)
+    shirts_finish_box = ObjectProperty(None)
+    shirts_preference_none = ObjectProperty(None)
+    shirts_preference_light = ObjectProperty(None)
+    shirts_preference_medium = ObjectProperty(None)
+    shirts_preference_heavy = ObjectProperty(None)
+    is_delivery = ObjectProperty(None)
+    mark_text = ObjectProperty(None)
+    marks_table = ObjectProperty(None)
+    street = ObjectProperty(None)
+    suite = ObjectProperty(None)
+    city = ObjectProperty(None)
+    zipcode = ObjectProperty(None)
+    concierge_name = ObjectProperty(None)
+    concierge_number = ObjectProperty(None)
+    special_instructions = ObjectProperty(None)
+
+    def reset(self):
+        self.last_name.text = ''
+        self.last_name.hint_text = 'Last Name'
+        self.last_name.hint_text_color = DEFAULT_COLOR
+        self.first_name.text = ''
+        self.first_name.hint_text = 'First Name'
+        self.first_name.hint_text_color = DEFAULT_COLOR
+        self.phone.text = ''
+        self.phone.hint_text = '(XXX) XXX-XXXX'
+        self.phone.hint_text_color = DEFAULT_COLOR
+        self.email.text = ''
+        self.email.hint_text = 'example@example.com'
+        self.email.hint_text_color = DEFAULT_COLOR
+        self.important_memo.text = ''
+        self.important_memo.hint_text = 'Important Memo'
+        self.important_memo.hint_text_color = DEFAULT_COLOR
+        self.invoice_memo.text = ''
+        self.invoice_memo.hint_text = 'Invoiced Memo'
+        self.invoice_memo.hint_text_color = DEFAULT_COLOR
+        self.shirts_finish_hanger.active = True
+        self.shirts_finish_box.active = False
+        self.shirts_preference_none.active = True
+        self.shirts_preference_light.active = False
+        self.shirts_preference_medium.active = False
+        self.shirts_preference_heavy.active = False
+        self.street.text = ''
+        self.street.hint_text = 'Street Address'
+        self.street.hint_text_color = DEFAULT_COLOR
+        self.street.disabled = True
+        self.suite.text = ''
+        self.suite.hint_text = 'Suite'
+        self.suite.hint_text_color = DEFAULT_COLOR
+        self.suite.disabled = True
+        self.city.text = ''
+        self.city.hint_text = 'City'
+        self.city.hint_text_color = DEFAULT_COLOR
+        self.city.disabled = True
+        self.zipcode.text = ''
+        self.zipcode.hint_text = 'Zipcode'
+        self.zipcode.hint_text_color = DEFAULT_COLOR
+        self.zipcode.disabled = True
+        self.concierge_name.text = ''
+        self.concierge_name.hint_text = 'Concierge Name'
+        self.concierge_name.hint_text_color = DEFAULT_COLOR
+        self.concierge_name.disabled = True
+        self.concierge_number.text = ''
+        self.concierge_number.hint_text = 'Concierge Number'
+        self.concierge_number.hint_text_color = DEFAULT_COLOR
+        self.concierge_number.disabled = True
+        self.special_instructions.text = ''
+        self.special_instructions.hint_text = 'Special Instructions'
+        self.special_instructions.hint_text_color = DEFAULT_COLOR
+        self.special_instructions.disabled = True
+        self.mark_text.text = ''
+        self.is_delivery.active = False
+        self.marks_table.clear_widgets()
+
+    def load(self):
+        if vars.CUSTOMER_ID:
+            customers = User()
+            customers.user_id = vars.CUSTOMER_ID
+            data = {'user_id': vars.CUSTOMER_ID}
+            customer = customers.where(data)
+            if customer:
+                for cust in customer:
+                    self.last_name.text = cust['last_name'] if cust['last_name'] else ''
+                    self.last_name.hint_text = 'Last Name'
+                    self.last_name.hint_text_color = DEFAULT_COLOR
+                    self.first_name.text = cust['first_name'] if cust['first_name'] else ''
+                    self.first_name.hint_text = 'First Name'
+                    self.first_name.hint_text_color = DEFAULT_COLOR
+                    self.phone.text = cust['phone'] if cust['phone'] else ''
+                    self.phone.hint_text = '(XXX) XXX-XXXX'
+                    self.phone.hint_text_color = DEFAULT_COLOR
+                    self.email.text = cust['email'] if cust['email'] else ''
+                    self.email.hint_text = 'example@example.com'
+                    self.email.hint_text_color = DEFAULT_COLOR
+                    self.important_memo.text = cust['important_memo'] if cust['important_memo'] else ''
+                    self.important_memo.hint_text = 'Important Memo'
+                    self.important_memo.hint_text_color = DEFAULT_COLOR
+                    self.invoice_memo.text = cust['invoice_memo'] if cust['invoice_memo'] else ''
+                    self.invoice_memo.hint_text = 'Invoiced Memo'
+                    self.invoice_memo.hint_text_color = DEFAULT_COLOR
+                    if cust['shirt'] == 1:
+                        self.shirts_finish_hanger.active = True
+                    if cust['shirt'] == 2:
+                        self.shirts_finish_box.active = True
+                    if cust['starch'] == 1:
+                        self.shirts_preference_none.active = True
+                    if cust['starch'] == 2:
+                        self.shirts_preference_light.active = True
+                    if cust['starch'] == 3:
+                        self.shirts_preference_medium.active = True
+                    if cust['starch'] == 4:
+                        self.shirts_preference_heavy.active = True
+                    if cust['street']:
+                        self.is_delivery.active = False
+                        self.street.text = cust['street'] if cust['street'] else ''
+                        self.street.hint_text = 'Street Address'
+                        self.street.hint_text_color = DEFAULT_COLOR
+                        self.street.disabled = False
+                        self.suite.text = cust['suite'] if cust['suite'] else ''
+                        self.suite.hint_text = 'Suite'
+                        self.suite.hint_text_color = DEFAULT_COLOR
+                        self.suite.disabled = False
+                        self.city.text = cust['city'] if cust['city'] else ''
+                        self.city.hint_text = 'City'
+                        self.city.hint_text_color = DEFAULT_COLOR
+                        self.city.disabled = False
+                        self.zipcode.text = cust['zipcode'] if cust['zipcode'] else ''
+                        self.zipcode.hint_text = 'Zipcode'
+                        self.zipcode.hint_text_color = DEFAULT_COLOR
+                        self.zipcode.disabled = False
+                        self.concierge_name.text = cust['concierge_name'] if cust['concierge_name'] else ''
+                        self.concierge_name.hint_text = 'Concierge Name'
+                        self.concierge_name.hint_text_color = DEFAULT_COLOR
+                        self.concierge_name.disabled = False
+                        self.concierge_number.text = cust['concierge_number'] if cust['concierge_number'] else ''
+                        self.concierge_number.hint_text = 'Concierge Number'
+                        self.concierge_number.hint_text_color = DEFAULT_COLOR
+                        self.concierge_number.disabled = False
+                        self.special_instructions.text = cust['special_instructions'] if cust[
+                            'special_instructions'] else ''
+                        self.special_instructions.hint_text = 'Special Instructions'
+                        self.special_instructions.hint_text_color = DEFAULT_COLOR
+                        self.special_instructions.disabled = False
+                        self.mark_text.text = ''
+                        self.marks_table.clear_widgets()
+                        self.update_marks_table()
+                    else:
+                        self.street.text = ''
+                        self.street.hint_text = 'Street Address'
+                        self.street.hint_text_color = DEFAULT_COLOR
+                        self.street.disabled = True
+                        self.suite.text = ''
+                        self.suite.hint_text = 'Suite'
+                        self.suite.hint_text_color = DEFAULT_COLOR
+                        self.suite.disabled = True
+                        self.city.text = ''
+                        self.city.hint_text = 'City'
+                        self.city.hint_text_color = DEFAULT_COLOR
+                        self.city.disabled = True
+                        self.zipcode.text = ''
+                        self.zipcode.hint_text = 'Zipcode'
+                        self.zipcode.hint_text_color = DEFAULT_COLOR
+                        self.zipcode.disabled = True
+                        self.concierge_name.text = ''
+                        self.concierge_name.hint_text = 'Concierge Name'
+                        self.concierge_name.hint_text_color = DEFAULT_COLOR
+                        self.concierge_name.disabled = True
+                        self.concierge_number.text = ''
+                        self.concierge_number.hint_text = 'Concierge Number'
+                        self.concierge_number.hint_text_color = DEFAULT_COLOR
+                        self.concierge_number.disabled = True
+                        self.special_instructions.text = ''
+                        self.special_instructions.hint_text = 'Special Instructions'
+                        self.special_instructions.hint_text_color = DEFAULT_COLOR
+                        self.special_instructions.disabled = True
+                        self.mark_text.text = ''
+                        self.marks_table.clear_widgets()
+                        
+    def set_result_status(self):
+        vars.SEARCH_RESULTS_STATUS = True
+
+    def create_mark(self):
+        popup = Popup()
+        popup.size = 900, 600
+        # check for previous marks set
+        marks = Custid()
+        custids = marks.where({'mark':'"{}"'.format(self.mark_text.text)})
+        if custids:
+            for custid in custids:
+                cust_id = custid['mark']
+            popup.title = 'Customer Mark Error'
+
+            popup.content = Builder.load_string(
+                KV.popup_alert('{} has already been taken. Please select another.'.format(cust_id)
+                               )
+            )
+            popup.open()
+        else:
+            # save the mark
+            marks.company_id = auth_user.company_id
+            marks.customer_id = vars.CUSTOMER_ID
+            marks.mark = self.mark_text.text
+            marks.status = 1
+            if marks.add():
+                # update the marks table
+                self.update_marks_table()
+                marks.close_connection()
+                popup.title = 'Success'
+                popup.content = Builder.load_string(KV.popup_alert('Successfully added a new mark!'))
+                popup.open()
+
+
+    def set_shirt_finish(self, value):
+        self.shirt_finish = str(value)
+
+    def set_shirt_preference(self, value):
+        self.shirt_preference = str(value)
+
+    def set_delivery(self):
+        self.street.text = ''
+        self.street.hint_text = 'Street Address'
+        self.street.hint_text_color = DEFAULT_COLOR
+        self.street.disabled = False if self.is_delivery.active else True
+        self.suite.text = ''
+        self.suite.hint_text = 'Suite'
+        self.suite.hint_text_color = DEFAULT_COLOR
+        self.suite.disabled = False if self.is_delivery.active else True
+        self.city.text = ''
+        self.city.hint_text = 'City'
+        self.city.hint_text_color = DEFAULT_COLOR
+        self.city.disabled = False if self.is_delivery.active else True
+        self.zipcode.text = ''
+        self.zipcode.hint_text = 'Zipcode'
+        self.zipcode.hint_text_color = DEFAULT_COLOR
+        self.zipcode.disabled = False if self.is_delivery.active else True
+        self.concierge_name.text = ''
+        self.concierge_name.hint_text = 'Concierge Name'
+        self.concierge_name.hint_text_color = DEFAULT_COLOR
+        self.concierge_name.disabled = False if self.is_delivery.active else True
+        self.concierge_number.text = ''
+        self.concierge_number.hint_text = 'Concierge Number'
+        self.concierge_number.hint_text_color = DEFAULT_COLOR
+        self.concierge_number.disabled = False if self.is_delivery.active else True
+        self.special_instructions.text = ''
+        self.special_instructions.hint_text = 'Special Instructions'
+        self.special_instructions.hint_text_color = DEFAULT_COLOR
+        self.special_instructions.disabled = False if self.is_delivery.active else True
+
+    def delete_mark(self, mark = False, *args, **kwargs):
+        print(mark)
+        popup = Popup()
+        popup.size = 800, 600
+        popup.title = 'Marks deleted'
+        marks = Custid()
+        custids = marks.where({'mark':'"{}"'.format(mark)})
+        if custids:
+            for custid in custids:
+                marks.id = custid['id']
+                if marks.delete():
+
+                    popup.content = Builder.load_string(KV.popup_alert('Mark has been succesfully deleted.'))
+
+        else:
+            popup.content = Builder.load_string(KV.popup_alert('No such mark to delete. Try again!'))
+        popup.open()
+        self.update_marks_table()
+
+    def update_marks_table(self):
+        self.marks_table.clear_widgets()
+        # create the headers
+        h1 = KV.invoice_tr(0, '#')
+        h2 = KV.invoice_tr(0, 'Customer ID')
+        h3 = KV.invoice_tr(0, 'Location')
+        h4 = KV.invoice_tr(0, 'Mark')
+        h5 = KV.invoice_tr(0, 'Status')
+        h6 = KV.invoice_tr(0, 'Action')
+        self.marks_table.add_widget(Builder.load_string(h1))
+        self.marks_table.add_widget(Builder.load_string(h2))
+        self.marks_table.add_widget(Builder.load_string(h3))
+        self.marks_table.add_widget(Builder.load_string(h4))
+        self.marks_table.add_widget(Builder.load_string(h5))
+        self.marks_table.add_widget(Builder.load_string(h6))
+
+        marks = Custid()
+        custids = marks.where({'customer_id':vars.CUSTOMER_ID})
+        even_odd = 0
+        if custids:
+            for custid in custids:
+                status = 'Active' if custid['status'] == 1 else 'Not Active'
+                even_odd += 1
+                rgba = '0.369,0.369,0.369,1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 1'
+                background_rgba = '0.369,0.369,0.369,0.1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 0.1'
+                text_color = 'e5e5e5' if even_odd % 2 == 0 else '5e5e5e'
+                tr1 = KV.widget_item(type='Label', data=even_odd, rgba=rgba,
+                                     background_rgba=background_rgba, text_color=text_color)
+                tr2 = KV.widget_item(type='Label', data=vars.CUSTOMER_ID, rgba=rgba,
+                                     background_rgba=background_rgba, text_color=text_color)
+                tr3 = KV.widget_item(type='Label', data=custid['company_id'], rgba=rgba,
+                                     background_rgba=background_rgba, text_color=text_color)
+                tr4 = KV.widget_item(type='Label', data=custid['mark'], rgba=rgba,
+                                     background_rgba=background_rgba, text_color=text_color)
+                tr5 = KV.widget_item(type='Label', data=status, rgba=rgba,
+                                     background_rgba=background_rgba, text_color=text_color)
+                tr6 = KV.widget_item(type='Button', data='Delete',
+                                     callback='self.parent.parent.parent.parent.parent.delete_mark(mark="{}")'
+                                     .format(custid['mark']))
+                self.marks_table.add_widget(Builder.load_string(tr1))
+                self.marks_table.add_widget(Builder.load_string(tr2))
+                self.marks_table.add_widget(Builder.load_string(tr3))
+                self.marks_table.add_widget(Builder.load_string(tr4))
+                self.marks_table.add_widget(Builder.load_string(tr5))
+                self.marks_table.add_widget(Builder.load_string(tr6))
+
+    def validate(self):
+        customers = User()
+        popup = Popup()
+        popup.size_hint = (None, None)
+        popup.size = '600sp', '300sp'
+        # sync database first
+        sync = Sync()
+
+        # check for errors
+        errors = 0
+        if self.phone.text == '':
+            errors += 1
+            self.phone.hint_text = "required"
+            self.phone.hint_text_color = ERROR_COLOR
+        else:
+            # check if the phone number already exists
+            phone = Job.make_numeric(data=self.phone.text)
+            data = {'phone': phone}
+            check_duplicate = customers.where(data)
+            if len(check_duplicate) > 0:
+                for cd in check_duplicate:
+                    if cd['user_id'] != vars.CUSTOMER_ID:
+                        errors += 1
+                        self.phone.hint_text = "duplicate number"
+                        self.phone.hint_text_color = ERROR_COLOR
+                        # create popup
+                        content = KV.popup_alert(
+                            'The phone number {} has been taken. Please use a new number'.format(self.phone.text))
+                        popup.content = Builder.load_string(content)
+                        popup.open()
+
+            elif not Job.check_valid_phone(phone):
+                errors += 1
+                self.phone.hint_text = "not valid"
+                self.phone.hint_text_color = ERROR_COLOR
+                # create popup
+                content = KV.popup_alert(
+                    'The phone number {} is not a valid phone number. Please try again'.format(self.phone.text))
+                popup.content = Builder.load_string(content)
+                popup.open()
+            else:
+                self.phone.hint_text = "(XXX) XXX-XXXX"
+                self.phone.hint_text_color = DEFAULT_COLOR
+
+        if self.last_name.text == '':
+            errors += 1
+            self.last_name.hint_text = "required"
+            self.last_name.hint_text_color = ERROR_COLOR
+        else:
+            self.last_name.hint_text = "Last Name"
+            self.last_name.hint_text_color = DEFAULT_COLOR
+
+        if self.first_name.text == '':
+            errors += 1
+            self.first_name.hint_text = "required"
+            self.first_name.hint_text_color = ERROR_COLOR
+        else:
+            self.first_name.hint_text = "Last Name"
+            self.first_name.hint_text_color = DEFAULT_COLOR
+
+        if self.email.text and not Job.check_valid_email(self.email.text):
+            errors += 1
+            self.email.text = ''
+            self.email.hint_text = 'Not valid'
+            self.email.hint_text_color = ERROR_COLOR
+
+        # Check if delivery is active
+        if self.is_delivery.active:
+            if self.street.text == '':
+                errors += 1
+                self.street.hint_text = 'required'
+                self.street.hint_text_color = ERROR_COLOR
+            else:
+                self.street.hint_text = 'Street'
+                self.street.hint_text_color = DEFAULT_COLOR
+            if self.city.text == '':
+                errors += 1
+                self.city.hint_text = 'required'
+                self.city.hint_text_color = ERROR_COLOR
+            else:
+                self.city.hint_text = 'City'
+                self.city.hint_text_color = DEFAULT_COLOR
+            if self.zipcode.text == '':
+                errors += 1
+                self.zipcode.hint_text = 'required'
+                self.zipcode.hint_text_color = ERROR_COLOR
+            else:
+                self.zipcode.hint_text = 'Zipcode'
+                self.zipcode.hint_text_color = DEFAULT_COLOR
+
+        if errors == 0:  # if no errors then save
+            where = {'user_id': vars.CUSTOMER_ID}
+            data = {}
+            data['company_id'] = auth_user.company_id
+            data['phone'] = Job.make_numeric(data=self.phone.text)
+            data['last_name'] = Job.make_no_whitespace(data=self.last_name.text)
+            data['first_name'] = Job.make_no_whitespace(data=self.first_name.text)
+            data['email'] = self.email.text if Job.check_valid_email(email=self.email.text) else None
+            data['important_memo'] = self.important_memo.text if self.important_memo.text else None
+            data['invoice_memo'] = self.invoice_memo.text if self.invoice_memo.text else None
+            data['shirt'] = self.shirt_finish
+            data['starch'] = self.shirt_preference
+            if self.is_delivery.active:
+                data['customers'].street = self.street.text
+                data['customers.suite'] = Job.make_no_whitespace(data=self.suite.text)
+                data['customers.city'] = Job.make_no_whitespace(data=self.city.text)
+                data['customers.zipcode'] = Job.make_no_whitespace(data=self.zipcode.text)
+                data['customers.concierge_name'] = self.concierge_name.text
+                data['customers.concierge_number'] = Job.make_numeric(data=self.concierge_number.text)
+                data[
+                    'customers.special_instructions'] = self.special_instructions.text if self.special_instructions.text else None
+
+            if customers.put(where=where, data=data):
+                # create the customer mark
+                marks = Custid()
+
+                updated_mark = marks.create_customer_mark(last_name=self.last_name.text,
+                                                          customer_id=str(vars.CUSTOMER_ID),
+                                                          starch=customers.get_starch(self.shirt_preference))
+                where = {'customer_id': vars.CUSTOMER_ID}
+                data = {'mark': updated_mark}
+                if marks.put(where=where, data=data):
+                    sync.db_sync(auth_user.company_id)  # update the database with the new mark and save it
+
+                self.reset()
+                self.customer_select(vars.CUSTOMER_ID)
+                # create popup
+                content = KV.popup_alert("You have successfully edited this customer.")
+                popup.content = Builder.load_string(content)
+                popup.open()
+                marks.close_connection()
+
+        customers.close_connection()
+
+    def customer_select(self, customer_id, *args, **kwargs):
+        vars.SEARCH_RESULTS_STATUS = True
+        vars.ROW_CAP = 0
+        vars.CUSTOMER_ID = customer_id
+        vars.INVOICE_ID = None
+        vars.ROW_SEARCH = 0, 9
+        self.parent.current = 'search'
+        # last 10 setup
+        vars.update_last_10()
 
 
 class HistoryScreen(Screen):
@@ -245,16 +725,18 @@ class Last10Screen(Screen):
         # create TH
         h1 = KV.widget_item(type='Label', data='#', text_color='000000', rgba=(1, 1, 1, 1))
         h2 = KV.widget_item(type='Label', data='ID', text_color='000000', rgba=(1, 1, 1, 1))
-        h3 = KV.widget_item(type='Label', data='Last', text_color='000000', rgba=(1, 1, 1, 1))
-        h4 = KV.widget_item(type='Label', data='First', text_color='000000', rgba=(1, 1, 1, 1))
-        h5 = KV.widget_item(type='Label', data='Phone', text_color='000000', rgba=(1, 1, 1, 1))
-        h6 = KV.widget_item(type='Label', data='Action', text_color='000000', rgba=(1, 1, 1, 1))
+        h3 = KV.widget_item(type='Label', data='Mark', text_color='000000', rgba=(1, 1, 1, 1))
+        h4 = KV.widget_item(type='Label', data='Last', text_color='000000', rgba=(1, 1, 1, 1))
+        h5 = KV.widget_item(type='Label', data='First', text_color='000000', rgba=(1, 1, 1, 1))
+        h6 = KV.widget_item(type='Label', data='Phone', text_color='000000', rgba=(1, 1, 1, 1))
+        h7 = KV.widget_item(type='Label', data='Action', text_color='000000', rgba=(1, 1, 1, 1))
         self.last10_table.add_widget(Builder.load_string(h1))
         self.last10_table.add_widget(Builder.load_string(h2))
         self.last10_table.add_widget(Builder.load_string(h3))
         self.last10_table.add_widget(Builder.load_string(h4))
         self.last10_table.add_widget(Builder.load_string(h5))
         self.last10_table.add_widget(Builder.load_string(h6))
+        self.last10_table.add_widget(Builder.load_string(h7))
         customers = User()
         # create Tbody TR
         even_odd = 0
@@ -268,17 +750,25 @@ class Last10Screen(Screen):
                 cust1 = customers.where(data)
                 if len(cust1) > 0:
                     for cust in cust1:
+                        marks = Custid()
+                        mark = ''
+                        custids = marks.where({'customer_id': cust['user_id']})
+                        if custids:
+                            for custid in custids:
+                                mark = custid['mark']
                         tr1 = KV.widget_item(type='Label', data=even_odd, rgba=rgba,
                                              background_rgba=background_rgba, text_color=text_color)
                         tr2 = KV.widget_item(type='Label', data=customer_id, rgba=rgba,
                                              background_rgba=background_rgba, text_color=text_color)
-                        tr3 = KV.widget_item(type='Label', data=cust['last_name'], rgba=rgba,
+                        tr3 = KV.widget_item(type='Label', data=mark, rgba=rgba,
                                              background_rgba=background_rgba, text_color=text_color)
-                        tr4 = KV.widget_item(type='Label', data=cust['first_name'], rgba=rgba,
+                        tr4 = KV.widget_item(type='Label', data=cust['last_name'], rgba=rgba,
                                              background_rgba=background_rgba, text_color=text_color)
-                        tr5 = KV.widget_item(type='Label', data=cust['phone'], rgba=rgba,
+                        tr5 = KV.widget_item(type='Label', data=cust['first_name'], rgba=rgba,
                                              background_rgba=background_rgba, text_color=text_color)
-                        tr6 = KV.widget_item(type='Button', data='View',
+                        tr6 = KV.widget_item(type='Label', data=cust['phone'], rgba=rgba,
+                                             background_rgba=background_rgba, text_color=text_color)
+                        tr7 = KV.widget_item(type='Button', data='View',
                                              callback='self.parent.parent.parent.customer_select({})'
                                              .format(customer_id))
                         self.last10_table.add_widget(Builder.load_string(tr1))
@@ -287,6 +777,7 @@ class Last10Screen(Screen):
                         self.last10_table.add_widget(Builder.load_string(tr4))
                         self.last10_table.add_widget(Builder.load_string(tr5))
                         self.last10_table.add_widget(Builder.load_string(tr6))
+                        self.last10_table.add_widget(Builder.load_string(tr7))
         fc_cancel = KV.widget_item(type='Button', data='Cancel', callback='app.root.current = "search"')
         self.last10_footer.add_widget(Builder.load_string(fc_cancel))
         customers.close_connection()
@@ -313,54 +804,238 @@ class NewCustomerScreen(Screen):
     email = ObjectProperty(None)
     important_memo = ObjectProperty(None)
     invoice_memo = ObjectProperty(None)
-    shirt_finish = None
-    shirt_preference = None
+    shirt_finish = '1'
+    shirt_preference = '1'
+    default_shirts_finish = ObjectProperty(None)
+    is_delivery = ObjectProperty(None)
+    street = ObjectProperty(None)
+    suite = ObjectProperty(None)
+    city = ObjectProperty(None)
+    zipcode = ObjectProperty(None)
+    concierge_name = ObjectProperty(None)
+    concierge_number = ObjectProperty(None)
+    special_instructions = ObjectProperty(None)
+
+    def reset(self):
+        self.last_name.text = ''
+        self.last_name.hint_text = 'Last Name'
+        self.last_name.hint_text_color = DEFAULT_COLOR
+        self.first_name.text = ''
+        self.first_name.hint_text = 'First Name'
+        self.first_name.hint_text_color = DEFAULT_COLOR
+        self.phone.text = ''
+        self.phone.hint_text = '(XXX) XXX-XXXX'
+        self.phone.hint_text_color = DEFAULT_COLOR
+        self.email.text = ''
+        self.email.hint_text = 'example@example.com'
+        self.email.hint_text_color = DEFAULT_COLOR
+        self.important_memo.text = ''
+        self.important_memo.hint_text = 'Important Memo'
+        self.important_memo.hint_text_color = DEFAULT_COLOR
+        self.invoice_memo.text = ''
+        self.invoice_memo.hint_text = 'Invoiced Memo'
+        self.invoice_memo.hint_text_color = DEFAULT_COLOR
+        self.default_shirts_finish.active = True
+        self.default_shirts_preference.active = True
+        self.street.text = ''
+        self.street.hint_text = 'Street Address'
+        self.street.hint_text_color = DEFAULT_COLOR
+        self.street.disabled = True
+        self.suite.text = ''
+        self.suite.hint_text = 'Suite'
+        self.suite.hint_text_color = DEFAULT_COLOR
+        self.suite.disabled = True
+        self.city.text = ''
+        self.city.hint_text = 'City'
+        self.city.hint_text_color = DEFAULT_COLOR
+        self.city.disabled = True
+        self.zipcode.text = ''
+        self.zipcode.hint_text = 'Zipcode'
+        self.zipcode.hint_text_color = DEFAULT_COLOR
+        self.zipcode.disabled = True
+        self.concierge_name.text = ''
+        self.concierge_name.hint_text = 'Concierge Name'
+        self.concierge_name.hint_text_color = DEFAULT_COLOR
+        self.concierge_name.disabled = True
+        self.concierge_number.text = ''
+        self.concierge_number.hint_text = 'Concierge Number'
+        self.concierge_number.hint_text_color = DEFAULT_COLOR
+        self.concierge_number.disabled = True
+        self.special_instructions.text = ''
+        self.special_instructions.hint_text = 'Special Instructions'
+        self.special_instructions.hint_text_color = DEFAULT_COLOR
+        self.special_instructions.disabled = True
+        self.is_delivery.active = False
 
     def set_shirt_finish(self, value):
-        self.shirt_finish = value
+        self.shirt_finish = str(value)
 
     def set_shirt_preference(self, value):
-        self.shirt_preference = value
+        self.shirt_preference = str(value)
+
+    def set_delivery(self):
+        self.street.text = ''
+        self.street.hint_text = 'Street Address'
+        self.street.hint_text_color = DEFAULT_COLOR
+        self.street.disabled = False if self.is_delivery.active else True
+        self.suite.text = ''
+        self.suite.hint_text = 'Suite'
+        self.suite.hint_text_color = DEFAULT_COLOR
+        self.suite.disabled = False if self.is_delivery.active else True
+        self.city.text = ''
+        self.city.hint_text = 'City'
+        self.city.hint_text_color = DEFAULT_COLOR
+        self.city.disabled = False if self.is_delivery.active else True
+        self.zipcode.text = ''
+        self.zipcode.hint_text = 'Zipcode'
+        self.zipcode.hint_text_color = DEFAULT_COLOR
+        self.zipcode.disabled = False if self.is_delivery.active else True
+        self.concierge_name.text = ''
+        self.concierge_name.hint_text = 'Concierge Name'
+        self.concierge_name.hint_text_color = DEFAULT_COLOR
+        self.concierge_name.disabled = False if self.is_delivery.active else True
+        self.concierge_number.text = ''
+        self.concierge_number.hint_text = 'Concierge Number'
+        self.concierge_number.hint_text_color = DEFAULT_COLOR
+        self.concierge_number.disabled = False if self.is_delivery.active else True
+        self.special_instructions.text = ''
+        self.special_instructions.hint_text = 'Special Instructions'
+        self.special_instructions.hint_text_color = DEFAULT_COLOR
+        self.special_instructions.disabled = False if self.is_delivery.active else True
 
     def validate(self):
+        customers = User()
         popup = Popup()
         popup.size_hint = (None, None)
         popup.size = '600sp', '300sp'
         # sync database first
         sync = Sync()
-        sync.db_sync()
 
         # check for errors
         errors = 0
         if self.phone.text == '':
             errors += 1
+            self.phone.hint_text = "required"
+            self.phone.hint_text_color = ERROR_COLOR
+        else:
+            # check if the phone number already exists
+            phone = Job.make_numeric(data=self.phone.text)
+            data = {'phone': phone}
+            if len(customers.where(data)) > 0:
+                errors += 1
+                self.phone.hint_text = "duplicate number"
+                self.phone.hint_text_color = ERROR_COLOR
+                # create popup
+                content = KV.popup_alert(
+                    'The phone number {} has been taken. Please use a new number'.format(self.phone.text))
+                popup.content = Builder.load_string(content)
+                popup.open()
+
+            elif not Job.check_valid_phone(phone):
+                errors += 1
+                self.phone.hint_text = "not valid"
+                self.phone.hint_text_color = ERROR_COLOR
+                # create popup
+                content = KV.popup_alert(
+                    'The phone number {} is not a valid phone number. Please try again'.format(self.phone.text))
+                popup.content = Builder.load_string(content)
+                popup.open()
+            else:
+                self.phone.hint_text = "(XXX) XXX-XXXX"
+                self.phone.hint_text_color = DEFAULT_COLOR
+
         if self.last_name.text == '':
             errors += 1
+            self.last_name.hint_text = "required"
+            self.last_name.hint_text_color = ERROR_COLOR
+        else:
+            self.last_name.hint_text = "Last Name"
+            self.last_name.hint_text_color = DEFAULT_COLOR
+
         if self.first_name.text == '':
             errors += 1
+            self.first_name.hint_text = "required"
+            self.first_name.hint_text_color = ERROR_COLOR
+        else:
+            self.first_name.hint_text = "Last Name"
+            self.first_name.hint_text_color = DEFAULT_COLOR
 
-        if errors == 0: # if no errors then save
-            customers = User()
+        if self.email.text and not Job.check_valid_email(self.email.text):
+            errors += 1
+            self.email.text = ''
+            self.email.hint_text = 'Not valid'
+            self.email.hint_text_color = ERROR_COLOR
+
+        # Check if delivery is active
+        if self.is_delivery.active:
+            if self.street.text == '':
+                errors += 1
+                self.street.hint_text = 'required'
+                self.street.hint_text_color = ERROR_COLOR
+            else:
+                self.street.hint_text = 'Street'
+                self.street.hint_text_color = DEFAULT_COLOR
+            if self.city.text == '':
+                errors += 1
+                self.city.hint_text = 'required'
+                self.city.hint_text_color = ERROR_COLOR
+            else:
+                self.city.hint_text = 'City'
+                self.city.hint_text_color = DEFAULT_COLOR
+            if self.zipcode.text == '':
+                errors += 1
+                self.zipcode.hint_text = 'required'
+                self.zipcode.hint_text_color = ERROR_COLOR
+            else:
+                self.zipcode.hint_text = 'Zipcode'
+                self.zipcode.hint_text_color = DEFAULT_COLOR
+
+        if errors == 0:  # if no errors then save
+            customers.company_id = auth_user.company_id
             customers.role_id = 3
-            customers.phone = self.phone.text
-            customers.last_name = self.last_name.text
-            customers.first_name = self.first_name.text
-            customers.email = self.email.text if self.email.text else None
+            customers.phone = Job.make_numeric(data=self.phone.text)
+            customers.last_name = Job.make_no_whitespace(data=self.last_name.text)
+            customers.first_name = Job.make_no_whitespace(data=self.first_name.text)
+            customers.email = self.email.text if Job.check_valid_email(email=self.email.text) else None
             customers.important_memo = self.important_memo.text if self.important_memo.text else None
             customers.invoice_memo = self.invoice_memo.text if self.invoice_memo.text else None
             customers.shirt = self.shirt_finish
             customers.starch = self.shirt_preference
+            if self.is_delivery.active:
+                customers.street = self.street.text
+                customers.suite = Job.make_no_whitespace(data=self.suite.text)
+                customers.city = Job.make_no_whitespace(data=self.city.text)
+                customers.zipcode = Job.make_no_whitespace(data=self.zipcode.text)
+                customers.concierge_name = self.concierge_name.text
+                customers.concierge_number = Job.make_numeric(data=self.concierge_number.text)
+                customers.special_instructions = self.special_instructions.text if self.special_instructions.text else None
 
             if customers.add():
-                sync.db_sync() # send the data to the server and get back the updated user id
-                # send user to search
 
-                self.customer_select(customers.user_id)
+                if sync.db_sync(auth_user.company_id):  # send the data to the server and get back the updated user id
+                    # send user to search
+                    last_row = customers.get_last_inserted_row()
+                    customers.id = last_row
+                    new_customer = customers.first({'id': customers.id})
+                    customers.user_id = new_customer['user_id']
+                    # create the customer mark
+                    marks = Custid()
+                    marks.customer_id = customers.user_id
+                    marks.company_id = auth_user.company_id
+                    marks.mark = marks.create_customer_mark(last_name=customers.last_name,
+                                                            customer_id=str(customers.user_id),
+                                                            starch=customers.get_starch(customers.starch))
+                    marks.status = 1
+                    if marks.add():
+                        sync.db_sync(auth_user.company_id)  # update the database with the new mark and save it
 
-                # create popup
-                content = KV.popup_alert("You have successfully created a new customer.")
-                popup.content = Builder.load_string(content)
-                popup.open()
+                    self.reset()
+                    self.customer_select(customers.user_id)
+                    # create popup
+                    content = KV.popup_alert("You have successfully created a new customer.")
+                    popup.content = Builder.load_string(content)
+                    popup.open()
+        customers.close_connection()
 
     def customer_select(self, customer_id, *args, **kwargs):
         vars.SEARCH_RESULTS_STATUS = True
@@ -371,8 +1046,6 @@ class NewCustomerScreen(Screen):
         self.parent.current = 'search'
         # last 10 setup
         vars.update_last_10()
-
-
 
 
 class PickupScreen(Screen):
@@ -396,6 +1069,7 @@ class SearchScreen(Screen):
     cust_credit = ObjectProperty(None)
     cust_invoice_memo = ObjectProperty(None)
     cust_important_memo = ObjectProperty(None)
+    customer_mark_l = ObjectProperty(None)
     history_btn = ObjectProperty(None)
     edit_customer_btn = ObjectProperty(None)
     edit_invoice_btn = ObjectProperty(None)
@@ -409,21 +1083,20 @@ class SearchScreen(Screen):
     search_results_footer = ObjectProperty(None)
 
     def reset(self, *args, **kwargs):
-        vars.ROW_SEARCH = 0, 9
+        vars.ROW_SEARCH = 0, 10
         vars.ROW_CAP = 0
         vars.SEARCH_TEXT = None
         if vars.SEARCH_RESULTS_STATUS:
 
             self.edit_invoice_btn.disabled = True
-            data = {
-                'user_id': vars.CUSTOMER_ID
-            }
+            data = {'user_id': vars.CUSTOMER_ID}
             customers = User()
             results = customers.where(data)
             self.customer_results(results)
         else:
             vars.CUSTOMER_ID = None
             self.search.text = ''
+            self.customer_mark_l = ''
             self.cust_last_name.text = ''
             self.cust_first_name.text = ''
             self.cust_phone.text = ''
@@ -451,16 +1124,31 @@ class SearchScreen(Screen):
         vars.SEARCH_RESULTS_STATUS = False
 
     def search_customer(self, *args, **kwargs):
+        popup = Popup()
         search_text = self.search.text
         customers = User()
-        if self.is_int(search_text):
+
+        data = {'mark': '"%{}%"'.format(self.search.text)}
+        marks = Custid()
+        custids = marks.like(data)
+        where = []
+        for custid in custids:
+            cust_id = custid['customer_id']
+            where.append(cust_id)
+
+        if len(where) == 1:
+            data = {'user_id': where[0]}
+            cust1 = customers.where(data)
+            self.customer_results(cust1)
+        elif len(where) > 1:
+            cust1 = customers.or_search(where=where)
+            self.customer_results(cust1)
+
+        elif Job.is_int(search_text):
             # check to see if length is 7 or greater
             if len(search_text) >= 7:  # This is a phone number
                 # First check to see if the number is exact
-                data = {
-                    'phone': '"%{}%"'.format(self.search.text)
-                }
-
+                data = {'phone': '"%{}%"'.format(self.search.text)}
                 cust1 = customers.like(data)
                 self.customer_results(cust1)
 
@@ -476,26 +1164,22 @@ class SearchScreen(Screen):
                         vars.CUSTOMER_ID = invoice['customer_id']
                         self.invoice_selected(invoice_id=vars.INVOICE_ID)
 
-
                 else:
-                    self.search_popup.title = 'No such invoice'
-                    self.search_popup.size_hint = None, None
-                    self.search_popup.size = 900, 600
+                    popup.title = 'No such invoice'
+                    popup.size_hint = None, None
+                    popup.size = 800, 600
                     content = KV.popup_alert(msg="Could not find an invoice with this invoice id. Please try again")
-                    self.search_popup.content = Builder.load_string(content)
-                    self.search_popup.open()
+                    popup.content = Builder.load_string(content)
+                    popup.open()
+
             else:  # look for a customer id
-                data = {
-                    'user_id': self.search.text
-                }
+                data = {'user_id': self.search.text}
                 cust1 = customers.where(data)
                 self.customer_results(cust1)
 
-
         else:  # Lookup by last name || mark
-            data = {
-                'last_name': '"%{}%"'.format(self.search.text),
-            }
+
+            data = {'last_name': '"%{}%"'.format(self.search.text)}
             vars.ROW_CAP = len(customers.like(data))
             vars.SEARCH_TEXT = self.search.text
 
@@ -504,26 +1188,22 @@ class SearchScreen(Screen):
                 'ORDER_BY': 'last_name ASC',
                 'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
             }
+
             cust1 = customers.like(data)
             self.customer_results(cust1)
 
         customers.close_connection()
 
-    def is_int(self, s):
-        try:
-            int(s)
-            return True
-        except ValueError:
-            return False
-
     def create_invoice_headers(self):
 
         h1 = KV.invoice_tr(0, 'Inv')
+        h2 = KV.invoice_tr(0, 'Loc')
         h3 = KV.invoice_tr(0, 'Due')
         h4 = KV.invoice_tr(0, 'Rack')
         h5 = KV.invoice_tr(0, 'Qty')
         h6 = KV.invoice_tr(0, 'Total')
         self.invoice_table.add_widget(Builder.load_string(h1))
+        self.invoice_table.add_widget(Builder.load_string(h2))
         self.invoice_table.add_widget(Builder.load_string(h3))
         self.invoice_table.add_widget(Builder.load_string(h4))
         self.invoice_table.add_widget(Builder.load_string(h5))
@@ -534,6 +1214,7 @@ class SearchScreen(Screen):
         """ Creates invoice table row and displays it to screen """
         check_invoice_id = int(vars.INVOICE_ID) if vars.INVOICE_ID else vars.INVOICE_ID
         invoice_id = row['invoice_id']
+        company_id = row['company_id']
         quantity = row['quantity']
         rack = row['rack']
         total = row['total']
@@ -560,11 +1241,13 @@ class SearchScreen(Screen):
         selected = True if invoice_id == check_invoice_id else False
 
         tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id)
+        tr_2 = KV.invoice_tr(state, company_id, selected=selected, invoice_id=invoice_id)
         tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id)
         tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id)
         tr_5 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id)
         tr_6 = KV.invoice_tr(state, total, selected=selected, invoice_id=invoice_id)
         self.invoice_table.add_widget(Builder.load_string(tr_1))
+        self.invoice_table.add_widget(Builder.load_string(tr_2))
         self.invoice_table.add_widget(Builder.load_string(tr_3))
         self.invoice_table.add_widget(Builder.load_string(tr_4))
         self.invoice_table.add_widget(Builder.load_string(tr_5))
@@ -737,15 +1420,17 @@ class SearchResultsScreen(Screen):
 
         # create TH
         h1 = KV.widget_item(type='Label', data='ID', text_color='000000', rgba=(1, 1, 1, 1))
-        h2 = KV.widget_item(type='Label', data='Last', text_color='000000', rgba=(1, 1, 1, 1))
-        h3 = KV.widget_item(type='Label', data='First', text_color='000000', rgba=(1, 1, 1, 1))
-        h4 = KV.widget_item(type='Label', data='Phone', text_color='000000', rgba=(1, 1, 1, 1))
-        h5 = KV.widget_item(type='Label', data='Action', text_color='000000', rgba=(1, 1, 1, 1))
+        h2 = KV.widget_item(type='Label', data='Mark', text_color='000000', rgba=(1, 1, 1, 1))
+        h3 = KV.widget_item(type='Label', data='Last', text_color='000000', rgba=(1, 1, 1, 1))
+        h4 = KV.widget_item(type='Label', data='First', text_color='000000', rgba=(1, 1, 1, 1))
+        h5 = KV.widget_item(type='Label', data='Phone', text_color='000000', rgba=(1, 1, 1, 1))
+        h6 = KV.widget_item(type='Label', data='Action', text_color='000000', rgba=(1, 1, 1, 1))
         self.search_results_table.add_widget(Builder.load_string(h1))
         self.search_results_table.add_widget(Builder.load_string(h2))
         self.search_results_table.add_widget(Builder.load_string(h3))
         self.search_results_table.add_widget(Builder.load_string(h4))
         self.search_results_table.add_widget(Builder.load_string(h5))
+        self.search_results_table.add_widget(Builder.load_string(h6))
 
         # create Tbody TR
         even_odd = 0
@@ -759,15 +1444,24 @@ class SearchResultsScreen(Screen):
                 rgba = '0.369,0.369,0.369,1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 1'
                 background_rgba = '0.369,0.369,0.369,0.1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 0.1'
                 text_color = 'e5e5e5' if even_odd % 2 == 0 else '5e5e5e'
+                marks = Custid()
+                mark = ''
+                custids = marks.where({'customer_id': cust['user_id']})
+                if custids:
+                    for custid in custids:
+                        mark = custid['mark']
+                marks.close_connection()
                 tr1 = KV.widget_item(type='Label', data=customer_id, rgba=rgba,
                                      background_rgba=background_rgba, text_color=text_color)
-                tr2 = KV.widget_item(type='Label', data=last_name, rgba=rgba,
+                tr2 = KV.widget_item(type='Label', data=mark, rgba=rgba,
                                      background_rgba=background_rgba, text_color=text_color)
-                tr3 = KV.widget_item(type='Label', data=first_name, rgba=rgba,
+                tr3 = KV.widget_item(type='Label', data=last_name, rgba=rgba,
                                      background_rgba=background_rgba, text_color=text_color)
-                tr4 = KV.widget_item(type='Label', data=phone, rgba=rgba,
+                tr4 = KV.widget_item(type='Label', data=first_name, rgba=rgba,
                                      background_rgba=background_rgba, text_color=text_color)
-                tr5 = KV.widget_item(type='Button', data='View',
+                tr5 = KV.widget_item(type='Label', data=phone, rgba=rgba,
+                                     background_rgba=background_rgba, text_color=text_color)
+                tr6 = KV.widget_item(type='Button', data='View',
                                      callback='self.parent.parent.parent.customer_select({})'
                                      .format(customer_id))
                 self.search_results_table.add_widget(Builder.load_string(tr1))
@@ -775,6 +1469,7 @@ class SearchResultsScreen(Screen):
                 self.search_results_table.add_widget(Builder.load_string(tr3))
                 self.search_results_table.add_widget(Builder.load_string(tr4))
                 self.search_results_table.add_widget(Builder.load_string(tr5))
+                self.search_results_table.add_widget(Builder.load_string(tr6))
         fc_cancel = KV.widget_item(type='Button', data='Cancel', callback='app.root.current = "search"')
         fc_up = KV.widget_item(type='Button', data='Prev', callback='self.parent.parent.parent.prev()')
         fc_down = KV.widget_item(type='Button', data='Next', callback='self.parent.parent.parent.next()')
@@ -787,7 +1482,7 @@ class SearchResultsScreen(Screen):
         if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
             vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
         else:
-            vars.ROW_SEARCH = vars.ROW_SEARCH[0] + 10, vars.ROW_SEARCH[1] + 10
+            vars.ROW_SEARCH = vars.ROW_SEARCH[1] + 1, vars.ROW_SEARCH[1] + 10
         data = {
             'last_name': '"%{}%"'.format(vars.SEARCH_TEXT),
             'ORDER_BY': 'last_name ASC',
@@ -802,8 +1497,8 @@ class SearchResultsScreen(Screen):
         self.get_results()
 
     def prev(self):
-        if vars.ROW_SEARCH[1] - 10 < 10:
-            vars.ROW_SEARCH = 0, 9
+        if vars.ROW_SEARCH[0] - 10 < 10:
+            vars.ROW_SEARCH = 0, 10
         else:
             vars.ROW_SEARCH = vars.ROW_SEARCH[0] - 10, vars.ROW_SEARCH[1] - 10
 
@@ -846,12 +1541,11 @@ class ScreenManagement(ScreenManager):
 # load kv files
 presentation = Builder.load_file("kv/main.kv")
 
-class MainApp(App):
 
+class MainApp(App):
     def build(self):
         return presentation
 
 
 if __name__ == "__main__":
-
     MainApp().run()

@@ -36,6 +36,7 @@ class InvoiceItem:
         table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
                                   IntegerField(column='invoice_items_id').data_type(),
                                   IntegerField(column='invoice_id').data_type(),
+                                  IntegerField(column='item_id').data_type(),
                                   IntegerField(column='company_id').data_type(),
                                   IntegerField(column='customer_id').data_type(),
                                   IntegerField(column='quantity').data_type(),
@@ -55,10 +56,11 @@ class InvoiceItem:
 
     def add(self):
 
-        self.c.execute('''INSERT INTO {t}(invoice_items_id,invoice_id,company_id,customer_id,quantity,color,memo,
-pretax,tax,total,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table),
+        self.c.execute('''INSERT INTO {t}(invoice_items_id,invoice_id,item_id,company_id,customer_id,quantity,color,memo,
+pretax,tax,total,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table),
                        (self.invoice_items_id,
                         self.invoice_id,
+                        self.item_id,
                         self.company_id,
                         self.customer_id,
                         self.quantity,
@@ -75,12 +77,38 @@ pretax,tax,total,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
         self.conn.commit()
         return True
 
+    def put(self, where = False, data = False):
+        sql = '''UPDATE {t} SET '''.format(t=table)
+        idx = 0
+        if len(data) > 0:
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    sql += '''{k} = "{v}" '''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = "{v}", '''.format(k=key, v=value)
+        sql += '''WHERE '''
+        idx = 0
+        if len(where) > 0:
+            for key, value in where.items():
+                idx += 1
+                if idx == len(where):
+                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+        self.c.execute(sql)
+        self.conn.commit()
+
+        return True
+
     def update(self):
 
-        self.c.execute('''UPDATE {t} SET invoice_items_id = ?, invoice_id = ?, company_id = ?, customer_id = ?,
+        self.c.execute('''UPDATE {t} SET invoice_items_id = ?, invoice_id = ?, item_id = ?, company_id = ?, customer_id = ?,
 quantity = ?, color = ?, memo = ?, pretax = ?, tax = ?, total = ?, status = ?, updated_at = ?
 WHERE id = ?'''.format(t=table), (self.invoice_items_id,
                                   self.invoice_id,
+                                  self.item_id,
                                   self.company_id,
                                   self.customer_id,
                                   self.quantity,
@@ -99,7 +127,7 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
 
     def find(self):
         try:
-            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(t=table), (str(self.id)))
+            self.c.execute("""SELECT * FROM {t} WHERE deleted_at is null AND id = ?""".format(table), (str(self.id)))
             self.conn.commit()
         except ValueError:
             return "Could not find the company with that id"
@@ -110,7 +138,7 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
 
     def first(self, data=False):
         if data:
-            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            sql = '''SELECT * FROM {t} WHERE deleted_at is null AND '''.format(t=table)
             idx = 0
             for key, value in data.items():
                 idx += 1
@@ -118,6 +146,7 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
                     sql += '''{k} = {v}'''.format(k=key, v=value)
                 elif idx < len(data):
                     sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchone()
@@ -133,11 +162,9 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
             if 'ORDER_BY' in data:
                 order_by = data['ORDER_BY']
                 del (data['ORDER_BY'])
-                print('removed order_by {}'.format(order_by))
             if 'LIMIT' in data:
                 limit = data['LIMIT']
                 del (data['LIMIT'])
-                print('removed limit {}'.format(limit))
 
             for key, value in data.items():
                 idx += 1
@@ -160,6 +187,48 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
                             sql += '''{k} is null AND '''.format(k=key)
                         else:
                             sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+                sql += ' AND deleted_at is null'
+
+            if order_by:
+                sql += ''' ORDER BY {} '''.format(order_by)
+
+            if limit:
+                sql += '''LIMIT {}'''.format(limit)
+
+            self.c.execute(sql)
+            self.conn.commit()
+            return self.c.fetchall()
+        else:
+            return False
+
+    def like(self, data=False):
+        if data:
+            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            idx = 0
+            order_by = False
+            limit = False
+            if 'ORDER_BY' in data:
+                order_by = data['ORDER_BY']
+                del (data['ORDER_BY'])
+            if 'LIMIT' in data:
+                limit = data['LIMIT']
+                del (data['LIMIT'])
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    if value is None:
+                        sql += '''{k} is null'''.format(k=key)
+                    else:
+                        sql += '''{k} LIKE {v}'''.format(k=key, v=value)
+                elif idx < len(data):
+                    if value is None:
+                        sql += '''{k} is null AND '''.format(k=key)
+                    else:
+                        sql += '''{k} LIKE {v} AND '''.format(k=key, v=value)
+
+            sql += ' AND deleted_at is null '
+
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
 

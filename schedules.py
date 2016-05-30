@@ -54,21 +54,46 @@ class Schedule:
 
         self.c.execute('''INSERT INTO {t}(schedule_id,company_id,pickup_delivery_id,pickup_date,dropoff_delivery_id,
 dropoff_date,special_instructions,type,token,status,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
-                                                       self.company_id,
-                                                       self.pickup_delivery_id,
-                                                       self.pickup_date,
-                                                       self.dropoff_delivery_id,
-                                                       self.dropoff_date,
-                                                       self.special_instructions,
-                                                       self.type,
-                                                       self.token,
-                                                       self.status,
-                                                       self.created_at,
-                                                       self.updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
+                                                     self.company_id,
+                                                     self.pickup_delivery_id,
+                                                     self.pickup_date,
+                                                     self.dropoff_delivery_id,
+                                                     self.dropoff_date,
+                                                     self.special_instructions,
+                                                     self.type,
+                                                     self.token,
+                                                     self.status,
+                                                     self.created_at,
+                                                     self.updated_at)
                        )
 
         self.conn.commit()
+        return True
+
+    def put(self, where=False, data=False):
+        sql = '''UPDATE {t} SET '''.format(t=table)
+        idx = 0
+        if len(data) > 0:
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    sql += '''{k} = "{v}" '''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = "{v}", '''.format(k=key, v=value)
+        sql += '''WHERE '''
+        idx = 0
+        if len(where) > 0:
+            for key, value in where.items():
+                idx += 1
+                if idx == len(where):
+                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+        self.c.execute(sql)
+        self.conn.commit()
+
         return True
 
     def update(self):
@@ -94,7 +119,7 @@ WHERE id = ?'''.format(t=table), (self.schedule_id,
 
     def find(self):
         try:
-            self.c.execute("""SELECT * FROM {t} WHERE id = ?""".format(table), (str(self.id)))
+            self.c.execute("""SELECT * FROM {t} WHERE deleted_at is null AND id = ?""".format(table), (str(self.id)))
             self.conn.commit()
         except ValueError:
             return "Could not find the company with that id"
@@ -105,7 +130,7 @@ WHERE id = ?'''.format(t=table), (self.schedule_id,
 
     def first(self, data=False):
         if data:
-            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            sql = '''SELECT * FROM {t} WHERE deleted_at is null AND '''.format(t=table)
             idx = 0
             for key, value in data.items():
                 idx += 1
@@ -113,6 +138,7 @@ WHERE id = ?'''.format(t=table), (self.schedule_id,
                     sql += '''{k} = {v}'''.format(k=key, v=value)
                 elif idx < len(data):
                     sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchone()
@@ -128,11 +154,9 @@ WHERE id = ?'''.format(t=table), (self.schedule_id,
             if 'ORDER_BY' in data:
                 order_by = data['ORDER_BY']
                 del (data['ORDER_BY'])
-                print('removed order_by {}'.format(order_by))
             if 'LIMIT' in data:
                 limit = data['LIMIT']
                 del (data['LIMIT'])
-                print('removed limit {}'.format(limit))
 
             for key, value in data.items():
                 idx += 1
@@ -155,6 +179,48 @@ WHERE id = ?'''.format(t=table), (self.schedule_id,
                             sql += '''{k} is null AND '''.format(k=key)
                         else:
                             sql += '''{k} = {v} AND '''.format(k=key, v=value)
+
+                sql += ' AND deleted_at is null'
+
+            if order_by:
+                sql += ''' ORDER BY {} '''.format(order_by)
+
+            if limit:
+                sql += '''LIMIT {}'''.format(limit)
+
+            self.c.execute(sql)
+            self.conn.commit()
+            return self.c.fetchall()
+        else:
+            return False
+
+    def like(self, data=False):
+        if data:
+            sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
+            idx = 0
+            order_by = False
+            limit = False
+            if 'ORDER_BY' in data:
+                order_by = data['ORDER_BY']
+                del (data['ORDER_BY'])
+            if 'LIMIT' in data:
+                limit = data['LIMIT']
+                del (data['LIMIT'])
+            for key, value in data.items():
+                idx += 1
+                if idx == len(data):
+                    if value is None:
+                        sql += '''{k} is null'''.format(k=key)
+                    else:
+                        sql += '''{k} LIKE {v}'''.format(k=key, v=value)
+                elif idx < len(data):
+                    if value is None:
+                        sql += '''{k} is null AND '''.format(k=key)
+                    else:
+                        sql += '''{k} LIKE {v} AND '''.format(k=key, v=value)
+
+            sql += ' AND deleted_at is null '
+
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
 

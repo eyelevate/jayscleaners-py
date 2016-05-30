@@ -7,19 +7,20 @@
     on_enter: root.get_results()
     BoxLayout:
         orientation: 'vertical'
-        pos_hint: {'top':1}
         GridLayout:
             id:search_results_table
             size_hint: 1,0.8
-            cols:5
-            rows:10
+            pos_hint: {'top':1}
+            cols:6
+            rows:11
             row_force_default: True
-            row_default_height:75
-        BoxLayout:
+            row_default_height:'42sp'
+        GridLayout:
             size_hint: 1,0.1
+            cols:1
+            rows:1
             Label:
                 id:search_results_label
-                size_hint_y: None
                 markup: True
                 text: "[color=000000]Showing rows [b]1[/b] - [b]10[/b] out of [b]10[/b][/color]"
                 canvas.before:
@@ -29,11 +30,14 @@
                         pos: self.pos
                         size: self.size
 
-        BoxLayout:
+        GridLayout:
+            cols:3
+            rows:1
             id:search_results_footer
             size_hint: 1,0.1
+            row_force_default: True
+            row_default_height:'65sp'
             Button:
-                size_hint_y: None
                 markup: True
                 text: 'Cancel'
                 on_press: app.root.current = 'search'

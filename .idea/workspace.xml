@@ -2,11 +2,35 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="44fffa09-638c-484a-90f8-bbe28d93b5f2" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/sync.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/jobs.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/colors.py" afterPath="$PROJECT_DIR$/colors.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/companies.py" afterPath="$PROJECT_DIR$/companies.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/custids.py" afterPath="$PROJECT_DIR$/custids.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db/jayscleaners.db" afterPath="$PROJECT_DIR$/db/jayscleaners.db" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deliveries.py" afterPath="$PROJECT_DIR$/deliveries.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/discounts.py" afterPath="$PROJECT_DIR$/discounts.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/inventories.py" afterPath="$PROJECT_DIR$/inventories.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/inventory_items.py" afterPath="$PROJECT_DIR$/inventory_items.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/invoice_items.py" afterPath="$PROJECT_DIR$/invoice_items.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/invoices.py" afterPath="$PROJECT_DIR$/invoices.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/edit_customer_screen.kv" afterPath="$PROJECT_DIR$/kv/edit_customer_screen.kv" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/last10.kv" afterPath="$PROJECT_DIR$/kv/last10.kv" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/main_screen.kv" afterPath="$PROJECT_DIR$/kv/main_screen.kv" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/new_customer_screen.kv" afterPath="$PROJECT_DIR$/kv/new_customer_screen.kv" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/search_results.kv" afterPath="$PROJECT_DIR$/kv/search_results.kv" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/search_screen.kv" afterPath="$PROJECT_DIR$/kv/search_screen.kv" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main.py" afterPath="$PROJECT_DIR$/main.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/memos.py" afterPath="$PROJECT_DIR$/memos.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/printers.py" afterPath="$PROJECT_DIR$/printers.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/reward_transactions.py" afterPath="$PROJECT_DIR$/reward_transactions.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/rewards.py" afterPath="$PROJECT_DIR$/rewards.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/schedules.py" afterPath="$PROJECT_DIR$/schedules.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server.py" afterPath="$PROJECT_DIR$/server.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sync.py" afterPath="$PROJECT_DIR$/sync.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/taxes.py" afterPath="$PROJECT_DIR$/taxes.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/transactions.py" afterPath="$PROJECT_DIR$/transactions.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/users.py" afterPath="$PROJECT_DIR$/users.py" />
     </list>
     <ignored path="jayscleaners.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -27,11 +51,33 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="49" column="0" selection-start-line="49" selection-start-column="0" selection-end-line="53" selection-end-column="34" />
+            <state relative-caret-position="230">
+              <caret line="430" column="24" selection-start-line="430" selection-start-column="24" selection-end-line="430" selection-end-column="24" />
+              <folding>
+                <element signature="e#0#11#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="custids.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/custids.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="155">
+              <caret line="219" column="30" selection-start-line="219" selection-start-column="28" selection-end-line="219" selection-end-column="30" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sync.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/sync.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2325">
+              <caret line="155" column="0" selection-start-line="155" selection-start-column="0" selection-end-line="155" selection-end-column="0" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -42,40 +88,8 @@
       <file leaf-file-name="users.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/users.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3180">
-              <caret line="293" column="51" selection-start-line="293" selection-start-column="51" selection-end-line="293" selection-end-column="51" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="sync.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/sync.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1605">
-              <caret line="29" column="34" selection-start-line="29" selection-start-column="34" selection-end-line="29" selection-end-column="34" />
-              <folding>
-                <element signature="e#0#11#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="new_customer_screen.kv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/kv/new_customer_screen.kv">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="162">
-              <caret line="279" column="49" selection-start-line="279" selection-start-column="49" selection-end-line="279" selection-end-column="49" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="search_results.kv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/kv/search_results.kv">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="315">
-              <caret line="21" column="33" selection-start-line="21" selection-start-column="16" selection-end-line="21" selection-end-column="33" />
+            <state relative-caret-position="75">
+              <caret line="320" column="0" selection-start-line="320" selection-start-column="0" selection-end-line="320" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -85,37 +99,27 @@
         <entry file="file://$PROJECT_DIR$/kv/search_screen.kv">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="45">
-              <caret line="90" column="32" selection-start-line="90" selection-start-column="32" selection-end-line="90" selection-end-column="32" />
+              <caret line="3" column="36" selection-start-line="3" selection-start-column="36" selection-end-line="3" selection-end-column="36" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main_screen.kv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
+      <file leaf-file-name="edit_customer_screen.kv" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/kv/edit_customer_screen.kv">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1425">
-              <caret line="95" column="39" selection-start-line="95" selection-start-column="39" selection-end-line="95" selection-end-column="39" />
+            <state relative-caret-position="270">
+              <caret line="539" column="58" selection-start-line="539" selection-start-column="58" selection-end-line="539" selection-end-column="58" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.kv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/kv/main.kv">
+      <file leaf-file-name="invoices.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/invoices.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="1" column="36" selection-start-line="1" selection-start-column="36" selection-end-line="1" selection-end-column="36" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="kv_generator.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/kv_generator.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2340">
-              <caret line="156" column="24" selection-start-line="156" selection-start-column="24" selection-end-line="156" selection-end-column="24" />
+            <state relative-caret-position="252">
+              <caret line="201" column="12" selection-start-line="201" selection-start-column="12" selection-end-line="201" selection-end-column="12" />
               <folding />
             </state>
           </provider>
@@ -151,11 +155,26 @@
         <option value="$PROJECT_DIR$/kv/delivery_screen.kv" />
         <option value="$PROJECT_DIR$/kv/dropoff_screen.kv" />
         <option value="$PROJECT_DIR$/kv/invoice_table_headers.kv" />
-        <option value="$PROJECT_DIR$/inventories.py" />
-        <option value="$PROJECT_DIR$/discounts.py" />
-        <option value="$PROJECT_DIR$/deliveries.py" />
-        <option value="$PROJECT_DIR$/companies.py" />
+        <option value="$PROJECT_DIR$/Static.kv.py" />
+        <option value="$PROJECT_DIR$/Static.py" />
+        <option value="$PROJECT_DIR$/kv/last10.kv.py" />
+        <option value="$PROJECT_DIR$/kv/main.kv" />
+        <option value="$PROJECT_DIR$/kv_generator.py" />
+        <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/static.py" />
+        <option value="$PROJECT_DIR$/jobs.py" />
+        <option value="$PROJECT_DIR$/server.py" />
+        <option value="$PROJECT_DIR$/kv/main_screen.kv" />
+        <option value="$PROJECT_DIR$/sync.py" />
+        <option value="$PROJECT_DIR$/kv/new_customer_screen.kv" />
+        <option value="$PROJECT_DIR$/kv/last10.kv" />
+        <option value="$PROJECT_DIR$/kv/search_results.kv" />
+        <option value="$PROJECT_DIR$/invoices.py" />
         <option value="$PROJECT_DIR$/colors.py" />
+        <option value="$PROJECT_DIR$/companies.py" />
+        <option value="$PROJECT_DIR$/deliveries.py" />
+        <option value="$PROJECT_DIR$/discounts.py" />
+        <option value="$PROJECT_DIR$/inventories.py" />
         <option value="$PROJECT_DIR$/inventory_items.py" />
         <option value="$PROJECT_DIR$/invoice_items.py" />
         <option value="$PROJECT_DIR$/memos.py" />
@@ -165,24 +184,11 @@
         <option value="$PROJECT_DIR$/schedules.py" />
         <option value="$PROJECT_DIR$/taxes.py" />
         <option value="$PROJECT_DIR$/transactions.py" />
-        <option value="$PROJECT_DIR$/Static.kv.py" />
-        <option value="$PROJECT_DIR$/Static.py" />
-        <option value="$PROJECT_DIR$/invoices.py" />
-        <option value="$PROJECT_DIR$/kv/search_results.kv" />
         <option value="$PROJECT_DIR$/users.py" />
-        <option value="$PROJECT_DIR$/kv/last10.kv.py" />
-        <option value="$PROJECT_DIR$/static.py" />
-        <option value="$PROJECT_DIR$/kv/last10.kv" />
-        <option value="$PROJECT_DIR$/server.py" />
         <option value="$PROJECT_DIR$/custids.py" />
-        <option value="$PROJECT_DIR$/kv/main.kv" />
-        <option value="$PROJECT_DIR$/kv/main_screen.kv" />
-        <option value="$PROJECT_DIR$/kv_generator.py" />
         <option value="$PROJECT_DIR$/kv/search_screen.kv" />
-        <option value="$PROJECT_DIR$/.gitignore" />
-        <option value="$PROJECT_DIR$/kv/new_customer_screen.kv" />
+        <option value="$PROJECT_DIR$/kv/edit_customer_screen.kv" />
         <option value="$PROJECT_DIR$/main.py" />
-        <option value="$PROJECT_DIR$/sync.py" />
       </list>
     </option>
   </component>
@@ -511,21 +517,11 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="3" />
+      <option name="time" value="5" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="22" column="13" selection-start-line="22" selection-start-column="13" selection-end-line="22" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/crypto/library/cryptor.py" />
     <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/crypto/library/__init__.py" />
     <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/crypto/app.py" />
@@ -582,13 +578,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/kv/playground.kv" />
-    <entry file="file://$PROJECT_DIR$/kv/edit_customer_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/kv/settings_screen.kv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -611,160 +600,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/companies.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="372">
-          <caret line="204" column="36" selection-start-line="204" selection-start-column="36" selection-end-line="204" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/colors.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="372">
-          <caret line="147" column="36" selection-start-line="147" selection-start-column="36" selection-end-line="147" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/deliveries.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="372">
-          <caret line="164" column="36" selection-start-line="164" selection-start-column="36" selection-end-line="164" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/discounts.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="372">
-          <caret line="173" column="36" selection-start-line="173" selection-start-column="36" selection-end-line="173" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/inventories.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="327">
-          <caret line="148" column="0" selection-start-line="148" selection-start-column="0" selection-end-line="148" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/inventory_items.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="852">
-          <caret line="170" column="24" selection-start-line="170" selection-start-column="24" selection-end-line="170" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/invoice_items.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="172" column="24" selection-start-line="172" selection-start-column="24" selection-end-line="172" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/memos.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="145" column="24" selection-start-line="145" selection-start-column="24" selection-end-line="145" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/schedules.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="167" column="24" selection-start-line="167" selection-start-column="24" selection-end-line="167" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/transactions.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="184" column="24" selection-start-line="184" selection-start-column="24" selection-end-line="184" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rewards.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="149" column="24" selection-start-line="149" selection-start-column="24" selection-end-line="149" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/reward_transactions.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="179" column="24" selection-start-line="179" selection-start-column="24" selection-end-line="179" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/printers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="153" column="24" selection-start-line="153" selection-start-column="24" selection-end-line="153" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/invoices.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="148" column="34" selection-start-line="148" selection-start-column="34" selection-end-line="148" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/kv/last10.kv.py" />
-    <entry file="file://$PROJECT_DIR$/taxes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="20" column="23" selection-start-line="20" selection-start-column="3" selection-end-line="20" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/last10.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="13" column="19" selection-start-line="13" selection-start-column="19" selection-end-line="13" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/server.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1035">
-          <caret line="88" column="25" selection-start-line="88" selection-start-column="25" selection-end-line="88" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/custids.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="167" column="38" selection-start-line="167" selection-start-column="38" selection-end-line="167" selection-end-column="38" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/search_results.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="21" column="33" selection-start-line="21" selection-start-column="16" selection-end-line="21" selection-end-column="33" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1425">
-          <caret line="95" column="39" selection-start-line="95" selection-start-column="39" selection-end-line="95" selection-end-column="39" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv_generator.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2340">
-          <caret line="156" column="24" selection-start-line="156" selection-start-column="24" selection-end-line="156" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="540">
@@ -773,68 +609,252 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/kv/search_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="90" column="32" selection-start-line="90" selection-start-column="32" selection-end-line="90" selection-end-column="32" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/main.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" column="36" selection-start-line="1" selection-start-column="36" selection-end-line="1" selection-end-column="36" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/new_customer_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="279" column="49" selection-start-line="279" selection-start-column="49" selection-end-line="279" selection-end-column="49" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-165">
+        <state relative-caret-position="15">
           <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jobs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="4" column="0" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/static.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="12" column="19" selection-start-line="12" selection-start-column="19" selection-end-line="12" selection-end-column="19" />
+        <state relative-caret-position="135">
+          <caret line="9" column="20" selection-start-line="9" selection-start-column="20" selection-end-line="9" selection-end-column="20" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/users.py">
+    <entry file="file://$PROJECT_DIR$/kv/main.kv">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3180">
-          <caret line="293" column="51" selection-start-line="293" selection-start-column="51" selection-end-line="293" selection-end-column="51" />
+        <state relative-caret-position="135">
+          <caret line="9" column="22" selection-start-line="9" selection-start-column="22" selection-end-line="9" selection-end-column="22" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
+    <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="135" column="35" selection-start-line="135" selection-start-column="35" selection-end-line="135" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv_generator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="777">
+          <caret line="156" column="24" selection-start-line="156" selection-start-column="24" selection-end-line="156" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/last10.kv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="180">
-          <caret line="49" column="0" selection-start-line="49" selection-start-column="0" selection-end-line="53" selection-end-column="34" />
+          <caret line="12" column="18" selection-start-line="12" selection-start-column="18" selection-end-line="12" selection-end-column="18" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/search_results.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="13" column="18" selection-start-line="13" selection-start-column="18" selection-end-line="13" selection-end-column="18" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/new_customer_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="46" selection-start-line="19" selection-start-column="46" selection-end-line="19" selection-end-column="46" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sync.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2325">
+          <caret line="155" column="0" selection-start-line="155" selection-start-column="0" selection-end-line="155" selection-end-column="0" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sync.py">
+    <entry file="file://$PROJECT_DIR$/colors.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1605">
-          <caret line="29" column="34" selection-start-line="29" selection-start-column="34" selection-end-line="29" selection-end-column="34" />
+        <state relative-caret-position="387">
+          <caret line="203" column="12" selection-start-line="203" selection-start-column="12" selection-end-line="203" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/companies.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="236" column="12" selection-start-line="236" selection-start-column="12" selection-end-line="236" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/deliveries.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="221" column="12" selection-start-line="221" selection-start-column="12" selection-end-line="221" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/discounts.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="230" column="12" selection-start-line="230" selection-start-column="12" selection-end-line="230" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/inventories.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="204" column="12" selection-start-line="204" selection-start-column="12" selection-end-line="204" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/inventory_items.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="225" column="12" selection-start-line="225" selection-start-column="12" selection-end-line="225" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/invoice_items.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="230" column="12" selection-start-line="230" selection-start-column="12" selection-end-line="230" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/memos.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="200" column="12" selection-start-line="200" selection-start-column="12" selection-end-line="200" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/printers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="208" column="12" selection-start-line="208" selection-start-column="12" selection-end-line="208" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reward_transactions.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="234" column="12" selection-start-line="234" selection-start-column="12" selection-end-line="234" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rewards.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="204" column="12" selection-start-line="204" selection-start-column="12" selection-end-line="204" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/schedules.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="222" column="12" selection-start-line="222" selection-start-column="12" selection-end-line="222" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15">
+          <caret line="84" column="55" selection-start-line="84" selection-start-column="55" selection-end-line="84" selection-end-column="55" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/taxes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="199" column="12" selection-start-line="199" selection-start-column="12" selection-end-line="199" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/transactions.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="239" column="12" selection-start-line="239" selection-start-column="12" selection-end-line="239" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/invoices.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="201" column="12" selection-start-line="201" selection-start-column="12" selection-end-line="201" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/users.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="320" column="0" selection-start-line="320" selection-start-column="0" selection-end-line="320" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/search_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="36" selection-start-line="3" selection-start-column="36" selection-end-line="3" selection-end-column="36" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/custids.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="155">
+          <caret line="219" column="30" selection-start-line="219" selection-start-column="28" selection-end-line="219" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/edit_customer_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="539" column="58" selection-start-line="539" selection-start-column="58" selection-end-line="539" selection-end-column="58" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="230">
+          <caret line="430" column="24" selection-start-line="430" selection-start-column="24" selection-end-line="430" selection-end-column="24" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
