@@ -26,7 +26,10 @@ class Delivery:
 
     def __init__(self):
         """Create the database and the table if they do not exist"""
-        self.conn = sqlite3.connect('./db/jayscleaners.db')
+        try:
+            self.conn = sqlite3.connect('./db/jayscleaners.db')
+        except sqlite3.OperationalError:
+            self.conn = sqlite3.connect('jayscleaners.db')
         self.conn.row_factory = dict_factory
         self.c = self.conn.cursor()
 

@@ -27,7 +27,10 @@ class InventoryItem:
 
     def __init__(self):
         """Create the database and the table if they do not exist"""
-        self.conn = sqlite3.connect('./db/jayscleaners.db')
+        try:
+            self.conn = sqlite3.connect('./db/jayscleaners.db')
+        except sqlite3.OperationalError:
+            self.conn = sqlite3.connect('jayscleaners.db')
         self.conn.row_factory = dict_factory
         self.c = self.conn.cursor()
 
@@ -127,6 +130,22 @@ WHERE id = ?'''.format(t=table), (self.item_id,
         except ValueError:
             return "Could not find the company with that id"
         finally:
+            if self.c.fetchone():
+                for single in self.c.fetchone():
+                    self.item_id = single['item_id']
+                    self.inventory_id = single['inventory_id']
+                    self.company_id = single['company_id']
+                    self.name = single['name']
+                    self.description = single['description']
+                    self.tags = single['tags']
+                    self.quantity = single['quantity']
+                    self.ordered = single['ordered']
+                    self.price = single['price']
+                    self.image = single['image']
+                    self.status = single['status']
+                    self.deleted_at = single['deleted_at']
+                    self.created_at = single['created_at']
+
             return self.c.fetchone()
 
         return False

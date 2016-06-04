@@ -17,3 +17,19 @@ class Static:
         self.LAST10.insert(0, self.CUSTOMER_ID)
         if len(self.LAST10) > 10:
             del self.LAST10[10]
+
+    def dow(self, day):
+        if day == 0:
+            return 'Mon'
+        elif day == 1:
+            return 'Tue'
+        elif day == 2:
+            return 'Wed'
+        elif day == 3:
+            return 'Thu'
+        elif day == 4:
+            return 'Fri'
+        elif day == 5:
+            return 'Sat'
+        else:
+            return 'Sun'

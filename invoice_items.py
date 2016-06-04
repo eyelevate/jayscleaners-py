@@ -28,7 +28,10 @@ class InvoiceItem:
 
     def __init__(self):
         """Create the database and the table if they do not exist"""
-        self.conn = sqlite3.connect('./db/jayscleaners.db')
+        try:
+            self.conn = sqlite3.connect('./db/jayscleaners.db')
+        except sqlite3.OperationalError:
+            self.conn = sqlite3.connect('jayscleaners.db')
         self.conn.row_factory = dict_factory
         self.c = self.conn.cursor()
 
@@ -154,6 +157,8 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
             return False
 
     def where(self, data=False):
+        print('test')
+        print(data)
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
@@ -188,7 +193,8 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
                         else:
                             sql += '''{k} = {v} AND '''.format(k=key, v=value)
 
-                sql += ' AND deleted_at is null'
+
+            sql += ' AND deleted_at is null'
 
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
@@ -196,6 +202,7 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
             if limit:
                 sql += '''LIMIT {}'''.format(limit)
 
+            print(sql)
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchall()

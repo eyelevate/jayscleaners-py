@@ -190,7 +190,7 @@ class MainScreen(Screen):
         sync = Sync()
         # sync.migrate()
         sync.db_sync(auth_user.company_id)
-        # sync.get_chunk(table='custids',start=5001,end=15000)
+        # sync.get_chunk(table='invoices',start=50001,end=60000)
 
         # self.update_label.text = 'Server updated at {}'.format()
 
@@ -202,14 +202,33 @@ class MainScreen(Screen):
         print(sys.path)
 
     def test_mark(self):
-        marks = Custid()
-        customers = User()
-        starch = customers.get_starch(3)
-        custid = marks.create_customer_mark(last_name='Tim',
-                                            customer_id=str(6251) if Job.is_int(6251) else '6251',
-                                            starch='Medium')
-        print(starch)
-        print(custid)
+        # marks = Custid()
+        # customers = User()
+        # starch = customers.get_starch(3)
+        # custid = marks.create_customer_mark(last_name='Tim',
+        #                                     customer_id=str(6251) if Job.is_int(6251) else '6251',
+        #                                     starch='Medium')
+        # print(starch)
+        # print(custid)
+        invoices = Invoice()
+        data = {'id': {'>': 0}}
+        invs = invoices.where(data)
+        if invs:
+            for inv in invs:
+                invoice_id = inv['id']
+                customer_id = inv['customer_id']
+                data = {'customer_id':customer_id}
+                custs = User()
+                if custs:
+                    for cust in custs:
+                        cust_id = cust['id']
+                        invs_1 = Invoice()
+                        where = {'id':invoice_id}
+                        data = {'customer_id':cust_id}
+                data = {'status': 5}
+                where = {'id': inv['id']}
+                invoices.put(where=where, data=data)
+                print("Saved id {} to status 5".format(inv['id']))
 
     def test_crypt(self):
         dt = datetime.datetime.strptime(NOW, "%Y-%m-%d %H:%M:%S") if NOW is not None else datetime.datetime.strptime(
@@ -428,7 +447,7 @@ class EditCustomerScreen(Screen):
                         self.special_instructions.disabled = True
                         self.mark_text.text = ''
                         self.marks_table.clear_widgets()
-                        
+
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
 
@@ -437,7 +456,7 @@ class EditCustomerScreen(Screen):
         popup.size = 900, 600
         # check for previous marks set
         marks = Custid()
-        custids = marks.where({'mark':'"{}"'.format(self.mark_text.text)})
+        custids = marks.where({'mark': '"{}"'.format(self.mark_text.text)})
         if custids:
             for custid in custids:
                 cust_id = custid['mark']
@@ -461,7 +480,6 @@ class EditCustomerScreen(Screen):
                 popup.title = 'Success'
                 popup.content = Builder.load_string(KV.popup_alert('Successfully added a new mark!'))
                 popup.open()
-
 
     def set_shirt_finish(self, value):
         self.shirt_finish = str(value)
@@ -499,18 +517,17 @@ class EditCustomerScreen(Screen):
         self.special_instructions.hint_text_color = DEFAULT_COLOR
         self.special_instructions.disabled = False if self.is_delivery.active else True
 
-    def delete_mark(self, mark = False, *args, **kwargs):
+    def delete_mark(self, mark=False, *args, **kwargs):
         print(mark)
         popup = Popup()
         popup.size = 800, 600
         popup.title = 'Marks deleted'
         marks = Custid()
-        custids = marks.where({'mark':'"{}"'.format(mark)})
+        custids = marks.where({'mark': '"{}"'.format(mark)})
         if custids:
             for custid in custids:
                 marks.id = custid['id']
                 if marks.delete():
-
                     popup.content = Builder.load_string(KV.popup_alert('Mark has been succesfully deleted.'))
 
         else:
@@ -535,7 +552,7 @@ class EditCustomerScreen(Screen):
         self.marks_table.add_widget(Builder.load_string(h6))
 
         marks = Custid()
-        custids = marks.where({'customer_id':vars.CUSTOMER_ID})
+        custids = marks.where({'customer_id': vars.CUSTOMER_ID})
         even_odd = 0
         if custids:
             for custid in custids:
@@ -710,7 +727,231 @@ class EditCustomerScreen(Screen):
 
 
 class HistoryScreen(Screen):
+    invoices_table = ObjectProperty(None)
+    items_table = ObjectProperty(None)
+    invs_results_label = ObjectProperty(None)
+
+    def get_history(self):
+
+        self.invoices_table.clear_widgets()
+        self.items_table.clear_widgets()
+
+        # create the invoice count list
+        invoices = Invoice()
+        data = {'customer_id': vars.CUSTOMER_ID}
+        vars.ROW_CAP = len(invoices.where(data))
+        if vars.ROW_CAP < 10 and vars.ROW_CAP <= vars.ROW_SEARCH[1]:
+            vars.ROW_SEARCH =0, vars.ROW_CAP
+        self.invs_results_label.text = '[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]'.format(
+            vars.ROW_SEARCH[0],
+            vars.ROW_SEARCH[1],
+            vars.ROW_CAP
+        )
+        data = {
+            'customer_id': '"%{}%"'.format(vars.CUSTOMER_ID),
+            'ORDER_BY': 'id DESC',
+            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
+        }
+
+        invoices = Invoice()
+        invs = invoices.like(data)
+        vars.SEARCH_RESULTS = invs
+        # get invoice rows and display them to the table
+
+        # create TH
+        h1 = KV.invoice_tr(0, 'ID')
+        h2 = KV.invoice_tr(0, 'Loc')
+        h3 = KV.invoice_tr(0, 'Due')
+        h4 = KV.invoice_tr(0, 'Rack')
+        h5 = KV.invoice_tr(0, 'Qty')
+        h6 = KV.invoice_tr(0, 'Total')
+        self.invoices_table.add_widget(Builder.load_string(h1))
+        self.invoices_table.add_widget(Builder.load_string(h2))
+        self.invoices_table.add_widget(Builder.load_string(h3))
+        self.invoices_table.add_widget(Builder.load_string(h4))
+        self.invoices_table.add_widget(Builder.load_string(h5))
+        self.invoices_table.add_widget(Builder.load_string(h6))
+
+        # create Tbody TR
+        if len(vars.SEARCH_RESULTS) > 0:
+            for cust in vars.SEARCH_RESULTS:
+                self.create_invoice_row(cust)
+
+        vars.SEARCH_RESULTS = []
+
     pass
+
+    def create_invoice_row(self, row, *args, **kwargs):
+        """ Creates invoice table row and displays it to screen """
+        check_invoice_id = int(vars.INVOICE_ID) if vars.INVOICE_ID else vars.INVOICE_ID
+        invoice_id = row['invoice_id']
+        company_id = row['company_id']
+        quantity = row['quantity']
+        rack = row['rack']
+        total = '${:,.2f}'.format(row['total'])
+        due = row['due_date']
+        status = row['status']
+        try:
+            dt = datetime.datetime.strptime(due,"%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+        due_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+        dow = vars.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
+        due_date = dt.strftime('%m/%d {}').format(dow)
+        try:
+            dt = datetime.datetime.strptime(NOW,"%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+
+        now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+
+        if status <= 3 and due_strtotime < now_strtotime:  # overdue
+            state = 2
+        else:
+            state = status
+
+        selected = True if invoice_id == check_invoice_id else False
+
+        tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_2 = KV.invoice_tr(state, company_id, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_5 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_6 = KV.invoice_tr(state, total, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        self.invoices_table.add_widget(Builder.load_string(tr_1))
+        self.invoices_table.add_widget(Builder.load_string(tr_2))
+        self.invoices_table.add_widget(Builder.load_string(tr_3))
+        self.invoices_table.add_widget(Builder.load_string(tr_4))
+        self.invoices_table.add_widget(Builder.load_string(tr_5))
+        self.invoices_table.add_widget(Builder.load_string(tr_6))
+
+        return True
+
+    def set_result_status(self):
+        vars.SEARCH_RESULTS_STATUS = True
+
+    def invoice_next(self):
+        if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
+            vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
+        else:
+            vars.ROW_SEARCH = vars.ROW_SEARCH[1] + 1, vars.ROW_SEARCH[1] + 10
+        data = {
+            'customer_id': '"%{}%"'.format(vars.CUSTOMER_ID),
+            'ORDER_BY': 'id DESC',
+            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
+        }
+
+        invoices = Invoice()
+        invs = invoices.like(data)
+        vars.SEARCH_RESULTS = invs
+        self.invs_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
+            vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
+        )
+        self.get_history()
+
+    def invoice_prev(self):
+        if vars.ROW_SEARCH[0] - 10 < 10:
+            vars.ROW_SEARCH = 0, 10
+        else:
+            vars.ROW_SEARCH = vars.ROW_SEARCH[0] - 10, vars.ROW_SEARCH[1] - 10
+
+        self.invs_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
+            vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
+        )
+
+        data = {
+            'customer_id': '"%{}%"'.format(vars.CUSTOMER_ID),
+            'ORDER_BY': 'id DESC',
+            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
+        }
+        invoices = Invoice()
+        invs = invoices.like(data)
+        vars.SEARCH_RESULTS = invs
+        self.invs_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
+            vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
+        )
+        self.get_history()
+
+    def invoice_selected(self, invoice_id):
+        vars.INVOICE_ID = invoice_id
+        iitems = InvoiceItem()
+        data = {'invoice_id':vars.INVOICE_ID}
+        inv_items = iitems.where(data)
+        if inv_items:
+            self.items_table.clear_widgets()
+            # create headers
+            # create TH
+            h1 = KV.invoice_tr(0, 'Item')
+            h2 = KV.invoice_tr(0, 'Qty')
+            h3 = KV.invoice_tr(0, 'Total')
+            h4 = KV.invoice_tr(0, 'Colors')
+            h5 = KV.invoice_tr(0, 'Memos')
+            self.items_table.add_widget(Builder.load_string(h1))
+            self.items_table.add_widget(Builder.load_string(h2))
+            self.items_table.add_widget(Builder.load_string(h3))
+            self.items_table.add_widget(Builder.load_string(h4))
+            self.items_table.add_widget(Builder.load_string(h5))
+            items = {}
+
+            for invoice_item in inv_items:
+                item_id = invoice_item['item_id']
+                items_search = InventoryItem()
+                itm_srch = items_search.where({'item_id':item_id})
+
+                if itm_srch:
+                    for itm in itm_srch:
+                        item_name = itm['name']
+                else:
+                    item_name = ''
+
+                items[item_id] = {
+                    'name' : item_name,
+                    'total' : 0,
+                    'quantity': 0,
+                    'color': [],
+                    'memo': []
+                }
+            # populate correct item totals
+            if items:
+                for key, value in items.items():
+                    item_id = key
+                    data = {
+                        'invoice_id':vars.INVOICE_ID,
+                        'item_id':item_id
+                    }
+                    print(data)
+                    iinv_items = InvoiceItem().where(data)
+                    if iinv_items:
+                        for inv_item in iinv_items:
+                            items[item_id]['quantity'] += int(inv_item['quantity']) if inv_item['quantity'] else 1
+                            items[item_id]['total'] += float(inv_item['pretax']) if inv_item['pretax'] else 0
+                            if inv_item['color']:
+                                items[item_id]['color'].append(inv_item['color'])
+                            if inv_item['memo']:
+                                items[item_id]['memo'].append(inv_item['memo'])
+            # print out the items into the table
+            if items:
+                for key,value in items.items():
+                    tr1 = KV.invoice_tr(1,value['name'])
+                    tr2 = KV.invoice_tr(1,value['quantity'])
+                    tr3 = KV.invoice_tr(1,'${:,.2f}'.format(value['total']))
+                    tr4 = KV.invoice_tr(1,value['color'], spinner = True, spinner_text = 'color(s)')
+                    tr5 = KV.invoice_tr(1,value['memo'], spinner = True, spinner_text = 'memo(s)')
+                    self.items_table.add_widget(Builder.load_string(tr1))
+                    self.items_table.add_widget(Builder.load_string(tr2))
+                    self.items_table.add_widget(Builder.load_string(tr3))
+                    self.items_table.add_widget(Builder.load_string(tr4))
+                    self.items_table.add_widget(Builder.load_string(tr5))
+            print(items)
+
+
+
 
 
 class Last10Screen(Screen):
@@ -1223,7 +1464,7 @@ class SearchScreen(Screen):
                                         "%Y-%m-%d %H:%M:%S") if due is not None else datetime.datetime.strptime(
             '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
         due_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-        dow = self.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
+        dow = vars.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
         due_date = dt.strftime('%m/%d {}').format(dow)
         dt = datetime.datetime.strptime(NOW,
                                         "%Y-%m-%d %H:%M:%S") if NOW is not None else datetime.datetime.strptime(
@@ -1240,12 +1481,18 @@ class SearchScreen(Screen):
 
         selected = True if invoice_id == check_invoice_id else False
 
-        tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id)
-        tr_2 = KV.invoice_tr(state, company_id, selected=selected, invoice_id=invoice_id)
-        tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id)
-        tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id)
-        tr_5 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id)
-        tr_6 = KV.invoice_tr(state, total, selected=selected, invoice_id=invoice_id)
+        tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_2 = KV.invoice_tr(state, company_id, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
+        callback = 'self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_5 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+        tr_6 = KV.invoice_tr(state, total, selected=selected, invoice_id=invoice_id,
+                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         self.invoice_table.add_widget(Builder.load_string(tr_1))
         self.invoice_table.add_widget(Builder.load_string(tr_2))
         self.invoice_table.add_widget(Builder.load_string(tr_3))
@@ -1315,7 +1562,7 @@ class SearchScreen(Screen):
                         if last_drop is not None:
 
                             dt = datetime.datetime.strptime(last_drop, "%Y-%m-%d %H:%M:%S")
-                            dow = self.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
+                            dow = vars.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
                             last_drop = dt.strftime('{} %m/%d/%y %I:%M%P').format(dow)
                         else:
                             last_drop = ''
@@ -1328,9 +1575,9 @@ class SearchScreen(Screen):
 
                 # display data
                 self.cust_mark_label.text = custid_string
-                self.cust_last_name.text = result['last_name']
-                self.cust_first_name.text = result['first_name']
-                self.cust_phone.text = result['phone']
+                self.cust_last_name.text = result['last_name'] if result['last_name'] else '';
+                self.cust_first_name.text = result['first_name'] if result['first_name'] else '';
+                self.cust_phone.text = result['phone'] if result['phone'] else ''
                 self.cust_last_drop.text = last_drop
                 self.cust_starch.text = self.get_starch_by_id(result['starch'])
                 self.cust_credit.text = '0.00'
@@ -1373,22 +1620,6 @@ class SearchScreen(Screen):
         self.parent.current = 'search_results'
 
         pass
-
-    def dow(self, day):
-        if day == 0:
-            return 'Mon'
-        elif day == 1:
-            return 'Tue'
-        elif day == 2:
-            return 'Wed'
-        elif day == 3:
-            return 'Thu'
-        elif day == 4:
-            return 'Fri'
-        elif day == 5:
-            return 'Sat'
-        else:
-            return 'Sun'
 
     def get_starch_by_id(self, starch):
         if starch == 1:
@@ -1539,11 +1770,13 @@ class ScreenManagement(ScreenManager):
 
 
 # load kv files
-presentation = Builder.load_file("kv/main.kv")
+presentation = Builder.load_file("main.kv")
+
 
 
 class MainApp(App):
     def build(self):
+        self.title = 'Jays POS'
         return presentation
 
 

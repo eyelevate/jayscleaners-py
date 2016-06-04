@@ -77,7 +77,7 @@ class Sync:
 
         invoice_items_1 = InvoiceItem()
         to_upload['invoice_items'] = invoice_items_1.where({'invoice_items_id': None})
-        to_upload_rows += len(to_upload['invoice_items'])
+        to_upload_rows += len(to_upload['invoice_items']) if to_upload['invoice_items'] else 0
         invoice_items_1.close_connection()
 
         inventories_1 = Inventory()

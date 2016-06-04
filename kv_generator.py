@@ -213,7 +213,7 @@ BoxLayout:
 
         return item
 
-    def invoice_tr(self,state, data, selected = False, invoice_id=False):
+    def invoice_tr(self,state, data, selected = False, invoice_id=False, callback=False, spinner = False, spinner_text = False):
         if state == 0:  # header
             tr = '''
 Label:
@@ -228,6 +228,14 @@ Label:
             pos: self.pos
             size: self.size'''.format(data)
             return tr
+        elif state == 5: # paid and done
+            background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
+            background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
+            text_color = 'e5e5e5' if selected else '5e5e5e'
+        elif state == 4: # deleted
+            background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
+            background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
+            text_color = 'e5e5e5' if selected else '5e5e5e'
         elif state == 3:  # Racked and Ready
             background_rgba = '0,0.64,0.149,0.1' if selected else '0.847,0.968,0.847,0.1'
             background_color = '0,0.64,0.149,1' if selected else '0.847,0.968,0.847,1'
@@ -241,19 +249,43 @@ Label:
             background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
             text_color = 'e5e5e5' if selected else '5e5e5e'
 
-        tr = '''
+        if spinner:
+            default_text = '{} {}'.format(len(data) if data else 0,spinner_text)
+            if len(data) > 0:
+                tr = '''
+Spinner:
+    text: '{title}'
+    values: {colors}'''.format(title = default_text,colors=data)
+            else:
+                tr = '''
 Button:
     size_hint_y: None
     markup: True
     font_size:'15sp'
     text: "[color={text_color}][b]{text}[/b][/color]"
     background_color:[{background_rgba}]
-    on_release: self.parent.parent.parent.parent.invoice_selected({inv_id})
+    on_release: {cb}
+    canvas.before:
+        Color:
+            rgba: {background_color}
+        Rectangle:
+            pos: self.pos
+            size: self.size'''.format(text=default_text,background_rgba=background_rgba, background_color=background_color,
+                                      text_color=text_color, inv_id= invoice_id, cb= callback)
+        else:
+            tr = '''
+Button:
+    size_hint_y: None
+    markup: True
+    font_size:'15sp'
+    text: "[color={text_color}][b]{text}[/b][/color]"
+    background_color:[{background_rgba}]
+    on_release: {cb}
     canvas.before:
         Color:
             rgba: {background_color}
         Rectangle:
             pos: self.pos
             size: self.size'''.format(text=data,background_rgba=background_rgba, background_color=background_color,
-                                      text_color=text_color, inv_id= invoice_id)
+                                      text_color=text_color, inv_id= invoice_id, cb= callback)
         return tr

@@ -1,0 +1,43 @@
+<SearchResultsScreen>:
+    id: screen_search_results
+    name: "search_results"
+    search_results_table: search_results_table
+    search_results_footer: search_results_footer
+    search_results_label: search_results_label
+    on_enter: root.get_results()
+    BoxLayout:
+        orientation: 'vertical'
+        GridLayout:
+            id:search_results_table
+            size_hint: 1,0.8
+            pos_hint: {'top':1}
+            cols:6
+            rows:11
+            row_force_default: True
+            row_default_height:'42sp'
+        GridLayout:
+            size_hint: 1,0.1
+            cols:1
+            rows:1
+            Label:
+                id:search_results_label
+                markup: True
+                text: "[color=000000]Showing rows [b]1[/b] - [b]10[/b] out of [b]10[/b][/color]"
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+        GridLayout:
+            cols:3
+            rows:1
+            id:search_results_footer
+            size_hint: 1,0.1
+            row_force_default: True
+            row_default_height:'65sp'
+            Button:
+                markup: True
+                text: 'Cancel'
+                on_press: app.root.current = 'search'
