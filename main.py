@@ -1773,7 +1773,7 @@ class ScreenManagement(ScreenManager):
 
 
 # load kv files
-presentation = Builder.load_file("kv/main.kv")
+presentation = Builder.load_file("main.kv")
 
 
 
