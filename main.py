@@ -1563,7 +1563,10 @@ class SearchScreen(Screen):
 
                             dt = datetime.datetime.strptime(last_drop, "%Y-%m-%d %H:%M:%S")
                             dow = vars.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
-                            last_drop = dt.strftime('{} %m/%d/%y %I:%M%P').format(dow)
+                            try:
+                                last_drop = '{} {}'.format(dow, dt.strftime('%m/%d/%y %I:%M%P'))
+                            except ValueError:
+                                last_drop = '{} {}'.format(dow, dt.strftime('%m/%d/%y'))
                         else:
                             last_drop = ''
                 invoices.close_connection()
@@ -1770,7 +1773,7 @@ class ScreenManagement(ScreenManager):
 
 
 # load kv files
-presentation = Builder.load_file("main.kv")
+presentation = Builder.load_file("kv/main.kv")
 
 
 
