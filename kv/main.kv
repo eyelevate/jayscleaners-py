@@ -1,6 +1,7 @@
 #: import FadeTransition kivy.uix.screenmanager.FadeTransition
 #: import DropDown kivy.uix.dropdown
 #: import Popup kivy.uix.popup.Popup
+#: import ScrollView kivy.uix.scrollview
 
 ScreenManagement:
     transition: FadeTransition()
@@ -9,6 +10,7 @@ ScreenManagement:
     DropoffScreen:
     EditCustomerScreen:
     HistoryScreen:
+    InvoiceDetailsScreen:
     Last10Screen:
     NewCustomerScreen:
     PickupScreen:
@@ -17,15 +19,16 @@ ScreenManagement:
     SearchResultsScreen:
     SettingsScreen:
 
-#:include ./kv/main_screen.kv
-#:include ./kv/delivery_screen.kv
-#:include ./kv/dropoff_screen.kv
-#:include ./kv/edit_customer_screen.kv
-#:include ./kv/history_screen.kv
-#:include ./kv/last10_screen.kv
-#:include ./kv/new_customer_screen.kv
-#:include ./kv/pickup_screen.kv
-#:include ./kv/reports_screen.kv
-#:include ./kv/search_screen.kv
-#:include ./kv/search_results.kv
-#:include ./kv/settings_screen.kv
+#:include kv/main_screen.kv
+#:include kv/delivery_screen.kv
+#:include kv/dropoff_screen.kv
+#:include kv/edit_customer_screen.kv
+#:include kv/history_screen.kv
+#:include kv/invoice_details_screen.kv
+#:include kv/last10_screen.kv
+#:include kv/new_customer_screen.kv
+#:include kv/pickup_screen.kv
+#:include kv/reports_screen.kv
+#:include kv/search_screen.kv
+#:include kv/search_results.kv
+#:include kv/settings_screen.kv

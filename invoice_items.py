@@ -157,8 +157,7 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
             return False
 
     def where(self, data=False):
-        print('test')
-        print(data)
+
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
@@ -202,7 +201,6 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
             if limit:
                 sql += '''LIMIT {}'''.format(limit)
 
-            print(sql)
             self.c.execute(sql)
             self.conn.commit()
             return self.c.fetchall()

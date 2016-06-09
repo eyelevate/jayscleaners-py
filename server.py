@@ -199,7 +199,7 @@ def sync_from_server(data):
         if 'invoices' in updates:
             for invoices in updates['invoices']:
                 invoice = Invoice()
-                invoice.invoice_id = invoices['id']
+                invoice.invoice_id = invoices['invoice_id']
                 invoice.company_id = invoices['company_id']
                 invoice.customer_id = invoices['customer_id']
                 invoice.quantity = invoices['quantity']

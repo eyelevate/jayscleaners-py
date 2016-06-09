@@ -37,6 +37,7 @@
                     text: 'Save As'
                 ActionButton:
                     text: 'Quit'
+
     GridLayout:
         cols: 2
         size_hint: 1,0.8
@@ -69,7 +70,7 @@
                 id: login_button
                 text: "Login"
                 font_size:'20sp'
-                on_release: root.login_popup.open()
+                on_release: root.get_login()
 
         Button:
             id: dropoff_button
@@ -79,6 +80,22 @@
             on_release: root.search_pre()
             text: "Drop / Pickup"
 
+    Button:
+        id: update_button
+        text:"Update"
+        disabled:False
+        on_release: root.db_sync()
+        size_hint: 0.1,0.1
+        pos_hint: {'x':0, 'y':0}
+        font_size:'20sp'
+    Label:
+        id: update_data_label
+        text:root.update_info()
+        size_hint_y: None
+        text_size: self.width, None
+        height: self.texture_size[1]
+        pos_hint: {'x':0.1, 'y':0}
+        font_size:'20sp'
     Popup:
         id: login_popup
         on_parent: if self.parent == screen_main: screen_main.remove_widget(self)
@@ -131,19 +148,3 @@
                     text: "Login"
                     font_size:'20sp'
                     on_release: root.login()
-    Button:
-        id: update_button
-        text:"Update"
-        disabled:False
-        on_release: root.db_sync()
-        size_hint: 0.1,0.1
-        pos_hint: {'x':0, 'y':0}
-        font_size:'20sp'
-    Label:
-        id: update_data_label
-        text:root.update_info()
-        size_hint_y: None
-        text_size: self.width, None
-        height: self.texture_size[1]
-        pos_hint: {'x':0.1, 'y':0}
-        font_size:'20sp'

@@ -213,20 +213,26 @@ BoxLayout:
 
         return item
 
-    def invoice_tr(self,state, data, selected = False, invoice_id=False, callback=False, spinner = False, spinner_text = False):
+    def invoice_tr(self,state, data, selected = False, invoice_id=False,
+                   callback=False, spinner = False, spinner_text = False,
+                   text_wrap = False):
         if state == 0:  # header
             tr = '''
 Label:
     size_hint_y: None
     markup: True
-    text: "[color=000000][b]{}[/b][/color]"
+    text: "[color=000000][b]{text}[/b][/color]"
     font_size:'15sp'
+    {txt_wrap}
+    valign:"{valign}"
     canvas.before:
         Color:
             rgba: 1, 1, 1, 1
         Rectangle:
             pos: self.pos
-            size: self.size'''.format(data)
+            size: self.size'''.format(text=data,
+                                      txt_wrap='text_size: self.size' if text_wrap else '',
+                                      valign='top' if text_wrap else 'middle')
             return tr
         elif state == 5: # paid and done
             background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
@@ -251,41 +257,190 @@ Label:
 
         if spinner:
             default_text = '{} {}'.format(len(data) if data else 0,spinner_text)
+            data_string = ''
+            if data:
+                for item_name in data:
+                    data_string += '"{}",'.format(item_name)
             if len(data) > 0:
                 tr = '''
 Spinner:
     text: '{title}'
-    values: {colors}'''.format(title = default_text,colors=data)
+    {txt_wrap}
+    valign:"{valign}"
+    values: "{colors}"'''.format(title = default_text,
+                               colors='({})'.format(data_string),
+                               txt_wrap='text_size: self.size' if text_wrap else '',
+                               valign='top' if text_wrap else 'middle')
             else:
                 tr = '''
 Button:
     size_hint_y: None
     markup: True
     font_size:'15sp'
-    text: "[color={text_color}][b]{text}[/b][/color]"
+    text: "[color={text_color}]{text}[/color]"
     background_color:[{background_rgba}]
     on_release: {cb}
+    {txt_wrap}
+    valign: "{valign)"
     canvas.before:
         Color:
             rgba: {background_color}
         Rectangle:
             pos: self.pos
-            size: self.size'''.format(text=default_text,background_rgba=background_rgba, background_color=background_color,
-                                      text_color=text_color, inv_id= invoice_id, cb= callback)
+            size: self.size'''.format(text=default_text,
+                                      txt_wrap = 'text_size: self.size' if text_wrap else '',
+                                      valign = 'top' if text_wrap else 'middle',
+                                      background_rgba=background_rgba,
+                                      background_color=background_color,
+                                      text_color=text_color,
+                                      inv_id= invoice_id,
+                                      cb= callback)
         else:
             tr = '''
 Button:
     size_hint_y: None
     markup: True
     font_size:'15sp'
-    text: "[color={text_color}][b]{text}[/b][/color]"
+    text: "[color={text_color}]{text}[/color]"
     background_color:[{background_rgba}]
     on_release: {cb}
+    {txt_wrap}
+    valign: "{valign}"
     canvas.before:
         Color:
             rgba: {background_color}
         Rectangle:
             pos: self.pos
-            size: self.size'''.format(text=data,background_rgba=background_rgba, background_color=background_color,
-                                      text_color=text_color, inv_id= invoice_id, cb= callback)
+            size: self.size'''.format(text=data,
+                                      txt_wrap='text_size:self.size' if text_wrap else '',
+                                      valign='top' if text_wrap else 'middle',
+                                      background_rgba=background_rgba,
+                                      background_color=background_color,
+                                      text_color=text_color,
+                                      inv_id= invoice_id,
+                                      cb= callback)
+        return tr
+
+    def sized_invoice_tr(self,
+                         state,
+                         data,
+                         size_hint_x: False,
+                         selected=False,
+                         invoice_id=False,
+                         callback=False,
+                         spinner=False,
+                         spinner_text=False,
+                         text_wrap=False):
+
+        if state == 0:  # header
+            tr = '''
+Label:
+    size_hint_x: {hint_x}
+    size_hint_y: None
+    markup: True
+    text: "[color=000000][b]{text}[/b][/color]"
+    font_size:'15sp'
+    {txt_wrap}
+    valign:"{valign}"
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size'''.format(hint_x=size_hint_x,
+                                      text=data,
+                                      txt_wrap='text_size: self.size' if text_wrap else '',
+                                      valign='top' if text_wrap else 'middle')
+            return tr
+        elif state == 5:  # paid and done
+            background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
+            background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
+            text_color = 'e5e5e5' if selected else '5e5e5e'
+        elif state == 4:  # deleted
+            background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
+            background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
+            text_color = 'e5e5e5' if selected else '5e5e5e'
+        elif state == 3:  # Racked and Ready
+            background_rgba = '0,0.64,0.149,0.1' if selected else '0.847,0.968,0.847,0.1'
+            background_color = '0,0.64,0.149,1' if selected else '0.847,0.968,0.847,1'
+            text_color = 'D8F7D8' if selected else '00A326'
+        elif state == 2:  # Overdue
+            background_rgba = '0.059,0.278,1,0.1' if selected else '0.816, 0.847, 0.961, 0.1'
+            background_color = '0.059,0.278,1,1' if selected else '0.816, 0.847, 0.961, 1'
+            text_color = 'D0D8F5' if selected else '0F47FF'
+        else:  # Not ready yet
+            background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
+            background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
+            text_color = 'e5e5e5' if selected else '5e5e5e'
+
+        if spinner:
+            default_text = '{} {}'.format(len(data) if data else 0, spinner_text)
+            data_string = ''
+            if data:
+                for item_name in data:
+                    data_string += '"{}",'.format(item_name)
+            if len(data) > 0:
+                tr = '''
+Spinner:
+    size_hint_x: {hint_x}
+    text: '{title}'
+    {txt_wrap}
+    valign:"{valign}"
+    values: "{colors}"'''.format(size_hint_x= size_hint_x,
+                                 title=default_text,
+                                 colors='({})'.format(data_string),
+                                 txt_wrap='text_size: self.size' if text_wrap else '',
+                                 valign='top' if text_wrap else 'middle')
+            else:
+                tr = '''
+Button:
+    size_hint_x: {hint_x}
+    size_hint_y: None
+    markup: True
+    font_size:'15sp'
+    text: "[color={text_color}]{text}[/color]"
+    background_color:[{background_rgba}]
+    on_release: {cb}
+    {txt_wrap}
+    valign: "{valign)"
+    canvas.before:
+        Color:
+            rgba: {background_color}
+        Rectangle:
+            pos: self.pos
+            size: self.size'''.format(hint_x=size_hint_x,
+                                      text=default_text,
+                                      txt_wrap='text_size: self.size' if text_wrap else '',
+                                      valign='top' if text_wrap else 'middle',
+                                      background_rgba=background_rgba,
+                                      background_color=background_color,
+                                      text_color=text_color,
+                                      inv_id=invoice_id,
+                                      cb=callback)
+        else:
+            tr = '''
+Button:
+    size_hint_x: {hint_x}
+    size_hint_y: None
+    markup: True
+    font_size:'15sp'
+    text: "[color={text_color}]{text}[/color]"
+    background_color:[{background_rgba}]
+    on_release: {cb}
+    {txt_wrap}
+    valign: "{valign}"
+    canvas.before:
+        Color:
+            rgba: {background_color}
+        Rectangle:
+            pos: self.pos
+            size: self.size'''.format(hint_x= size_hint_x,
+                                      text=data,
+                                      txt_wrap='text_size:self.size' if text_wrap else '',
+                                      valign='top' if text_wrap else 'middle',
+                                      background_rgba=background_rgba,
+                                      background_color=background_color,
+                                      text_color=text_color,
+                                      inv_id=invoice_id,
+                                      cb=callback)
         return tr

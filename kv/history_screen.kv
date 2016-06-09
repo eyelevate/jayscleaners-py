@@ -4,21 +4,22 @@
     invoices_table: invoices_table
     items_table: items_table
     invs_results_label: invs_results_label
-    items_results_label: items_results_label
     on_enter: root.get_history()
 
     BoxLayout:
         orientation: 'horizontal'
         pos_hint: {'top':1}
         size_hint: 1,0.8
-        GridLayout:
-            id: invoices_table
-            pos_hint:{'top':1}
+        ScrollView:
             size_hint_x: 0.4
-            cols:6
-            rows:10
-            row_force_default: True
-            row_default_height:'50sp'
+            pos_hint:{'top':1}
+            GridLayout:
+                id: invoices_table
+                size_hint_y:None
+                height: self.minimum_height
+                cols:6
+                row_force_default: True
+                row_default_height:'50sp'
         BoxLayout:
             orientation: 'vertical'
             pos_hint:{'top':1}
@@ -44,49 +45,31 @@
             Button:
                 id: invoice_details_btn
                 font_size:'20sp'
-                on_release: app.root.current = "history"
+                on_release: app.root.current = "invoice_details"
                 text: "Details"
                 disabled: False
-        GridLayout:
-            id: items_table
+        ScrollView:
+            size_hint_x: 0.5
             pos_hint:{'top':1}
-            size_hint_x: 0.4
-            cols:5
-            rows:11
             canvas.before:
                 Color:
                     rgba: 1, 1, 1, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
-        BoxLayout:
-            orientation: 'vertical'
-            pos_hint:{'top':1}
-            size_hint_x: 0.1
-            Button:
-                id: up_btn
-                font_size:'20sp'
-                on_release: root.up()
-                text: "Up"
-                disabled: False
-            Button:
-                id: down_btn
-                font_size:'20sp'
-                on_release: root.down()
-                text: "Down"
-                disabled: False
-            Button:
-                id: edit_invoice_btn
-                font_size:'20sp'
-                on_release: root.edit()
-                text: "Edit"
-                disabled: False
-            Button:
-                id: history_btn
-                font_size:'20sp'
-                on_release: app.root.current = "history"
-                text: "History"
-                disabled: False
+            GridLayout:
+                id: items_table
+                size_hint_y:None
+                height: self.minimum_height
+                cols:3
+                row_default_height:'50sp'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
     BoxLayout:
         id:invs_results_label
         size_hint: 1,0.1
@@ -102,16 +85,7 @@
                 Rectangle:
                     pos: self.pos
                     size: self.size
-        Label:
-            id:items_results_label
-            markup: True
-            text: "[color=000000]Showing rows [b]1[/b] - [b]10[/b] out of [b]10[/b][/color]"
-            canvas.before:
-                Color:
-                    rgba: 1, 1, 1, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+
     BoxLayout:
         size_hint: 1,0.1
         Button:

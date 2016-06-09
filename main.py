@@ -93,6 +93,9 @@ class MainScreen(Screen):
         info = "Last updated {}".format("today")
         return info
 
+    def get_login(self):
+        self.login_popup.open()
+
     def login(self, *args, **kwargs):
 
         user = User()
@@ -190,7 +193,7 @@ class MainScreen(Screen):
         sync = Sync()
         # sync.migrate()
         sync.db_sync(auth_user.company_id)
-        # sync.get_chunk(table='invoices',start=50001,end=60000)
+        # sync.get_chunk(table='invoice_items',start=140001,end=150000)
 
         # self.update_label.text = 'Server updated at {}'.format()
 
@@ -217,14 +220,14 @@ class MainScreen(Screen):
             for inv in invs:
                 invoice_id = inv['id']
                 customer_id = inv['customer_id']
-                data = {'customer_id':customer_id}
+                data = {'customer_id': customer_id}
                 custs = User()
                 if custs:
                     for cust in custs:
                         cust_id = cust['id']
                         invs_1 = Invoice()
-                        where = {'id':invoice_id}
-                        data = {'customer_id':cust_id}
+                        where = {'id': invoice_id}
+                        data = {'customer_id': cust_id}
                 data = {'status': 5}
                 where = {'id': inv['id']}
                 invoices.put(where=where, data=data)
@@ -733,6 +736,7 @@ class HistoryScreen(Screen):
 
     def get_history(self):
 
+        # check if an invoice was previously selected
         self.invoices_table.clear_widgets()
         self.items_table.clear_widgets()
 
@@ -741,7 +745,7 @@ class HistoryScreen(Screen):
         data = {'customer_id': vars.CUSTOMER_ID}
         vars.ROW_CAP = len(invoices.where(data))
         if vars.ROW_CAP < 10 and vars.ROW_CAP <= vars.ROW_SEARCH[1]:
-            vars.ROW_SEARCH =0, vars.ROW_CAP
+            vars.ROW_SEARCH = 0, vars.ROW_CAP
         self.invs_results_label.text = '[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]'.format(
             vars.ROW_SEARCH[0],
             vars.ROW_SEARCH[1],
@@ -779,6 +783,9 @@ class HistoryScreen(Screen):
 
         vars.SEARCH_RESULTS = []
 
+        if vars.INVOICE_ID:
+            self.items_table_update()
+
     pass
 
     def create_invoice_row(self, row, *args, **kwargs):
@@ -792,14 +799,14 @@ class HistoryScreen(Screen):
         due = row['due_date']
         status = row['status']
         try:
-            dt = datetime.datetime.strptime(due,"%Y-%m-%d %H:%M:%S")
+            dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
         due_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
         dow = vars.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
         due_date = dt.strftime('%m/%d {}').format(dow)
         try:
-            dt = datetime.datetime.strptime(NOW,"%Y-%m-%d %H:%M:%S")
+            dt = datetime.datetime.strptime(NOW, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
 
@@ -813,17 +820,17 @@ class HistoryScreen(Screen):
         selected = True if invoice_id == check_invoice_id else False
 
         tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
         tr_2 = KV.invoice_tr(state, company_id, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
         tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
         tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
         tr_5 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
         tr_6 = KV.invoice_tr(state, total, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
         self.invoices_table.add_widget(Builder.load_string(tr_1))
         self.invoices_table.add_widget(Builder.load_string(tr_2))
         self.invoices_table.add_widget(Builder.load_string(tr_3))
@@ -835,6 +842,13 @@ class HistoryScreen(Screen):
 
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
+
+    def select_invoice(self, invoice_id):
+        # set selected invoice and update the table to show it
+        vars.INVOICE_ID = invoice_id
+        # self.invoices_table.clear_widgets()
+        self.get_history()
+        self.items_table_update()
 
     def invoice_next(self):
         if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
@@ -878,31 +892,26 @@ class HistoryScreen(Screen):
         )
         self.get_history()
 
-    def invoice_selected(self, invoice_id):
-        vars.INVOICE_ID = invoice_id
+    def items_table_update(self):
+        self.items_table.clear_widgets()
         iitems = InvoiceItem()
-        data = {'invoice_id':vars.INVOICE_ID}
+        data = {'invoice_id': vars.INVOICE_ID}
         inv_items = iitems.where(data)
         if inv_items:
-            self.items_table.clear_widgets()
             # create headers
             # create TH
-            h1 = KV.invoice_tr(0, 'Item')
-            h2 = KV.invoice_tr(0, 'Qty')
-            h3 = KV.invoice_tr(0, 'Total')
-            h4 = KV.invoice_tr(0, 'Colors')
-            h5 = KV.invoice_tr(0, 'Memos')
+            h1 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.2)
+            h2 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+            h3 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
             self.items_table.add_widget(Builder.load_string(h1))
             self.items_table.add_widget(Builder.load_string(h2))
             self.items_table.add_widget(Builder.load_string(h3))
-            self.items_table.add_widget(Builder.load_string(h4))
-            self.items_table.add_widget(Builder.load_string(h5))
             items = {}
 
             for invoice_item in inv_items:
                 item_id = invoice_item['item_id']
                 items_search = InventoryItem()
-                itm_srch = items_search.where({'item_id':item_id})
+                itm_srch = items_search.where({'item_id': item_id})
 
                 if itm_srch:
                     for itm in itm_srch:
@@ -911,10 +920,10 @@ class HistoryScreen(Screen):
                     item_name = ''
 
                 items[item_id] = {
-                    'name' : item_name,
-                    'total' : 0,
+                    'name': item_name,
+                    'total': 0,
                     'quantity': 0,
-                    'color': [],
+                    'color': {},
                     'memo': []
                 }
             # populate correct item totals
@@ -922,34 +931,265 @@ class HistoryScreen(Screen):
                 for key, value in items.items():
                     item_id = key
                     data = {
-                        'invoice_id':vars.INVOICE_ID,
-                        'item_id':item_id
+                        'invoice_id': vars.INVOICE_ID,
+                        'item_id': item_id
                     }
-                    print(data)
                     iinv_items = InvoiceItem().where(data)
                     if iinv_items:
                         for inv_item in iinv_items:
                             items[item_id]['quantity'] += int(inv_item['quantity']) if inv_item['quantity'] else 1
                             items[item_id]['total'] += float(inv_item['pretax']) if inv_item['pretax'] else 0
-                            if inv_item['color']:
-                                items[item_id]['color'].append(inv_item['color'])
+                            if inv_item['color'] in items[item_id]['color']:
+                                items[item_id]['color'][inv_item['color']] += 1
+                            else:
+                                items[item_id]['color'][inv_item['color']] = 1
                             if inv_item['memo']:
                                 items[item_id]['memo'].append(inv_item['memo'])
             # print out the items into the table
             if items:
-                for key,value in items.items():
-                    tr1 = KV.invoice_tr(1,value['name'])
-                    tr2 = KV.invoice_tr(1,value['quantity'])
-                    tr3 = KV.invoice_tr(1,'${:,.2f}'.format(value['total']))
-                    tr4 = KV.invoice_tr(1,value['color'], spinner = True, spinner_text = 'color(s)')
-                    tr5 = KV.invoice_tr(1,value['memo'], spinner = True, spinner_text = 'memo(s)')
+                for key, value in items.items():
+                    tr1 = KV.sized_invoice_tr(1, value['quantity'], size_hint_x=0.2)
+                    color_string = []
+                    for color_id, color_qty in value['color'].items():
+                        get_color_name = Colored().where({'color_id': color_id})
+                        if get_color_name:
+                            for color_item in get_color_name:
+                                color_string.append('{count}-{name}'.format(count=str(color_qty), name=color_item['name']))
+
+                    item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=value['name'],
+                                                                                color_s=', '.join(color_string),
+                                                                                memo_s= '/ '.join(value['memo']))
+                    # print(item_string)
+                    tr2 = KV.sized_invoice_tr(1,
+                                              item_string,
+                                              text_wrap=True,
+                                              size_hint_x=0.6)
+
+                    tr3 = KV.sized_invoice_tr(1, '${:,.2f}'.format(value['total']), size_hint_x=0.2)
                     self.items_table.add_widget(Builder.load_string(tr1))
                     self.items_table.add_widget(Builder.load_string(tr2))
                     self.items_table.add_widget(Builder.load_string(tr3))
-                    self.items_table.add_widget(Builder.load_string(tr4))
-                    self.items_table.add_widget(Builder.load_string(tr5))
-            print(items)
 
+
+class InvoiceDetailsScreen(Screen):
+    invoice_number_label = ObjectProperty(None)
+    customer_type_label = ObjectProperty(None)
+    full_name_label = ObjectProperty(None)
+    last4_label = ObjectProperty(None)
+    phone_label = ObjectProperty(None)
+    dropoff_label = ObjectProperty(None)
+    payment_id_label = ObjectProperty(None)
+    payment_type_label = ObjectProperty(None)
+    pickup_label = ObjectProperty(None)
+    profile_id_label = ObjectProperty(None)
+    rack_label = ObjectProperty(None)
+    rack_date_label = ObjectProperty(None)
+    items_table = ObjectProperty(None)
+    quantity_label= ObjectProperty(None)
+    subtotal_label= ObjectProperty(None)
+    tax_label= ObjectProperty(None)
+    total_label= ObjectProperty(None)
+    discount_label= ObjectProperty(None)
+    credit_label= ObjectProperty(None)
+    tendered_label= ObjectProperty(None)
+    due_label= ObjectProperty(None)
+
+    def get_details(self):
+        invoices = Invoice().where({'invoice_id':vars.INVOICE_ID})
+        if invoices:
+            #reset the page first
+            self.invoice_number_label.text = ''
+            self.customer_type_label.text = ''
+            self.full_name_label.text = ''
+            self.phone_label.text = ''
+            self.dropoff_label.text = ''
+            self.pickup_label.text = ''
+            self.rack_label.text = ''
+            self.rack_date_label.text = ''
+            self.total_label.text = '$0.00'
+            self.quantity_label.text = '0'
+            self.subtotal_label.text = '$0.00'
+            self.tax_label.text = '$0.00'
+            self.credit_label.text = '$0.00'
+            self.discount_label.text = '$0.00'
+            self.tendered_label.text = '$0.00'
+            self.due_label.text = '0.00'
+            for invoice in invoices:
+                # get the invoice information
+                base_invoice_id = invoice['id']
+                company_id = invoice['company_id']
+                quantity = invoice['quantity']
+                subtotal = '${:,.2f}'.format(invoice['pretax']) if invoice['pretax'] else '$0.00'
+                tax = '${:,.2f}'.format(invoice['tax']) if invoice['tax'] else '$0.00'
+                total = '${:,.2f}'.format(invoice['total']) if invoice['total'] else '$0.00'
+                rack = invoice['rack'] if invoice['rack'] else ''
+                rack_date = invoice['rack_date'] if invoice['rack_date'] else ''
+                dropoff_date = invoice['created_at'] if invoice['created_at'] else ''
+                due_date = invoice['due_date'] if invoice['due_date'] else ''
+                memo = invoice['memo']
+                status = invoice['status']
+                self.invoice_number_label.text = '[color=000000]#{}[/color]'.format(vars.INVOICE_ID) if vars.INVOICE_ID else ''
+                self.dropoff_label.text = '[color=000000]{}[/color]'.format(dropoff_date)
+                self.rack_label.text = '[color=000000]{}[/color]'.format(rack)
+                self.rack_date_label.text = '[color=000000]{}[/color]'.format(rack_date)
+                self.quantity_label.text = '[color=000000]{}[/color]'.format(quantity)
+                self.subtotal_label.text = '[color=000000]{}[/color]'.format(subtotal)
+                self.tax_label.text = '[color=000000]{}[/color]'.format(tax)
+                self.total_label.text = '[color=000000]{}[/color]'.format(total)
+
+
+
+                # get the customer information
+                customer_id = invoice['customer_id']
+                users = User().where({'user_id':customer_id})
+                if users:
+                    for user in users:
+                        last_name = user['last_name']
+                        first_name = user['first_name']
+                        full_name = '{}, {}'.format(last_name.capitalize(), first_name.capitalize())
+                        phone = user['phone']
+                        payment_id = user['payment_id']
+                        profile_id = user['profile_id']
+                        delivery = 'Delivery' if user['delivery'] == 1 else False
+                        account = 'Account' if user['account'] == 1 else False
+                        if delivery:
+                            customer_type = delivery
+                        elif account:
+                            customer_type = account
+                        else:
+                            customer_type = 'General'
+                        self.full_name_label.text = '[color=000000]{}[/color]'.format(full_name)
+                        self.phone_label.text = '[color=000000]{}[/color]'.format(phone)
+                        self.customer_type_label.text = '[color=000000]{}[/color]'.format(customer_type)
+                        self.payment_id_label.text = '[color=000000]{}[/color]'.format(payment_id)
+                        self.profile_id_label.text = '[color=000000]{}[/color]'.format(profile_id)
+
+                # update the items table
+                self.items_table_update()
+
+                # get the transaction information
+                transaction_id = invoice['transaction_id']
+                transactions = Transaction().where({'transaction_id':transaction_id})
+                if transactions:
+                    for transaction in transactions:
+                        payment_type = transaction['type']
+                        discount_pre = transaction['discount'] if transaction['discount'] else 0
+                        discount_total = discount_pre + 0
+                        tendered_total = transaction['tendered'] if transaction['tendered'] else 0
+                        if payment_type == 1:
+                            transaction_type = 'Credit'
+                            tendered = invoice['total'] - discount_total
+
+                        elif payment_type ==2:
+                            transaction_type = 'Cash'
+                        elif payment_type ==3:
+                            transaction_type = 'Check'
+                            tendered_total = invoice['total'] - discount_total
+                        else:
+                            transaction_type = ''
+
+                        last4 = transaction['last_four']
+                        pickup_date = transaction['created_at'] if transaction['created_at'] else ''
+
+                        discount = '${:,.2f}'.format(transaction['discount']) if transaction['discount'] else '$0.00'
+                        # need to add in credits
+                        credit = '$0.00'
+                        due_amt = invoice['total'] - discount_total - tendered_total
+                        due = '${:,.2f}'.format(due_amt)
+
+                        self.pickup_label.text = '[color=000000]{}[/color]'.format(pickup_date)
+                        self.payment_type_label.text = '[color=000000]{}[/color]'.format(transaction_type)
+                        self.last4_label.text = '[color=000000]{}[/color]'.format(last4)
+                        self.discount_label.text = '[color=000000]{}[/color]'.format(discount)
+                        self.credit_label.text = '[color=000000]{}[/color]'.format(credit)
+                        self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(due)
+                        self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(tendered_total))
+                else:
+                    self.pickup_label.text = '[color=000000]{}[/color]'.format('')
+                    self.payment_type_label.text = '[color=000000]{}[/color]'.format('')
+                    self.last4_label.text = '[color=000000]{}[/color]'.format('')
+                    self.discount_label.text = '[color=000000]{}[/color]'.format('$0.00')
+                    self.credit_label.text = '[color=000000]{}[/color]'.format('$0.00')
+                    self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(total)
+                    self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format('$0.00'))
+
+    def items_table_update(self):
+        self.items_table.clear_widgets()
+        iitems = InvoiceItem()
+        data = {'invoice_id': vars.INVOICE_ID}
+        inv_items = iitems.where(data)
+        if inv_items:
+            # create headers
+            # create TH
+            h1 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.2)
+            h2 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+            h3 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+            self.items_table.add_widget(Builder.load_string(h1))
+            self.items_table.add_widget(Builder.load_string(h2))
+            self.items_table.add_widget(Builder.load_string(h3))
+            items = {}
+
+            for invoice_item in inv_items:
+                item_id = invoice_item['item_id']
+                items_search = InventoryItem()
+                itm_srch = items_search.where({'item_id': item_id})
+
+                if itm_srch:
+                    for itm in itm_srch:
+                        item_name = itm['name']
+                else:
+                    item_name = ''
+
+                items[item_id] = {
+                    'name': item_name,
+                    'total': 0,
+                    'quantity': 0,
+                    'color': {},
+                    'memo': []
+                }
+            # populate correct item totals
+            if items:
+                for key, value in items.items():
+                    item_id = key
+                    data = {
+                        'invoice_id': vars.INVOICE_ID,
+                        'item_id': item_id
+                    }
+                    iinv_items = InvoiceItem().where(data)
+                    if iinv_items:
+                        for inv_item in iinv_items:
+                            items[item_id]['quantity'] += int(inv_item['quantity']) if inv_item['quantity'] else 1
+                            items[item_id]['total'] += float(inv_item['pretax']) if inv_item['pretax'] else 0
+                            if inv_item['color'] in items[item_id]['color']:
+                                items[item_id]['color'][inv_item['color']] += 1
+                            else:
+                                items[item_id]['color'][inv_item['color']] = 1
+                            if inv_item['memo']:
+                                items[item_id]['memo'].append(inv_item['memo'])
+            # print out the items into the table
+            if items:
+                for key, value in items.items():
+                    tr1 = KV.sized_invoice_tr(1, value['quantity'], size_hint_x=0.2)
+                    color_string = []
+                    for color_id, color_qty in value['color'].items():
+                        get_color_name = Colored().where({'color_id': color_id})
+                        if get_color_name:
+                            for color_item in get_color_name:
+                                color_string.append('{count}-{name}'.format(count=str(color_qty), name=color_item['name']))
+
+                    item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=value['name'],
+                                                                                color_s=', '.join(color_string),
+                                                                                memo_s= '/ '.join(value['memo']))
+                    # print(item_string)
+                    tr2 = KV.sized_invoice_tr(1,
+                                              item_string,
+                                              text_wrap=True,
+                                              size_hint_x=0.6)
+
+                    tr3 = KV.sized_invoice_tr(1, '${:,.2f}'.format(value['total']), size_hint_x=0.2)
+                    self.items_table.add_widget(Builder.load_string(tr1))
+                    self.items_table.add_widget(Builder.load_string(tr2))
+                    self.items_table.add_widget(Builder.load_string(tr3))
 
 
 
@@ -1486,7 +1726,7 @@ class SearchScreen(Screen):
         tr_2 = KV.invoice_tr(state, company_id, selected=selected, invoice_id=invoice_id,
                              callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
-        callback = 'self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id,
                              callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         tr_5 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id,
@@ -1773,8 +2013,7 @@ class ScreenManagement(ScreenManager):
 
 
 # load kv files
-presentation = Builder.load_file("main.kv")
-
+presentation = Builder.load_file("./kv/main.kv")
 
 
 class MainApp(App):
