@@ -39,6 +39,7 @@ class Invoice:
         self.c = self.conn.cursor()
 
     def create_table(self):
+
         table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
                                   IntegerField(column='invoice_id').data_type(),
                                   IntegerField(column='company_id').data_type(),
@@ -64,7 +65,10 @@ class Invoice:
         self.conn.commit()
 
     def add(self):
-
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
+        self.created_at = now
         self.c.execute('''INSERT INTO {t}(invoice_id,company_id,customer_id,quantity,pretax,tax,reward_id,discount_id,
 total,rack,rack_date,due_date,memo,transaction_id,status,created_at,updated_at)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_id,
@@ -89,16 +93,18 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_id,
         self.conn.commit()
         return True
 
-    def put(self, where=False, data=False):
+    def put(self, where = False, data = False):
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
         sql = '''UPDATE {t} SET '''.format(t=table)
-        idx = 0
         if len(data) > 0:
             for key, value in data.items():
-                idx += 1
-                if idx == len(data):
-                    sql += '''{k} = "{v}" '''.format(k=key, v=value)
+                if value is None:
+                    sql += '''{k} = NULL, '''.format(k=key, v=value)
                 else:
                     sql += '''{k} = "{v}", '''.format(k=key, v=value)
+            sql += '''updated_at = "{v}" '''.format(v=self.updated_at)
         sql += '''WHERE '''
         idx = 0
         if len(where) > 0:
@@ -115,7 +121,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_id,
         return True
 
     def update(self):
-
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
         self.c.execute('''UPDATE {t} SET invoice_id = ?, company_id = ?, customer_id = ?, quantity = ?, pretax = ?,
 tax = ?, reward_id = ?, discount_id = ?, total = ?, rack = ?, rack_date = ?, due_date = ?, memo = ?, transaction_id =?,
 status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
@@ -141,6 +149,7 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
         return True
 
     def find(self):
+
         try:
             self.c.execute("""SELECT * FROM {t} WHERE deleted_at is null AND id = ?""".format(table), (str(self.id)))
             self.conn.commit()
@@ -152,6 +161,7 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
         return False
 
     def first(self, data=False):
+
         if data:
             sql = '''SELECT * FROM {t} WHERE deleted_at is null AND '''.format(t=table)
             idx = 0
@@ -168,7 +178,8 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
         else:
             return False
 
-    def where(self, data=False):
+    def where(self, data=False, deleted_at= True):
+
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
@@ -203,7 +214,7 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
                         else:
                             sql += '''{k} = {v} AND '''.format(k=key, v=value)
 
-            sql += ' AND deleted_at is null'
+            sql += ' AND deleted_at is null' if deleted_at else ''
 
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
@@ -213,11 +224,13 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
 
             self.c.execute(sql)
             self.conn.commit()
+
             return self.c.fetchall()
         else:
             return False
 
-    def like(self, data=False):
+    def like(self, data=False, deleted_at=True):
+
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
@@ -242,7 +255,7 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
                     else:
                         sql += '''{k} LIKE {v} AND '''.format(k=key, v=value)
 
-                sql += ' AND deleted_at is null '
+            sql += ' AND deleted_at is null ' if deleted_at else ''
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
 
@@ -254,11 +267,15 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
             return self.c.fetchall()
         else:
             return False
+
     def delete(self):
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
 
         if self.id:
 
-            self.c.execute("""UPDATE {t} SET deleted_at = ?, updated_at = ? WHERE id = ?""".format(table),
+            self.c.execute("""UPDATE {t} SET deleted_at = ?, updated_at = ? WHERE id = ?""".format(t=table),
                            (self.updated_at,
                             self.updated_at,
                             self.id)
@@ -269,6 +286,24 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
             return True
         else:
             return False
+
+    def get_id(self,invoice_id):
+        invoices = self.where({'invoice_id':invoice_id})
+        if invoices:
+            for invoice in invoices:
+                id = invoice['id']
+                return id
+        else:
+            return False
+
+
+    def get_last_insert_id(self):
+        sql = '''SELECT last_insert_rowid();'''
+        self.c.execute(sql)
+        self.conn.commit()
+        rows = self.c.fetchone()
+        return rows['last_insert_rowid()']
+
 
     def close_connection(self):
         self.c.close()

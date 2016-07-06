@@ -46,7 +46,10 @@ class Inventory:
         self.conn.commit()
 
     def add(self):
-
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
+        self.created_at = now
         self.c.execute('''INSERT INTO {t}(inventory_id,company_id,name,description,ordered,status,created_at,updated_at)
 VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.inventory_id,
                                              self.company_id,
@@ -62,15 +65,14 @@ VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.inventory_id,
         return True
 
     def put(self, where = False, data = False):
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
         sql = '''UPDATE {t} SET '''.format(t=table)
-        idx = 0
         if len(data) > 0:
             for key, value in data.items():
-                idx += 1
-                if idx == len(data):
-                    sql += '''{k} = "{v}" '''.format(k=key, v=value)
-                else:
-                    sql += '''{k} = "{v}", '''.format(k=key, v=value)
+                sql += '''{k} = "{v}", '''.format(k=key, v=value)
+            sql += '''updated_at = "{v}" '''.format(v=self.updated_at)
         sql += '''WHERE '''
         idx = 0
         if len(where) > 0:
@@ -87,7 +89,9 @@ VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.inventory_id,
         return True
 
     def update(self):
-
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
         self.c.execute('''UPDATE {t} SET inventory_id = ?, company_id = ?, name = ?, description = ?, ordered = ?,
 status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
                                                              self.company_id,
@@ -130,7 +134,7 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
         else:
             return False
 
-    def where(self, data=False):
+    def where(self, data=False, deleted_at=True):
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
@@ -165,7 +169,7 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
                         else:
                             sql += '''{k} = {v} AND '''.format(k=key, v=value)
 
-                sql += ' AND deleted_at is null'
+            sql += ' AND deleted_at is null' if deleted_at else ''
 
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
@@ -179,7 +183,7 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
         else:
             return False
 
-    def like(self, data=False):
+    def like(self, data=False, deleted_at=True):
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
@@ -204,8 +208,7 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
                     else:
                         sql += '''{k} LIKE {v} AND '''.format(k=key, v=value)
 
-            sql += ' AND deleted_at is null '
-
+            sql += ' AND deleted_at is null ' if deleted_at else ''
             if order_by:
                 sql += ''' ORDER BY {} '''.format(order_by)
 
@@ -219,7 +222,9 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
             return False
 
     def delete(self):
-
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
         if self.id:
 
             self.c.execute("""UPDATE {t} SET deleted_at = ?, updated_at = ? WHERE id = ?""".format(table),

@@ -5,6 +5,8 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="bool.__getitem__" />
+          <option value="KivyCalendar.CalendarWidget" />
+          <option value="KivyCalendar.DatePicker" />
         </list>
       </option>
     </inspection_tool>

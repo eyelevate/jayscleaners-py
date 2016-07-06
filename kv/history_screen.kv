@@ -37,10 +37,22 @@
                 text: "Next"
                 disabled: False
             Button:
-                id: edit_invoice_btn
+                id: delete_invoice_btn
                 font_size:'20sp'
-                on_release: root.edit()
-                text: "Edit"
+                on_release: root.delete_invoice_confirm()
+                text: "Delete"
+                disabled: False
+            Button:
+                id: undo_btn
+                font_size:'20sp'
+                on_release: root.undo_invoice_confirm()
+                text: "Undo"
+                disabled: False
+            Button:
+                id: reprint_btn
+                font_size:'20sp'
+                on_release: root.reprint()
+                text: "Reprint"
                 disabled: False
             Button:
                 id: invoice_details_btn

@@ -1,16 +1,24 @@
 #: import FadeTransition kivy.uix.screenmanager.FadeTransition
+#: import NoTransition kivy.uix.screenmanager.NoTransition
+#: import WipeTransition kivy.uix.screenmanager.WipeTransition
+#: import SwapTransition kivy.uix.screenmanager.SwapTransition
+#: import FallOutTransition kivy.uix.screenmanager.FallOutTransition
+#: import RiseInTransition kivy.uix.screenmanager.RiseInTransition
 #: import DropDown kivy.uix.dropdown
 #: import Popup kivy.uix.popup.Popup
 #: import ScrollView kivy.uix.scrollview
+#:include kv/library.kv
 
 ScreenManagement:
-    transition: FadeTransition()
+    transition: RiseInTransition()
     MainScreen:
     DeliveryScreen:
     DropoffScreen:
+    EditInvoiceScreen:
     EditCustomerScreen:
     HistoryScreen:
     InvoiceDetailsScreen:
+    ItemDetailsScreen:
     Last10Screen:
     NewCustomerScreen:
     PickupScreen:
@@ -23,8 +31,10 @@ ScreenManagement:
 #:include kv/delivery_screen.kv
 #:include kv/dropoff_screen.kv
 #:include kv/edit_customer_screen.kv
+#:include kv/edit_invoice_screen.kv
 #:include kv/history_screen.kv
 #:include kv/invoice_details_screen.kv
+#:include kv/item_details_screen.kv
 #:include kv/last10_screen.kv
 #:include kv/new_customer_screen.kv
 #:include kv/pickup_screen.kv

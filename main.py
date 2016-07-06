@@ -4,7 +4,10 @@ import platform
 import time
 import datetime
 import os
-import calendar
+from collections import OrderedDict
+
+os.environ['TZ'] = 'US/Pacific'
+time.tzset()
 
 # Models
 from colors import Colored
@@ -23,37 +26,47 @@ from printers import Printer
 from reward_transactions import RewardTransaction
 from rewards import Reward
 from schedules import Schedule
+from sync import Sync
 from taxes import Tax
 from transactions import Transaction
 from users import User
 
 # Helpers
+import calendar
+from calendar import Calendar
 from kv_generator import KvString
 from jobs import Job
 from static import Static
-from sync import Sync
+import threading
+import queue
 
 # from escpos import *
 # from escpos.printer import Network
 
 from kivy.app import App
+from kivy.factory import Factory
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.stacklayout import StackLayout
 from kivy.lang import Builder
-from kivy.properties import ObjectProperty
+from kivy.uix.button import Button
+from kivy.uix.image import Image
+from kivy.properties import ObjectProperty, partial
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import Screen
 from kivy.uix.screenmanager import FadeTransition
+from kivy.uix.spinner import Spinner
 from kivy.core.window import Window
 from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
+from kivy.uix.tabbedpanel import TabbedPanel
+from kivy.uix.tabbedpanel import TabbedPanelHeader
+from kivy.uix.tabbedpanel import TabbedPanelContent
 from kivy.graphics.instructions import Canvas
 from kivy.graphics import Rectangle, Color
-
-from threading import Thread
-from urllib import error
-from urllib import request
-from urllib import parse
-from urllib.parse import urlencode
-from urllib.request import urlopen
+from kivy.uix.widget import WidgetException
 
 if platform.system() == 'Darwin':  # Mac
     sys.path.append('/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
@@ -64,6 +77,7 @@ elif platform.system() == 'Windows':  # Windows
 
 auth_user = User()
 Job = Job()
+
 ERROR_COLOR = 0.94, 0.33, 0.33, 1
 DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
 unix = time.time()
@@ -75,8 +89,74 @@ SEARCH_NEW = vars.SEARCH_NEW
 LAST10 = vars.LAST10
 SEARCH_RESULTS = vars.SEARCH_RESULTS
 KV = KvString()
+SYNC = Sync()
+queueLock = threading.Lock()
+workQueue = queue.Queue(10)
+list_len = []
 
 
+# handles multithreads for database sync
+class MultiThread(threading.Thread):
+    def __init__(self, threadID, name, q):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.q = q
+
+    def run(self):
+        print("Starting " + self.name)
+        process_data(threadName=self.name, q=self.q)
+        print("Exiting " + self.name)
+
+
+def process_data(threadName, q):
+    while not vars.EXITFLAG:
+        queueLock.acquire()
+        if not workQueue.empty():
+            data = q.get()
+            # do method in here
+            if data == "Sync":
+                SYNC.run_sync()
+
+            queueLock.release()
+            print("{} processing {}".format(threadName, data))
+        else:
+            queueLock.release()
+        time.sleep(0.1)
+
+
+def threads_start():
+    vars.THREADID += 1
+    thread = MultiThread(vars.THREADID, 'Thread-{}'.format(len(vars.WORKLIST)), workQueue)
+    thread.start()
+    vars.THREADS.append(thread)
+
+    # Fill the queue
+    queueLock.acquire()
+    for word in vars.WORKLIST:
+        workQueue.put(word)
+    queueLock.release()
+
+    # Wait for queue to empty
+    while not workQueue.empty():
+        pass
+
+    # Notify threads it's time to exit
+    vars.EXITFLAG = True
+
+    # Wait for all threads to complete
+    thread.join()
+
+    # reset query variables
+    vars.THREADS = []
+    vars.WORKLIST = []
+    vars.EXITFLAG = False
+    vars.THREADID = 1
+
+    print("Exiting Main Thread")
+
+
+# SCREEN CLASSES
 class MainScreen(Screen):
     update_label = ObjectProperty(None)
     login_button = ObjectProperty(None)
@@ -88,12 +168,63 @@ class MainScreen(Screen):
     username = ObjectProperty(None)
     password = ObjectProperty(None)
     login_popup = ObjectProperty(None)
+    login_button = ObjectProperty(None)
 
     def update_info(self):
         info = "Last updated {}".format("today")
         return info
 
-    def get_login(self):
+    def check_username(self, value):
+        print(value)
+
+    def login_show(self):
+        self.login_popup = Popup()
+        self.login_popup.size_hint = (None, None)
+        self.login_popup.size = '400sp', '200sp'
+        self.login_popup.title = 'Login Screen'
+        layout = BoxLayout(orientation='vertical')
+        inner_content_1 = GridLayout(rows=2,
+                                     cols=2,
+                                     row_force_default=True,
+                                     row_default_height='40sp',
+                                     size_hint=(1, 0.7))
+        inner_content_1.add_widget(Label(text="username",
+                                         size_hint_y=None,
+                                         font_size='20sp'))
+        self.username = TextInput(id='username',
+                                  write_tab=False,
+                                  font_size='20sp',
+                                  hint_text='Username',
+                                  on_text_validate=self.login,
+                                  multiline=False,
+                                  padding=[5, 5, 5, 5],
+                                  text='')
+        inner_content_1.add_widget(self.username)
+
+        inner_content_1.add_widget(Label(text="password",
+                                         size_hint_y=None,
+                                         font_size='20sp'))
+        self.password = TextInput(id='password',
+                                  write_tab=False,
+                                  font_size='20sp',
+                                  hint_text='Password',
+                                  password=True,
+                                  on_text_validate=self.login,
+                                  multiline=False,
+                                  padding=[5, 5, 5, 5],
+                                  text='')
+        inner_content_1.add_widget(self.password)
+        inner_content_2 = BoxLayout(orientation='horizontal',
+                                    size_hint=(1, 0.3))
+        inner_content_2.add_widget(Button(text="Cancel",
+                                          font_size='20sp',
+                                          on_release=self.login_popup.dismiss))
+        inner_content_2.add_widget(Button(text="Login",
+                                          font_size='20sp',
+                                          on_release=self.login))
+        layout.add_widget(inner_content_1)
+        layout.add_widget(inner_content_2)
+        self.login_popup.content = layout
         self.login_popup.open()
 
     def login(self, *args, **kwargs):
@@ -103,7 +234,8 @@ class MainScreen(Screen):
         user.password = self.password.text  # cipher and salt later
         popup = Popup()
         popup.size_hint = (None, None)
-        popup.size = '600sp', '300sp'
+        popup.size = '600sp', '400sp'
+        popup.title = 'Login Screen'
 
         # validate the form data
         if not user.username:
@@ -137,14 +269,15 @@ class MainScreen(Screen):
                     auth_user.user_id = user1['user_id']
                     auth_user.username = user1['username']
                     auth_user.company_id = user1['company_id']
+                    SYNC.company_id = user1['company_id']
 
                 popup.title = 'Authentication Success!'
                 popup.content = Builder.load_string(
                     KV.popup_alert('You are now logged in as {}!'.format(user.username)))
                 self.login_popup.dismiss()
             else:  # did not find user in local db, look for user on server
-                sync = Sync()
-                data = sync.server_login(username=user.username, password=user.password)
+
+                data = SYNC.server_login(username=user.username, password=user.password)
 
                 if data['status']:
                     self.login_button.text = "Logout"
@@ -159,6 +292,7 @@ class MainScreen(Screen):
 
                     auth_user.username = user.username
                     auth_user.company_id = data['company_id']
+                    SYNC.company_id = data['company_id']
                     popup.title = 'Authentication Success!'
                     content = KV.popup_alert(msg='You are now logged in as {}!'.format(user.username))
                     popup.content = Builder.load_string(content)
@@ -189,17 +323,231 @@ class MainScreen(Screen):
         self.settings_button.disabled = True
 
     def db_sync(self, *args, **kwargs):
-        # self.update_label.text = 'Connecting to server...'
-        sync = Sync()
+
+        # self.update_label.text = 'Connecting to server...
         # sync.migrate()
-        sync.db_sync(auth_user.company_id)
+        # SYNC.db_sync()
+
+        # test multithreading here
+        vars.WORKLIST.append("Sync")
+        threads_start()
+
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
 
         # self.update_label.text = 'Server updated at {}'.format()
 
-    def search_pre(self):
+    def test_time(self):
+        invoices_2 = Invoice().where({'id': 43693}, deleted_at=False)
+        if invoices_2:
+            idx = -1
+            for invoice in invoices_2:
+                idx += 1
+                invoices_2[idx]['due_date'] = int(datetime.datetime.strptime(invoice['due_date'],
+                                                                             "%Y-%m-%d %H:%M:%S").timestamp())
+                invoices_2[idx]['rack_date'] = int(datetime.datetime.strptime(invoice['rack_date'],
+                                                                              "%Y-%m-%d %H:%M:%S").timestamp()) if \
+                    invoice[
+                        'rack_date'] else None
 
-        Thread(target=self.db_sync()).start()
+                print(invoices_2[idx]['due_date'])
+                print(invoices_2[idx]['rack_date'])
+
+    now = datetime.datetime.now()
+    month = now.month
+    year = now.year
+    day = now.day
+    calendar_layout = ObjectProperty(None)
+    month_button = ObjectProperty(None)
+    year_button = ObjectProperty(None)
+    due_date = None  # tbr
+
+    def make_calendar(self):
+
+        # tbr
+        company = Company()
+        company_data = company.where({'company_id': 1})
+        if company_data:
+            for comp in company_data:
+                store_hours = json.loads(comp['store_hours'])
+        else:
+            store_hours = False
+
+        today = datetime.datetime.today()
+        dow = int(datetime.datetime.today().strftime("%w"))
+        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        new_date = today + datetime.timedelta(days=turn_around_day)
+        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.month = int(self.due_date.strftime('%m'))
+
+        popup = Popup()
+        popup.title = 'Calendar'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                   orientation='vertical')
+        calendar_selection = GridLayout(cols=4,
+                                        rows=1,
+                                        size_hint=(1, 0.1))
+        prev_month = Button(markup=True,
+                            text="<",
+                            font_size="30sp",
+                            on_release=self.prev_month)
+        next_month = Button(markup=True,
+                            text=">",
+                            font_size="30sp",
+                            on_release=self.next_month)
+        select_month = Factory.SelectMonth()
+        self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
+                                   on_release=select_month.open)
+        for index in range(12):
+            month_options = Button(text='{}'.format(vars.month_by_number(index)),
+                                   size_hint_y=None,
+                                   height=40,
+                                   on_release=partial(self.select_calendar_month, index))
+            select_month.add_widget(month_options)
+
+        select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+        select_year = Factory.SelectMonth()
+
+        self.year_button = Button(text="{}".format(self.year),
+                                  on_release=select_year.open)
+        for index in range(10):
+            year_options = Button(text='{}'.format(int(self.year) + index),
+                                  size_hint_y=None,
+                                  height=40,
+                                  on_release=partial(self.select_calendar_year, index))
+            select_year.add_widget(year_options)
+
+        select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+        calendar_selection.add_widget(prev_month)
+        calendar_selection.add_widget(self.month_button)
+        calendar_selection.add_widget(self.year_button)
+        calendar_selection.add_widget(next_month)
+        self.calendar_layout = GridLayout(cols=7,
+                                          rows=8,
+                                          size_hint=(1, 0.9))
+        self.create_calendar_table()
+
+        inner_layout_1.add_widget(calendar_selection)
+        inner_layout_1.add_widget(self.calendar_layout)
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                   orientation='horizontal')
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="cancel",
+                                         on_release=popup.dismiss))
+
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def create_calendar_table(self):
+        # set the variables
+
+        store_hours = Company().get_store_hours(1)
+        today_date = datetime.datetime.today()
+        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
+        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
+
+        self.calendar_layout.clear_widgets()
+        calendars = Calendar()
+        calendars.setfirstweekday(calendar.SUNDAY)
+        selected_month = self.month - 1
+        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+        th1 = KV.invoice_tr(0, 'Su')
+        th2 = KV.invoice_tr(0, 'Mo')
+        th3 = KV.invoice_tr(0, 'Tu')
+        th4 = KV.invoice_tr(0, 'We')
+        th5 = KV.invoice_tr(0, 'Th')
+        th6 = KV.invoice_tr(0, 'Fr')
+        th7 = KV.invoice_tr(0, 'Sa')
+        self.calendar_layout.add_widget(Builder.load_string(th1))
+        self.calendar_layout.add_widget(Builder.load_string(th2))
+        self.calendar_layout.add_widget(Builder.load_string(th3))
+        self.calendar_layout.add_widget(Builder.load_string(th4))
+        self.calendar_layout.add_widget(Builder.load_string(th5))
+        self.calendar_layout.add_widget(Builder.load_string(th6))
+        self.calendar_layout.add_widget(Builder.load_string(th7))
+        if year_dates[selected_month]:
+            for month in year_dates[selected_month]:
+                for week in month:
+                    for day in week:
+                        if day[0] > 0:
+                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                           Job.date_leading_zeroes(self.month),
+                                                                           Job.date_leading_zeroes(day[0]))
+                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                            check_date = today_base.timestamp()
+                            dow_check = today_base.strftime("%w")
+                            # rule #1 remove all past dates so users cannot set a due date previous to today
+                            if check_date < check_today:
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                if check_date == check_today:
+                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                elif check_date == check_due_date:
+                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(
+                                                                      0.2156862, 0.9921568, 0.98823529, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                elif check_date > check_today and check_date < check_due_date:
+                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0.878431372549020, 1, 1, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                else:
+                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                  on_release=partial(self.select_due_date, today_base))
+                            else:  # store is closed
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                        else:
+                            item = Factory.CalendarButton(disabled=True)
+                        self.calendar_layout.add_widget(item)
+
+    def prev_month(self, *args, **kwargs):
+        if self.month == 1:
+            self.month = 12
+            self.year -= 1
+        else:
+            self.month -= 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_calendar_table()
+
+    def next_month(self, *args, **kwargs):
+        if self.month == 12:
+            self.month = 1
+            self.year += 1
+        else:
+            self.month += 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_calendar_table()
+
+    def select_calendar_month(self, month, *args, **kwargs):
+        self.month = month
+        self.create_calendar_table()
+
+    def select_calendar_year(self, year, *args, **kwargs):
+        self.year = year
+        self.create_calendar_table()
+
+    def select_due_date(self, selected_date, *args, **kwargs):
+        self.due_date = selected_date
+        self.create_calendar_table()
 
     def test_sys(self):
         print(sys.path)
@@ -261,7 +609,2720 @@ class DeliveryScreen(Screen):
 
 
 class DropoffScreen(Screen):
-    pass
+    sm = ObjectProperty(None)
+    inv_qty_list = ['1']
+    qty_clicks = 0
+    inv_qty = 1
+    adjust_sum_grid = ObjectProperty(None)
+    adjust_individual_grid = ObjectProperty(None)
+    invoice_list = OrderedDict()
+    invoice_list_copy = OrderedDict()
+    inventory_panel = ObjectProperty(None)
+    items_grid = GridLayout()
+    qty_count_label = ObjectProperty(None)
+    item_selected_row = 0
+    items_layout = ObjectProperty(None)
+    memo_text_input = TextInput(size_hint=(1, 0.4),
+                                multiline=True)
+    summary_table = ObjectProperty(None)
+    summary_quantity_label = ObjectProperty(None)
+    summary_tags_label = ObjectProperty(None)
+    summary_subtotal_label = ObjectProperty(None)
+    summary_tax_label = ObjectProperty(None)
+    summary_discount_label = ObjectProperty(None)
+    summary_total_label = ObjectProperty(None)
+    quantity = 0
+    tags = 0
+    subtotal = 0
+    tax = 0
+    discount = 0
+    total = 0
+    adjust_price = 0
+    adjusted_price = ObjectProperty(None)
+    calculator_text = ObjectProperty(None)
+    adjust_price_list = []
+    memo_color_popup = Popup()
+    date_picker = ObjectProperty(None)
+    due_date = None
+    due_date_string = None
+    now = datetime.datetime.now()
+    month = now.month
+    year = now.year
+    day = now.day
+    calendar_layout = ObjectProperty(None)
+    month_button = ObjectProperty(None)
+    year_button = ObjectProperty(None)
+    print_popup = ObjectProperty(None)
+    deleted_rows = []
+
+    def reset(self):
+        # reset the inventory table
+        self.inventory_panel.clear_widgets()
+        self.get_inventory()
+        self.summary_table.clear_widgets()
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today = datetime.datetime.today()
+        dow = int(datetime.datetime.today().strftime("%w"))
+        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        new_date = today + datetime.timedelta(days=turn_around_day)
+        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+        self.date_picker.text = self.due_date_string
+        self.inventory_panel.clear_widgets()
+        self.get_inventory()
+        self.memo_color_popup.dismiss()
+        self.qty_clicks = 0
+        self.inv_qty = 1
+        self.inv_qty_list = ['1']
+        self.qty_count_label.text = '1'
+        self.invoice_list = OrderedDict()
+        self.invoice_list_copy = OrderedDict()
+        self.memo_text_input.text = ''
+        self.summary_table.clear_widgets()
+        self.summary_quantity_label.text = '[color=000000]0[/color]'
+        self.summary_tags_label.text = '[color=000000]0[/color]'
+        self.summary_subtotal_label.text = '[color=000000]$0.00[/color]'
+        self.summary_tax_label.text = '[color=000000]$0.00[/color]'
+        self.summary_discount_label.text = '[color=000000]($0.00)[/color]'
+        self.summary_total_label.text = '[color=000000]$0.00[/color]'
+        self.quantity = 0
+        self.tags = 0
+        self.subtotal = 0
+        self.tax = 0
+        self.discount = 0
+        self.total = 0
+        self.adjust_price = 0
+        self.adjust_price_list = []
+        vars.ITEM_ID = None
+        # reset the inventory table
+        self.inventory_panel.clear_widgets()
+        self.get_inventory()
+        # create th for invoice summary table
+        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
+        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+        self.summary_table.add_widget(Builder.load_string(h1))
+        self.summary_table.add_widget(Builder.load_string(h2))
+        self.summary_table.add_widget(Builder.load_string(h3))
+        self.summary_table.add_widget(Builder.load_string(h4))
+        self.get_inventory()
+        self.deleted_rows = []
+        taxes = Tax().where({'company_id': auth_user.company_id, 'status': 1})
+        if taxes:
+            for tax in taxes:
+                vars.TAX_RATE = tax['rate']
+        else:
+            vars.TAX_RATE = 0.096
+
+    def set_result_status(self):
+        vars.SEARCH_RESULTS_STATUS = True
+        self.summary_table.clear_widgets()
+
+    def get_inventory(self):
+        inventories = Inventory().where({'company_id': '{}'.format(auth_user.company_id)})
+        if inventories:
+            idx = 0
+            self.inventory_panel.clear_tabs()
+            self.inventory_panel.clear_widgets()
+            for inventory in inventories:
+                idx += 1
+                inventory_id = inventory['inventory_id']
+                inventory_name = inventory['name']
+                iitems = InventoryItem()
+                inventory_items = iitems.where({'inventory_id': inventory_id, 'ORDER_BY': 'ordered ASC'})
+                tph = TabbedPanelHeader(text='{}'.format(inventory_name))
+                layout = ScrollView()
+                content = '''
+GridLayout:
+    size_hint_y:None
+    height: self.minimum_height
+    cols:4
+    row_force_default: True
+    row_default_height:'150sp'
+'''
+                if inventory_items:
+                    for item in inventory_items:
+                        item_id = item['item_id']
+                        item_price = '${:,.2f}'.format(item['price'])
+                        content += '''
+    Button:
+        font_size:'17sp'
+        markup:True
+        text: '[b]{item_name}[/b]\\n[i]{item_price}[/i]'
+        disabled: False
+        text_size:self.size
+        valign:'bottom'
+        halign:'center'
+        on_release: root.parent.parent.parent.parent.parent.parent.set_item({item_id})
+        background_rgba:(.7,.3,.5,1)
+        Image:
+            id: item_image
+            source: '{img_src}'
+            size: '50sp','50sp'
+            center_x: self.parent.center_x
+            center_y: self.parent.center_y
+            allow_stretch: True'''.format(item_name=item['name'],
+                                          item_price=item_price,
+                                          item_id=item_id,
+                                          img_src=iitems.get_image_src(item['item_id']))
+
+                layout.add_widget(Builder.load_string(content))
+                tph.content = layout
+                self.inventory_panel.add_widget(tph)
+                if idx == 1:
+                    self.inventory_panel.switch_to(tph)
+
+    def set_qty(self, qty):
+
+        if qty == 'C':
+            self.qty_clicks = 0
+            self.inv_qty_list = ['1']
+        elif self.qty_clicks == 0 and qty > 1:
+            self.qty_clicks += 1
+            self.inv_qty_list = ['{}'.format(str(qty))]
+        else:
+            self.qty_clicks += 1
+            self.inv_qty_list.append('{}'.format(str(qty)))
+        inv_str = ''.join(self.inv_qty_list)
+        if len(self.inv_qty_list) > 3:
+            self.qty_clicks = 0
+            self.inv_qty_list = ['1']
+            inv_str = '1'
+        self.qty_count_label.text = inv_str
+        self.inv_qty = int(inv_str)
+
+    def set_item(self, item_id):
+        vars.ITEM_ID = item_id
+        items = InventoryItem().where({'item_id': item_id})
+        if items:
+            for item in items:
+                inventory_id = item['inventory_id']
+                item_price = item['price']
+                item_name = item['name']
+                item_tags = item['tags'] if item['tags'] else 1
+                item_quantity = item['quantity'] if item['quantity'] else 1
+                inventories = Inventory().where({'inventory_id': '{}'.format(str(inventory_id))})
+                if inventories:
+                    for inventory in inventories:
+                        inventory_init = inventory['name'][:1].capitalize()
+                else:
+                    inventory_init = ''
+                for x in range(0, self.inv_qty):
+
+                    if item_id in self.invoice_list:
+                        self.invoice_list[item_id].append({
+                            'type': inventory_init,
+                            'inventory_id': inventory_id,
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_price': item_price,
+                            'color': '',
+                            'memo': '',
+                            'qty': int(item_quantity),
+                            'tags': int(item_tags)
+                        })
+                        self.invoice_list_copy[item_id].append({
+                            'type': inventory_init,
+                            'inventory_id': inventory_id,
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_price': item_price,
+                            'color': '',
+                            'memo': '',
+                            'qty': int(item_quantity),
+                            'tags': int(item_tags)
+                        })
+                    else:
+                        self.invoice_list[item_id] = [{
+                            'type': inventory_init,
+                            'inventory_id': inventory_id,
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_price': item_price,
+                            'color': '',
+                            'memo': '',
+                            'qty': int(item_quantity),
+                            'tags': int(item_tags)
+                        }]
+                        self.invoice_list_copy[item_id] = [{
+                            'type': inventory_init,
+                            'inventory_id': inventory_id,
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_price': item_price,
+                            'color': '',
+                            'memo': '',
+                            'qty': int(item_quantity),
+                            'tags': int(item_tags)
+                        }]
+        # update dictionary make sure that the most recently selected item is on top
+        row = self.invoice_list[vars.ITEM_ID]
+        del self.invoice_list[vars.ITEM_ID]
+        self.invoice_list[item_id] = row
+
+        self.create_summary_table()
+        self.inv_qty_list = ['1']
+        self.qty_clicks = 0
+        self.inv_qty = 1
+        self.qty_count_label.text = '1'
+
+    def create_summary_table(self):
+        self.summary_table.clear_widgets()
+
+        # create th
+        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
+        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
+        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+        h5 = KV.sized_invoice_tr(0, 'A.', size_hint_x=0.1)
+        self.summary_table.add_widget(Builder.load_string(h1))
+        self.summary_table.add_widget(Builder.load_string(h2))
+        self.summary_table.add_widget(Builder.load_string(h3))
+        self.summary_table.add_widget(Builder.load_string(h4))
+        self.summary_table.add_widget(Builder.load_string(h5))
+
+        if self.invoice_list:
+
+            for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+                item_id = key
+                total_qty = len(values)
+                colors = {}
+                item_price = 0
+                color_string = []
+                memo_string = []
+                if values:
+                    for item in values:
+                        item_name = item['item_name']
+                        item_type = item['type']
+                        item_color = item['color']
+                        item_memo = item['memo']
+                        item_price += item['item_price'] if item['item_price'] else 0
+                        if item['color']:
+                            if item_color in colors:
+                                colors[item_color] += 1
+                            else:
+                                colors[item_color] = 1
+                        if item_memo:
+                            memo_string.append(item_memo)
+                    if colors:
+                        for color_name, color_amount in colors.items():
+                            if color_name:
+                                color_string.append('{}-{}'.format(color_amount, color_name))
+
+                    item_string = '[b]{}[/b] \\n{}\\n{}'.format(item_name, ', '.join(color_string),
+                                                                '/ '.join(memo_string))
+                    selected = True if vars.ITEM_ID == item_id else False
+                    tr1 = KV.sized_invoice_tr(1,
+                                              item_type,
+                                              size_hint_x=0.1,
+                                              selected=selected,
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                                  item_id))
+                    tr2 = KV.sized_invoice_tr(1,
+                                              total_qty,
+                                              size_hint_x=0.1,
+                                              selected=selected,
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                                  item_id))
+                    tr3 = KV.sized_invoice_tr(1,
+                                              item_string,
+                                              size_hint_x=0.5,
+                                              selected=selected,
+                                              text_wrap=True,
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                                  item_id))
+                    tr4 = KV.sized_invoice_tr(1,
+                                              vars.us_dollar(item_price),
+                                              size_hint_x=0.2,
+                                              selected=selected,
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                                  item_id))
+                    tr5 = Button(size_hint_x=0.1,
+                                 markup=True,
+                                 text="[color=ffffff][b]-[/b][/color]",
+                                 background_color=(1, 0, 0, 1),
+                                 background_normal='',
+                                 on_release=partial(self.remove_item_row, item_id))
+                    self.summary_table.add_widget(Builder.load_string(tr1))
+                    self.summary_table.add_widget(Builder.load_string(tr2))
+                    self.summary_table.add_widget(Builder.load_string(tr3))
+                    self.summary_table.add_widget(Builder.load_string(tr4))
+                    self.summary_table.add_widget(tr5)
+        self.create_summary_totals()
+
+    def select_item(self, item_id, *args, **kwargs):
+        vars.ITEM_ID = item_id
+        self.create_summary_table()
+
+    def remove_item_row(self, item_id, *args, **kwargs):
+        vars.ITEM_ID = item_id
+        if vars.ITEM_ID in self.invoice_list:
+            del self.invoice_list[vars.ITEM_ID]
+        if vars.ITEM_ID in self.invoice_list_copy:
+            del self.invoice_list_copy[vars.ITEM_ID]
+        if self.invoice_list:
+            idx = 0
+            for row_key, row_value in self.invoice_list.items():
+                idx += 1
+                if idx == 1:
+                    vars.ITEM_ID = row_key
+                    break
+        self.create_summary_table()
+        self.create_summary_totals()
+
+    def create_summary_totals(self):
+        self.quantity = 0
+        self.tags = 0
+        self.subtotal = 0
+        self.tax = 0
+        self.discount = 0
+        self.total = 0
+        # calculate totals
+        if len(self.invoice_list):
+            for item_key, item_values in self.invoice_list.items():
+                for item in item_values:
+                    self.quantity += 1
+                    self.tags += int(item['tags']) if item['tags'] else 1
+                    self.subtotal += float(item['item_price']) if item['item_price'] else 0
+            self.tax = self.subtotal * vars.TAX_RATE
+            self.discount = 0
+            self.total = self.subtotal + self.tax - self.discount
+            self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
+            self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
+            self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
+            self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
+            self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
+            self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
+
+    def make_memo_color(self):
+
+        self.item_row_selected(row=0)
+
+        # make popup
+        self.memo_color_popup.title = "Add Memo / Color"
+
+        layout = BoxLayout(orientation='vertical',
+                           pos_hint={'top': 1},
+                           size_hint=(1, 1))
+
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        memo_color_layout = BoxLayout(orientation='vertical',
+                                      size_hint=(0.5, 1))
+        color_layout = ScrollView(size_hint=(1, 0.4))
+        color_title = Label(markup=True,
+                            text='[b]Select A Color[/b]',
+                            size_hint=(1, 0.1))
+        memo_color_layout.add_widget(color_title)
+        color_grid = GridLayout(size_hint_y=None,
+                                cols=5,
+                                row_force_default=True,
+                                row_default_height='60sp')
+        color_grid.bind(minimum_height=color_grid.setter('height'))
+        colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        if colors:
+            for color in colors:
+                color_btn = Button(markup=True,
+                                   text='[b]{color_name}[/b]'.format(color_name=color['name']),
+                                   on_release=partial(self.color_selected, color['name']))
+                color_btn.text_size = color_btn.size
+                color_btn.font_size = '12sp'
+                color_btn.valign = 'bottom'
+                color_btn.halign = 'center'
+                color_btn.background_normal = ''
+                color_btn.background_color = vars.color_rgba(color['color'])
+                color_grid.add_widget(color_btn)
+        color_layout.add_widget(color_grid)
+        # memo section
+        memo_layout = BoxLayout(orientation='vertical',
+                                size_hint=(1, 0.5))
+        memo_title = Label(markup=True,
+                           pos_hint={'top': 1},
+                           text='[b]Create Memo[/b]',
+                           size_hint=(1, 0.1))
+        memo_inner_layout = BoxLayout(orientation='horizontal',
+                                      size_hint=(1, 0.4))
+        memo_layout.add_widget(memo_title)
+        memo_text_input = TextInput(text='',
+                                    size_hint=(0.9, 1),
+                                    multiline=True)
+        try:
+            memo_inner_layout.add_widget(memo_text_input)
+        except WidgetException:
+            memo_inner_layout.remove_widget(memo_text_input)
+            memo_inner_layout.add_widget(memo_text_input)
+        self.memo_text_input = memo_text_input
+        memo_add_button = Button(text='Add',
+                                 size_hint=(0.1, 1),
+                                 on_press=self.add_memo)
+        memo_inner_layout.add_widget(memo_add_button)
+        memo_layout.add_widget(memo_inner_layout)
+        memo_color_layout.add_widget(color_layout)
+        memo_color_layout.add_widget(memo_layout)
+        # make items side
+        self.items_layout = ScrollView(size_hint=(0.5, 1),
+                                       pos_hint={'top': 1})
+        self.items_grid = GridLayout(size_hint_y=None,
+                                     cols=5,
+                                     row_force_default=True,
+                                     row_default_height='60sp')
+        self.make_items_table()
+        self.items_layout.add_widget(self.items_grid)
+
+        inner_layout_1.add_widget(memo_color_layout)
+        inner_layout_1.add_widget(self.items_layout)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(markup=True,
+                               text="Cancel",
+                               on_press=self.memo_color_popup.dismiss)
+        save_button = Button(markup=True,
+                             text="[color=00f900][b]Save[/b][/color]",
+                             on_press=self.save_memo_color,
+                             on_release=self.memo_color_popup.dismiss)
+
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(save_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.memo_color_popup.content = layout
+        # show layout
+        self.memo_color_popup.open()
+
+    def make_items_table(self):
+        self.items_grid.clear_widgets()
+        item_th1 = KV.sized_invoice_tr(0, '#', size_hint_x=0.1)
+        item_th2 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.2)
+        item_th3 = KV.sized_invoice_tr(0, 'Color', size_hint_x=0.1)
+        item_th4 = KV.sized_invoice_tr(0, 'Memo', size_hint_x=0.5)
+        item_th5 = KV.sized_invoice_tr(0, 'A.', size_hint_x=0.1)
+
+        self.items_grid.add_widget(Builder.load_string(item_th1))
+        self.items_grid.add_widget(Builder.load_string(item_th2))
+        self.items_grid.add_widget(Builder.load_string(item_th3))
+        self.items_grid.add_widget(Builder.load_string(item_th4))
+        self.items_grid.add_widget(Builder.load_string(item_th5))
+
+        if self.invoice_list_copy[vars.ITEM_ID]:
+            idx = -1
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+                idx += 1
+                background_color = (0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
+                    0.89803922, 0.89803922, 0.89803922, 1)
+                background_normal = ''
+                text_color = 'e5e5e5' if idx == self.item_selected_row else '5e5e5e'
+                item_name = items['item_name']
+                item_color = items['color']
+                item_memo = items['memo']
+                items_tr1 = Button(markup=True,
+                                   text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                    msg=str((idx + 1))),
+                                   on_press=partial(self.item_row_selected, idx),
+                                   size_hint_x=0.1,
+                                   font_size='12sp',
+                                   background_color=background_color,
+                                   background_normal=background_normal)
+                items_tr2 = Button(markup=True,
+                                   text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                    msg=item_name),
+                                   on_press=partial(self.item_row_selected, idx),
+                                   size_hint_x=0.2,
+                                   font_size='12sp',
+                                   background_color=background_color,
+                                   background_normal=background_normal)
+
+                items_tr3 = Button(markup=True,
+                                   text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                    msg=item_color),
+                                   on_press=partial(self.item_row_selected, idx),
+                                   size_hint_x=0.2,
+                                   font_size='12sp',
+                                   background_color=background_color,
+                                   background_normal=background_normal)
+                items_tr4 = Factory.LongButton(text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                                msg=item_memo),
+                                               on_press=partial(self.item_row_selected, idx),
+                                               size_hint_x=0.4,
+                                               size_hint_y=None,
+                                               background_color=background_color,
+                                               background_normal=background_normal)
+                items_tr5 = Button(markup=True,
+                                   text='[color=ff0000][b]Edit[b][/color]',
+                                   on_press=partial(self.item_row_selected, idx),
+                                   on_release=partial(self.item_row_edit, idx),
+                                   size_hint_x=0.1,
+                                   font_size='12sp',
+                                   background_color=background_color,
+                                   background_normal=background_normal)
+
+                self.items_grid.add_widget(items_tr1)
+                self.items_grid.add_widget(items_tr2)
+                self.items_grid.add_widget(items_tr3)
+                self.items_grid.add_widget(items_tr4)
+                items_tr4.text_size = (items_tr4.width + 200, items_tr4.height)
+
+                self.items_grid.add_widget(items_tr5)
+        self.items_grid.bind(minimum_height=self.items_grid.setter('height'))
+
+    def add_memo(self, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
+            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                self.invoice_list_copy[vars.ITEM_ID]) else 0
+            self.item_selected_row = next_row
+            self.make_items_table()
+            self.memo_text_input.text = ''
+
+    def color_selected(self, color=False, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
+            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                self.invoice_list_copy[vars.ITEM_ID]) else 0
+            self.item_selected_row = next_row
+            self.make_items_table()
+
+    def item_row_edit(self, row, *args, **kwargs):
+        popup = Popup(title='Remove Colors / Memo')
+        popup.size_hint = None, None
+        popup.size = 900, 600
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.7))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Remove Color',
+                                         on_press=self.remove_color,
+                                         on_release=popup.dismiss))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Remove Memo',
+                                         on_press=self.remove_memo,
+                                         on_release=popup.dismiss))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.3))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='Cancel',
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def remove_color(self, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
+            self.make_items_table()
+
+    def remove_memo(self, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
+            self.make_items_table()
+
+    def item_row_selected(self, row, *args, **kwargs):
+        self.item_selected_row = row
+        self.make_items_table()
+
+    def save_memo_color(self, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID]:
+            idx = -1
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+                idx += 1
+                color = items['color']
+                memo = items['memo']
+                self.invoice_list[vars.ITEM_ID][idx]['color'] = color
+                self.invoice_list[vars.ITEM_ID][idx]['memo'] = memo
+        self.create_summary_table()
+
+    def make_adjust(self):
+        self.item_selected_row = 0
+        popup = Popup()
+        popup.title = 'Adjust Items'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        adjust_sum_section = BoxLayout(orientation='vertical',
+                                       size_hint=(0.5, 1))
+        adjust_sum_title = Label(size_hint=(1, 0.1),
+                                 markup=True,
+                                 text='[b]Adjust Sum Total[/b]')
+        adjust_sum_scroll = ScrollView(size_hint=(1, 0.9))
+        self.adjust_sum_grid = GridLayout(size_hint_y=None,
+                                          cols=4,
+                                          row_force_default=True,
+                                          row_default_height='50sp')
+        self.adjust_sum_grid.bind(minimum_height=self.adjust_sum_grid.setter('height'))
+        self.make_adjustment_sum_table()
+        adjust_sum_scroll.add_widget(self.adjust_sum_grid)
+        adjust_sum_section.add_widget(adjust_sum_title)
+        adjust_sum_section.add_widget(adjust_sum_scroll)
+        inner_layout_1.add_widget(adjust_sum_section)
+        adjust_individual_section = BoxLayout(orientation='vertical',
+                                              size_hint=(0.5, 1))
+
+        adjust_individual_title = Label(size_hint=(1, 0.1),
+                                        markup=True,
+                                        text='[b]Adjust Individual Totals[/b]')
+        adjust_individual_scroll = ScrollView(size_hint=(1, 0.9))
+        self.adjust_individual_grid = GridLayout(size_hint_y=None,
+                                                 cols=5,
+                                                 row_force_default=True,
+                                                 row_default_height='50sp')
+        self.adjust_individual_grid.bind(minimum_height=self.adjust_individual_grid.setter('height'))
+        self.make_adjustment_individual_table()
+        adjust_individual_scroll.add_widget(self.adjust_individual_grid)
+        adjust_individual_section.add_widget(adjust_individual_title)
+        adjust_individual_section.add_widget(adjust_individual_scroll)
+        inner_layout_1.add_widget(adjust_individual_section)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="Cancel",
+                                         on_release=popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="[color=00f900][b]save[/b][/color]",
+                                         on_press=self.save_price_adjustment,
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def make_adjustment_sum_table(self):
+        self.adjust_sum_grid.clear_widgets()
+        if len(self.invoice_list_copy[vars.ITEM_ID]) > 1:
+            # create th
+            h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
+            h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+            h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+            h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+            self.adjust_sum_grid.add_widget(Builder.load_string(h1))
+            self.adjust_sum_grid.add_widget(Builder.load_string(h2))
+            self.adjust_sum_grid.add_widget(Builder.load_string(h3))
+            self.adjust_sum_grid.add_widget(Builder.load_string(h4))
+
+            if self.invoice_list:
+
+                for key, values in OrderedDict(reversed(list(self.invoice_list_copy.items()))).items():
+                    if key == vars.ITEM_ID:
+                        item_id = key
+                        total_qty = len(values)
+                        colors = {}
+                        item_price = 0
+                        color_string = []
+                        memo_string = []
+                        if values:
+                            for item in values:
+                                item_name = item['item_name']
+                                item_type = item['type']
+                                item_color = item['color']
+                                item_memo = item['memo']
+                                item_price += item['item_price'] if item['item_price'] else 0
+                                if item['color']:
+                                    if item_color in colors:
+                                        colors[item_color] += 1
+                                    else:
+                                        colors[item_color] = 1
+                                if item_memo:
+                                    memo_string.append(item_memo)
+                            if colors:
+                                for color_name, color_amount in colors.items():
+                                    if color_name:
+                                        color_string.append('{}-{}'.format(color_amount, color_name))
+
+                            item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
+                                                                      '/ '.join(memo_string))
+                            tr1 = Button(size_hint_x=0.1,
+                                         markup=True,
+                                         text='{}'.format(item_type),
+                                         on_release=partial(self.adjustment_calculator,
+                                                            1,
+                                                            item_price))
+                            tr2 = Button(size_hint_x=0.1,
+                                         markup=True,
+                                         text='{}'.format(total_qty),
+                                         on_release=partial(self.adjustment_calculator,
+                                                            1,
+                                                            item_price))
+                            tr3 = Factory.LongButton(size_hint_x=0.6,
+                                                     size_hint_y=None,
+                                                     markup=True,
+                                                     text='{}'.format(item_string),
+                                                     on_release=partial(self.adjustment_calculator,
+                                                                        1,
+                                                                        item_price))
+
+                            tr4 = Button(size_hint_x=0.2,
+                                         markup=True,
+                                         text='{}'.format(vars.us_dollar(item_price)),
+                                         on_release=partial(self.adjustment_calculator,
+                                                            1,
+                                                            item_price))
+
+                            self.adjust_sum_grid.add_widget(tr1)
+                            self.adjust_sum_grid.add_widget(tr2)
+                            self.adjust_sum_grid.add_widget(tr3)
+                            self.adjust_sum_grid.add_widget(tr4)
+
+    def make_adjustment_individual_table(self):
+        self.adjust_individual_grid.clear_widgets()
+        # create th
+        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
+        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
+        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+        h5 = KV.sized_invoice_tr(0, 'A', size_hint_x=0.1)
+        self.adjust_individual_grid.add_widget(Builder.load_string(h1))
+        self.adjust_individual_grid.add_widget(Builder.load_string(h2))
+        self.adjust_individual_grid.add_widget(Builder.load_string(h3))
+        self.adjust_individual_grid.add_widget(Builder.load_string(h4))
+        self.adjust_individual_grid.add_widget(Builder.load_string(h5))
+
+        if self.invoice_list:
+
+            for key, values in OrderedDict(reversed(list(self.invoice_list_copy.items()))).items():
+                if key == vars.ITEM_ID:
+                    idx = -1
+                    for item in values:
+                        idx += 1
+                        item_name = item['item_name']
+                        item_type = item['type']
+                        item_color = item['color']
+                        item_memo = item['memo']
+                        item_price = item['item_price'] if item['item_price'] else 0
+                        item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, item_color, item_memo)
+                        background_color = (
+                            0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
+                            0.89803922, 0.89803922, 0.89803922, 1)
+                        background_normal = ''
+                        text_color = 'e5e5e5' if idx == self.item_selected_row else '5e5e5e'
+
+                        tr1 = Button(size_hint_x=0.1,
+                                     markup=True,
+                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                     msg=item_type),
+                                     on_press=partial(self.item_row_adjusted_selected, idx),
+                                     on_release=partial(self.adjustment_calculator,
+                                                        2,
+                                                        item_price,
+                                                        idx),
+                                     background_color=background_color,
+                                     background_normal=background_normal)
+                        tr2 = Button(size_hint_x=0.1,
+                                     markup=True,
+                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                     msg=1),
+                                     on_press=partial(self.item_row_adjusted_selected, idx),
+                                     on_release=partial(self.adjustment_calculator,
+                                                        2,
+                                                        item_price,
+                                                        idx),
+                                     background_color=background_color,
+                                     background_normal=background_normal)
+                        tr3 = Factory.LongButton(size_hint_x=0.6,
+                                                 size_hint_y=None,
+                                                 markup=True,
+                                                 text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                                 msg=item_string),
+                                                 on_press=partial(self.item_row_adjusted_selected, idx),
+                                                 on_release=partial(self.adjustment_calculator,
+                                                                    2,
+                                                                    item_price,
+                                                                    idx),
+                                                 background_color=background_color,
+                                                 background_normal=background_normal)
+                        tr4 = Button(size_hint_x=0.2,
+                                     markup=True,
+                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                     msg=vars.us_dollar(item_price)),
+                                     on_press=partial(self.item_row_adjusted_selected, idx),
+                                     on_release=partial(self.adjustment_calculator,
+                                                        2,
+                                                        item_price,
+                                                        idx),
+                                     background_color=background_color,
+                                     background_normal=background_normal)
+
+                        tr5 = Button(size_hint_x=0.1,
+                                     markup=True,
+                                     text='[color=ffffff][b]-[/b][/color]',
+                                     on_release=partial(self.item_row_delete_selected, idx),
+                                     background_color=(1, 0, 0, 1),
+                                     background_normal='')
+
+                        self.adjust_individual_grid.add_widget(tr1)
+                        self.adjust_individual_grid.add_widget(tr2)
+                        self.adjust_individual_grid.add_widget(tr3)
+                        self.adjust_individual_grid.add_widget(tr4)
+                        self.adjust_individual_grid.add_widget(tr5)
+
+    def adjustment_calculator(self, type=None, price=0, row=None, *args, **kwargs):
+        self.adjust_price = 0
+        self.adjust_price_list = []
+        popup = Popup()
+        popup.title = 'Adjustment Calculator'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        calculator_layout = BoxLayout(orientation='vertical',
+                                      size_hint=(0.5, 1))
+        calculator_top = GridLayout(cols=1,
+                                    rows=1,
+                                    size_hint=(1, 0.2))
+        self.calculator_text = Factory.CenteredLabel(text="[color=000000][b]{}[/b][/color]".format(vars.us_dollar(0)))
+        calculator_top.add_widget(self.calculator_text)
+        calculator_main_layout = GridLayout(cols=3,
+                                            rows=4,
+                                            size_hint=(1, 0.8))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]7[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '7')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]8[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '8')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]9[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '9')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]4[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '4')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]5[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '5')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]6[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '6')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]1[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '1')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]2[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '2')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]3[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '3')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]0[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '0')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]00[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '00')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[color=ff0000][b]C[/b][/color]",
+                                                 on_release=partial(self.set_price_adjustment_sum, 'C')))
+        calculator_layout.add_widget(calculator_top)
+        calculator_layout.add_widget(calculator_main_layout)
+        summary_layout = BoxLayout(orientation='vertical',
+                                   size_hint=(0.5, 1))
+        summary_layout.add_widget(Label(markup=True,
+                                        text="[b]Summary Totals[/b]",
+                                        size_hint=(1, 0.1)))
+        summary_grid = GridLayout(size_hint=(1, 0.9),
+                                  cols=2,
+                                  rows=2,
+                                  row_force_default=True,
+                                  row_default_height='50sp')
+        summary_grid.add_widget(Label(markup=True,
+                                      text="Original Price"))
+        original_price = Factory.ReadOnlyLabel(text='[color=e5e5e5]{}[/color]'.format(vars.us_dollar(price)))
+        summary_grid.add_widget(original_price)
+        summary_grid.add_widget(Label(markup=True,
+                                      text="Adjusted Price"))
+        self.adjusted_price = Factory.ReadOnlyLabel(
+            text='[color=e5e5e5]{}[/color]'.format(vars.us_dollar(self.adjust_price)))
+        summary_grid.add_widget(self.adjusted_price)
+        summary_layout.add_widget(summary_grid)
+
+        inner_layout_1.add_widget(calculator_layout)
+        inner_layout_1.add_widget(summary_layout)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="cancel",
+                                         on_release=popup.dismiss))
+
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="[color=00f900][b]OK[/b][/color]",
+                                         on_press=self.set_price_adjustment_sum_correct_individual if type == 1 else partial(
+                                             self.set_price_adjustment_individual_correct_sum, row),
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def set_price_adjustment_sum(self, digit, *args, **kwargs):
+        if digit == 'C':
+            self.adjust_price = 0
+            self.adjust_price_list = []
+
+        else:
+            self.adjust_price_list.append(digit)
+            self.adjust_price = int(''.join(self.adjust_price_list)) / 100
+        self.calculator_text.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.adjust_price))
+        self.adjusted_price.text = '[color=e5e5e5][b]{}[/b][/color]'.format(vars.us_dollar(self.adjust_price))
+
+    def set_price_adjustment_sum_correct_individual(self, row, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID]:
+            total_count = len(self.invoice_list_copy[vars.ITEM_ID])
+            new_avg_price = round(self.adjust_price / total_count, 2)
+            minus_total = self.adjust_price
+            idx = -1
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+                idx += 1
+                minus_total -= new_avg_price
+                if idx < len(self.invoice_list_copy[vars.ITEM_ID]) - 1:
+                    self.invoice_list_copy[vars.ITEM_ID][idx]['item_price'] = new_avg_price
+                else:
+                    self.invoice_list_copy[vars.ITEM_ID][idx]['item_price'] = round(new_avg_price + minus_total, 2)
+            self.make_adjustment_sum_table()
+            self.make_adjustment_individual_table()
+
+    def set_price_adjustment_individual_correct_sum(self, row, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][row]:
+            self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
+            self.make_adjustment_sum_table()
+            self.make_adjustment_individual_table()
+
+    def save_price_adjustment(self, *args, **kwargs):
+
+        if self.invoice_list_copy[vars.ITEM_ID]:
+            idx = -1
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+                idx += 1
+                new_price = items['item_price']
+                self.invoice_list[vars.ITEM_ID][idx]['item_price'] = new_price
+            self.create_summary_table()
+            self.create_summary_totals()
+
+    def item_row_delete_selected(self, row, *args, **kwargs):
+        del self.invoice_list[vars.ITEM_ID][row]
+        del self.invoice_list_copy[vars.ITEM_ID][row]
+        self.item_selected_row = 0
+        self.make_adjustment_sum_table()
+        self.make_adjustment_individual_table()
+        self.create_summary_table()
+        self.create_summary_totals()
+
+    def item_row_adjusted_selected(self, row, *args, **kwargs):
+        self.item_selected_row = row
+        self.adjust_individual_grid.clear_widgets()
+        self.make_adjustment_individual_table()
+
+    def make_calendar(self):
+
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today = datetime.datetime.today()
+        dow = int(datetime.datetime.today().strftime("%w"))
+        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        new_date = today + datetime.timedelta(days=turn_around_day)
+        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+        due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.month = int(due_date.strftime('%m'))
+
+        popup = Popup()
+        popup.title = 'Calendar'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                   orientation='vertical')
+        calendar_selection = GridLayout(cols=4,
+                                        rows=1,
+                                        size_hint=(1, 0.1))
+        prev_month = Button(markup=True,
+                            text="<",
+                            font_size="30sp",
+                            on_release=self.prev_month)
+        next_month = Button(markup=True,
+                            text=">",
+                            font_size="30sp",
+                            on_release=self.next_month)
+        select_month = Factory.SelectMonth()
+        self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
+                                   on_release=select_month.open)
+        for index in range(12):
+            month_options = Button(text='{}'.format(vars.month_by_number(index)),
+                                   size_hint_y=None,
+                                   height=40,
+                                   on_release=partial(self.select_calendar_month, index))
+            select_month.add_widget(month_options)
+
+        select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+        select_year = Factory.SelectMonth()
+
+        self.year_button = Button(text="{}".format(self.year),
+                                  on_release=select_year.open)
+        for index in range(10):
+            year_options = Button(text='{}'.format(int(self.year) + index),
+                                  size_hint_y=None,
+                                  height=40,
+                                  on_release=partial(self.select_calendar_year, index))
+            select_year.add_widget(year_options)
+
+        select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+        calendar_selection.add_widget(prev_month)
+        calendar_selection.add_widget(self.month_button)
+        calendar_selection.add_widget(self.year_button)
+        calendar_selection.add_widget(next_month)
+        self.calendar_layout = GridLayout(cols=7,
+                                          rows=8,
+                                          size_hint=(1, 0.9))
+        self.create_calendar_table()
+
+        inner_layout_1.add_widget(calendar_selection)
+        inner_layout_1.add_widget(self.calendar_layout)
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                   orientation='horizontal')
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="Okay",
+                                         on_release=popup.dismiss))
+
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def create_calendar_table(self):
+        # set the variables
+
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today_date = datetime.datetime.today()
+        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
+        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
+
+        self.calendar_layout.clear_widgets()
+        calendars = Calendar()
+        calendars.setfirstweekday(calendar.SUNDAY)
+        selected_month = self.month - 1
+        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+        th1 = KV.invoice_tr(0, 'Su')
+        th2 = KV.invoice_tr(0, 'Mo')
+        th3 = KV.invoice_tr(0, 'Tu')
+        th4 = KV.invoice_tr(0, 'We')
+        th5 = KV.invoice_tr(0, 'Th')
+        th6 = KV.invoice_tr(0, 'Fr')
+        th7 = KV.invoice_tr(0, 'Sa')
+        self.calendar_layout.add_widget(Builder.load_string(th1))
+        self.calendar_layout.add_widget(Builder.load_string(th2))
+        self.calendar_layout.add_widget(Builder.load_string(th3))
+        self.calendar_layout.add_widget(Builder.load_string(th4))
+        self.calendar_layout.add_widget(Builder.load_string(th5))
+        self.calendar_layout.add_widget(Builder.load_string(th6))
+        self.calendar_layout.add_widget(Builder.load_string(th7))
+        if year_dates[selected_month]:
+            for month in year_dates[selected_month]:
+                for week in month:
+                    for day in week:
+                        if day[0] > 0:
+                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                           Job.date_leading_zeroes(self.month),
+                                                                           Job.date_leading_zeroes(day[0]))
+                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                            check_date = today_base.timestamp()
+                            dow_check = today_base.strftime("%w")
+                            # rule #1 remove all past dates so users cannot set a due date previous to today
+                            if check_date < check_today:
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                if check_date == check_today:
+                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                elif check_date == check_due_date:
+                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(
+                                                                      0.2156862, 0.9921568, 0.98823529, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                elif check_today < check_date < check_due_date:
+                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0.878431372549020, 1, 1, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                else:
+                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                  on_release=partial(self.select_due_date, today_base))
+                            else:  # store is closed
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                        else:
+                            item = Factory.CalendarButton(disabled=True)
+                        self.calendar_layout.add_widget(item)
+
+    def prev_month(self, *args, **kwargs):
+        if self.month == 1:
+            self.month = 12
+            self.year -= 1
+        else:
+            self.month -= 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_calendar_table()
+
+    def next_month(self, *args, **kwargs):
+        if self.month == 12:
+            self.month = 1
+            self.year += 1
+        else:
+            self.month += 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_calendar_table()
+
+    def select_calendar_month(self, month, *args, **kwargs):
+        self.month = month
+        self.create_calendar_table()
+
+    def select_calendar_year(self, year, *args, **kwargs):
+        self.year = year
+        self.create_calendar_table()
+
+    def select_due_date(self, selected_date, *args, **kwargs):
+        store_hours = Company().get_store_hours(auth_user.company_id)
+
+        dow = int(selected_date.strftime("%w"))
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+        self.date_picker.text = self.due_date_string
+        self.create_calendar_table()
+
+    def print_selection(self):
+        self.print_popup = Popup()
+        self.print_popup.title = 'Print Selection'
+        self.print_popup.size_hint = (None, None)
+        self.print_popup.size = (800, 600)
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.7))
+
+        button_1 = Factory.PrintButton(text='Customer + Store Copy',
+                                       on_press=partial(self.finish_invoice, 2))
+
+        inner_layout_1.add_widget(button_1)
+        button_2 = Factory.PrintButton(text='Store Copy Only',
+                                       on_press=partial(self.finish_invoice, 1))
+        inner_layout_1.add_widget(button_2)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.3))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='Cancel',
+                                         on_release=self.print_popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.print_popup.content = layout
+        self.print_popup.open()
+
+    def finish_invoice(self, type, *args, **kwargs):
+        # determine the types of invoices we need to print
+        # set the printer data
+
+        # splt up invoice by inventory group
+        save_invoice = {}
+        save_totals = {}
+        save_invoice_items = {}
+        inventories = Inventory().where({'company_id': auth_user.company_id})
+        if inventories:
+            for inventory in inventories:
+                # iterate through the newly created invoice list and group each inventory id into one invoice
+                inventory_id = inventory['inventory_id']
+                save_invoice[inventory_id] = []
+                save_totals[inventory_id] = {'quantity': 0,
+                                             'tags': 0,
+                                             'subtotal': 0,
+                                             'tax': 0,
+                                             'discount': 0,
+                                             'total': 0}
+                for invoice_item_key, invoice_item_value in self.invoice_list.items():
+                    for iivalue in invoice_item_value:
+                        if inventory_id == iivalue['inventory_id']:
+                            save_invoice[inventory_id].append(iivalue)
+                            save_totals[inventory_id]['quantity'] += iivalue['qty']
+                            save_totals[inventory_id]['tags'] += iivalue['tags']
+                            save_totals[inventory_id]['subtotal'] += iivalue['item_price']
+                            save_totals[inventory_id]['discount'] += 0
+        if save_invoice:
+            for inventory_id, invoice_group in save_invoice.items():
+                if len(save_invoice[inventory_id]) > 0:
+                    tax_amount = save_totals[inventory_id]['subtotal'] * vars.TAX_RATE
+                    total = save_totals[inventory_id]['subtotal'] * (1 + vars.TAX_RATE)
+
+                    # set invoice data to save
+                    new_invoice = Invoice()
+                    new_invoice.company_id = auth_user.company_id
+                    new_invoice.customer_id = vars.CUSTOMER_ID
+                    new_invoice.quantity = save_totals[inventory_id]['quantity']
+                    new_invoice.pretax = float('%.2f' % (save_totals[inventory_id]['subtotal']))
+                    new_invoice.tax = float('%.2f' % (tax_amount))
+                    new_invoice.total = float('%.2f' % (total))
+                    new_invoice.due_date = '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))
+                    new_invoice.status = 1
+                    # save to local db
+                    if new_invoice.add():
+                        last_insert_id = new_invoice.get_last_insert_id()
+                        save_invoice_items[last_insert_id] = invoice_group
+                        idx = -1
+                        for inv_items in save_invoice_items[last_insert_id]:
+                            idx += 1
+                            save_invoice_items[last_insert_id][idx]['status'] = 3
+                            save_invoice_items[last_insert_id][idx]['invoice_id'] = last_insert_id
+            # save the invoices to the db and return the proper invoice_ids
+            run_sync = threading.Thread(target=SYNC.run_sync)
+            try:
+                run_sync.start()
+            finally:
+                run_sync.join()
+                print('sync now finished')
+                for id in save_invoice_items:
+                    invoices = Invoice().where({'id': id})
+                    if invoices:
+                        for invoice in invoices:
+                            new_invoice_id = invoice['invoice_id']
+                            idx = -1
+                            for items in save_invoice_items[id]:
+                                idx += 1
+                                save_invoice_items[id][idx]['invoice_id'] = new_invoice_id
+                                save_invoice_items[id][idx]['status'] = 1
+            if len(save_invoice_items) > 0:
+                for iitems_id in save_invoice_items:
+                    for item in save_invoice_items[iitems_id]:
+                        item_price = float(item['item_price']) if item['item_price'] else 0
+                        item_tax = float('%.2f' % (item_price * vars.TAX_RATE))
+                        item_total = float('%.2f' % (item_price * (1 + vars.TAX_RATE)))
+                        # set invoice data to save
+                        new_invoice_item = InvoiceItem()
+                        new_invoice_item.company_id = auth_user.company_id
+                        new_invoice_item.customer_id = vars.CUSTOMER_ID
+                        new_invoice_item.invoice_id = item['invoice_id']
+                        new_invoice_item.item_id = item['item_id']
+                        new_invoice_item.quantity = item['qty']
+                        new_invoice_item.color = item['color']
+                        new_invoice_item.memo = item['memo']
+                        new_invoice_item.pretax = item_price
+                        new_invoice_item.tax = item_tax
+                        new_invoice_item.total = item_total
+                        new_invoice_item.status = item['status']
+                        # save to local db
+                        if new_invoice_item.add():
+                            print('saved invoice item')
+            # set invoice_items data to save
+            run_sync2 = threading.Thread(target=SYNC.db_sync)
+            try:
+                run_sync2.start()
+            finally:
+                run_sync2.join()
+                print('sync invoice items now finished')
+            self.set_result_status()
+            self.print_popup.dismiss()
+
+
+class EditInvoiceScreen(Screen):
+    inv_qty_list = ['1']
+    qty_clicks = 0
+    inv_qty = 1
+    adjust_sum_grid = ObjectProperty(None)
+    adjust_individual_grid = ObjectProperty(None)
+    invoice_list = OrderedDict()
+    invoice_list_copy = OrderedDict()
+    inventory_panel = ObjectProperty(None)
+    items_grid = GridLayout()
+    qty_count_label = ObjectProperty(None)
+    item_selected_row = 0
+    items_layout = ObjectProperty(None)
+    memo_text_input = TextInput(size_hint=(1, 0.4),
+                                multiline=True)
+    summary_table = ObjectProperty(None)
+    summary_quantity_label = ObjectProperty(None)
+    summary_tags_label = ObjectProperty(None)
+    summary_subtotal_label = ObjectProperty(None)
+    summary_tax_label = ObjectProperty(None)
+    summary_discount_label = ObjectProperty(None)
+    summary_total_label = ObjectProperty(None)
+    quantity = 0
+    tags = 0
+    subtotal = 0
+    tax = 0
+    discount = 0
+    total = 0
+    adjust_price = 0
+    adjusted_price = ObjectProperty(None)
+    calculator_text = ObjectProperty(None)
+    adjust_price_list = []
+    memo_color_popup = Popup()
+    date_picker = ObjectProperty(None)
+    due_date = None
+    due_date_string = None
+    now = datetime.datetime.now()
+    month = now.month
+    year = now.year
+    day = now.day
+    calendar_layout = ObjectProperty(None)
+    month_button = ObjectProperty(None)
+    year_button = ObjectProperty(None)
+    print_popup = ObjectProperty(None)
+    deleted_rows = []
+    inventory_id = 1
+
+    def reset(self):
+        # reset the inventory table
+        self.inventory_panel.clear_widgets()
+        self.get_inventory()
+        self.summary_table.clear_widgets()
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today = datetime.datetime.today()
+        dow = int(datetime.datetime.today().strftime("%w"))
+        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        new_date = today + datetime.timedelta(days=turn_around_day)
+        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+
+        total_tags = InvoiceItem().total_tags(vars.INVOICE_ID)
+        invoice_items = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
+        self.invoice_list = OrderedDict()
+        self.invoice_list_copy = OrderedDict()
+        if invoice_items:
+            for invoice_item in invoice_items:
+                invoice_items_id = invoice_item['invoice_items_id']
+                item_id = invoice_item['item_id']
+                items = InventoryItem().where({'item_id': item_id})
+                if items:
+                    for item in items:
+                        inventory_id = item['inventory_id']
+                        self.inventory_id = inventory_id
+                        inventories = Inventory().where({'inventory_id': '{}'.format(str(inventory_id))})
+                        tags = item['tags']
+                        if inventories:
+                            for inventory in inventories:
+                                inventory_init = inventory['name'][:1].capitalize()
+                        else:
+                            inventory_init = ''
+
+                        if item_id in self.invoice_list:
+                            self.invoice_list[item_id].append({
+                                'invoice_items_id': invoice_items_id,
+                                'type': inventory_init,
+                                'inventory_id': inventory_id,
+                                'item_id': item_id,
+                                'item_name': item['name'],
+                                'item_price': invoice_item['pretax'],
+                                'color': invoice_item['color'],
+                                'memo': invoice_item['memo'],
+                                'qty': int(invoice_item['quantity']),
+                                'tags': int(tags) if tags else 1,
+                                'deleted': False
+                            })
+                            self.invoice_list_copy[item_id].append({
+                                'invoice_items_id': invoice_items_id,
+                                'type': inventory_init,
+                                'inventory_id': inventory_id,
+                                'item_id': item_id,
+                                'item_name': item['name'],
+                                'item_price': invoice_item['pretax'],
+                                'color': invoice_item['color'],
+                                'memo': invoice_item['memo'],
+                                'qty': int(invoice_item['quantity']),
+                                'tags': int(tags) if tags else 1,
+                                'deleted': False
+                            })
+                        else:
+                            self.invoice_list[item_id] = [{
+                                'invoice_items_id': invoice_items_id,
+                                'type': inventory_init,
+                                'inventory_id': inventory_id,
+                                'item_id': item_id,
+                                'item_name': item['name'],
+                                'item_price': invoice_item['pretax'],
+                                'color': invoice_item['color'],
+                                'memo': invoice_item['memo'],
+                                'qty': int(invoice_item['quantity']),
+                                'tags': int(tags) if tags else 1,
+                                'deleted': False
+                            }]
+                            self.invoice_list_copy[item_id] = [{
+                                'invoice_items_id': invoice_items_id,
+                                'type': inventory_init,
+                                'inventory_id': inventory_id,
+                                'item_id': item_id,
+                                'item_name': item['name'],
+                                'item_price': invoice_item['pretax'],
+                                'color': invoice_item['color'],
+                                'memo': invoice_item['memo'],
+                                'qty': int(invoice_item['quantity']),
+                                'tags': int(tags) if tags else 1,
+                                'deleted': False
+                            }]
+
+        invoices = Invoice().where({'invoice_id': vars.INVOICE_ID})
+        if invoices:
+            for invoice in invoices:
+                self.due_date = datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S")
+                self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+                self.summary_quantity_label.text = '[color=000000]{}[/color]'.format(invoice['quantity'])
+                self.summary_tags_label.text = '[color=000000]{}[/color]'.format(total_tags)
+                self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(invoice['pretax']))
+                self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(invoice['tax']))
+                self.summary_discount_label.text = '[color=000000]($0.00)[/color]'
+                self.summary_total_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(invoice['total']))
+                self.quantity = invoice['quantity']
+                self.tags = total_tags
+                self.subtotal = float(invoice['pretax'])
+                self.tax = float(invoice['tax'])
+                self.discount = 0
+                self.total = float(invoice['total'])
+        else:
+            self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+            self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+            self.summary_quantity_label.text = '[color=000000]0[/color]'
+            self.summary_tags_label.text = '[color=000000]0[/color]'
+            self.summary_subtotal_label.text = '[color=000000]$0.00[/color]'
+            self.summary_tax_label.text = '[color=000000]$0.00[/color]'
+            self.summary_discount_label.text = '[color=000000]($0.00)[/color]'
+            self.summary_total_label.text = '[color=000000]$0.00[/color]'
+            self.quantity = 0
+            self.tags = 0
+            self.subtotal = 0
+            self.tax = 0
+            self.discount = 0
+            self.total = 0
+
+        self.date_picker.text = self.due_date_string
+        self.inventory_panel.clear_widgets()
+        self.get_inventory()
+        self.memo_color_popup.dismiss()
+        self.qty_clicks = 0
+        self.inv_qty = 1
+        self.inv_qty_list = ['1']
+        self.qty_count_label.text = '1'
+        self.memo_text_input.text = ''
+        self.summary_table.clear_widgets()
+        self.adjust_price = 0
+        self.adjust_price_list = []
+        vars.ITEM_ID = None
+
+        # create th for invoice summary table
+        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
+        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+        self.summary_table.add_widget(Builder.load_string(h1))
+        self.summary_table.add_widget(Builder.load_string(h2))
+        self.summary_table.add_widget(Builder.load_string(h3))
+        self.summary_table.add_widget(Builder.load_string(h4))
+        self.get_inventory()
+        taxes = Tax().where({'company_id': auth_user.company_id, 'status': 1})
+        if taxes:
+            for tax in taxes:
+                vars.TAX_RATE = tax['rate']
+        else:
+            vars.TAX_RATE = 0.096
+        self.create_summary_table()
+        self.create_summary_totals()
+        self.deleted_rows = []
+
+    def set_result_status(self):
+        vars.SEARCH_RESULTS_STATUS = True
+        self.summary_table.clear_widgets()
+
+    def get_inventory(self):
+        inventories = Inventory().where({'company_id': '{}'.format(auth_user.company_id)})
+        if inventories:
+            idx = 0
+            self.inventory_panel.clear_tabs()
+            self.inventory_panel.clear_widgets()
+            for inventory in inventories:
+                idx += 1
+                inventory_id = inventory['inventory_id']
+                inventory_name = inventory['name']
+                iitems = InventoryItem()
+                inventory_items = iitems.where({'inventory_id': inventory_id, 'ORDER_BY': 'ordered ASC'})
+                tph = TabbedPanelHeader(text='{}'.format(inventory_name))
+                layout = ScrollView()
+                content = '''
+GridLayout:
+    size_hint_y:None
+    height: self.minimum_height
+    cols:4
+    row_force_default: True
+    row_default_height:'150sp'
+'''
+                if inventory_items:
+                    for item in inventory_items:
+                        item_id = item['item_id']
+                        item_price = '${:,.2f}'.format(item['price'])
+                        content += '''
+    Button:
+        font_size:'17sp'
+        markup:True
+        text: '[b]{item_name}[/b]\\n[i]{item_price}[/i]'
+        disabled: False
+        text_size:self.size
+        valign:'bottom'
+        halign:'center'
+        on_release: root.parent.parent.parent.parent.parent.parent.set_item({item_id})
+        background_rgba:(.7,.3,.5,1)
+        Image:
+            id: item_image
+            source: '{img_src}'
+            size: '50sp','50sp'
+            center_x: self.parent.center_x
+            center_y: self.parent.center_y
+            allow_stretch: True'''.format(item_name=item['name'],
+                                          item_price=item_price,
+                                          item_id=item_id,
+                                          img_src=iitems.get_image_src(item['item_id']))
+
+                layout.add_widget(Builder.load_string(content))
+                tph.content = layout
+                self.inventory_panel.add_widget(tph)
+                if idx == 1:
+                    self.inventory_panel.switch_to(tph)
+
+    def set_qty(self, qty):
+
+        if qty == 'C':
+            self.qty_clicks = 0
+            self.inv_qty_list = ['1']
+        elif self.qty_clicks == 0 and qty > 1:
+            self.qty_clicks += 1
+            self.inv_qty_list = ['{}'.format(str(qty))]
+        else:
+            self.qty_clicks += 1
+            self.inv_qty_list.append('{}'.format(str(qty)))
+        inv_str = ''.join(self.inv_qty_list)
+        if len(self.inv_qty_list) > 3:
+            self.qty_clicks = 0
+            self.inv_qty_list = ['1']
+            inv_str = '1'
+        self.qty_count_label.text = inv_str
+        self.inv_qty = int(inv_str)
+
+    def set_item(self, item_id):
+        vars.ITEM_ID = item_id
+        items = InventoryItem().where({'item_id': item_id})
+        if items:
+            for item in items:
+                inventory_id = item['inventory_id']
+                item_price = item['price']
+                item_name = item['name']
+                item_tags = item['tags'] if item['tags'] else 1
+                item_quantity = item['quantity'] if item['quantity'] else 1
+                inventories = Inventory().where({'inventory_id': '{}'.format(str(inventory_id))})
+                if inventories:
+                    for inventory in inventories:
+                        inventory_init = inventory['name'][:1].capitalize()
+                else:
+                    inventory_init = ''
+                for x in range(0, self.inv_qty):
+
+                    if item_id in self.invoice_list:
+                        self.invoice_list[item_id].append({
+                            'type': inventory_init,
+                            'inventory_id': inventory_id,
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_price': item_price,
+                            'color': '',
+                            'memo': '',
+                            'qty': int(item_quantity),
+                            'tags': int(item_tags)
+                        })
+                        self.invoice_list_copy[item_id].append({
+                            'type': inventory_init,
+                            'inventory_id': inventory_id,
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_price': item_price,
+                            'color': '',
+                            'memo': '',
+                            'qty': int(item_quantity),
+                            'tags': int(item_tags)
+                        })
+                    else:
+                        self.invoice_list[item_id] = [{
+                            'type': inventory_init,
+                            'inventory_id': inventory_id,
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_price': item_price,
+                            'color': '',
+                            'memo': '',
+                            'qty': int(item_quantity),
+                            'tags': int(item_tags)
+                        }]
+                        self.invoice_list_copy[item_id] = [{
+                            'type': inventory_init,
+                            'inventory_id': inventory_id,
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_price': item_price,
+                            'color': '',
+                            'memo': '',
+                            'qty': int(item_quantity),
+                            'tags': int(item_tags)
+                        }]
+        # update dictionary make sure that the most recently selected item is on top
+        row = self.invoice_list[vars.ITEM_ID]
+        del self.invoice_list[vars.ITEM_ID]
+        self.invoice_list[item_id] = row
+
+        self.create_summary_table()
+        self.inv_qty_list = ['1']
+        self.qty_clicks = 0
+        self.inv_qty = 1
+        self.qty_count_label.text = '1'
+
+    def create_summary_table(self):
+        self.summary_table.clear_widgets()
+
+        # create th
+        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
+        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
+        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+        h5 = KV.sized_invoice_tr(0, 'A.', size_hint_x=0.1)
+        self.summary_table.add_widget(Builder.load_string(h1))
+        self.summary_table.add_widget(Builder.load_string(h2))
+        self.summary_table.add_widget(Builder.load_string(h3))
+        self.summary_table.add_widget(Builder.load_string(h4))
+        self.summary_table.add_widget(Builder.load_string(h5))
+
+        if self.invoice_list:
+
+            for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+                item_id = key
+                total_qty = len(values)
+                colors = {}
+                item_price = 0
+                color_string = []
+                memo_string = []
+                if values:
+                    for item in values:
+                        item_name = item['item_name']
+                        item_type = item['type']
+                        item_color = item['color']
+                        item_memo = item['memo']
+                        item_price += item['item_price'] if item['item_price'] else 0
+                        if item['color']:
+                            if item_color in colors:
+                                colors[item_color] += 1
+                            else:
+                                colors[item_color] = 1
+                        if item_memo:
+                            memo_string.append(item_memo)
+                    if colors:
+                        for color_name, color_amount in colors.items():
+                            if color_name:
+                                color_string.append('{}-{}'.format(color_amount, color_name))
+
+                    item_string = '[b]{}[/b] \\n{}\\n{}'.format(item_name, ', '.join(color_string),
+                                                                '/ '.join(memo_string))
+                    selected = True if vars.ITEM_ID == item_id else False
+                    tr1 = KV.sized_invoice_tr(1,
+                                              item_type,
+                                              size_hint_x=0.1,
+                                              selected=selected,
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                                  item_id))
+                    tr2 = KV.sized_invoice_tr(1,
+                                              total_qty,
+                                              size_hint_x=0.1,
+                                              selected=selected,
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                                  item_id))
+                    tr3 = KV.sized_invoice_tr(1,
+                                              item_string,
+                                              size_hint_x=0.5,
+                                              selected=selected,
+                                              text_wrap=True,
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                                  item_id))
+                    tr4 = KV.sized_invoice_tr(1,
+                                              vars.us_dollar(item_price),
+                                              size_hint_x=0.2,
+                                              selected=selected,
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                                  item_id))
+                    tr5 = Button(size_hint_x=0.1,
+                                 markup=True,
+                                 text="[color=ffffff][b]-[/b][/color]",
+                                 background_color=(1, 0, 0, 1),
+                                 background_normal='',
+                                 on_release=partial(self.remove_item_row, item_id))
+                    self.summary_table.add_widget(Builder.load_string(tr1))
+                    self.summary_table.add_widget(Builder.load_string(tr2))
+                    self.summary_table.add_widget(Builder.load_string(tr3))
+                    self.summary_table.add_widget(Builder.load_string(tr4))
+                    self.summary_table.add_widget(tr5)
+        self.create_summary_totals()
+
+    def select_item(self, item_id, *args, **kwargs):
+        vars.ITEM_ID = item_id
+        self.create_summary_table()
+
+    def remove_item_row(self, item_id, *args, **kwargs):
+        vars.ITEM_ID = item_id
+        if vars.ITEM_ID in self.invoice_list:
+            idx = -1
+            for row in self.invoice_list[vars.ITEM_ID]:
+                idx += 1
+                if 'invoice_items_id' in row:
+                    self.invoice_list[vars.ITEM_ID][idx]['delete'] = True
+                    self.deleted_rows.append(row['invoice_items_id'])
+
+            del self.invoice_list[vars.ITEM_ID]
+        if vars.ITEM_ID in self.invoice_list_copy:
+            del self.invoice_list_copy[vars.ITEM_ID]
+        if self.invoice_list:
+            idx = 0
+            for row_key, row_value in self.invoice_list.items():
+                idx += 1
+                if idx == 1:
+                    vars.ITEM_ID = row_key
+                    break
+        print(self.deleted_rows)
+        self.create_summary_table()
+        self.create_summary_totals()
+
+    def create_summary_totals(self):
+        self.quantity = 0
+        self.tags = 0
+        self.subtotal = 0
+        self.tax = 0
+        self.discount = 0
+        self.total = 0
+        # calculate totals
+        if len(self.invoice_list):
+            for item_key, item_values in self.invoice_list.items():
+                for item in item_values:
+                    self.quantity += 1
+                    self.tags += int(item['tags']) if item['tags'] else 1
+                    self.subtotal += float(item['item_price']) if item['item_price'] else 0
+            self.tax = self.subtotal * vars.TAX_RATE
+            self.discount = 0
+            self.total = self.subtotal + self.tax - self.discount
+            self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
+            self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
+            self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
+            self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
+            self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
+            self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
+
+    def make_memo_color(self):
+
+        self.item_row_selected(row=0)
+
+        # make popup
+        self.memo_color_popup.title = "Add Memo / Color"
+
+        layout = BoxLayout(orientation='vertical',
+                           pos_hint={'top': 1},
+                           size_hint=(1, 1))
+
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        memo_color_layout = BoxLayout(orientation='vertical',
+                                      size_hint=(0.5, 1))
+        color_layout = ScrollView(size_hint=(1, 0.4))
+        color_title = Label(markup=True,
+                            text='[b]Select A Color[/b]',
+                            size_hint=(1, 0.1))
+        memo_color_layout.add_widget(color_title)
+        color_grid = GridLayout(size_hint_y=None,
+                                cols=5,
+                                row_force_default=True,
+                                row_default_height='60sp')
+        color_grid.bind(minimum_height=color_grid.setter('height'))
+        colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        if colors:
+            for color in colors:
+                color_btn = Button(markup=True,
+                                   text='[b]{color_name}[/b]'.format(color_name=color['name']),
+                                   on_release=partial(self.color_selected, color['name']))
+                color_btn.text_size = color_btn.size
+                color_btn.font_size = '12sp'
+                color_btn.valign = 'bottom'
+                color_btn.halign = 'center'
+                color_btn.background_normal = ''
+                color_btn.background_color = vars.color_rgba(color['color'])
+                color_grid.add_widget(color_btn)
+        color_layout.add_widget(color_grid)
+        # memo section
+        memo_layout = BoxLayout(orientation='vertical',
+                                size_hint=(1, 0.5))
+        memo_title = Label(markup=True,
+                           pos_hint={'top': 1},
+                           text='[b]Create Memo[/b]',
+                           size_hint=(1, 0.1))
+        memo_inner_layout = BoxLayout(orientation='horizontal',
+                                      size_hint=(1, 0.4))
+        memo_layout.add_widget(memo_title)
+        memo_text_input = TextInput(text='',
+                                    size_hint=(0.9, 1),
+                                    multiline=True)
+        try:
+            memo_inner_layout.add_widget(memo_text_input)
+        except WidgetException:
+            memo_inner_layout.remove_widget(memo_text_input)
+            memo_inner_layout.add_widget(memo_text_input)
+        self.memo_text_input = memo_text_input
+        memo_add_button = Button(text='Add',
+                                 size_hint=(0.1, 1),
+                                 on_press=self.add_memo)
+        memo_inner_layout.add_widget(memo_add_button)
+        memo_layout.add_widget(memo_inner_layout)
+        memo_color_layout.add_widget(color_layout)
+        memo_color_layout.add_widget(memo_layout)
+        # make items side
+        self.items_layout = ScrollView(size_hint=(0.5, 1),
+                                       pos_hint={'top': 1})
+        self.items_grid = GridLayout(size_hint_y=None,
+                                     cols=5,
+                                     row_force_default=True,
+                                     row_default_height='60sp')
+        self.make_items_table()
+        self.items_layout.add_widget(self.items_grid)
+
+        inner_layout_1.add_widget(memo_color_layout)
+        inner_layout_1.add_widget(self.items_layout)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(markup=True,
+                               text="Cancel",
+                               on_press=self.memo_color_popup.dismiss)
+        save_button = Button(markup=True,
+                             text="[color=00f900][b]Save[/b][/color]",
+                             on_press=self.save_memo_color,
+                             on_release=self.memo_color_popup.dismiss)
+
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(save_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.memo_color_popup.content = layout
+        # show layout
+        self.memo_color_popup.open()
+
+    def make_items_table(self):
+        self.items_grid.clear_widgets()
+        item_th1 = KV.sized_invoice_tr(0, '#', size_hint_x=0.1)
+        item_th2 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.2)
+        item_th3 = KV.sized_invoice_tr(0, 'Color', size_hint_x=0.1)
+        item_th4 = KV.sized_invoice_tr(0, 'Memo', size_hint_x=0.5)
+        item_th5 = KV.sized_invoice_tr(0, 'A.', size_hint_x=0.1)
+
+        self.items_grid.add_widget(Builder.load_string(item_th1))
+        self.items_grid.add_widget(Builder.load_string(item_th2))
+        self.items_grid.add_widget(Builder.load_string(item_th3))
+        self.items_grid.add_widget(Builder.load_string(item_th4))
+        self.items_grid.add_widget(Builder.load_string(item_th5))
+
+        if self.invoice_list_copy[vars.ITEM_ID]:
+            idx = -1
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+                idx += 1
+                background_color = (0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
+                    0.89803922, 0.89803922, 0.89803922, 1)
+                background_normal = ''
+                text_color = 'e5e5e5' if idx == self.item_selected_row else '5e5e5e'
+                item_name = items['item_name']
+                item_color = items['color']
+                item_memo = items['memo']
+                items_tr1 = Button(markup=True,
+                                   text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                    msg=str((idx + 1))),
+                                   on_press=partial(self.item_row_selected, idx),
+                                   size_hint_x=0.1,
+                                   font_size='12sp',
+                                   background_color=background_color,
+                                   background_normal=background_normal)
+                items_tr2 = Button(markup=True,
+                                   text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                    msg=item_name),
+                                   on_press=partial(self.item_row_selected, idx),
+                                   size_hint_x=0.2,
+                                   font_size='12sp',
+                                   background_color=background_color,
+                                   background_normal=background_normal)
+
+                items_tr3 = Button(markup=True,
+                                   text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                    msg=item_color),
+                                   on_press=partial(self.item_row_selected, idx),
+                                   size_hint_x=0.2,
+                                   font_size='12sp',
+                                   background_color=background_color,
+                                   background_normal=background_normal)
+                items_tr4 = Factory.LongButton(text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                                msg=item_memo),
+                                               on_press=partial(self.item_row_selected, idx),
+                                               size_hint_x=0.4,
+                                               size_hint_y=None,
+                                               background_color=background_color,
+                                               background_normal=background_normal)
+                items_tr5 = Button(markup=True,
+                                   text='[color=ff0000][b]Edit[b][/color]',
+                                   on_press=partial(self.item_row_selected, idx),
+                                   on_release=partial(self.item_row_edit, idx),
+                                   size_hint_x=0.1,
+                                   font_size='12sp',
+                                   background_color=background_color,
+                                   background_normal=background_normal)
+
+                self.items_grid.add_widget(items_tr1)
+                self.items_grid.add_widget(items_tr2)
+                self.items_grid.add_widget(items_tr3)
+                self.items_grid.add_widget(items_tr4)
+                items_tr4.text_size = (items_tr4.width + 200, items_tr4.height)
+
+                self.items_grid.add_widget(items_tr5)
+        self.items_grid.bind(minimum_height=self.items_grid.setter('height'))
+
+    def add_memo(self, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
+            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                self.invoice_list_copy[vars.ITEM_ID]) else 0
+            self.item_selected_row = next_row
+            self.make_items_table()
+            self.memo_text_input.text = ''
+
+    def color_selected(self, color=False, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
+            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                self.invoice_list_copy[vars.ITEM_ID]) else 0
+            self.item_selected_row = next_row
+            self.make_items_table()
+
+    def item_row_edit(self, row, *args, **kwargs):
+        popup = Popup(title='Remove Colors / Memo')
+        popup.size_hint = None, None
+        popup.size = 900, 600
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.7))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Remove Color',
+                                         on_press=self.remove_color,
+                                         on_release=popup.dismiss))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Remove Memo',
+                                         on_press=self.remove_memo,
+                                         on_release=popup.dismiss))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.3))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='Cancel',
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def remove_color(self, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
+            self.make_items_table()
+
+    def remove_memo(self, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
+            self.make_items_table()
+
+    def item_row_selected(self, row, *args, **kwargs):
+        self.item_selected_row = row
+        self.make_items_table()
+
+    def save_memo_color(self, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID]:
+            idx = -1
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+                idx += 1
+                color = items['color']
+                memo = items['memo']
+                self.invoice_list[vars.ITEM_ID][idx]['color'] = color
+                self.invoice_list[vars.ITEM_ID][idx]['memo'] = memo
+        self.create_summary_table()
+
+    def make_adjust(self):
+        self.item_selected_row = 0
+        popup = Popup()
+        popup.title = 'Adjust Items'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        adjust_sum_section = BoxLayout(orientation='vertical',
+                                       size_hint=(0.5, 1))
+        adjust_sum_title = Label(size_hint=(1, 0.1),
+                                 markup=True,
+                                 text='[b]Adjust Sum Total[/b]')
+        adjust_sum_scroll = ScrollView(size_hint=(1, 0.9))
+        self.adjust_sum_grid = GridLayout(size_hint_y=None,
+                                          cols=4,
+                                          row_force_default=True,
+                                          row_default_height='50sp')
+        self.adjust_sum_grid.bind(minimum_height=self.adjust_sum_grid.setter('height'))
+        self.make_adjustment_sum_table()
+        adjust_sum_scroll.add_widget(self.adjust_sum_grid)
+        adjust_sum_section.add_widget(adjust_sum_title)
+        adjust_sum_section.add_widget(adjust_sum_scroll)
+        inner_layout_1.add_widget(adjust_sum_section)
+        adjust_individual_section = BoxLayout(orientation='vertical',
+                                              size_hint=(0.5, 1))
+
+        adjust_individual_title = Label(size_hint=(1, 0.1),
+                                        markup=True,
+                                        text='[b]Adjust Individual Totals[/b]')
+        adjust_individual_scroll = ScrollView(size_hint=(1, 0.9))
+        self.adjust_individual_grid = GridLayout(size_hint_y=None,
+                                                 cols=5,
+                                                 row_force_default=True,
+                                                 row_default_height='50sp')
+        self.adjust_individual_grid.bind(minimum_height=self.adjust_individual_grid.setter('height'))
+        self.make_adjustment_individual_table()
+        adjust_individual_scroll.add_widget(self.adjust_individual_grid)
+        adjust_individual_section.add_widget(adjust_individual_title)
+        adjust_individual_section.add_widget(adjust_individual_scroll)
+        inner_layout_1.add_widget(adjust_individual_section)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="Cancel",
+                                         on_release=popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="[color=00f900][b]save[/b][/color]",
+                                         on_press=self.save_price_adjustment,
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def make_adjustment_sum_table(self):
+        self.adjust_sum_grid.clear_widgets()
+        if vars.ITEM_ID in self.invoice_list_copy and len(self.invoice_list_copy[vars.ITEM_ID]) > 1:
+            # create th
+            h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
+            h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+            h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+            h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+            self.adjust_sum_grid.add_widget(Builder.load_string(h1))
+            self.adjust_sum_grid.add_widget(Builder.load_string(h2))
+            self.adjust_sum_grid.add_widget(Builder.load_string(h3))
+            self.adjust_sum_grid.add_widget(Builder.load_string(h4))
+
+            if self.invoice_list:
+
+                for key, values in OrderedDict(reversed(list(self.invoice_list_copy.items()))).items():
+                    if key == vars.ITEM_ID:
+                        item_id = key
+                        total_qty = len(values)
+                        colors = {}
+                        item_price = 0
+                        color_string = []
+                        memo_string = []
+                        if values:
+                            for item in values:
+                                item_name = item['item_name']
+                                item_type = item['type']
+                                item_color = item['color']
+                                item_memo = item['memo']
+                                item_price += item['item_price'] if item['item_price'] else 0
+                                if item['color']:
+                                    if item_color in colors:
+                                        colors[item_color] += 1
+                                    else:
+                                        colors[item_color] = 1
+                                if item_memo:
+                                    memo_string.append(item_memo)
+                            if colors:
+                                for color_name, color_amount in colors.items():
+                                    if color_name:
+                                        color_string.append('{}-{}'.format(color_amount, color_name))
+
+                            item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
+                                                                      '/ '.join(memo_string))
+                            tr1 = Button(size_hint_x=0.1,
+                                         markup=True,
+                                         text='{}'.format(item_type),
+                                         on_release=partial(self.adjustment_calculator,
+                                                            1,
+                                                            item_price))
+                            tr2 = Button(size_hint_x=0.1,
+                                         markup=True,
+                                         text='{}'.format(total_qty),
+                                         on_release=partial(self.adjustment_calculator,
+                                                            1,
+                                                            item_price))
+                            tr3 = Factory.LongButton(size_hint_x=0.6,
+                                                     size_hint_y=None,
+                                                     markup=True,
+                                                     text='{}'.format(item_string),
+                                                     on_release=partial(self.adjustment_calculator,
+                                                                        1,
+                                                                        item_price))
+
+                            tr4 = Button(size_hint_x=0.2,
+                                         markup=True,
+                                         text='{}'.format(vars.us_dollar(item_price)),
+                                         on_release=partial(self.adjustment_calculator,
+                                                            1,
+                                                            item_price))
+
+                            self.adjust_sum_grid.add_widget(tr1)
+                            self.adjust_sum_grid.add_widget(tr2)
+                            self.adjust_sum_grid.add_widget(tr3)
+                            self.adjust_sum_grid.add_widget(tr4)
+
+    def make_adjustment_individual_table(self):
+        self.adjust_individual_grid.clear_widgets()
+        # create th
+        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
+        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
+        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+        h5 = KV.sized_invoice_tr(0, 'A', size_hint_x=0.1)
+        self.adjust_individual_grid.add_widget(Builder.load_string(h1))
+        self.adjust_individual_grid.add_widget(Builder.load_string(h2))
+        self.adjust_individual_grid.add_widget(Builder.load_string(h3))
+        self.adjust_individual_grid.add_widget(Builder.load_string(h4))
+        self.adjust_individual_grid.add_widget(Builder.load_string(h5))
+
+        if self.invoice_list:
+
+            for key, values in OrderedDict(reversed(list(self.invoice_list_copy.items()))).items():
+                if key == vars.ITEM_ID:
+                    idx = -1
+                    for item in values:
+                        idx += 1
+                        item_name = item['item_name']
+                        item_type = item['type']
+                        item_color = item['color']
+                        item_memo = item['memo']
+                        item_price = item['item_price'] if item['item_price'] else 0
+                        item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, item_color, item_memo)
+                        background_color = (
+                            0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
+                            0.89803922, 0.89803922, 0.89803922, 1)
+                        background_normal = ''
+                        text_color = 'e5e5e5' if idx == self.item_selected_row else '5e5e5e'
+
+                        tr1 = Button(size_hint_x=0.1,
+                                     markup=True,
+                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                     msg=item_type),
+                                     on_press=partial(self.item_row_adjusted_selected, idx),
+                                     on_release=partial(self.adjustment_calculator,
+                                                        2,
+                                                        item_price,
+                                                        idx),
+                                     background_color=background_color,
+                                     background_normal=background_normal)
+                        tr2 = Button(size_hint_x=0.1,
+                                     markup=True,
+                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                     msg=1),
+                                     on_press=partial(self.item_row_adjusted_selected, idx),
+                                     on_release=partial(self.adjustment_calculator,
+                                                        2,
+                                                        item_price,
+                                                        idx),
+                                     background_color=background_color,
+                                     background_normal=background_normal)
+                        tr3 = Factory.LongButton(size_hint_x=0.6,
+                                                 size_hint_y=None,
+                                                 markup=True,
+                                                 text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                                 msg=item_string),
+                                                 on_press=partial(self.item_row_adjusted_selected, idx),
+                                                 on_release=partial(self.adjustment_calculator,
+                                                                    2,
+                                                                    item_price,
+                                                                    idx),
+                                                 background_color=background_color,
+                                                 background_normal=background_normal)
+                        tr4 = Button(size_hint_x=0.2,
+                                     markup=True,
+                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                     msg=vars.us_dollar(item_price)),
+                                     on_press=partial(self.item_row_adjusted_selected, idx),
+                                     on_release=partial(self.adjustment_calculator,
+                                                        2,
+                                                        item_price,
+                                                        idx),
+                                     background_color=background_color,
+                                     background_normal=background_normal)
+
+                        tr5 = Button(size_hint_x=0.1,
+                                     markup=True,
+                                     text='[color=ffffff][b]-[/b][/color]',
+                                     on_release=partial(self.item_row_delete_selected, idx),
+                                     background_color=(1, 0, 0, 1),
+                                     background_normal='')
+
+                        self.adjust_individual_grid.add_widget(tr1)
+                        self.adjust_individual_grid.add_widget(tr2)
+                        self.adjust_individual_grid.add_widget(tr3)
+                        self.adjust_individual_grid.add_widget(tr4)
+                        self.adjust_individual_grid.add_widget(tr5)
+
+    def adjustment_calculator(self, type=None, price=0, row=None, *args, **kwargs):
+        self.adjust_price = 0
+        self.adjust_price_list = []
+        popup = Popup()
+        popup.title = 'Adjustment Calculator'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        calculator_layout = BoxLayout(orientation='vertical',
+                                      size_hint=(0.5, 1))
+        calculator_top = GridLayout(cols=1,
+                                    rows=1,
+                                    size_hint=(1, 0.2))
+        self.calculator_text = Factory.CenteredLabel(text="[color=000000][b]{}[/b][/color]".format(vars.us_dollar(0)))
+        calculator_top.add_widget(self.calculator_text)
+        calculator_main_layout = GridLayout(cols=3,
+                                            rows=4,
+                                            size_hint=(1, 0.8))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]7[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '7')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]8[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '8')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]9[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '9')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]4[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '4')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]5[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '5')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]6[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '6')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]1[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '1')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]2[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '2')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]3[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '3')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]0[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '0')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[b]00[/b]",
+                                                 on_release=partial(self.set_price_adjustment_sum, '00')))
+        calculator_main_layout.add_widget(Button(markup=True,
+                                                 text="[color=ff0000][b]C[/b][/color]",
+                                                 on_release=partial(self.set_price_adjustment_sum, 'C')))
+        calculator_layout.add_widget(calculator_top)
+        calculator_layout.add_widget(calculator_main_layout)
+        summary_layout = BoxLayout(orientation='vertical',
+                                   size_hint=(0.5, 1))
+        summary_layout.add_widget(Label(markup=True,
+                                        text="[b]Summary Totals[/b]",
+                                        size_hint=(1, 0.1)))
+        summary_grid = GridLayout(size_hint=(1, 0.9),
+                                  cols=2,
+                                  rows=2,
+                                  row_force_default=True,
+                                  row_default_height='50sp')
+        summary_grid.add_widget(Label(markup=True,
+                                      text="Original Price"))
+        original_price = Factory.ReadOnlyLabel(text='[color=e5e5e5]{}[/color]'.format(vars.us_dollar(price)))
+        summary_grid.add_widget(original_price)
+        summary_grid.add_widget(Label(markup=True,
+                                      text="Adjusted Price"))
+        self.adjusted_price = Factory.ReadOnlyLabel(
+            text='[color=e5e5e5]{}[/color]'.format(vars.us_dollar(self.adjust_price)))
+        summary_grid.add_widget(self.adjusted_price)
+        summary_layout.add_widget(summary_grid)
+
+        inner_layout_1.add_widget(calculator_layout)
+        inner_layout_1.add_widget(summary_layout)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="cancel",
+                                         on_release=popup.dismiss))
+
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="[color=00f900][b]OK[/b][/color]",
+                                         on_press=self.set_price_adjustment_sum_correct_individual if type == 1 else partial(
+                                             self.set_price_adjustment_individual_correct_sum, row),
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def set_price_adjustment_sum(self, digit, *args, **kwargs):
+        if digit == 'C':
+            self.adjust_price = 0
+            self.adjust_price_list = []
+
+        else:
+            self.adjust_price_list.append(digit)
+            self.adjust_price = int(''.join(self.adjust_price_list)) / 100
+        self.calculator_text.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.adjust_price))
+        self.adjusted_price.text = '[color=e5e5e5][b]{}[/b][/color]'.format(vars.us_dollar(self.adjust_price))
+
+    def set_price_adjustment_sum_correct_individual(self, row, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID]:
+            total_count = len(self.invoice_list_copy[vars.ITEM_ID])
+            new_avg_price = round(self.adjust_price / total_count, 2)
+            minus_total = self.adjust_price
+            idx = -1
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+                idx += 1
+                minus_total -= new_avg_price
+                if idx < len(self.invoice_list_copy[vars.ITEM_ID]) - 1:
+                    self.invoice_list_copy[vars.ITEM_ID][idx]['item_price'] = new_avg_price
+                else:
+                    self.invoice_list_copy[vars.ITEM_ID][idx]['item_price'] = round(new_avg_price + minus_total, 2)
+            self.make_adjustment_sum_table()
+            self.make_adjustment_individual_table()
+
+    def set_price_adjustment_individual_correct_sum(self, row, *args, **kwargs):
+        if self.invoice_list_copy[vars.ITEM_ID][row]:
+            self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
+            self.make_adjustment_sum_table()
+            self.make_adjustment_individual_table()
+
+    def save_price_adjustment(self, *args, **kwargs):
+
+        if vars.ITEM_ID in self.invoice_list_copy:
+            idx = -1
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+                idx += 1
+                new_price = items['item_price']
+                self.invoice_list[vars.ITEM_ID][idx]['item_price'] = new_price
+            self.create_summary_table()
+            self.create_summary_totals()
+
+    def item_row_delete_selected(self, row, *args, **kwargs):
+
+        if 'invoice_items_id' in self.invoice_list[vars.ITEM_ID][row]:
+            self.invoice_list[vars.ITEM_ID][row]['delete'] = True
+            self.deleted_rows.append(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
+        print(self.deleted_rows)
+        del self.invoice_list[vars.ITEM_ID][row]
+        del self.invoice_list_copy[vars.ITEM_ID][row]
+        self.item_selected_row = 0
+        self.make_adjustment_sum_table()
+        self.make_adjustment_individual_table()
+        self.create_summary_table()
+        self.create_summary_totals()
+
+    def item_row_adjusted_selected(self, row, *args, **kwargs):
+        self.item_selected_row = row
+        self.adjust_individual_grid.clear_widgets()
+        self.make_adjustment_individual_table()
+
+    def make_calendar(self):
+
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today = datetime.datetime.today()
+        dow = int(datetime.datetime.today().strftime("%w"))
+        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        new_date = today + datetime.timedelta(days=turn_around_day)
+        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+        due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.month = int(due_date.strftime('%m'))
+
+        popup = Popup()
+        popup.title = 'Calendar'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                   orientation='vertical')
+        calendar_selection = GridLayout(cols=4,
+                                        rows=1,
+                                        size_hint=(1, 0.1))
+        prev_month = Button(markup=True,
+                            text="<",
+                            font_size="30sp",
+                            on_release=self.prev_month)
+        next_month = Button(markup=True,
+                            text=">",
+                            font_size="30sp",
+                            on_release=self.next_month)
+        select_month = Factory.SelectMonth()
+        self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
+                                   on_release=select_month.open)
+        for index in range(12):
+            month_options = Button(text='{}'.format(vars.month_by_number(index)),
+                                   size_hint_y=None,
+                                   height=40,
+                                   on_release=partial(self.select_calendar_month, index))
+            select_month.add_widget(month_options)
+
+        select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+        select_year = Factory.SelectMonth()
+
+        self.year_button = Button(text="{}".format(self.year),
+                                  on_release=select_year.open)
+        for index in range(10):
+            year_options = Button(text='{}'.format(int(self.year) + index),
+                                  size_hint_y=None,
+                                  height=40,
+                                  on_release=partial(self.select_calendar_year, index))
+            select_year.add_widget(year_options)
+
+        select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+        calendar_selection.add_widget(prev_month)
+        calendar_selection.add_widget(self.month_button)
+        calendar_selection.add_widget(self.year_button)
+        calendar_selection.add_widget(next_month)
+        self.calendar_layout = GridLayout(cols=7,
+                                          rows=8,
+                                          size_hint=(1, 0.9))
+        self.create_calendar_table()
+
+        inner_layout_1.add_widget(calendar_selection)
+        inner_layout_1.add_widget(self.calendar_layout)
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                   orientation='horizontal')
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="Okay",
+                                         on_release=popup.dismiss))
+
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def create_calendar_table(self):
+        # set the variables
+
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today_date = datetime.datetime.today()
+        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
+        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
+
+        self.calendar_layout.clear_widgets()
+        calendars = Calendar()
+        calendars.setfirstweekday(calendar.SUNDAY)
+        selected_month = self.month - 1
+        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+        th1 = KV.invoice_tr(0, 'Su')
+        th2 = KV.invoice_tr(0, 'Mo')
+        th3 = KV.invoice_tr(0, 'Tu')
+        th4 = KV.invoice_tr(0, 'We')
+        th5 = KV.invoice_tr(0, 'Th')
+        th6 = KV.invoice_tr(0, 'Fr')
+        th7 = KV.invoice_tr(0, 'Sa')
+        self.calendar_layout.add_widget(Builder.load_string(th1))
+        self.calendar_layout.add_widget(Builder.load_string(th2))
+        self.calendar_layout.add_widget(Builder.load_string(th3))
+        self.calendar_layout.add_widget(Builder.load_string(th4))
+        self.calendar_layout.add_widget(Builder.load_string(th5))
+        self.calendar_layout.add_widget(Builder.load_string(th6))
+        self.calendar_layout.add_widget(Builder.load_string(th7))
+        if year_dates[selected_month]:
+            for month in year_dates[selected_month]:
+                for week in month:
+                    for day in week:
+                        if day[0] > 0:
+                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                           Job.date_leading_zeroes(self.month),
+                                                                           Job.date_leading_zeroes(day[0]))
+                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                            check_date = today_base.timestamp()
+                            dow_check = today_base.strftime("%w")
+                            # rule #1 remove all past dates so users cannot set a due date previous to today
+                            if check_date < check_today:
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                if check_date == check_today:
+                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                elif check_date == check_due_date:
+                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(
+                                                                      0.2156862, 0.9921568, 0.98823529, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                elif check_today < check_date < check_due_date:
+                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0.878431372549020, 1, 1, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                else:
+                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                  on_release=partial(self.select_due_date, today_base))
+                            else:  # store is closed
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                        else:
+                            item = Factory.CalendarButton(disabled=True)
+                        self.calendar_layout.add_widget(item)
+
+    def prev_month(self, *args, **kwargs):
+        if self.month == 1:
+            self.month = 12
+            self.year -= 1
+        else:
+            self.month -= 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_calendar_table()
+
+    def next_month(self, *args, **kwargs):
+        if self.month == 12:
+            self.month = 1
+            self.year += 1
+        else:
+            self.month += 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_calendar_table()
+
+    def select_calendar_month(self, month, *args, **kwargs):
+        self.month = month
+        self.create_calendar_table()
+
+    def select_calendar_year(self, year, *args, **kwargs):
+        self.year = year
+        self.create_calendar_table()
+
+    def select_due_date(self, selected_date, *args, **kwargs):
+        store_hours = Company().get_store_hours(auth_user.company_id)
+
+        dow = int(selected_date.strftime("%w"))
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+        self.date_picker.text = self.due_date_string
+        self.create_calendar_table()
+
+    def print_selection(self):
+        self.print_popup = Popup()
+        self.print_popup.title = 'Print Selection'
+        self.print_popup.size_hint = (None, None)
+        self.print_popup.size = (800, 600)
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.7))
+
+        button_1 = Factory.PrintButton(text='Customer + Store Copy',
+                                       on_press=partial(self.finish_invoice, 2))
+
+        inner_layout_1.add_widget(button_1)
+        button_2 = Factory.PrintButton(text='Store Copy Only',
+                                       on_press=partial(self.finish_invoice, 1))
+        inner_layout_1.add_widget(button_2)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.3))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='Cancel',
+                                         on_release=self.print_popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.print_popup.content = layout
+        self.print_popup.open()
+
+    def finish_invoice(self, type, *args, **kwargs):
+        # determine the types of invoices we need to print
+
+        # set the printer data
+
+        if self.deleted_rows:
+            for invoice_items_id in self.deleted_rows:
+                invoice_items = InvoiceItem()
+                invoice_items.id = invoice_items.get_id(invoice_items_id)
+                if invoice_items.delete():
+                    print('deleted row {}'.format(invoice_items.id))
+
+        if self.invoice_list:
+            invoice_items = InvoiceItem()
+            for invoice_item_key, invoice_item_value in self.invoice_list.items():
+                for iivalue in invoice_item_value:
+                    qty = iivalue['qty']
+                    pretax = float(iivalue['item_price']) if iivalue['item_price'] else 0
+                    tax = float('%.2f' % (pretax * vars.TAX_RATE))
+                    total = float('%.2f' % (pretax * (1 + vars.TAX_RATE)))
+
+                    if 'invoice_items_id' in iivalue:
+                        invoice_items.put(where={'invoice_items_id': iivalue['invoice_items_id']},
+                                          data={'quantity': iivalue['qty'],
+                                                'color': iivalue['color'] if iivalue['color'] else None,
+                                                'memo': iivalue['memo'] if iivalue['memo'] else None,
+                                                'pretax': pretax,
+                                                'tax': tax,
+                                                'total': total})
+                        print('invoice item updated')
+                    else:
+                        new_invoice_item = InvoiceItem()
+                        new_invoice_item.company_id = auth_user.company_id
+                        new_invoice_item.customer_id = vars.CUSTOMER_ID
+                        new_invoice_item.invoice_id = vars.INVOICE_ID
+                        new_invoice_item.item_id = iivalue['item_id']
+                        new_invoice_item.quantity = iivalue['qty']
+                        new_invoice_item.color = iivalue['color'] if iivalue['color'] else None
+                        new_invoice_item.memo = iivalue['memo'] if iivalue['memo'] else None
+                        new_invoice_item.pretax = pretax
+                        new_invoice_item.tax = tax
+                        new_invoice_item.total = total
+                        new_invoice_item.status = 1
+                        if new_invoice_item.add():
+                            print('new item added')
+                            # delete rows
+        vars.WORKLIST.append("Sync")
+        threads_start()
+
+        Invoice().put(where={'invoice_id': vars.INVOICE_ID},
+                      data={'quantity': self.quantity,
+                            'pretax': '%.2f' % self.subtotal,
+                            'tax': '%.2f' % self.tax,
+                            'total': '%.2f' % self.total,
+                            'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))})
+
+        vars.WORKLIST.append("Sync")
+        threads_start()
+
+        self.set_result_status()
+        self.print_popup.dismiss()
 
 
 class EditCustomerScreen(Screen):
@@ -521,7 +3582,6 @@ class EditCustomerScreen(Screen):
         self.special_instructions.disabled = False if self.is_delivery.active else True
 
     def delete_mark(self, mark=False, *args, **kwargs):
-        print(mark)
         popup = Popup()
         popup.size = 800, 600
         popup.title = 'Marks deleted'
@@ -590,8 +3650,8 @@ class EditCustomerScreen(Screen):
         popup.size_hint = (None, None)
         popup.size = '600sp', '300sp'
         # sync database first
-        sync = Sync()
-
+        vars.WORKLIST.append("Sync")
+        threads_start()
         # check for errors
         errors = 0
         if self.phone.text == '':
@@ -706,7 +3766,8 @@ class EditCustomerScreen(Screen):
                 where = {'customer_id': vars.CUSTOMER_ID}
                 data = {'mark': updated_mark}
                 if marks.put(where=where, data=data):
-                    sync.db_sync(auth_user.company_id)  # update the database with the new mark and save it
+                    vars.WORKLIST.append("Sync")
+                    threads_start()
 
                 self.reset()
                 self.customer_select(vars.CUSTOMER_ID)
@@ -731,11 +3792,13 @@ class EditCustomerScreen(Screen):
 
 class HistoryScreen(Screen):
     invoices_table = ObjectProperty(None)
+    item_image = ObjectProperty(None)
     items_table = ObjectProperty(None)
     invs_results_label = ObjectProperty(None)
+    history_popup = ObjectProperty(None)
+    status_spinner = ObjectProperty(None)
 
     def get_history(self):
-
         # check if an invoice was previously selected
         self.invoices_table.clear_widgets()
         self.items_table.clear_widgets()
@@ -743,7 +3806,7 @@ class HistoryScreen(Screen):
         # create the invoice count list
         invoices = Invoice()
         data = {'customer_id': vars.CUSTOMER_ID}
-        vars.ROW_CAP = len(invoices.where(data))
+        vars.ROW_CAP = len(invoices.where(data=data, deleted_at=False))
         if vars.ROW_CAP < 10 and vars.ROW_CAP <= vars.ROW_SEARCH[1]:
             vars.ROW_SEARCH = 0, vars.ROW_CAP
         self.invs_results_label.text = '[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]'.format(
@@ -758,7 +3821,7 @@ class HistoryScreen(Screen):
         }
 
         invoices = Invoice()
-        invs = invoices.like(data)
+        invs = invoices.like(data=data, deleted_at=False)
         vars.SEARCH_RESULTS = invs
         # get invoice rows and display them to the table
 
@@ -798,6 +3861,8 @@ class HistoryScreen(Screen):
         total = '${:,.2f}'.format(row['total'])
         due = row['due_date']
         status = row['status']
+        deleted_at = row['deleted_at']
+        transaction_id = row['transaction_id']
         try:
             dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
         except ValueError:
@@ -811,11 +3876,16 @@ class HistoryScreen(Screen):
             dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
 
         now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-
-        if status <= 3 and due_strtotime < now_strtotime:  # overdue
+        if deleted_at:  # deleted
+            state = 4
+        elif transaction_id:  # picked up and done
+            state = 5
+        elif rack and not transaction_id:  # racked and ready
+            state = 3
+        elif due_strtotime < now_strtotime:  # overdue
             state = 2
-        else:
-            state = status
+        else:  # Not ready yet
+            state = 1
 
         selected = True if invoice_id == check_invoice_id else False
 
@@ -840,8 +3910,17 @@ class HistoryScreen(Screen):
 
         return True
 
+    def reprint(self):
+        pass
+
+    def undo(self):
+        pass
+
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
+        # update db with current changes
+        vars.WORKLIST.append("Sync")
+        threads_start()
 
     def select_invoice(self, invoice_id):
         # set selected invoice and update the table to show it
@@ -862,7 +3941,7 @@ class HistoryScreen(Screen):
         }
 
         invoices = Invoice()
-        invs = invoices.like(data)
+        invs = invoices.like(data=data, deleted_at=False)
         vars.SEARCH_RESULTS = invs
         self.invs_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
             vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
@@ -885,7 +3964,7 @@ class HistoryScreen(Screen):
             'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
         }
         invoices = Invoice()
-        invs = invoices.like(data)
+        invs = invoices.like(data=data, deleted_at=False)
         vars.SEARCH_RESULTS = invs
         self.invs_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
             vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
@@ -894,9 +3973,17 @@ class HistoryScreen(Screen):
 
     def items_table_update(self):
         self.items_table.clear_widgets()
+        invoices = Invoice().where({'invoice_id': vars.INVOICE_ID}, deleted_at=False)
+        if invoices:
+            for invoice in invoices:
+                invoice_deleted = True if invoice['deleted_at'] else False
+        else:
+            invoice_deleted = False
+        print(invoice_deleted)
         iitems = InvoiceItem()
         data = {'invoice_id': vars.INVOICE_ID}
-        inv_items = iitems.where(data)
+        inv_items = iitems.where(data,
+                                 deleted_at=False if invoice_deleted else True)
         if inv_items:
             # create headers
             # create TH
@@ -912,7 +3999,6 @@ class HistoryScreen(Screen):
                 item_id = invoice_item['item_id']
                 items_search = InventoryItem()
                 itm_srch = items_search.where({'item_id': item_id})
-
                 if itm_srch:
                     for itm in itm_srch:
                         item_name = itm['name']
@@ -920,6 +4006,7 @@ class HistoryScreen(Screen):
                     item_name = ''
 
                 items[item_id] = {
+                    'id': invoice_item['id'],
                     'name': item_name,
                     'total': 0,
                     'quantity': 0,
@@ -948,27 +4035,314 @@ class HistoryScreen(Screen):
             # print out the items into the table
             if items:
                 for key, value in items.items():
-                    tr1 = KV.sized_invoice_tr(1, value['quantity'], size_hint_x=0.2)
+                    tr1 = KV.sized_invoice_tr(1,
+                                              value['quantity'],
+                                              size_hint_x=0.2,
+                                              on_release='app.root.current="item_details"',
+                                              on_press='self.parent.parent.parent.parent.item_details({})'.format(key))
                     color_string = []
-                    for color_id, color_qty in value['color'].items():
-                        get_color_name = Colored().where({'color_id': color_id})
-                        if get_color_name:
-                            for color_item in get_color_name:
-                                color_string.append('{count}-{name}'.format(count=str(color_qty), name=color_item['name']))
+                    for color_name, color_qty in value['color'].items():
+                        if color_name:
+                            color_string.append('{count}-{name}'.format(count=str(color_qty), name=color_name))
 
                     item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=value['name'],
                                                                                 color_s=', '.join(color_string),
-                                                                                memo_s= '/ '.join(value['memo']))
+                                                                                memo_s='/ '.join(value['memo']))
                     # print(item_string)
                     tr2 = KV.sized_invoice_tr(1,
                                               item_string,
                                               text_wrap=True,
-                                              size_hint_x=0.6)
+                                              size_hint_x=0.6,
+                                              on_release='app.root.current="item_details"',
+                                              on_press='self.parent.parent.parent.parent.item_details({})'.format(key))
 
-                    tr3 = KV.sized_invoice_tr(1, '${:,.2f}'.format(value['total']), size_hint_x=0.2)
+                    tr3 = KV.sized_invoice_tr(1,
+                                              '${:,.2f}'.format(value['total']),
+                                              size_hint_x=0.2,
+                                              on_release='app.root.current="item_details"',
+                                              on_press='self.parent.parent.parent.parent.item_details({})'.format(key))
                     self.items_table.add_widget(Builder.load_string(tr1))
                     self.items_table.add_widget(Builder.load_string(tr2))
                     self.items_table.add_widget(Builder.load_string(tr3))
+
+    def item_details(self, item_id):
+        vars.ITEM_ID = item_id
+
+    def delete_invoice_confirm(self):
+        self.history_popup = Popup()
+        self.history_popup.auto_dismiss = False
+        self.history_popup.title = 'Delete Confirmation'
+        self.history_popup.size_hint = (None, None)
+        self.history_popup.size = ('800sp', '400sp')
+        invoice_id = vars.INVOICE_ID
+        if invoice_id:
+            layout = BoxLayout(orientation='vertical')
+            inner_content_1 = BoxLayout(size_hint=(1, 0.8))
+            inner_content_1.add_widget(Label(text="Are you sure you want to delete #{}?".format(invoice_id)))
+            inner_content_2 = BoxLayout(size_hint=(1, 0.2),
+                                        orientation='horizontal')
+            inner_content_2.add_widget(Button(markup=True,
+                                              text='Cancel',
+                                              on_press=self.history_popup.dismiss))
+            inner_content_2.add_widget(Button(markup=True,
+                                              text='[color=0FFF00]Confirm[/color]',
+                                              on_press=self.delete_invoice))
+            layout.add_widget(inner_content_1)
+            layout.add_widget(inner_content_2)
+
+        else:
+            layout = BoxLayout(orientation='vertical')
+            inner_content_1 = BoxLayout(size_hint=(1, 0.8))
+            inner_content_1.add_widget(Label(text="No such invoice. Please select an invoice".format(invoice_id)))
+            inner_content_2 = BoxLayout(size_hint=(1, 0.2),
+                                        orientation='horizontal')
+            inner_content_2.add_widget(Button(markup=True,
+                                              text='Cancel',
+                                              on_press=self.history_popup.dismiss))
+            layout.add_widget(inner_content_1)
+            layout.add_widget(inner_content_2)
+        self.history_popup.content = layout
+        self.history_popup.open()
+
+    def delete_invoice(self, *args, **kwargs):
+        popup = Popup()
+        popup.title = 'Deleted Invoice'
+        popup.size_hint = (None, None)
+        popup.size = (600, 400)
+        if vars.INVOICE_ID:
+            inv = Invoice()
+            invoices = inv.where({'invoice_id': vars.INVOICE_ID}, deleted_at=False)
+            if invoices:
+                for invoice in invoices:
+                    inv.id = invoice['id']
+                    inv.delete()
+            invoice_items = InvoiceItem()
+            iis = invoice_items.where({'invoice_id': vars.INVOICE_ID}, deleted_at=False)
+            if iis:
+                for invoice_item in iis:
+                    del_ii = InvoiceItem()
+                    del_ii.id = invoice_item['id']
+                    del_ii.delete()
+
+            msg = KV.popup_alert(msg="Successfully deleted invoice #{}!".format(vars.INVOICE_ID))
+        else:
+            msg = KV.popup_alert(msg="Could not locate the invoice_id. Please try again.")
+            pass
+
+        popup.content = Builder.load_string(msg)
+        popup.open()
+        self.history_popup.dismiss()
+        self.get_history()
+
+    def undo_invoice_confirm(self):
+        self.history_popup = Popup()
+        self.history_popup.auto_dismiss = False
+        self.history_popup.title = 'Undo Status Selection #{}'.format(vars.INVOICE_ID)
+        self.history_popup.size_hint = (None, None)
+        self.history_popup.size = ('800sp', '400sp')
+        invoice_id = vars.INVOICE_ID
+        if invoice_id:
+            layout = BoxLayout(orientation='vertical')
+            inner_content_1 = GridLayout(size_hint=(1, 0.8),
+                                         cols=1,
+                                         rows=3,
+                                         row_force_default=True,
+                                         row_default_height='50sp')
+            inner_content_1.add_widget(
+                Label(markup=True,
+                      text="[b]Change #{} Status To[b]".format(invoice_id)))
+            self.status_spinner = Spinner(text='Select Status',
+                                          values=('Not Ready', 'Racked', 'Picked Up'),
+                                          size_hint_y=None,
+                                          height='48sp')
+            inner_content_1.add_widget(self.status_spinner)
+
+            inner_content_2 = BoxLayout(size_hint=(1, 0.2),
+                                        orientation='horizontal')
+            inner_content_2.add_widget(Button(markup=True,
+                                              text='Cancel',
+                                              on_press=self.history_popup.dismiss))
+            inner_content_2.add_widget(Button(markup=True,
+                                              text='[color=0FFF00]Confirm[/color]',
+                                              on_press=self.undo_invoice))
+            layout.add_widget(inner_content_1)
+            layout.add_widget(inner_content_2)
+
+        else:
+            layout = BoxLayout(orientation='vertical')
+            inner_content_1 = BoxLayout(size_hint=(1, 0.8))
+            inner_content_1.add_widget(Label(text="No such invoice. Please select an invoice".format(invoice_id)))
+            inner_content_2 = BoxLayout(size_hint=(1, 0.2),
+                                        orientation='horizontal')
+            inner_content_2.add_widget(Button(markup=True,
+                                              text='Cancel',
+                                              on_press=self.history_popup.dismiss))
+            layout.add_widget(inner_content_1)
+            layout.add_widget(inner_content_2)
+        self.history_popup.content = layout
+        self.history_popup.open()
+
+    def undo_invoice(self, *args, **kwargs):
+        if self.status_spinner.text == 'Not Ready':
+            status = 1
+        elif self.status_spinner.text == 'Racked':
+            status = 3
+        elif self.status_spinner.text == 'Picked Up':
+            status = 5
+        popup = Popup()
+        popup.title = 'Undo Invoice'
+        popup.size_hint = (None, None)
+        popup.size = (600, 400)
+        if vars.INVOICE_ID:
+            if status > 0:
+                inv = Invoice()
+                invoices = inv.where({'invoice_id': vars.INVOICE_ID}, deleted_at=False)
+                if invoices:
+                    for invoice in invoices:
+                        transaction_id = invoice['transaction_id']
+                        status = 5 if transaction_id else status
+                        inv.id = invoice['id']
+                        data = {'deleted_at': None,
+                                'status': status}
+                        where = {'id': invoice['id']}
+                        inv.put(where=where, data=data)
+
+                        data = {'deleted_at': None}
+                        where = {'invoice_id': invoice['invoice_id']}
+                        InvoiceItem().put(where=where, data=data)
+
+                msg = KV.popup_alert(msg="Successfully updated invoice #{}!".format(vars.INVOICE_ID))
+                # sync the database
+                vars.WORKLIST.append("Sync")
+                threads_start()
+            else:
+                msg = KV.popup_alert(msg="Please select a valid status.")
+
+        else:
+            msg = KV.popup_alert(msg="Could not locate the invoice_id. Please try again.")
+
+        popup.content = Builder.load_string(msg)
+        popup.open()
+        self.history_popup.dismiss()
+        self.get_history()
+
+
+class ItemDetailsScreen(Screen):
+    name = ObjectProperty(None)
+    items_table = ObjectProperty(None)
+    inventory_name_label = ObjectProperty(None)
+    inventory_item_name = ObjectProperty(None)
+
+    def get_details(self):
+        # reset invoice_items_id
+        vars.INVOICE_ITEMS_ID = None
+        # make the items
+        self.item_image.source = ''
+        self.inventory_name_label.text = ''
+        self.inventory_item_name.text = ''
+        self.items_table_update()
+        pass
+
+    def items_table_update(self):
+        self.items_table.clear_widgets()
+        iitems = InvoiceItem()
+        data = {'item_id': vars.ITEM_ID, 'invoice_id': vars.INVOICE_ID}
+        inv_items = iitems.where(data)
+        if inv_items:
+            # create headers
+            # create TH
+            h1 = KV.sized_invoice_tr(0, 'ID', size_hint_x=0.1)
+            h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+            h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+            h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+            self.items_table.add_widget(Builder.load_string(h1))
+            self.items_table.add_widget(Builder.load_string(h2))
+            self.items_table.add_widget(Builder.load_string(h3))
+            self.items_table.add_widget(Builder.load_string(h4))
+
+            for invoice_item in inv_items:
+                invoice_items_id = invoice_item['invoice_items_id']
+                selected = True if invoice_items_id == vars.INVOICE_ITEMS_ID else False
+                item_id = invoice_item['item_id']
+                items_search = InventoryItem()
+                itm_srch = items_search.where({'item_id': item_id})
+
+                if itm_srch:
+                    for itm in itm_srch:
+                        item_name = itm['name']
+                else:
+                    item_name = ''
+                tr1 = KV.sized_invoice_tr(1,
+                                          invoice_item['id'],
+                                          size_hint_x=0.1,
+                                          selected=selected,
+                                          on_release='app.root.current="item_details"',
+                                          on_press='self.parent.parent.parent.parent.item_details({})'.format(
+                                              invoice_items_id))
+
+                tr2 = KV.sized_invoice_tr(1,
+                                          invoice_item['quantity'],
+                                          size_hint_x=0.1,
+                                          selected=selected,
+                                          on_release='app.root.current="item_details"',
+                                          on_press='self.parent.parent.parent.parent.item_details({})'.format(
+                                              invoice_items_id))
+                color_name = invoice_item['color']
+
+                item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=item_name,
+                                                                            color_s='{}'.format(color_name),
+                                                                            memo_s='{}'.format(invoice_item['memo']))
+                # print(item_string)
+                tr3 = KV.sized_invoice_tr(1,
+                                          item_string,
+                                          text_wrap=True,
+                                          size_hint_x=0.6,
+                                          selected=selected,
+                                          on_release='app.root.current="item_details"',
+                                          on_press='self.parent.parent.parent.parent.item_details({})'.format(
+                                              invoice_items_id))
+
+                tr4 = KV.sized_invoice_tr(1,
+                                          '${:,.2f}'.format(invoice_item['pretax']),
+                                          size_hint_x=0.2,
+                                          selected=selected,
+                                          on_release='app.root.current="item_details"',
+                                          on_press='self.parent.parent.parent.parent.item_details({})'.format(
+                                              invoice_items_id))
+                self.items_table.add_widget(Builder.load_string(tr1))
+                self.items_table.add_widget(Builder.load_string(tr2))
+                self.items_table.add_widget(Builder.load_string(tr3))
+                self.items_table.add_widget(Builder.load_string(tr4))
+
+    def item_details(self, item_id):
+        # highlight the selected invoice items
+        vars.INVOICE_ITEMS_ID = item_id
+        self.items_table_update()
+        # get item details and display them to item_detail_history_table
+        invoice_items = InvoiceItem().where({'id': item_id})
+        if invoice_items:
+            for invoice_item in invoice_items:
+                inventory_item_id = invoice_item['item_id']
+                items = InventoryItem()
+                iitems = items.where({'item_id': inventory_item_id})
+                if iitems:
+                    for iitem in iitems:
+                        inventory_id = iitem['inventory_id']
+                        inventories = Inventory().where({'inventory_id': inventory_id})
+                        if inventories:
+                            for inventory in inventories:
+                                inventory_name = inventory['name']
+                        else:
+                            inventory_name = ''
+                        items.image = items.get_image_src(invoice_item['item_id'])
+                        items.name = iitem['name']
+                    self.item_image.source = items.image if items.image else ''
+                    self.inventory_item_name.text = items.name if items.name else ''
+                    self.inventory_name_label.text = inventory_name if inventory_name else ''
+
+                    # update the rfid table history
+
+        pass
 
 
 class InvoiceDetailsScreen(Screen):
@@ -985,19 +4359,19 @@ class InvoiceDetailsScreen(Screen):
     rack_label = ObjectProperty(None)
     rack_date_label = ObjectProperty(None)
     items_table = ObjectProperty(None)
-    quantity_label= ObjectProperty(None)
-    subtotal_label= ObjectProperty(None)
-    tax_label= ObjectProperty(None)
-    total_label= ObjectProperty(None)
-    discount_label= ObjectProperty(None)
-    credit_label= ObjectProperty(None)
-    tendered_label= ObjectProperty(None)
-    due_label= ObjectProperty(None)
+    quantity_label = ObjectProperty(None)
+    subtotal_label = ObjectProperty(None)
+    tax_label = ObjectProperty(None)
+    total_label = ObjectProperty(None)
+    discount_label = ObjectProperty(None)
+    credit_label = ObjectProperty(None)
+    tendered_label = ObjectProperty(None)
+    due_label = ObjectProperty(None)
 
     def get_details(self):
-        invoices = Invoice().where({'invoice_id':vars.INVOICE_ID})
+        invoices = Invoice().where({'invoice_id': vars.INVOICE_ID})
         if invoices:
-            #reset the page first
+            # reset the page first
             self.invoice_number_label.text = ''
             self.customer_type_label.text = ''
             self.full_name_label.text = ''
@@ -1028,7 +4402,8 @@ class InvoiceDetailsScreen(Screen):
                 due_date = invoice['due_date'] if invoice['due_date'] else ''
                 memo = invoice['memo']
                 status = invoice['status']
-                self.invoice_number_label.text = '[color=000000]#{}[/color]'.format(vars.INVOICE_ID) if vars.INVOICE_ID else ''
+                self.invoice_number_label.text = '[color=000000]#{}[/color]'.format(
+                    vars.INVOICE_ID) if vars.INVOICE_ID else ''
                 self.dropoff_label.text = '[color=000000]{}[/color]'.format(dropoff_date)
                 self.rack_label.text = '[color=000000]{}[/color]'.format(rack)
                 self.rack_date_label.text = '[color=000000]{}[/color]'.format(rack_date)
@@ -1037,11 +4412,9 @@ class InvoiceDetailsScreen(Screen):
                 self.tax_label.text = '[color=000000]{}[/color]'.format(tax)
                 self.total_label.text = '[color=000000]{}[/color]'.format(total)
 
-
-
                 # get the customer information
                 customer_id = invoice['customer_id']
-                users = User().where({'user_id':customer_id})
+                users = User().where({'user_id': customer_id})
                 if users:
                     for user in users:
                         last_name = user['last_name']
@@ -1069,7 +4442,7 @@ class InvoiceDetailsScreen(Screen):
 
                 # get the transaction information
                 transaction_id = invoice['transaction_id']
-                transactions = Transaction().where({'transaction_id':transaction_id})
+                transactions = Transaction().where({'transaction_id': transaction_id})
                 if transactions:
                     for transaction in transactions:
                         payment_type = transaction['type']
@@ -1080,9 +4453,9 @@ class InvoiceDetailsScreen(Screen):
                             transaction_type = 'Credit'
                             tendered = invoice['total'] - discount_total
 
-                        elif payment_type ==2:
+                        elif payment_type == 2:
                             transaction_type = 'Cash'
-                        elif payment_type ==3:
+                        elif payment_type == 3:
                             transaction_type = 'Check'
                             tendered_total = invoice['total'] - discount_total
                         else:
@@ -1111,7 +4484,7 @@ class InvoiceDetailsScreen(Screen):
                     self.discount_label.text = '[color=000000]{}[/color]'.format('$0.00')
                     self.credit_label.text = '[color=000000]{}[/color]'.format('$0.00')
                     self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(total)
-                    self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format('$0.00'))
+                    self.tendered_label.text = '[color=000000]{}[/color]'.format('$0.00')
 
     def items_table_update(self):
         self.items_table.clear_widgets()
@@ -1171,15 +4544,14 @@ class InvoiceDetailsScreen(Screen):
                 for key, value in items.items():
                     tr1 = KV.sized_invoice_tr(1, value['quantity'], size_hint_x=0.2)
                     color_string = []
-                    for color_id, color_qty in value['color'].items():
-                        get_color_name = Colored().where({'color_id': color_id})
-                        if get_color_name:
-                            for color_item in get_color_name:
-                                color_string.append('{count}-{name}'.format(count=str(color_qty), name=color_item['name']))
+                    for name, color_qty in value['color'].items():
+                        if name:
+                            color_string.append('{count}-{name}'.format(count=str(color_qty),
+                                                                        name=name))
 
                     item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=value['name'],
                                                                                 color_s=', '.join(color_string),
-                                                                                memo_s= '/ '.join(value['memo']))
+                                                                                memo_s='/ '.join(value['memo']))
                     # print(item_string)
                     tr2 = KV.sized_invoice_tr(1,
                                               item_string,
@@ -1190,8 +4562,6 @@ class InvoiceDetailsScreen(Screen):
                     self.items_table.add_widget(Builder.load_string(tr1))
                     self.items_table.add_widget(Builder.load_string(tr2))
                     self.items_table.add_widget(Builder.load_string(tr3))
-
-
 
 
 class Last10Screen(Screen):
@@ -1389,8 +4759,6 @@ class NewCustomerScreen(Screen):
         popup = Popup()
         popup.size_hint = (None, None)
         popup.size = '600sp', '300sp'
-        # sync database first
-        sync = Sync()
 
         # check for errors
         errors = 0
@@ -1493,7 +4861,8 @@ class NewCustomerScreen(Screen):
 
             if customers.add():
 
-                if sync.db_sync(auth_user.company_id):  # send the data to the server and get back the updated user id
+                if vars.WORKLIST.append("Sync"):  # send the data to the server and get back the updated user id
+                    threads_start()
                     # send user to search
                     last_row = customers.get_last_inserted_row()
                     customers.id = last_row
@@ -1508,14 +4877,14 @@ class NewCustomerScreen(Screen):
                                                             starch=customers.get_starch(customers.starch))
                     marks.status = 1
                     if marks.add():
-                        sync.db_sync(auth_user.company_id)  # update the database with the new mark and save it
-
-                    self.reset()
-                    self.customer_select(customers.user_id)
-                    # create popup
-                    content = KV.popup_alert("You have successfully created a new customer.")
-                    popup.content = Builder.load_string(content)
-                    popup.open()
+                        vars.WORKLIST.append("Sync")
+                        threads_start()
+                        self.reset()
+                        self.customer_select(customers.user_id)
+                        # create popup
+                        content = KV.popup_alert("You have successfully created a new customer.")
+                        popup.content = Builder.load_string(content)
+                        popup.open()
         customers.close_connection()
 
     def customer_select(self, customer_id, *args, **kwargs):
@@ -1569,13 +4938,14 @@ class SearchScreen(Screen):
         vars.SEARCH_TEXT = None
         if vars.SEARCH_RESULTS_STATUS:
 
-            self.edit_invoice_btn.disabled = True
+            self.edit_invoice_btn.disabled = False if vars.INVOICE_ID is not None else True
             data = {'user_id': vars.CUSTOMER_ID}
             customers = User()
             results = customers.where(data)
             self.customer_results(results)
         else:
             vars.CUSTOMER_ID = None
+            vars.INVOICE_ID None
             self.search.text = ''
             self.customer_mark_l = ''
             self.cust_last_name.text = ''
@@ -1698,11 +5068,12 @@ class SearchScreen(Screen):
         company_id = row['company_id']
         quantity = row['quantity']
         rack = row['rack']
-        total = row['total']
+        total = vars.us_dollar(row['total'])
         due = row['due_date']
-        dt = datetime.datetime.strptime(due,
-                                        "%Y-%m-%d %H:%M:%S") if due is not None else datetime.datetime.strptime(
-            '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+        try:
+            dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
         due_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
         dow = vars.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
         due_date = dt.strftime('%m/%d {}').format(dow)
@@ -1722,17 +5093,17 @@ class SearchScreen(Screen):
         selected = True if invoice_id == check_invoice_id else False
 
         tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         tr_2 = KV.invoice_tr(state, company_id, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         tr_5 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         tr_6 = KV.invoice_tr(state, total, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
+                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         self.invoice_table.add_widget(Builder.load_string(tr_1))
         self.invoice_table.add_widget(Builder.load_string(tr_2))
         self.invoice_table.add_widget(Builder.load_string(tr_3))
@@ -2002,6 +5373,9 @@ class SearchResultsScreen(Screen):
         self.parent.current = 'search'
         # last 10 setup
         vars.update_last_10()
+        # sync db
+        vars.WORKLIST.append("Sync")
+        threads_start()
 
 
 class SettingsScreen(Screen):

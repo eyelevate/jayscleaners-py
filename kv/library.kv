@@ -1,0 +1,52 @@
+<LongButton@Button>:
+    size_hint_x: 1
+    size_hint_y: None
+    markup: True
+    font_size:'17sp'
+    text_size: self.size
+    valign: "top"
+    halign: "left"
+<CalendarButton@Button>:
+    markup: True
+    font_size:'20sp'
+    text_size: self.size
+    valign: "top"
+    halign: "left"
+
+<CalendarSelectedButton@Button>:
+    markup: True
+    font_size:'20sp'
+    text_size: self.size
+    valign: "top"
+    halign: "left"
+<CenteredLabel@Label>:
+    markup:True
+    text_size:self.size
+    halign: 'center'
+    valign: 'middle'
+    font_size: '30sp'
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+<PrintButton@Button>:
+    markup: True
+    on_release: app.root.current = "search"
+
+
+<ReadOnlyLabel@Label>
+    markup:True
+    text_size:self.size
+    halign: 'center'
+    valign: 'middle'
+    font_size: '20sp'
+    canvas.before:
+        Color:
+            rgba: 0.2, 0.2, 0.2, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+<SelectMonth@DropDown>
+    on_parent: self.dismiss

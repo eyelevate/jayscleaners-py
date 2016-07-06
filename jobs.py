@@ -1,4 +1,6 @@
 import re
+import time
+import datetime
 
 
 class Job:
@@ -32,3 +34,8 @@ class Job:
             return True
         else:
             return False
+
+    def date_leading_zeroes(self, num):
+        return "%02d" % (num,)
+
+

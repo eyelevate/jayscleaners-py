@@ -1,4 +1,6 @@
 import json
+import queue
+import threading
 import time
 import datetime
 
@@ -29,17 +31,47 @@ from urllib import request
 from urllib import parse
 from urllib.parse import urlencode
 from urllib.request import urlopen
+from threading import Thread
+from static import Static
 
 ERROR_COLOR = 0.94, 0.33, 0.33, 1
 DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
-unix = time.time()
-NOW = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
 
 class Sync:
-    def db_sync(self, company_id):
+    company_id = None
+    server_at = None
+
+    def db_sync(self):
+        run_sync = Thread(target=self.run_sync)
+        run_sync.start()
+        run_sync.join()
+        print('Sync finished')
+
+    def run_sync(self, *args, **kwargs):
         # self.migrate()
         # start upload text
+        unix = time.time()
+        NOW = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        company = Company()
+        company.id = self.company_id
+        data = {'company_id': self.company_id}
+        c1 = company.where(data)
+        if len(c1) > 0:
+            for comp in c1:
+                dt = datetime.datetime.strptime(comp['server_at'], "%Y-%m-%d %H:%M:%S") if comp[
+                                                                                               'server_at'] is not None else self.server_at
+                server_at = dt
+                company.server_at = int(datetime.datetime.strptime(comp['server_at'], "%Y-%m-%d %H:%M:%S").timestamp())
+                # company.server_at = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+                company.api_token = comp['api_token']
+        else:
+            server_at = self.server_at
+            company.id = 1
+            company.server_at = 0
+            company.api_token = '2064535930-1'
+
+        print(server_at)
 
         # create an array of data that need to be uploaded to the server
         to_upload = {}
@@ -72,6 +104,23 @@ class Sync:
 
         invoices_1 = Invoice().where({'invoice_id': None})
         if invoices_1:
+            idx = -1
+            for invoice in invoices_1:
+                idx += 1
+                try:
+                    invoices_1[idx]['due_date'] = int(
+                        datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S").timestamp())
+                except TypeError:
+                    invoices_1[idx]['due_date'] = None
+                except ValueError:
+                    invoices_1[idx]['due_date'] = None
+                try:
+                    invoices_1[idx]['rack_date'] = int(
+                        datetime.datetime.strptime(invoice['rack_date'], "%Y-%m-%d %H:%M:%S").timestamp())
+                except TypeError:
+                    invoices_1[idx]['rack_date'] = None
+                except ValueError:
+                    invoices_1[idx]['rack_date'] = None
             to_upload['invoices'] = invoices_1
             to_upload_rows += len(to_upload['invoices'])
 
@@ -130,51 +179,146 @@ class Sync:
             to_upload['users'] = users_1
             to_upload_rows += len(to_upload['users'])
 
-        company = Company()
-        company.id = company_id
-        data = {'company_id': company_id}
-        c1 = company.where(data)
+        # # update columns
+        to_update = {}
+        to_update_rows = 0
+        colors_2 = Colored().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if colors_2:
+            to_update['colors'] = colors_2
+            to_update_rows += len(to_update['colors'])
 
-        if len(c1) > 0:
-            for comp in c1:
-                dt = datetime.datetime.strptime(comp['server_at'], "%Y-%m-%d %H:%M:%S") if comp['server_at'] is not None else datetime.datetime.strptime(
-                    '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
-                company.server_at = str(dt).replace(" ", "_")
-                # company.server_at = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-                company.api_token = comp['api_token']
-        else:
-            company.id = 1
-            company.server_at = 0
-            company.api_token = '2064535930-1'
+        companies_2 = Company().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if companies_2:
+            to_update['companies'] = companies_2
+            to_update_rows += len(to_update['companies'])
 
-        url = 'http://74.207.240.88/admins/api/update/{}/{}/{}/up={}'.format(
-            company.id,
-            company.api_token,
-            company.server_at,
-            json.dumps(to_upload).replace(" ", "")
+        custids_2 = Custid().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if custids_2:
+            to_update['custids'] = custids_2
+            to_update_rows += len(to_update['custids'])
+
+        deliveries_2 = Delivery().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if deliveries_2:
+            to_update['deliveries'] = deliveries_2
+            to_update_rows += len(to_update['deliveries'])
+
+        discounts_2 = Discount().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if discounts_2:
+            to_update['discounts'] = discounts_2
+            to_update_rows += len(to_update['discounts'])
+
+        invoices_2 = Invoice().where({'invoice_id': {'!=': '""'},
+                                      'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if invoices_2:
+            idx = -1
+            for invoice in invoices_2:
+                idx += 1
+                try:
+                    invoices_2[idx]['due_date'] = int(
+                        datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S").timestamp())
+                except TypeError:
+                    invoices_2[idx]['due_date'] = None
+                except ValueError:
+                    invoices_2[idx]['due_date'] = None
+                try:
+                    invoices_2[idx]['rack_date'] = int(
+                        datetime.datetime.strptime(invoice['rack_date'], "%Y-%m-%d %H:%M:%S").timestamp())
+                except TypeError:
+                    invoices_2[idx]['rack_date'] = None
+                except ValueError:
+                    invoices_2[idx]['rack_date'] = None
+            to_update['invoices'] = invoices_2
+            to_update_rows += len(to_update['invoices'])
+
+        invoice_items_2 = InvoiceItem().where({'invoice_items_id': {'!=': '""'},
+                                               'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if invoice_items_2:
+            to_update['invoice_items'] = invoice_items_2
+            to_update_rows += len(to_update['invoice_items']) if to_update['invoice_items'] else 0
+
+        inventories_2 = Inventory().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if inventories_2:
+            to_update['inventories'] = inventories_2
+            to_update_rows += len(to_update['inventories'])
+
+        inventory_items_2 = InventoryItem().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if inventory_items_2:
+            to_update['inventory_items'] = inventory_items_2
+            to_update_rows += len(to_update['inventory_items'])
+
+        memos_2 = Memo().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if memos_2:
+            to_update['memos'] = memos_2
+            to_update_rows += len(to_update['memos'])
+
+        printers_2 = Printer().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if printers_2:
+            to_update['printers'] = printers_2
+            to_update_rows += len(to_update['colors'])
+
+        reward_transactions_2 = RewardTransaction().where({'updated_at': {'>': '"{}"'.format(server_at)}},
+                                                          deleted_at=False)
+        if reward_transactions_2:
+            to_update['reward_transactions'] = reward_transactions_2
+            to_update_rows += len(to_update['reward_transactions'])
+
+        rewards_2 = Reward().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if rewards_2:
+            to_update['rewards'] = rewards_2
+            to_update_rows += len(to_update['rewards'])
+
+        schedules_2 = Schedule().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if schedules_2:
+            to_update['schedules'] = schedules_2
+            to_update_rows += len(to_update['schedules'])
+
+        taxes_2 = Tax().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if taxes_2:
+            to_update['taxes'] = taxes_2
+            to_update_rows += len(to_update['taxes'])
+
+        transactions_2 = Transaction().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if transactions_2:
+            to_update['transactions'] = transactions_2
+            to_update_rows += len(to_update['transactions'])
+
+        users_2 = User().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if users_2:
+            to_update['users'] = users_2
+            to_update_rows += len(to_update['users'])
+
+        print(to_update_rows)
+
+        url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+            cid=company.id,
+            api=company.api_token,
+            servat=company.server_at,
+            upload=json.dumps(to_upload).replace(" ", ""),
+            update=json.dumps(to_update).replace(" ", "")
         )
 
+        print(url)
         # attempt to connect to server
-        try:
-            r = request.urlopen(url)
-            data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+        if to_upload_rows > 0 or to_update_rows > 0:
+            try:
+                r = request.urlopen(url)
+                data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+                if data_1['status'] is 200:
+                    # Save the local data
+                    sync_from_server(data=data_1)
+                    # update ids with saved data & update company table with server_at timestamp
+                    update_database(data=data_1)
+                    # update server_at in companies with most current timestamp
 
-            if data['status'] is 200:
-                # Save the local data
-                sync_from_server(data=data)
-                # update ids with saved data & update company table with server_at timestamp
-                update_database(data=data)
-                # update server_at in companies with most current timestamp
+                    where = {'company_id': self.company_id}
+                    dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    self.server_at = dt
+                    data = {'server_at': dt}
+                    Company().server_at_update(where, data)
 
-                where = {'company_id': company_id}
-                dt = datetime.datetime.strptime(NOW, "%Y-%m-%d %H:%M:%S") if NOW is not None else datetime.datetime.strptime(
-                    '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
-                data = {'server_at': dt}
-                company.put(where, data)
-                company.close_connection()
 
-        except urllib.error.URLError as e:
-            print(e.reason) # could not save this time around because no internet, move on
+            except urllib.error.URLError as e:
+                print(e.reason)  # could not save this time around because no internet, move on
 
     def get_chunk(self, table=False, start=False, end=False):
         company_id = 1
@@ -274,6 +418,6 @@ class Sync:
         except urllib.error.URLError as e:
             print(e.reason)
             # there is no internet connection so check the local sqlite db
-            authenticated = users.auth(username=username,password=password)
+            authenticated = users.auth(username=username, password=password)
             users.close_connection()
             return authenticated

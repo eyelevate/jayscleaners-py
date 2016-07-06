@@ -164,8 +164,30 @@ BoxLayout:
             font_size:'15sp'
             markup: True
             text: 'Okay'
-            on_press: root.parent.parent.parent.dismiss()
-'''.format(text=msg)
+            on_press: root.parent.parent.parent.dismiss()'''.format(text=msg)
+
+    def popup_confirm(self, msg=False,on_confirm=False,on_cancel=False):
+        return '''
+BoxLayout:
+    orientation: 'vertical'
+    BoxLayout:
+        size_hint: 1,0.8
+        Label:
+            markup:True
+            text:"{text}"
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1,0.2
+        Button:
+            font_size:'15sp'
+            markup: True
+            text: 'Cancel'
+            on_release: {cancel}
+        Button:
+            font_size:'15sp'
+            markup: True
+            text: 'Okay'
+            on_release: {confirm}'''.format(text=msg,cancel=on_cancel,confirm=on_confirm)
 
     def widget_item(self, type, data, text_color=False, bold=False, italic=False,
                     rgba=False, background_rgba=False, callback=False):
@@ -234,14 +256,14 @@ Label:
                                       txt_wrap='text_size: self.size' if text_wrap else '',
                                       valign='top' if text_wrap else 'middle')
             return tr
-        elif state == 5: # paid and done
+        elif state == 5:  # paid and done
             background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
             background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
             text_color = 'e5e5e5' if selected else '5e5e5e'
-        elif state == 4: # deleted
-            background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
-            background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
-            text_color = 'e5e5e5' if selected else '5e5e5e'
+        elif state == 4:  # deleted
+            background_rgba = '1,0,0,0.1' if selected else '1, 0.717, 0.717, 0.1'
+            background_color = '1,0,0,1' if selected else '1, 0.717, 0.717, 1'
+            text_color = 'ffcccc' if selected else 'ff0000'
         elif state == 3:  # Racked and Ready
             background_rgba = '0,0.64,0.149,0.1' if selected else '0.847,0.968,0.847,0.1'
             background_color = '0,0.64,0.149,1' if selected else '0.847,0.968,0.847,1'
@@ -327,11 +349,11 @@ Button:
                          size_hint_x: False,
                          selected=False,
                          invoice_id=False,
-                         callback=False,
+                         on_press=False,
+                         on_release=False,
                          spinner=False,
                          spinner_text=False,
                          text_wrap=False):
-
         if state == 0:  # header
             tr = '''
 Label:
@@ -357,9 +379,9 @@ Label:
             background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
             text_color = 'e5e5e5' if selected else '5e5e5e'
         elif state == 4:  # deleted
-            background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
-            background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
-            text_color = 'e5e5e5' if selected else '5e5e5e'
+            background_rgba = '1,0,0,0.1' if selected else '1, 0.717, 0.717, 0.1'
+            background_color = '1,0,0,1' if selected else '1, 0.717, 0.717, 1'
+            text_color = 'ffcccc' if selected else 'ff0000'
         elif state == 3:  # Racked and Ready
             background_rgba = '0,0.64,0.149,0.1' if selected else '0.847,0.968,0.847,0.1'
             background_color = '0,0.64,0.149,1' if selected else '0.847,0.968,0.847,1'
@@ -372,7 +394,6 @@ Label:
             background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
             background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
             text_color = 'e5e5e5' if selected else '5e5e5e'
-
         if spinner:
             default_text = '{} {}'.format(len(data) if data else 0, spinner_text)
             data_string = ''
@@ -400,7 +421,8 @@ Button:
     font_size:'15sp'
     text: "[color={text_color}]{text}[/color]"
     background_color:[{background_rgba}]
-    on_release: {cb}
+    on_press: {opress}
+    on_release: {orelease}
     {txt_wrap}
     valign: "{valign)"
     canvas.before:
@@ -416,7 +438,8 @@ Button:
                                       background_color=background_color,
                                       text_color=text_color,
                                       inv_id=invoice_id,
-                                      cb=callback)
+                                      opress=on_press,
+                                      orelease=on_release)
         else:
             tr = '''
 Button:
@@ -426,7 +449,8 @@ Button:
     font_size:'15sp'
     text: "[color={text_color}]{text}[/color]"
     background_color:[{background_rgba}]
-    on_release: {cb}
+    on_press: {opress}
+    on_release: {orelease}
     {txt_wrap}
     valign: "{valign}"
     canvas.before:
@@ -442,5 +466,6 @@ Button:
                                       background_color=background_color,
                                       text_color=text_color,
                                       inv_id=invoice_id,
-                                      cb=callback)
+                                      opress=on_press,
+                                      orelease=on_release)
         return tr
