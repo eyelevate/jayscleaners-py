@@ -336,8 +336,11 @@
                                 pos: self.pos
                                 size: self.size
 
-        BoxLayout:
-            orientation: 'horizontal'
+        GridLayout:
+            rows: 1
+            cols: 5
+            spacing: 2
+            padding: 3
             size_hint: 1,0.1
             Button:
                 markup:True

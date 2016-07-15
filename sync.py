@@ -277,7 +277,8 @@ class Sync:
             to_update['taxes'] = taxes_2
             to_update_rows += len(to_update['taxes'])
 
-        transactions_2 = Transaction().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        transactions_2 = Transaction().where({'transaction_id': {'!=': '""'},
+                                              'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if transactions_2:
             to_update['transactions'] = transactions_2
             to_update_rows += len(to_update['transactions'])

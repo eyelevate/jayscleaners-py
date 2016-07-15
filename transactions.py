@@ -278,6 +278,9 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.transaction_id
         else:
             return False
 
+    def get_last_insert_id(self):
+        return self.c.lastrowid
+
     def close_connection(self):
         self.c.close()
         self.conn.close()

@@ -24,6 +24,8 @@ class Company:
     store_hours = None
     turn_around = None
     api_token = None
+    payment_gateway_id = None
+    payment_api_login = None
     deleted_at = None
     created_at = now
     updated_at = now
@@ -53,6 +55,8 @@ class Company:
                                   TextField(column='store_hours').data_type(),
                                   TextField(column='turn_around').data_type(),
                                   CharField(column='api_token', max_length=100).data_type(),
+                                  TextField(column='payment_gateway_id').data_type(),
+                                  TextField(column='payment_api_login').data_type(),
                                   TextField(column='deleted_at').data_type(),
                                   TextField(column='created_at').data_type(),
                                   TextField(column='updated_at').data_type(),
@@ -68,27 +72,29 @@ class Company:
         self.updated_at = now
         self.created_at = now
         self.c.execute('''INSERT INTO {t}
-(company_id,name,street,suite,city,state,zip,email,phone,store_hours,turn_around,api_token,created_at,updated_at) VALUES
-(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.company_id,
-                                                   self.name,
-                                                   self.street,
-                                                   self.suite,
-                                                   self.city,
-                                                   self.state,
-                                                   self.zip,
-                                                   self.email,
-                                                   self.phone,
-                                                   self.store_hours,
-                                                   self.turn_around,
-                                                   self.api_token,
-                                                   self.created_at,
-                                                   self.updated_at)
+(company_id,name,street,suite,city,state,zip,email,phone,store_hours,turn_around,api_token,payment_gateway_id,payment_api_login,created_at,updated_at) VALUES
+(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.company_id,
+                                                       self.name,
+                                                       self.street,
+                                                       self.suite,
+                                                       self.city,
+                                                       self.state,
+                                                       self.zip,
+                                                       self.email,
+                                                       self.phone,
+                                                       self.store_hours,
+                                                       self.turn_around,
+                                                       self.api_token,
+                                                       self.payment_gateway_id,
+                                                       self.payment_api_login,
+                                                       self.created_at,
+                                                       self.updated_at)
                        )
 
         self.conn.commit()
         return True
 
-    def put(self, where = False, data = False):
+    def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
@@ -117,23 +123,25 @@ class Company:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.c.execute('''UPDATE {t} SET company_id = ?, name = ?, street = ?, suite = ?, city = ?, state = ?, zip = ?,
-email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_at = ?, server_at = ? WHERE id = ?'''.format(t=table),
-                       (self.company_id,
-                        self.name,
-                        self.street,
-                        self.suite,
-                        self.city,
-                        self.state,
-                        self.zip,
-                        self.email,
-                        self.phone,
-                        self.store_hours,
-                        self.turn_around,
-                        self.api_token,
-                        self.updated_at,
-                        self.server_at,
-                        self.id)
-                       )
+email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, payment_gateway_id = ?, payment_api_login = ?,
+updated_at = ?, server_at = ? WHERE id = ?'''.format(
+            t=table),
+            (self.company_id,
+             self.name,
+             self.street,
+             self.suite,
+             self.city,
+             self.state,
+             self.zip,
+             self.email,
+             self.phone,
+             self.store_hours,
+             self.turn_around,
+             self.api_token,
+             self.updated_at,
+             self.server_at,
+             self.id)
+        )
 
         self.conn.commit()
         return True
@@ -271,7 +279,7 @@ email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_a
         else:
             return False
 
-    def server_at_update(self, where = False, data = False):
+    def server_at_update(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
@@ -301,7 +309,7 @@ email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_a
         return True
 
     def get_store_hours(self, company_id):
-        companies = self.where({'company_id':company_id})
+        companies = self.where({'company_id': company_id})
         self.close_connection()
         if companies:
             for company in companies:
@@ -314,4 +322,3 @@ email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, updated_a
     def close_connection(self):
         self.c.close()
         self.conn.close()
-

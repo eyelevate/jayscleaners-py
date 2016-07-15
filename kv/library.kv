@@ -48,5 +48,24 @@
         Rectangle:
             pos: self.pos
             size: self.size
+<OkayLabel@Label>
+    markup:True
+    text_size:self.size
+    halign: 'center'
+    valign: 'middle'
+    font_size: '20sp'
+    text: '[color=0AAC00][b]Ok[/b][/color]'
+    canvas.before:
+        Color:
+            rgba: 0.73725490, 1, 0.72156863, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
 <SelectMonth@DropDown>
     on_parent: self.dismiss
+
+<CenterVerticalTextInput@TextInput>
+    write_tab: False
+    font_size: '20sp'
+    multiline: False
+    padding: [5, ( self.height - self.line_height ) / 2]

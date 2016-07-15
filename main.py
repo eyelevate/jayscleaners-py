@@ -6,6 +6,12 @@ import datetime
 import os
 from collections import OrderedDict
 
+if platform.system() == 'Darwin':  # Mac
+    sys.path.append('~/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
+elif platform.system() == 'Linux':  # Linux
+    sys.path.append('/')  # TODO
+elif platform.system() == 'Windows':  # Windows
+    sys.path.append('/')  # TODO
 os.environ['TZ'] = 'US/Pacific'
 time.tzset()
 
@@ -39,9 +45,8 @@ from jobs import Job
 from static import Static
 import threading
 import queue
-
-# from escpos import *
-# from escpos.printer import Network
+import authorize
+from escpos import *
 
 from kivy.app import App
 from kivy.factory import Factory
@@ -67,13 +72,6 @@ from kivy.uix.tabbedpanel import TabbedPanelContent
 from kivy.graphics.instructions import Canvas
 from kivy.graphics import Rectangle, Color
 from kivy.uix.widget import WidgetException
-
-if platform.system() == 'Darwin':  # Mac
-    sys.path.append('/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
-elif platform.system() == 'Linux':  # Linux
-    sys.path.append('/')  # TODO
-elif platform.system() == 'Windows':  # Windows
-    sys.path.append('/')  # TODO
 
 auth_user = User()
 Job = Job()
@@ -191,28 +189,20 @@ class MainScreen(Screen):
         inner_content_1.add_widget(Label(text="username",
                                          size_hint_y=None,
                                          font_size='20sp'))
-        self.username = TextInput(id='username',
-                                  write_tab=False,
-                                  font_size='20sp',
-                                  hint_text='Username',
-                                  on_text_validate=self.login,
-                                  multiline=False,
-                                  padding=[5, 5, 5, 5],
-                                  text='')
+        self.username = Factory.CenterVerticalTextInput(id='username',
+                                                        write_tab=False,
+                                                        hint_text='Username',
+                                                        on_text_validate=self.login)
         inner_content_1.add_widget(self.username)
 
         inner_content_1.add_widget(Label(text="password",
                                          size_hint_y=None,
                                          font_size='20sp'))
-        self.password = TextInput(id='password',
-                                  write_tab=False,
-                                  font_size='20sp',
-                                  hint_text='Password',
-                                  password=True,
-                                  on_text_validate=self.login,
-                                  multiline=False,
-                                  padding=[5, 5, 5, 5],
-                                  text='')
+        self.password = Factory.CenterVerticalTextInput(id='password',
+                                                        write_tab=False,
+                                                        password=True,
+                                                        hint_text='Password',
+                                                        on_text_validate=self.login)
         inner_content_1.add_widget(self.password)
         inner_content_2 = BoxLayout(orientation='horizontal',
                                     size_hint=(1, 0.3))
@@ -336,218 +326,23 @@ class MainScreen(Screen):
 
         # self.update_label.text = 'Server updated at {}'.format()
 
-    def test_time(self):
-        invoices_2 = Invoice().where({'id': 43693}, deleted_at=False)
-        if invoices_2:
-            idx = -1
-            for invoice in invoices_2:
-                idx += 1
-                invoices_2[idx]['due_date'] = int(datetime.datetime.strptime(invoice['due_date'],
-                                                                             "%Y-%m-%d %H:%M:%S").timestamp())
-                invoices_2[idx]['rack_date'] = int(datetime.datetime.strptime(invoice['rack_date'],
-                                                                              "%Y-%m-%d %H:%M:%S").timestamp()) if \
-                    invoice[
-                        'rack_date'] else None
+    def printer_test(self):
 
-                print(invoices_2[idx]['due_date'])
-                print(invoices_2[idx]['rack_date'])
-
-    now = datetime.datetime.now()
-    month = now.month
-    year = now.year
-    day = now.day
-    calendar_layout = ObjectProperty(None)
-    month_button = ObjectProperty(None)
-    year_button = ObjectProperty(None)
-    due_date = None  # tbr
-
-    def make_calendar(self):
-
-        # tbr
-        company = Company()
-        company_data = company.where({'company_id': 1})
-        if company_data:
-            for comp in company_data:
-                store_hours = json.loads(comp['store_hours'])
-        else:
-            store_hours = False
-
-        today = datetime.datetime.today()
-        dow = int(datetime.datetime.today().strftime("%w"))
-        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
-        new_date = today + datetime.timedelta(days=turn_around_day)
-        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
-                                           turn_around_minutes)
-        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-        self.month = int(self.due_date.strftime('%m'))
-
-        popup = Popup()
-        popup.title = 'Calendar'
-        layout = BoxLayout(orientation='vertical')
-        inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
-                                   orientation='vertical')
-        calendar_selection = GridLayout(cols=4,
-                                        rows=1,
-                                        size_hint=(1, 0.1))
-        prev_month = Button(markup=True,
-                            text="<",
-                            font_size="30sp",
-                            on_release=self.prev_month)
-        next_month = Button(markup=True,
-                            text=">",
-                            font_size="30sp",
-                            on_release=self.next_month)
-        select_month = Factory.SelectMonth()
-        self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
-                                   on_release=select_month.open)
-        for index in range(12):
-            month_options = Button(text='{}'.format(vars.month_by_number(index)),
-                                   size_hint_y=None,
-                                   height=40,
-                                   on_release=partial(self.select_calendar_month, index))
-            select_month.add_widget(month_options)
-
-        select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
-        select_year = Factory.SelectMonth()
-
-        self.year_button = Button(text="{}".format(self.year),
-                                  on_release=select_year.open)
-        for index in range(10):
-            year_options = Button(text='{}'.format(int(self.year) + index),
-                                  size_hint_y=None,
-                                  height=40,
-                                  on_release=partial(self.select_calendar_year, index))
-            select_year.add_widget(year_options)
-
-        select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
-        calendar_selection.add_widget(prev_month)
-        calendar_selection.add_widget(self.month_button)
-        calendar_selection.add_widget(self.year_button)
-        calendar_selection.add_widget(next_month)
-        self.calendar_layout = GridLayout(cols=7,
-                                          rows=8,
-                                          size_hint=(1, 0.9))
-        self.create_calendar_table()
-
-        inner_layout_1.add_widget(calendar_selection)
-        inner_layout_1.add_widget(self.calendar_layout)
-        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
-                                   orientation='horizontal')
-        inner_layout_2.add_widget(Button(markup=True,
-                                         text="cancel",
-                                         on_release=popup.dismiss))
-
-        layout.add_widget(inner_layout_1)
-        layout.add_widget(inner_layout_2)
-        popup.content = layout
-        popup.open()
-
-    def create_calendar_table(self):
-        # set the variables
-
-        store_hours = Company().get_store_hours(1)
-        today_date = datetime.datetime.today()
-        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
-        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
-        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
-        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
-
-        self.calendar_layout.clear_widgets()
-        calendars = Calendar()
-        calendars.setfirstweekday(calendar.SUNDAY)
-        selected_month = self.month - 1
-        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
-        th1 = KV.invoice_tr(0, 'Su')
-        th2 = KV.invoice_tr(0, 'Mo')
-        th3 = KV.invoice_tr(0, 'Tu')
-        th4 = KV.invoice_tr(0, 'We')
-        th5 = KV.invoice_tr(0, 'Th')
-        th6 = KV.invoice_tr(0, 'Fr')
-        th7 = KV.invoice_tr(0, 'Sa')
-        self.calendar_layout.add_widget(Builder.load_string(th1))
-        self.calendar_layout.add_widget(Builder.load_string(th2))
-        self.calendar_layout.add_widget(Builder.load_string(th3))
-        self.calendar_layout.add_widget(Builder.load_string(th4))
-        self.calendar_layout.add_widget(Builder.load_string(th5))
-        self.calendar_layout.add_widget(Builder.load_string(th6))
-        self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
-            for month in year_dates[selected_month]:
-                for week in month:
-                    for day in week:
-                        if day[0] > 0:
-                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
-                                                                           Job.date_leading_zeroes(self.month),
-                                                                           Job.date_leading_zeroes(day[0]))
-                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
-                            check_date = today_base.timestamp()
-                            dow_check = today_base.strftime("%w")
-                            # rule #1 remove all past dates so users cannot set a due date previous to today
-                            if check_date < check_today:
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
-                                if check_date == check_today:
-                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                  background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
-                                elif check_date == check_due_date:
-                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(
-                                                                      0.2156862, 0.9921568, 0.98823529, 1),
-                                                                  background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
-                                elif check_date > check_today and check_date < check_due_date:
-                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0.878431372549020, 1, 1, 1),
-                                                                  background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
-                                else:
-                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  on_release=partial(self.select_due_date, today_base))
-                            else:  # store is closed
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                        else:
-                            item = Factory.CalendarButton(disabled=True)
-                        self.calendar_layout.add_widget(item)
-
-    def prev_month(self, *args, **kwargs):
-        if self.month == 1:
-            self.month = 12
-            self.year -= 1
-        else:
-            self.month -= 1
-        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
-        self.year_button.text = '{}'.format(self.year)
-        self.create_calendar_table()
-
-    def next_month(self, *args, **kwargs):
-        if self.month == 12:
-            self.month = 1
-            self.year += 1
-        else:
-            self.month += 1
-        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
-        self.year_button.text = '{}'.format(self.year)
-        self.create_calendar_table()
-
-    def select_calendar_month(self, month, *args, **kwargs):
-        self.month = month
-        self.create_calendar_table()
-
-    def select_calendar_year(self, year, *args, **kwargs):
-        self.year = year
-        self.create_calendar_table()
-
-    def select_due_date(self, selected_date, *args, **kwargs):
-        self.due_date = selected_date
-        self.create_calendar_table()
+        try:
+            Epson = printer.Usb(0x1a86, 0x7584,0,0x81,0x02)
+        except AttributeError:
+            print('No Printer Detected')
+        finally:
+            # Print text
+            Epson.text("Hello World\n")
+            # Print image
+            # Epson.image("logo.gif")
+            # Print QR Code
+            # Epson.qr("You can readme from your smartphone")
+            # Print barcode
+            Epson.barcode('1324354657687', 'EAN13', 64, 2, '', '')
+            # Cut paper
+            Epson.cut()
 
     def test_sys(self):
         print(sys.path)
@@ -4899,7 +4694,421 @@ class NewCustomerScreen(Screen):
 
 
 class PickupScreen(Screen):
-    pass
+    invoice_table = ObjectProperty(None)
+    quantity_label = ObjectProperty(None)
+    subtotal_label = ObjectProperty(None)
+    tax_label = ObjectProperty(None)
+    total_label = ObjectProperty(None)
+    calc_total = ObjectProperty(None)
+    credit_card_data_layout = ObjectProperty(None)
+    instore_button = ObjectProperty(None)
+    online_button = ObjectProperty(None)
+    due_label = ObjectProperty(None)
+    check_number = ObjectProperty(None)
+    calc_amount = []
+    amount_tendered = 0
+    selected_invoices = []
+    total_subtotal = 0
+    total_quantity = 0
+    total_tax = 0
+    total_amount = 0
+    total_credit = 0
+    total_discount = 0
+    total_due = 0
+    change_due = 0
+    payment_type = 'cc'
+    card_location = 1
+    finish_popup = Popup()
+
+    def reset(self):
+        self.selected_invoices = []
+        # setup invoice table
+        self.invoice_table.clear_widgets()
+
+        # make headers
+        self.invoice_create_rows()
+
+        # reset payment values
+        self.calc_amount = []
+        self.amount_tendered = 0
+        self.selected_invoices = []
+        self.total_subtotal = 0
+        self.total_quantity = 0
+        self.total_tax = 0
+        self.total_amount = 0
+        self.total_credit = 0
+        self.total_discount = 0
+        self.total_due = 0
+        self.change_due = 0
+        self.payment_type = 'cc'
+        self.card_location = 1
+        self.due_label.text = '[color=000000][b]$0.00[/b][/color]'
+        self.check_number.text = ''
+
+        # reset states
+        self.instore_button.state = 'down'
+        self.online_button.state = 'normal'
+
+    def invoice_create_rows(self):
+        self.invoice_table.clear_widgets()
+        h1 = KV.sized_invoice_tr(0, '#', size_hint_x=0.2)
+        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.2)
+        h3 = KV.sized_invoice_tr(0, 'Due', size_hint_x=0.2)
+        h4 = KV.sized_invoice_tr(0, 'Rack', size_hint_x=0.2)
+        h5 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+        self.invoice_table.add_widget(Builder.load_string(h1))
+        self.invoice_table.add_widget(Builder.load_string(h2))
+        self.invoice_table.add_widget(Builder.load_string(h3))
+        self.invoice_table.add_widget(Builder.load_string(h4))
+        self.invoice_table.add_widget(Builder.load_string(h5))
+        invoices = Invoice()
+        invoice_data = invoices.where({'customer_id': vars.CUSTOMER_ID,
+                                       'status': {'<': 3}})
+        if invoice_data:
+            for invoice in invoice_data:
+                invoice_id = invoice['invoice_id']
+                quantity = int(invoice['quantity'])
+                subtotal = vars.us_dollar(invoice['pretax'])
+                tax = vars.us_dollar(invoice['tax'])
+                total = vars.us_dollar(invoice['total'])
+                rack = invoice['rack']
+                due = invoice['due_date']
+                try:
+                    dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+                due_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+                dow = vars.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
+                due_date = dt.strftime('%m/%d {}').format(dow)
+                dt = datetime.datetime.strptime(NOW,
+                                                "%Y-%m-%d %H:%M:%S") if NOW is not None else datetime.datetime.strptime(
+                    '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+                now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+                # check to see if invoice is overdue
+
+                if rack:  # racked and ready
+                    state = 3
+                elif due_strtotime < now_strtotime:  # overdue
+                    state = 2
+                else:  # Not ready yet
+                    state = 1
+
+                    if invoice_id in self.selected_invoices:
+                        self.total_quantity += quantity
+                        self.total_subtotal += invoice['pretax']
+                        self.total_tax += invoice['tax']
+                        self.total_amount += invoice['total']
+                selected = True if invoice_id in self.selected_invoices else False
+
+                tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id,
+                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
+                                         invoice_id))
+                tr_2 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id,
+                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
+                                         invoice_id))
+                tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
+                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
+                                         invoice_id))
+                tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id,
+                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
+                                         invoice_id))
+                tr_5 = KV.invoice_tr(state, subtotal, selected=selected, invoice_id=invoice_id,
+                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
+                                         invoice_id))
+
+                self.invoice_table.add_widget(Builder.load_string(tr_1))
+                self.invoice_table.add_widget(Builder.load_string(tr_2))
+                self.invoice_table.add_widget(Builder.load_string(tr_3))
+                self.invoice_table.add_widget(Builder.load_string(tr_4))
+                self.invoice_table.add_widget(Builder.load_string(tr_5))
+
+    def set_result_status(self):
+        vars.SEARCH_RESULTS_STATUS = True
+
+    def invoice_selected(self, invoice_id, *args, **kwargs):
+        # get invoice total
+        invoices = Invoice().where({'invoice_id': invoice_id})
+        if invoices:
+            for invoice in invoices:
+                total = invoice['total']
+                quantity = invoice['quantity']
+                subtotal = invoice['pretax']
+                tax = invoice['tax']
+        else:
+            total = 0
+            quantity = 0
+            subtotal = 0
+            tax = 0
+        if invoice_id in self.selected_invoices:
+            idx = -1
+            for inv_id in self.selected_invoices:
+                idx += 1
+                if inv_id == invoice_id:
+                    del self.selected_invoices[idx]
+                    self.amount_tendered -= total
+                    self.total_amount -= total
+                    self.total_subtotal -= subtotal
+                    self.total_quantity -= quantity
+                    self.total_tax -= tax
+        else:
+            self.selected_invoices.append(invoice_id)
+            self.amount_tendered += total
+            self.total_amount += total
+            self.total_subtotal += subtotal
+            self.total_quantity += quantity
+            self.total_tax += tax
+
+        self.total_due = 0 if self.total_credit >= self.total_amount else (
+            self.total_amount - self.total_credit - self.total_discount)
+
+        fix = 0 if self.total_amount <= 0 else self.total_amount
+        fix_qty = 0 if self.total_quantity <= 0 else self.total_quantity
+        fix_tax = 0 if self.total_tax <= 0 else self.total_tax
+        fix_subtotal = 0 if self.total_subtotal <= 0 else self.total_subtotal
+        fix_due = 0 if self.total_due <= 0 else self.total_due
+        self.total_amount = fix
+        self.amount_tendered = fix
+        self.total_quantity = fix_qty
+        self.total_subtotal = fix_subtotal
+        self.total_tax = fix_tax
+        self.total_due = fix_due
+
+        # update the subtotal label
+        self.quantity_label.text = '[color=000000][b]{}[/b][/color]'.format(self.total_quantity)
+        self.subtotal_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_subtotal))
+        self.tax_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_tax))
+        self.total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_amount))
+        self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_due))
+
+        # update the calculator total
+        self.calc_amount = ['{}'.format(int(self.total_due * 100))]
+        self.calc_total.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_due))
+
+        # calculate change due
+        self.change_due = self.amount_tendered - self.total_due
+
+        # clear table and update selected rows
+        self.invoice_table.clear_widgets()
+        self.invoice_create_rows()
+
+    def calculator_amounts(self, num):
+        if num == '7':
+            self.calc_amount.append('7')
+        elif num == '8':
+            self.calc_amount.append('8')
+        elif num == '9':
+            self.calc_amount.append('9')
+        elif num == '4':
+            self.calc_amount.append('4')
+        elif num == '5':
+            self.calc_amount.append('5')
+        elif num == '6':
+            self.calc_amount.append('6')
+        elif num == '1':
+            self.calc_amount.append('1')
+        elif num == '2':
+            self.calc_amount.append('2')
+        elif num == '3':
+            self.calc_amount.append('3')
+        elif num == '0':
+            self.calc_amount.append('0')
+        elif num == '00':
+            self.calc_amount.append('00')
+        else:
+            self.calc_amount = ['0']
+
+        total = vars.us_dollar(int(''.join(self.calc_amount)) / 100)
+        self.amount_tendered = int(''.join(self.calc_amount)) / 100
+        if self.payment_type == 'ca':
+            self.change_due = self.amount_tendered - self.total_due
+        self.calc_total.text = '[color=000000][b]{}[/b][/color]'.format(total)
+
+    def select_payment_type(self, type):
+        if type == 'cc':
+            self.payment_type = 'cc'
+        elif type == 'ca':
+            self.payment_type = 'ca'
+        elif type == 'ch':
+            self.payment_type = 'ch'
+        else:
+            self.payment_type = 'ac'
+        self.amount_tendered = self.total_due
+        self.calc_total.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_due))
+
+    def select_card_location(self, loc):
+        self.credit_card_data_layout.clear_widgets()
+        if loc == '1':
+            self.card_location = 1
+            self.instore_button.state = 'down'
+            self.online_button.state = 'normal'
+        else:
+            self.card_location = 2
+            self.instore_button.state = 'normal'
+            self.online_button.state = 'down'
+            inner_layout_1 = GridLayout(size_hint=(1, 0.6), cols=2, rows=2)
+            # get card expiration date and display it to screen
+            inner_layout_1.add_widget(Label(text='Exp: {}'.format('12/16')))
+            # get status for card expiration and validation and send it to screen
+            inner_layout_1.add_widget(Factory.OkayLabel())
+            # make the update and add buttons and send it to screen
+            inner_layout_1.add_widget(Button(text="Update", on_release=self.update_card))
+            inner_layout_1.add_widget(Button(text="Add", on_release=self.add_card))
+            self.credit_card_data_layout.add_widget(inner_layout_1)
+
+    def update_card(self, *args, **kwargs):
+        print('update_card')
+        pass
+
+    def add_card(self, *args, **kwargs):
+        print('add card')
+        pass
+
+    def cash_tendered(self, amount):
+        total = vars.us_dollar(int(''.join(amount)))
+        self.amount_tendered = int(''.join(amount))
+        self.change_due = self.amount_tendered - self.total_due
+        self.calc_total.text = '[color=000000][b]{}[/b][/color]'.format(total)
+
+    def pay_popup_create(self):
+
+        self.finish_popup.title = 'Finish Payment'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        button_1 = Factory.PrintButton(text='Finish + Customer Invoice',
+                                       on_press=partial(self.finish_transaction, 1))
+        button_2 = Factory.PrintButton(text='Finish + No Invoice',
+                                       on_press=partial(self.finish_transaction, 2))
+        if self.payment_type == 'cc':
+            if self.card_location == 1:
+                inner_layout_1.add_widget(button_1)
+                inner_layout_1.add_widget(button_2)
+            else:
+                validate_layout = BoxLayout(orientation='vertical')
+                validate_inner_layout_1 = GridLayout(cols=2,
+                                                     rows=2,
+                                                     size_hint=(1, 0.4),
+                                                     row_force_default=True,
+                                                     row_default_height='50sp')
+                validate_inner_layout_1.add_widget(Label(text='status: '))
+                # results from validation
+                validate_status = Factory.OkayLabel()
+                validate_inner_layout_1.add_widget(validate_status)
+                validate_inner_layout_1.add_widget(Label(text='reason: '))
+                validate_reason = Factory.OkayLabel()
+                validate_inner_layout_1.add_widget(validate_reason)
+                validate_button = Button(text='Validate Card')
+                validate_inner_layout_2 = BoxLayout(orientation='horizontal',
+                                                    size_hint=(1, 0.6))
+                validate_inner_layout_2.add_widget(validate_button)
+                validate_inner_layout_2.add_widget(button_1)
+                validate_inner_layout_2.add_widget(button_2)
+                validate_layout.add_widget(validate_inner_layout_1)
+                validate_layout.add_widget(validate_inner_layout_2)
+                inner_layout_1.add_widget(validate_layout)
+
+        elif self.payment_type == 'ca':
+            cash_layout = BoxLayout(orientation='vertical')
+            cash_inner_layout_1 = GridLayout(cols=2,
+                                             rows=1,
+                                             size_hint=(1, 0.1))
+            cash_inner_layout_1.add_widget(Label(text='change due: '))
+            # results from validation
+            if self.change_due > 0:
+                change_due_text = '[color=0AAC00][b]{}[/b][/color]'.format(vars.us_dollar(self.change_due))
+            elif self.change_due == 0:
+                change_due_text = '[b]$0.00[/b]'
+            elif self.change_due < 0:
+                change_due_text = '[color=FF0000][b][i]Remaining Due: {}[/i][/b][/color]'.format(vars.us_dollar(self.change_due))
+            cash_change = Factory.CenteredLabel(markup=True,
+                                                text=change_due_text)
+            cash_inner_layout_1.add_widget(cash_change)
+            cash_inner_layout_2 = BoxLayout(orientation='horizontal',
+                                            size_hint=(1, 0.9))
+            cash_inner_layout_2.add_widget(button_1)
+            cash_inner_layout_2.add_widget(button_2)
+            cash_layout.add_widget(cash_inner_layout_1)
+            cash_layout.add_widget(cash_inner_layout_2)
+            inner_layout_1.add_widget(cash_layout)
+            pass
+        elif self.payment_tyoe == 'ch':
+            inner_layout_1.add_widget(button_1)
+            inner_layout_1.add_widget(button_2)
+        else:
+            inner_layout_1.add_widget(button_1)
+            inner_layout_1.add_widget(button_2)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         font_size='20sp',
+                                         text='[color=FF0000]Cancel[/color]',
+                                         on_release=self.finish_popup.dismiss))
+
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.finish_popup.content = layout
+        self.finish_popup.open()
+
+    def validate_card(self):
+        pass
+
+    def finish_transaction(self, print, *args, **kwargs):
+        if print == 1:  # customer copy of invoice and finish
+            pass
+
+        transaction = Transaction()
+        transaction.company_id = auth_user.company_id
+        transaction.customer_id = vars.CUSTOMER_ID
+        transaction.schedule_id = None
+        transaction.pretax = self.total_subtotal
+        transaction.tax = self.total_tax
+        transaction.aftertax = self.total_amount
+        transaction.discount = self.total_discount
+        transaction.total = self.total_due
+        last_four = None
+        if self.payment_type == 'cc' and self.card_location == 1:
+            type = 1
+        elif self.payment_type == 'cc' and self.card_location == 2:
+            type = 2
+        elif self.payment_type == 'ca':
+            type = 3
+        elif self.payment_type == 'ch':
+            type = 4
+            last_four = self.check_number.text
+        else:
+            type = 5
+
+        transaction.type = type
+        transaction.last_four = last_four
+        transaction.tendered = self.amount_tendered
+        transaction.status = 1
+        if transaction.add():
+            # update to server
+            run_sync = threading.Thread(target=SYNC.run_sync)
+            try:
+                run_sync.start()
+            finally:
+                run_sync.join()
+                # last transaction _id
+
+                last_transaction = transaction.where({'id': {'>': 0}, 'ORDER_BY': 'id desc', 'LIMIT': 1})
+                if last_transaction:
+                    for trans in last_transaction:
+                        transaction_id = trans['transaction_id']
+                else:
+                    transaction_id = None
+
+                # save transaction_id to Transaction and each invoice
+                if self.selected_invoices:
+                    invoices = Invoice()
+                    for invoice_id in self.selected_invoices:
+                        invoices.put(where={'invoice_id': invoice_id},
+                                     data={'status': 5, 'transaction_id': transaction_id})
+                    self.set_result_status()
+                    self.finish_popup.dismiss()
+
+    def set_result_status(self):
+        vars.SEARCH_RESULTS_STATUS = True
 
 
 class ReportsScreen(Screen):
@@ -4945,7 +5154,7 @@ class SearchScreen(Screen):
             self.customer_results(results)
         else:
             vars.CUSTOMER_ID = None
-            vars.INVOICE_ID None
+            vars.INVOICE_ID = None
             self.search.text = ''
             self.customer_mark_l = ''
             self.cust_last_name.text = ''
