@@ -303,7 +303,7 @@
                 size_hint: 0.20,1
                 Button:
                     id: reprint_btn
-                    on_release: app.root.current = "invoice"
+                    on_release: root.reprint_popup()
                     font_size:'20sp'
                     text: "Reprint"
                     disabled: True

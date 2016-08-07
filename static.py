@@ -26,6 +26,21 @@ class Static:
         if len(self.LAST10) > 10:
             del self.LAST10[10]
 
+    def dow_schedule(self, day):
+        if day == 0:
+            return 'Sunday'
+        elif day == 1:
+            return 'Monday'
+        elif day == 2:
+            return 'Tuesday'
+        elif day == 3:
+            return 'Wednesday'
+        elif day == 4:
+            return 'Thursday'
+        elif day == 5:
+            return 'Friday'
+        else:
+            return 'Saturday'
 
     def dow(self, day):
         if day == 0:
@@ -100,6 +115,24 @@ class Static:
             return 'November'
         else:
             return 'December'
+
+    def get_starch_by_code(self, code):
+        if code == 4:
+            starch = 'Heavy'
+        elif code == 2:
+            starch = 'Light'
+        elif code == 3:
+            starch = 'Medium'
+        else:
+            starch = 'None'
+
+        return starch
+
+    def esc(self, command):
+        if 'initiate':
+            return b'\x1b'+ b'@'
+
+
 
 
 

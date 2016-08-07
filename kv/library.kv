@@ -31,6 +31,28 @@
         Rectangle:
             pos: self.pos
             size: self.size
+<CenteredFormLabel@Label>:
+    markup: True
+    text_size: self.size
+    halign: 'right'
+    valign: 'middle'
+    font_size:'20sp'
+    size_hint_x: None
+    width: '175sp'
+    padding_x: '20sp'
+<CenteredHighlightedLabel@Label>:
+    markup:True
+    text_size:self.size
+    halign: 'center'
+    valign: 'middle'
+    font_size: '30sp'
+    canvas.before:
+        Color:
+            rgba: 0.8, 0.8, 0.8, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
 <PrintButton@Button>:
     markup: True
     on_release: app.root.current = "search"
@@ -69,3 +91,102 @@
     font_size: '20sp'
     multiline: False
     padding: [5, ( self.height - self.line_height ) / 2]
+
+<CenterGlyphUpButton@Button>
+    markup: True
+    font_size:'15sp'
+    markup:True
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    background_color: 1,1,1,1
+    Image:
+        size: '20sp','20sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y
+        allow_stretch: True
+        source: 'src/glyphicons-white/arrow-up.png'
+
+<CenterGlyphDownButton@Button>
+    markup: True
+    font_size:'15sp'
+    markup:True
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    background_color: 1,1,1,1
+
+    Image:
+        size: '20sp','20sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y
+        allow_stretch: True
+        source: 'src/glyphicons-white/arrow-down.png'
+
+<GridLayoutForScrollView@GridLayout>
+    size_hint_y:None
+    height: self.minimum_height
+    cols:6
+    spacing:sp(3)
+    row_force_default: True
+    row_default_height:'150sp'
+
+<ItemsButton@Button>
+    id: inventory_button
+    font_size:'17sp'
+    markup:True
+    text: ''
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    background_rgba:(.7,.3,.5,1)
+    Image:
+        id: items_image
+        source: ''
+        size: '50sp','50sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        allow_stretch: True
+
+<ItemsFromButton@Button>
+    id: inventory_button
+    font_size:'17sp'
+    markup:True
+    text: ''
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    background_color: 0,0.64,0.149,0.1
+    canvas.before:
+        Color:
+            rgba: 0,0.64,0.149,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    Image:
+        id: items_image
+        source: ''
+        size: '50sp','50sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        allow_stretch: True
+
+<ImageFileChooser@BoxLayout>
+    orientation: 'vertical'
+    Image:
+        id: inventory_image
+        source: ''
+        size_hint: 0.7,0.4
+        allow_stretch: True
+        keep_ratio: False
+    FileChooser:
+        id: fc
+        rootpath: 'src/imgs'
+        on_selection: inventory_image.source = self.selection and self.selection[0] or ''
+        FileChooserListLayout
+#        FileChooserIconLayout
+#        FileChooserListLayout

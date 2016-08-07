@@ -4,6 +4,7 @@ import platform
 import time
 import datetime
 import os
+import re
 from collections import OrderedDict
 
 if platform.system() == 'Darwin':  # Mac
@@ -47,10 +48,20 @@ import threading
 import queue
 import authorize
 from escpos import *
+from escpos.exceptions import USBNotFoundError
+import phonenumbers
+from threading import Thread
+import usb.core
+import usb.util
 
 from kivy.app import App
 from kivy.factory import Factory
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.carousel import Carousel
+from kivy.uix.dropdown import DropDown
+from kivy.uix.filechooser import FileChooser
+from kivy.uix.filechooser import FileChooserListView
+from kivy.uix.filechooser import FileChooserIconView
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.stacklayout import StackLayout
@@ -61,11 +72,13 @@ from kivy.properties import ObjectProperty, partial
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import Screen
 from kivy.uix.screenmanager import FadeTransition
+from kivy.uix.progressbar import ProgressBar
 from kivy.uix.spinner import Spinner
 from kivy.core.window import Window
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
+from kivy.uix.switch import Switch
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.tabbedpanel import TabbedPanelHeader
 from kivy.uix.tabbedpanel import TabbedPanelContent
@@ -91,6 +104,7 @@ SYNC = Sync()
 queueLock = threading.Lock()
 workQueue = queue.Queue(10)
 list_len = []
+printer_list = {}
 
 
 # handles multithreads for database sync
@@ -194,7 +208,7 @@ class MainScreen(Screen):
                                                         hint_text='Username',
                                                         on_text_validate=self.login)
         inner_content_1.add_widget(self.username)
-
+        self.username.focus = True
         inner_content_1.add_widget(Label(text="password",
                                          size_hint_y=None,
                                          font_size='20sp'))
@@ -260,6 +274,13 @@ class MainScreen(Screen):
                     auth_user.username = user1['username']
                     auth_user.company_id = user1['company_id']
                     SYNC.company_id = user1['company_id']
+                print_data = Printer().where({'company_id': auth_user.company_id})
+                if print_data:
+                    for printer in print_data:
+                        printer_list[printer['type']] = {
+                            'vendor_id': printer['vendor_id'],
+                            'product_id': printer['product_id'],
+                        }
 
                 popup.title = 'Authentication Success!'
                 popup.content = Builder.load_string(
@@ -282,6 +303,14 @@ class MainScreen(Screen):
 
                     auth_user.username = user.username
                     auth_user.company_id = data['company_id']
+                    print_data = Printer().where({'company_id': auth_user.company_id})
+                    if print_data:
+                        for printer in print_data:
+                            printer_list[printer['type']] = {
+                                'vendor_id': printer['vendor_id'],
+                                'product_id': printer['product_id'],
+                            }
+
                     SYNC.company_id = data['company_id']
                     popup.title = 'Authentication Success!'
                     content = KV.popup_alert(msg='You are now logged in as {}!'.format(user.username))
@@ -293,7 +322,6 @@ class MainScreen(Screen):
                     popup.content = Builder.load_string(
                         KV.popup_alert(msg='Could not find any user with these credentials. '
                                            'Please try again!!'))
-
             user.close_connection()
             popup.open()
 
@@ -328,24 +356,38 @@ class MainScreen(Screen):
 
     def printer_test(self):
 
-        try:
-            Epson = printer.Usb(0x1a86, 0x7584,0,0x81,0x02)
-        except AttributeError:
-            print('No Printer Detected')
-        finally:
-            # Print text
-            Epson.text("Hello World\n")
-            # Print image
-            # Epson.image("logo.gif")
-            # Print QR Code
-            # Epson.qr("You can readme from your smartphone")
-            # Print barcode
-            Epson.barcode('1324354657687', 'EAN13', 64, 2, '', '')
-            # Cut paper
-            Epson.cut()
+        # find our device
+        dev = usb.core.find(idVendor=0x067b, idProduct=0x2303)
+
+        # was it found?
+        if dev is None:
+            raise ValueError('Device not found')
+        # set the active configuration. With no arguments, the first
+        # configuration will be the active one
+        dev.set_configuration()
+
+        # get an endpoint instance
+        cfg = dev.get_active_configuration()
+        intf = cfg[(0, 0)]
+
+        ep = usb.util.find_descriptor(
+            intf,
+            # match the first OUT endpoint
+            custom_match= \
+                lambda e: \
+                    usb.util.endpoint_direction(e.bEndpointAddress) == \
+                    usb.util.ENDPOINT_OUT)
+
+        assert ep is not None
+        print(ep)
+        # write the data
+        ep.write('test')
+
+        printers = usb.core.find(find_all=True)
+        sys.stdout.write('There are ' + len(printers) + ' in the system\n.')
 
     def test_sys(self):
-        print(sys.path)
+        print(len(''))
 
     def test_mark(self):
         # marks = Custid()
@@ -399,6 +441,226 @@ class MainScreen(Screen):
         # print("done")
 
 
+class CompanyScreen(Screen):
+    company_name = ObjectProperty(None)
+    company_phone = ObjectProperty(None)
+    company_email = ObjectProperty(None)
+    company_street = ObjectProperty(None)
+    company_city = ObjectProperty(None)
+    company_state = ObjectProperty(None)
+    company_zipcode = ObjectProperty(None)
+    company_payment_gateway_id = ObjectProperty(None)
+    company_payment_api_login = ObjectProperty(None)
+    store_hours_table = ObjectProperty(None)
+    store_hours = []
+    load_popup = Popup()
+    load_count = False
+
+    def reset(self):
+        companies = Company().where({'company_id': auth_user.company_id})
+        if companies:
+            for company in companies:
+                self.company_name.text = company['name'] if company['name'] else ''
+                self.company_phone.text = company['phone'] if company['phone'] else ''
+                self.company_email.text = company['email'] if company['email'] else ''
+                self.company_street.text = company['street'] if company['street'] else ''
+                self.company_city.text = company['city'] if company['city'] else ''
+                self.company_state.text = company['state'] if company['state'] else ''
+                self.company_zipcode.text = company['zip'] if company['zip'] else ''
+                self.company_payment_gateway_id.text = company['payment_gateway_id'] if company[
+                    'payment_gateway_id'] else ''
+                self.company_payment_api_login.text = company['payment_api_login'] if company[
+                    'payment_api_login'] else ''
+                self.store_hours = json.loads(company['store_hours'])
+
+        # update hours table
+        self.load_count = False
+
+    def update_store_hours_table(self):
+        if not self.load_count:
+            self.load_count = True
+            self.store_hours_table.clear_widgets()
+
+            # start store hours table
+            h1 = KV.invoice_tr(0, 'Day')
+            h2 = KV.invoice_tr(0, 'Status')
+            h3 = KV.invoice_tr(0, 'Op. H')
+            h4 = KV.invoice_tr(0, 'Op. M')
+            h5 = KV.invoice_tr(0, 'Op. A')
+            h6 = KV.invoice_tr(0, 'Cl. H')
+            h7 = KV.invoice_tr(0, 'Cl. M')
+            h8 = KV.invoice_tr(0, 'Cl. A')
+            h9 = KV.invoice_tr(0, 'Turn')
+            h10 = KV.invoice_tr(0, 'Due H')
+            h11 = KV.invoice_tr(0, 'Due M')
+            h12 = KV.invoice_tr(0, 'Due A')
+            self.store_hours_table.add_widget(Builder.load_string(h1))
+            self.store_hours_table.add_widget(Builder.load_string(h2))
+            self.store_hours_table.add_widget(Builder.load_string(h3))
+            self.store_hours_table.add_widget(Builder.load_string(h4))
+            self.store_hours_table.add_widget(Builder.load_string(h5))
+            self.store_hours_table.add_widget(Builder.load_string(h6))
+            self.store_hours_table.add_widget(Builder.load_string(h7))
+            self.store_hours_table.add_widget(Builder.load_string(h8))
+            self.store_hours_table.add_widget(Builder.load_string(h9))
+            self.store_hours_table.add_widget(Builder.load_string(h10))
+            self.store_hours_table.add_widget(Builder.load_string(h11))
+            self.store_hours_table.add_widget(Builder.load_string(h12))
+            hours = []
+            for index in range(1, 13):
+                hours.append(str(index))
+
+            mins = []
+            for index in range(0, 60):
+                mins.append(':{0:0>2}'.format(index))
+
+            turnaround = []
+            for index in range(0, 11):
+                turnaround.append(str(index))
+
+            if self.store_hours:
+                idx = - 1
+                for store_hour in self.store_hours:
+                    if store_hour['status'] == '1':
+                        store_hour['open_hour'] = "1"
+                        store_hour['open_minutes'] = "0"
+                        store_hour['open_ampm'] = 'am'
+                        store_hour['turnaround'] = "0"
+                        store_hour['closed_hour'] = "1"
+                        store_hour['closed_minutes'] = "0"
+                        store_hour['closed_ampm'] = 'am'
+                        store_hour['due_hour'] = "1"
+                        store_hour['due_minutes'] = "0"
+                        store_hour['due_ampm'] = 'am'
+                    idx += 1
+                    dow = vars.dow_schedule(idx)
+                    c1 = Label(text='{}'.format(dow))
+                    c2 = Switch()
+                    c2.active = False if store_hour['status'] == '1' else True
+                    c2.bind(active=partial(self.set_status, idx))
+                    c3 = Spinner(text='{}'.format(str(store_hour['open_hour'])),
+                                 values=hours,
+                                 disabled=True if store_hour['status'] == '1' else False)
+                    c3.bind(text=partial(self.set_store_open_hour, idx))
+                    c4 = Spinner(text=':{0:0>2}'.format(store_hour['open_minutes']),
+                                 values=mins,
+                                 disabled=True if store_hour['status'] == '1' else False)
+                    c4.bind(text=partial(self.set_store_open_minutes, idx))
+                    c5 = Spinner(text='{}'.format(store_hour['open_ampm']),
+                                 values=('am', 'pm'),
+                                 disabled=True if store_hour['status'] == '1' else False)
+                    c5.bind(text=partial(self.set_store_open_ampm, idx))
+                    c6 = Spinner(text='{}'.format(str(store_hour['closed_hour'])),
+                                 values=hours,
+                                 disabled=True if store_hour['status'] == '1' else False)
+                    c6.bind(text=partial(self.set_store_closed_hour, idx))
+                    c7 = Spinner(text=':{0:0>2}'.format(store_hour['closed_minutes']),
+                                 values=mins,
+                                 disabled=True if store_hour['status'] == '1' else False)
+                    c7.bind(text=partial(self.set_store_closed_minutes, idx))
+                    c8 = Spinner(text='{}'.format(store_hour['closed_ampm']),
+                                 values=('am', 'pm'),
+                                 disabled=True if store_hour['status'] == '1' else False)
+                    c8.bind(text=partial(self.set_store_closed_ampm, idx))
+                    c9 = Spinner(text='{}'.format(store_hour['turnaround']),
+                                 values=turnaround,
+                                 disabled=True if store_hour['status'] == '1' else False)
+                    c9.bind(text=partial(self.set_store_turnaround, idx))
+                    c10 = Spinner(text='{}'.format(store_hour['due_hour']),
+                                  values=hours,
+                                  disabled=True if store_hour['status'] == '1' else False)
+                    c10.bind(text=partial(self.set_store_due_hour, idx))
+                    c11 = Spinner(text=':{0:0>2}'.format(store_hour['due_minutes']),
+                                  values=mins,
+                                  disabled=True if store_hour['status'] == '1' else False)
+                    c11.bind(text=partial(self.set_store_due_minutes, idx))
+                    c12 = Spinner(text='{}'.format(store_hour['due_ampm']),
+                                  values=('am', 'pm'),
+                                  disabled=True if store_hour['status'] == '1' else False)
+                    c12.bind(text=partial(self.set_store_due_ampm, idx))
+
+                    self.store_hours_table.add_widget(c1)
+                    self.store_hours_table.add_widget(c2)
+                    self.store_hours_table.add_widget(c3)
+                    self.store_hours_table.add_widget(c4)
+                    self.store_hours_table.add_widget(c5)
+                    self.store_hours_table.add_widget(c6)
+                    self.store_hours_table.add_widget(c7)
+                    self.store_hours_table.add_widget(c8)
+                    self.store_hours_table.add_widget(c9)
+                    self.store_hours_table.add_widget(c10)
+                    self.store_hours_table.add_widget(c11)
+                    self.store_hours_table.add_widget(c12)
+
+    def set_status(self, day, item, status, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['status'] = 2 if not status else 1
+
+    def set_store_open_hour(self, day, item, hour, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['open_hour'] = hour
+
+    def set_store_open_minutes(self, day, item, minutes, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['open_minutes'] = re.sub(r'\W+', '', minutes)
+
+    def set_store_open_ampm(self, day, item, ampm, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['open_ampm'] = ampm
+
+    def set_store_closed_hour(self, day, item, hour, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['closed_hour'] = hour
+
+    def set_store_closed_minutes(self, day, item, minutes, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['closed_minutes'] = '{0:0>2}'.format(re.sub(r'\W+', '', minutes))
+
+    def set_store_closed_ampm(self, day, item, ampm, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['closed_ampm'] = ampm
+
+    def set_store_turnaround(self, day, item, turnaround, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['turnaround'] = turnaround
+
+    def set_store_due_hour(self, day, item, hour, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['due_hour'] = hour
+
+    def set_store_due_minutes(self, day, item, minutes, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['due_minutes'] = '{0:0>2}'.format(re.sub(r'\W+', '', minutes))
+
+    def set_store_due_ampm(self, day, item, ampm, *args, **kwargs):
+        if self.store_hours:
+            self.store_hours[day]['due_ampm'] = ampm
+
+    def update(self):
+
+        companies = Company()
+        put = companies.put(where={'company_id': auth_user.company_id},
+                            data={'name': self.company_name.text,
+                                  'phone': self.company_phone.text,
+                                  'email': self.company_email.text,
+                                  'street': self.company_street.text,
+                                  'city': self.company_city.text,
+                                  'state': self.company_state.text,
+                                  'zip': self.company_zipcode.text,
+                                  'payment_gateway_id': self.company_payment_gateway_id.text,
+                                  'payment_api_login': self.company_payment_api_login.text,
+                                  'store_hours': self.store_hours
+                                  })
+        if put:
+            vars.WORKLIST.append("Sync")
+            threads_start()
+            popup = Popup()
+            popup.title = 'Company Update'
+            content = KV.popup_alert('Successfully updated company!')
+            popup.content = Builder.load_string(content)
+            popup.open()
+
+
 class DeliveryScreen(Screen):
     pass
 
@@ -449,6 +711,7 @@ class DropoffScreen(Screen):
     year_button = ObjectProperty(None)
     print_popup = ObjectProperty(None)
     deleted_rows = []
+    starch = None
 
     def reset(self):
         # reset the inventory table
@@ -516,6 +779,13 @@ class DropoffScreen(Screen):
         else:
             vars.TAX_RATE = 0.096
 
+        customers = User().where({'user_id': vars.CUSTOMER_ID})
+        if customers:
+            for customer in customers:
+                self.starch = vars.get_starch_by_code(customer['starch'])
+        else:
+            self.starch = vars.get_starch_by_code(None)
+
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
         self.summary_table.clear_widgets()
@@ -562,7 +832,7 @@ GridLayout:
             source: '{img_src}'
             size: '50sp','50sp'
             center_x: self.parent.center_x
-            center_y: self.parent.center_y
+            center_y: self.parent.center_y + sp(20)
             allow_stretch: True'''.format(item_name=item['name'],
                                           item_price=item_price,
                                           item_id=item_id,
@@ -600,15 +870,21 @@ GridLayout:
             for item in items:
                 inventory_id = item['inventory_id']
                 item_price = item['price']
-                item_name = item['name']
+
                 item_tags = item['tags'] if item['tags'] else 1
                 item_quantity = item['quantity'] if item['quantity'] else 1
                 inventories = Inventory().where({'inventory_id': '{}'.format(str(inventory_id))})
                 if inventories:
                     for inventory in inventories:
                         inventory_init = inventory['name'][:1].capitalize()
+                        laundry = inventory['laundry']
                 else:
                     inventory_init = ''
+                    laundry = 0
+
+                starch = self.starch if laundry else ''
+                item_name = '{} ({})'.format(item['name'], starch) if laundry else item['name']
+
                 for x in range(0, self.inv_qty):
 
                     if item_id in self.invoice_list:
@@ -1628,6 +1904,8 @@ GridLayout:
     def finish_invoice(self, type, *args, **kwargs):
         # determine the types of invoices we need to print
         # set the printer data
+        printers = Printer()
+        thermal_printers = printers.get_printer_ids(auth_user.company_id, 1)
 
         # splt up invoice by inventory group
         save_invoice = {}
@@ -1654,6 +1932,10 @@ GridLayout:
                             save_totals[inventory_id]['subtotal'] += iivalue['item_price']
                             save_totals[inventory_id]['discount'] += 0
         if save_invoice:
+            print_sync_invoice = {}  # if synced to server
+            print_sync_totals = {}
+            print_invoice = {}  # if not synced to server
+            print_totals = {}
             for inventory_id, invoice_group in save_invoice.items():
                 if len(save_invoice[inventory_id]) > 0:
                     tax_amount = save_totals[inventory_id]['subtotal'] * vars.TAX_RATE
@@ -1672,12 +1954,48 @@ GridLayout:
                     # save to local db
                     if new_invoice.add():
                         last_insert_id = new_invoice.get_last_insert_id()
+                        print_totals[last_insert_id] = {
+                            'quantity': new_invoice.quantity,
+                            'subtotal': new_invoice.pretax,
+                            'tax': new_invoice.tax,
+                            'total': new_invoice.total
+                        }
                         save_invoice_items[last_insert_id] = invoice_group
                         idx = -1
+                        colors = {}
+                        print_invoice[last_insert_id] = {}
                         for inv_items in save_invoice_items[last_insert_id]:
                             idx += 1
                             save_invoice_items[last_insert_id][idx]['status'] = 3
                             save_invoice_items[last_insert_id][idx]['invoice_id'] = last_insert_id
+                            item_id = save_invoice_items[last_insert_id][idx]['item_id']
+                            item_name = save_invoice_items[last_insert_id][idx]['item_name']
+                            item_price = save_invoice_items[last_insert_id][idx]['item_price']
+                            item_type = save_invoice_items[last_insert_id][idx]['type']
+                            item_color = save_invoice_items[last_insert_id][idx]['color']
+                            item_memo = save_invoice_items[last_insert_id][idx]['memo']
+                            if item_color in colors:
+                                colors[item_color] += 1
+                            else:
+                                colors[item_color] = 1
+                            if item_id in print_invoice[last_insert_id]:
+                                print_invoice[last_insert_id][item_id]['item_price'] += item_price
+                                print_invoice[last_insert_id][item_id]['qty'] += 1
+                                print_invoice[last_insert_id][item_id]['colors'] = colors
+                                if item_memo:
+                                    print_invoice[last_insert_id][item_id]['memos'].append(item_memo)
+                            else:
+
+                                print_invoice[last_insert_id][item_id] = {
+                                    'item_id': item_id,
+                                    'type': item_type,
+                                    'name': item_name,
+                                    'item_price': item_price,
+                                    'qty': 1,
+                                    'memos': [item_memo] if item_memo else [],
+                                    'colors': colors
+                                }
+
             # save the invoices to the db and return the proper invoice_ids
             run_sync = threading.Thread(target=SYNC.run_sync)
             try:
@@ -1691,10 +2009,46 @@ GridLayout:
                         for invoice in invoices:
                             new_invoice_id = invoice['invoice_id']
                             idx = -1
+                            colors = {}
+                            print_sync_totals[new_invoice_id] = {
+                                'quantity': invoice['quantity'],
+                                'subtotal': invoice['pretax'],
+                                'tax': invoice['tax'],
+                                'total': invoice['total']
+                            }
+                            print_sync_invoice[new_invoice_id] = {}
                             for items in save_invoice_items[id]:
                                 idx += 1
                                 save_invoice_items[id][idx]['invoice_id'] = new_invoice_id
                                 save_invoice_items[id][idx]['status'] = 1
+                                item_id = items['item_id']
+                                item_name = items['item_name']
+                                item_price = items['item_price']
+                                item_type = items['type']
+                                item_color = items['color']
+                                item_memo = items['memo']
+                                if item_color in colors:
+                                    colors[item_color] += 1
+                                else:
+                                    colors[item_color] = 1
+                                if item_id in print_sync_invoice[new_invoice_id]:
+
+                                    print_sync_invoice[new_invoice_id][item_id]['item_price'] += item_price
+                                    print_sync_invoice[new_invoice_id][item_id]['qty'] += 1
+                                    if item_memo:
+                                        print_sync_invoice[new_invoice_id][item_id]['memos'].append(item_memo)
+                                    print_sync_invoice[new_invoice_id][item_id]['colors'] = colors
+                                else:
+                                    print_sync_invoice[new_invoice_id][item_id] = {
+                                        'item_id': item_id,
+                                        'type': item_type,
+                                        'name': item_name,
+                                        'item_price': item_price,
+                                        'qty': 1,
+                                        'memos': [item_memo] if item_memo else [],
+                                        'colors': {item_color: 1}
+                                    }
+
             if len(save_invoice_items) > 0:
                 for iitems_id in save_invoice_items:
                     for item in save_invoice_items[iitems_id]:
@@ -1724,8 +2078,437 @@ GridLayout:
             finally:
                 run_sync2.join()
                 print('sync invoice items now finished')
-            self.set_result_status()
-            self.print_popup.dismiss()
+
+                # print invoices
+                try:
+                    Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+                    companies = Company()
+                    comps = companies.where({'company_id': auth_user.company_id}, set=True)
+
+                    if comps:
+                        for company in comps:
+                            companies.id = company['id']
+                            companies.company_id = company['company_id']
+                            companies.name = company['name']
+                            companies.street = company['street']
+                            companies.suite = company['suite']
+                            companies.city = company['city']
+                            companies.state = company['state']
+                            companies.zip = company['zip']
+                            companies.email = company['email']
+                            companies.phone = company['phone']
+                    customers = User()
+                    custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+                    if custs:
+                        for user in custs:
+                            customers.id = user['id']
+                            customers.user_id = user['user_id']
+                            customers.company_id = user['company_id']
+                            customers.username = user['username']
+                            customers.first_name = user['first_name']
+                            customers.last_name = user['last_name']
+                            customers.street = user['street']
+                            customers.suite = user['suite']
+                            customers.city = user['city']
+                            customers.state = user['state']
+                            customers.zipcode = user['zipcode']
+                            customers.email = user['email']
+                            customers.phone = user['phone']
+                            customers.intercom = user['intercom']
+                            customers.concierge_name = user['concierge_name']
+                            customers.concierge_number = user['concierge_number']
+                            customers.special_instructions = user['special_instructions']
+                            customers.shirt_old = user['shirt_old']
+                            customers.shirt = user['shirt']
+                            customers.delivery = user['delivery']
+                            customers.profile_id = user['profile_id']
+                            customers.payment_status = user['payment_status']
+                            customers.payment_id = user['payment_id']
+                            customers.token = user['token']
+                            customers.api_token = user['api_token']
+                            customers.reward_status = user['reward_status']
+                            customers.reward_points = user['reward_points']
+                            customers.account = user['account']
+                            customers.starch = user['starch']
+                            customers.important_memo = user['important_memo']
+                            customers.invoice_memo = user['invoice_memo']
+                            customers.password = user['password']
+                            customers.role_id = user['role_id']
+                            customers.remember_token = user['remember_token']
+                    if type == 2:
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("{}\n".format(companies.name))
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("{}\n".format(companies.street))
+                        Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                  invert=False, smooth=False, flip=False)
+
+                        Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                        Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                        # Print barcode
+                        Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('------------------------------------------\n')
+
+                        # display invoice details
+                        if self.invoice_list:
+
+                            for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+                                total_qty = len(values)
+                                colors = {}
+                                item_price = 0
+                                color_string = []
+                                memo_string = []
+                                if values:
+                                    for item in values:
+                                        item_name = item['item_name']
+                                        item_type = item['type']
+                                        item_color = item['color']
+                                        item_memo = item['memo']
+                                        item_price += item['item_price'] if item['item_price'] else 0
+                                        if item['color']:
+                                            if item_color in colors:
+                                                colors[item_color] += 1
+                                            else:
+                                                colors[item_color] = 1
+                                        if item_memo:
+                                            memo_string.append(item_memo)
+                                    if colors:
+                                        for color_name, color_amount in colors.items():
+                                            if color_name:
+                                                color_string.append('{}-{}'.format(color_amount, color_name))
+
+                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                              density=5, invert=False, smooth=False, flip=False)
+                                    Epson.text('{} {}   '.format(item_type, total_qty, item_name))
+                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'B', width=1, height=1,
+                                              density=5, invert=False, smooth=False, flip=False)
+                                    Epson.text('{}\n'.format(item_name))
+                                    if len(memo_string) > 0:
+                                        Epson.control('HT')
+                                        Epson.control('HT')
+                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                                  density=5, invert=False, smooth=False, flip=False)
+                                        Epson.text('  {}\n'.format('/ '.join(memo_string)))
+                                    if len(color_string):
+                                        Epson.control('HT')
+                                        Epson.control('HT')
+                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                                  density=5, invert=False, smooth=False, flip=False)
+                                        Epson.text('  {}\n'.format(', '.join(color_string)))
+
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('------------------------------------------\n')
+                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{} PCS\n'.format(self.quantity))
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('------------------------------------------\n')
+                        # Cut paper
+                        Epson.cut(mode=u"PART")
+
+                        # Print store copies
+                        if print_sync_invoice:  # if invoices synced
+                            for invoice_id, item_id in print_sync_invoice.items():
+
+                                # start invoice
+                                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text("::COPY::\n")
+                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text("{}\n".format(companies.name))
+                                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
+                                          density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text(
+                                    "READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                                # Print barcode
+                                Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
+                                              'B', 'B')
+
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                                          density=6,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text(
+                                    '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=2,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=1,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('------------------------------------------\n')
+
+                                if print_sync_invoice[invoice_id]:
+                                    for item_id, invoice_item in print_sync_invoice[invoice_id].items():
+                                        item_name = invoice_item['name']
+                                        item_price = invoice_item['item_price']
+                                        item_qty = invoice_item['qty']
+                                        item_color_string = []
+                                        item_memo = invoice_item['memos']
+                                        item_type = invoice_item['type']
+                                        if invoice_item['colors']:
+                                            for color_name, color_qty in invoice_item['colors'].items():
+                                                if color_name:
+                                                    item_color_string.append('{}-{}'.format(color_qty, color_name))
+                                        string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
+                                            vars.us_dollar(item_price)) + 4
+                                        string_offset = 42 - string_length if 42 - string_length > 0 else 0
+                                        Epson.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                             item_qty,
+                                                                             item_name,
+                                                                             ' ' * string_offset,
+                                                                             vars.us_dollar(item_price)))
+
+                                        # Epson.text('\r\x1b@\x1b\x61\x02{}\n'.format(vars.us_dollar(item_price)))
+                                        if len(item_memo) > 0:
+                                            Epson.control('HT')
+                                            Epson.control('HT')
+                                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                      height=1,
+                                                      density=5, invert=False, smooth=False, flip=False)
+                                            Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                        if len(item_color_string) > 0:
+                                            Epson.control('HT')
+                                            Epson.control('HT')
+                                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                      height=1,
+                                                      density=5, invert=False, smooth=False, flip=False)
+                                            Epson.text('  {}\n'.format(', '.join(item_color_string)))
+
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=1,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('------------------------------------------\n')
+                                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('{} PCS\n'.format(print_sync_totals[invoice_id]['quantity']))
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=1,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('------------------------------------------\n')
+                                Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('    SUBTOTAL:')
+                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['subtotal']))
+                                string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                                Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                           vars.us_dollar(
+                                                               print_sync_totals[invoice_id]['subtotal'])))
+                                Epson.set(align=u"RIGHT", text_type=u'B')
+                                Epson.text('         TAX:')
+                                string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['tax']))
+                                string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                           vars.us_dollar(print_sync_totals[invoice_id]['tax'])))
+                                Epson.set(align=u"RIGHT", text_type=u'B')
+                                Epson.text('       TOTAL:')
+                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['total']))
+                                string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                                Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                           vars.us_dollar(print_sync_totals[invoice_id]['total'])))
+                                Epson.set(align=u"RIGHT", text_type=u'B')
+                                Epson.text('     BALANCE:')
+                                string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['total']))
+                                string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                                Epson.text('{}{}\n\n'.format(' ' * string_offset,
+                                                             vars.us_dollar(
+                                                                 print_sync_totals[invoice_id]['total'])))
+                                if item_type == 'L':
+                                    # get customer mark
+                                    marks = Custid()
+                                    marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                                    if marks_list:
+                                        m_list = []
+                                        for mark in marks_list:
+                                            m_list.append(mark['mark'])
+                                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                                  density=8, invert=False, smooth=False, flip=False)
+                                        Epson.text('{}\n\n'.format(', '.join(m_list)))
+
+                                # Cut paper
+                                Epson.cut(mode=u"PART")
+                        else:
+                            for invoice_id, item_id in print_invoice.items():
+
+                                # start invoice
+                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text("{}\n".format(companies.name))
+                                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=2, height=3, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text(
+                                    "READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text("--{}--\n".format('{0:06d}'.format(invoice_id)))
+                                # Print barcode
+                                Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
+                                              'B', 'B')
+
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                                          density=6,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text(
+                                    '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=2,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=1,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('------------------------------------------\n')
+
+                                if print_sync_invoice[invoice_id][item_id]:
+                                    for invoice_item in print_sync_invoice[invoice_id][item_id]:
+                                        item_name = invoice_item['name']
+                                        item_price = invoice_item['item_price']
+                                        item_qty = invoice_item['qty']
+                                        item_color_string = []
+                                        item_memo = invoice_item['memos']
+                                        item_type = invoice_item['type']
+                                        if invoice_item['colors']:
+                                            for color_name, color_qty in invoice_item['colors'].items():
+                                                if color_name:
+                                                    item_color_string.append('{}-{}'.format(color_qty, color_name))
+                                        string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
+                                            vars.us_dollar(item_price)) + 4
+                                        string_offset = 42 - string_length if 42 - string_length > 0 else 0
+                                        Epson.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                             item_qty,
+                                                                             item_name,
+                                                                             ' ' * string_offset,
+                                                                             vars.us_dollar(item_price)))
+
+                                        if len(item_memo) > 0:
+                                            Epson.control('HT')
+                                            Epson.control('HT')
+                                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                      height=1,
+                                                      density=5, invert=False, smooth=False, flip=False)
+                                            Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                        if len(item_color_string) > 0:
+                                            Epson.control('HT')
+                                            Epson.control('HT')
+                                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                      height=1,
+                                                      density=5, invert=False, smooth=False, flip=False)
+                                            Epson.text('  {}\n'.format(', '.join(item_color_string)))
+
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=1,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('------------------------------------------\n')
+                                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('{} PCS\n'.format(print_sync_totals[invoice_id]['quantity']))
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=1,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('------------------------------------------\n')
+                                Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('    SUBTOTAL:')
+                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                string_length = len(vars.us_dollar(print_totals[invoice_id]['subtotal']))
+                                string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                                Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                           vars.us_dollar(print_totals[invoice_id]['subtotal'])))
+                                Epson.set(align=u"RIGHT", text_type=u'B')
+                                Epson.text('         TAX:')
+                                string_length = len(vars.us_dollar(print_totals[invoice_id]['tax']))
+                                string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                           vars.us_dollar(print_totals[invoice_id]['tax'])))
+                                Epson.set(align=u"RIGHT", text_type=u'B')
+                                Epson.text('       TOTAL:')
+                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                string_length = len(vars.us_dollar(print_totals[invoice_id]['total']))
+                                string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                                Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                           vars.us_dollar(print_totals[invoice_id]['total'])))
+                                Epson.set(align=u"RIGHT", text_type=u'B')
+                                Epson.text('     BALANCE:')
+                                string_length = len(vars.us_dollar(print_totals[invoice_id]['total']))
+                                string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                                Epson.text('{}{}\n\n'.format(' ' * string_offset,
+                                                             vars.us_dollar(print_totals[invoice_id]['total'])))
+                                if customers.invoice_memo:
+                                    Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                              invert=False, smooth=False, flip=False)
+                                    Epson.text('{}\n'.format(customers.invoice_memo))
+                                if item_type == 'L':
+                                    # get customer mark
+                                    marks = Custid()
+                                    marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                                    if marks_list:
+                                        m_list = []
+                                        for mark in marks_list:
+                                            m_list.append(mark['mark'])
+                                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                                  density=8, invert=False, smooth=False, flip=False)
+                                        Epson.text('{}\n\n'.format(', '.join(m_list)))
+
+                                # Cut paper
+                                Epson.cut(mode=u"PART")
+                except USBNotFoundError:
+                    popup = Popup()
+                    popup.title = 'Printer Error'
+                    content = KV.popup_alert('Could not find usb.')
+                    popup.content = Builder.load_string(content)
+                    popup.open()
+                    # Beep Sound
+                    sys.stdout.write('\a')
+                    sys.stdout.flush()
+
+        self.set_result_status()
+        self.print_popup.dismiss()
 
 
 class EditInvoiceScreen(Screen):
@@ -1774,6 +2557,7 @@ class EditInvoiceScreen(Screen):
     print_popup = ObjectProperty(None)
     deleted_rows = []
     inventory_id = 1
+    starch = None
 
     def reset(self):
         # reset the inventory table
@@ -1796,6 +2580,12 @@ class EditInvoiceScreen(Screen):
         invoice_items = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
         self.invoice_list = OrderedDict()
         self.invoice_list_copy = OrderedDict()
+        customers = User().where({'user_id': vars.CUSTOMER_ID})
+        if customers:
+            for customer in customers:
+                self.starch = vars.get_starch_by_code(customer['starch'])
+        else:
+            self.starch = vars.get_starch_by_code(None)
         if invoice_items:
             for invoice_item in invoice_items:
                 invoice_items_id = invoice_item['invoice_items_id']
@@ -1810,16 +2600,19 @@ class EditInvoiceScreen(Screen):
                         if inventories:
                             for inventory in inventories:
                                 inventory_init = inventory['name'][:1].capitalize()
+                                laundry = inventory['laundry']
                         else:
                             inventory_init = ''
+                            laundry = 0
 
+                        item_name = '{} ({})'.format(item['name'], self.starch) if laundry else item['name']
                         if item_id in self.invoice_list:
                             self.invoice_list[item_id].append({
                                 'invoice_items_id': invoice_items_id,
                                 'type': inventory_init,
                                 'inventory_id': inventory_id,
                                 'item_id': item_id,
-                                'item_name': item['name'],
+                                'item_name': item_name,
                                 'item_price': invoice_item['pretax'],
                                 'color': invoice_item['color'],
                                 'memo': invoice_item['memo'],
@@ -1832,7 +2625,7 @@ class EditInvoiceScreen(Screen):
                                 'type': inventory_init,
                                 'inventory_id': inventory_id,
                                 'item_id': item_id,
-                                'item_name': item['name'],
+                                'item_name': item_name,
                                 'item_price': invoice_item['pretax'],
                                 'color': invoice_item['color'],
                                 'memo': invoice_item['memo'],
@@ -1846,7 +2639,7 @@ class EditInvoiceScreen(Screen):
                                 'type': inventory_init,
                                 'inventory_id': inventory_id,
                                 'item_id': item_id,
-                                'item_name': item['name'],
+                                'item_name': item_name,
                                 'item_price': invoice_item['pretax'],
                                 'color': invoice_item['color'],
                                 'memo': invoice_item['memo'],
@@ -1859,7 +2652,7 @@ class EditInvoiceScreen(Screen):
                                 'type': inventory_init,
                                 'inventory_id': inventory_id,
                                 'item_id': item_id,
-                                'item_name': item['name'],
+                                'item_name': item_name,
                                 'item_price': invoice_item['pretax'],
                                 'color': invoice_item['color'],
                                 'memo': invoice_item['memo'],
@@ -2019,15 +2812,18 @@ GridLayout:
             for item in items:
                 inventory_id = item['inventory_id']
                 item_price = item['price']
-                item_name = item['name']
                 item_tags = item['tags'] if item['tags'] else 1
                 item_quantity = item['quantity'] if item['quantity'] else 1
                 inventories = Inventory().where({'inventory_id': '{}'.format(str(inventory_id))})
                 if inventories:
                     for inventory in inventories:
                         inventory_init = inventory['name'][:1].capitalize()
+                        laundry = inventory['laundry']
                 else:
                     inventory_init = ''
+                    laundry = 0
+
+                item_name = '{} ({})'.format(item['name'], self.starch) if laundry else item['name']
                 for x in range(0, self.inv_qty):
 
                     if item_id in self.invoice_list:
@@ -3040,13 +3836,16 @@ GridLayout:
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.7))
 
-        button_1 = Factory.PrintButton(text='Customer + Store Copy',
+        button_1 = Factory.PrintButton(text='Cust. + Store',
                                        on_press=partial(self.finish_invoice, 2))
 
         inner_layout_1.add_widget(button_1)
-        button_2 = Factory.PrintButton(text='Store Copy Only',
+        button_2 = Factory.PrintButton(text='Store Only',
                                        on_press=partial(self.finish_invoice, 1))
         inner_layout_1.add_widget(button_2)
+        button_3 = Factory.PrintButton(text='No Print',
+                                       on_press=partial(self.finish_invoice, False))
+        inner_layout_1.add_widget(button_3)
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.3))
         inner_layout_2.add_widget(Button(markup=True,
@@ -3071,13 +3870,42 @@ GridLayout:
 
         if self.invoice_list:
             invoice_items = InvoiceItem()
+            print_invoice = {}
+            print_invoice[vars.INVOICE_ID] = {}
             for invoice_item_key, invoice_item_value in self.invoice_list.items():
+                colors = {}
                 for iivalue in invoice_item_value:
                     qty = iivalue['qty']
                     pretax = float(iivalue['item_price']) if iivalue['item_price'] else 0
                     tax = float('%.2f' % (pretax * vars.TAX_RATE))
                     total = float('%.2f' % (pretax * (1 + vars.TAX_RATE)))
+                    item_id = iivalue['item_id']
+                    item_name = iivalue['item_name']
+                    item_price = iivalue['item_price']
+                    item_type = iivalue['type']
+                    item_color = iivalue['color']
+                    item_memo = iivalue['memo']
+                    if item_color in colors:
+                        colors[item_color] += 1
+                    else:
+                        colors[item_color] = 1
+                    if item_id in print_invoice[vars.INVOICE_ID]:
+                        print_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_price
+                        print_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
+                        print_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
+                        if item_memo:
+                            print_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
+                    else:
 
+                        print_invoice[vars.INVOICE_ID][item_id] = {
+                            'item_id': item_id,
+                            'type': item_type,
+                            'name': item_name,
+                            'item_price': item_price,
+                            'qty': 1,
+                            'memos': [item_memo] if item_memo else [],
+                            'colors': colors
+                        }
                     if 'invoice_items_id' in iivalue:
                         invoice_items.put(where={'invoice_items_id': iivalue['invoice_items_id']},
                                           data={'quantity': iivalue['qty'],
@@ -3115,6 +3943,418 @@ GridLayout:
 
         vars.WORKLIST.append("Sync")
         threads_start()
+
+        # print invoices
+        try:
+            Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+
+            companies = Company()
+            comps = companies.where({'company_id': auth_user.company_id}, set=True)
+            if comps:
+                for company in comps:
+                    companies.id = company['id']
+                    companies.company_id = company['company_id']
+                    companies.name = company['name']
+                    companies.street = company['street']
+                    companies.suite = company['suite']
+                    companies.city = company['city']
+                    companies.state = company['state']
+                    companies.zip = company['zip']
+                    companies.email = company['email']
+                    companies.phone = company['phone']
+            customers = User()
+            custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+            if custs:
+                for user in custs:
+                    customers.id = user['id']
+                    customers.user_id = user['user_id']
+                    customers.company_id = user['company_id']
+                    customers.username = user['username']
+                    customers.first_name = user['first_name']
+                    customers.last_name = user['last_name']
+                    customers.street = user['street']
+                    customers.suite = user['suite']
+                    customers.city = user['city']
+                    customers.state = user['state']
+                    customers.zipcode = user['zipcode']
+                    customers.email = user['email']
+                    customers.phone = user['phone']
+                    customers.intercom = user['intercom']
+                    customers.concierge_name = user['concierge_name']
+                    customers.concierge_number = user['concierge_number']
+                    customers.special_instructions = user['special_instructions']
+                    customers.shirt_old = user['shirt_old']
+                    customers.shirt = user['shirt']
+                    customers.delivery = user['delivery']
+                    customers.profile_id = user['profile_id']
+                    customers.payment_status = user['payment_status']
+                    customers.payment_id = user['payment_id']
+                    customers.token = user['token']
+                    customers.api_token = user['api_token']
+                    customers.reward_status = user['reward_status']
+                    customers.reward_points = user['reward_points']
+                    customers.account = user['account']
+                    customers.starch = user['starch']
+                    customers.important_memo = user['important_memo']
+                    customers.invoice_memo = user['invoice_memo']
+                    customers.password = user['password']
+                    customers.role_id = user['role_id']
+                    customers.remember_token = user['remember_token']
+
+            if not type or not Epson:
+                self.set_result_status()
+                self.print_popup.dismiss()
+                pass
+            elif type == 2:
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("{}\n".format(companies.name))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("{}\n".format(companies.street))
+                Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                          invert=False, smooth=False, flip=False)
+
+                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                Epson.text("edited on: {}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                # Print barcode
+                Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('------------------------------------------\n')
+
+                # display invoice details
+                if self.invoice_list:
+
+                    for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+                        total_qty = len(values)
+                        colors = {}
+                        item_price = 0
+                        color_string = []
+                        memo_string = []
+                        if values:
+                            for item in values:
+                                item_name = item['item_name']
+                                item_type = item['type']
+                                item_color = item['color']
+                                item_memo = item['memo']
+                                item_price += item['item_price'] if item['item_price'] else 0
+                                if item['color']:
+                                    if item_color in colors:
+                                        colors[item_color] += 1
+                                    else:
+                                        colors[item_color] = 1
+                                if item_memo:
+                                    memo_string.append(item_memo)
+                            if colors:
+                                for color_name, color_amount in colors.items():
+                                    if color_name:
+                                        color_string.append('{}-{}'.format(color_amount, color_name))
+
+                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=5, invert=False, smooth=False, flip=False)
+                            Epson.text('{} {}    '.format(item_type, total_qty, item_name))
+                            Epson.set(align=u'LEFT', font=u'A', text_type=u'B', width=1, height=1,
+                                      density=5, invert=False, smooth=False, flip=False)
+                            Epson.text('{}\n'.format(item_name))
+                            if len(memo_string) > 0:
+                                Epson.control('HT')
+                                Epson.control('HT')
+                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=5, invert=False, smooth=False, flip=False)
+                                Epson.text('  {}\n'.format('/ '.join(memo_string)))
+                            if len(color_string):
+                                Epson.control('HT')
+                                Epson.control('HT')
+                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                          density=5, invert=False, smooth=False, flip=False)
+                                Epson.text('  {}\n'.format(', '.join(color_string)))
+
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('------------------------------------------\n')
+                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{} PCS\n'.format(self.quantity))
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('------------------------------------------\n')
+                # Cut paper
+                Epson.cut(mode=u"PART")
+
+                # Print store copies
+                if print_invoice:  # if invoices synced
+                    for invoice_id, item_id in print_invoice.items():
+
+                        # start invoice
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("::COPY::\n")
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("{}\n".format(companies.name))
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                        Epson.text("edited: {}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                        # Print barcode
+                        Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('------------------------------------------\n')
+
+                        if print_invoice[invoice_id]:
+                            for item_id, invoice_item in print_invoice[invoice_id].items():
+                                item_name = invoice_item['name']
+                                item_price = invoice_item['item_price']
+                                item_qty = invoice_item['qty']
+                                item_color_string = []
+                                item_memo = invoice_item['memos']
+                                item_type = invoice_item['type']
+                                if invoice_item['colors']:
+                                    for color_name, color_qty in invoice_item['colors'].items():
+                                        if color_name:
+                                            item_color_string.append('{}-{}'.format(color_qty, color_name))
+                                string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
+                                    vars.us_dollar(item_price)) + 4
+                                string_offset = 42 - string_length if 42 - string_length > 0 else 0
+                                Epson.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                     item_qty,
+                                                                     item_name,
+                                                                     ' ' * string_offset,
+                                                                     vars.us_dollar(item_price)))
+
+                                # Epson.text('\r\x1b@\x1b\x61\x02{}\n'.format(vars.us_dollar(item_price)))
+                                if len(item_memo) > 0:
+                                    Epson.control('HT')
+                                    Epson.control('HT')
+                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                              density=5, invert=False, smooth=False, flip=False)
+                                    Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                if len(item_color_string) > 0:
+                                    Epson.control('HT')
+                                    Epson.control('HT')
+                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                              density=5, invert=False, smooth=False, flip=False)
+                                    Epson.text('  {}\n'.format(', '.join(item_color_string)))
+
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('------------------------------------------\n')
+                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{} PCS\n'.format(self.quantity))
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('------------------------------------------\n')
+                        Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('    SUBTOTAL:')
+                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        string_length = len(vars.us_dollar(self.subtotal))
+                        string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                        Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                   vars.us_dollar(self.subtotal)))
+                        Epson.set(align=u"RIGHT", text_type=u'B')
+                        Epson.text('         TAX:')
+                        string_length = len(vars.us_dollar(self.tax))
+                        string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                   vars.us_dollar(self.tax)))
+                        Epson.set(align=u"RIGHT", text_type=u'B')
+                        Epson.text('       TOTAL:')
+                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        string_length = len(vars.us_dollar(self.total))
+                        string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                        Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                   vars.us_dollar(self.total)))
+                        Epson.set(align=u"RIGHT", text_type=u'B')
+                        Epson.text('     BALANCE:')
+                        string_length = len(vars.us_dollar(self.total))
+                        string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                        Epson.text('{}{}\n\n'.format(' ' * string_offset,
+                                                     vars.us_dollar(self.total)))
+                        if item_type == 'L':
+                            # get customer mark
+                            marks = Custid()
+                            marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                            if marks_list:
+                                m_list = []
+                                for mark in marks_list:
+                                    m_list.append(mark['mark'])
+                                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                          density=8, invert=False, smooth=False, flip=False)
+                                Epson.text('{}\n\n'.format(', '.join(m_list)))
+
+                        # Cut paper
+                        Epson.cut(mode=u"PART")
+            else:
+                # Print store copies
+                if print_invoice:  # if invoices synced
+                    for invoice_id, item_id in print_invoice.items():
+
+                        # start invoice
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("::COPY::\n")
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("{}\n".format(companies.name))
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                        Epson.text("edited: {}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                        # Print barcode
+                        Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('------------------------------------------\n')
+
+                        if print_invoice[invoice_id]:
+                            for item_id, invoice_item in print_invoice[invoice_id].items():
+                                item_name = invoice_item['name']
+                                item_price = invoice_item['item_price']
+                                item_qty = invoice_item['qty']
+                                item_color_string = []
+                                item_memo = invoice_item['memos']
+                                item_type = invoice_item['type']
+                                if invoice_item['colors']:
+                                    for color_name, color_qty in invoice_item['colors'].items():
+                                        if color_name:
+                                            item_color_string.append('{}-{}'.format(color_qty, color_name))
+                                string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
+                                    vars.us_dollar(item_price)) + 4
+                                string_offset = 42 - string_length if 42 - string_length > 0 else 0
+                                Epson.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                     item_qty,
+                                                                     item_name,
+                                                                     ' ' * string_offset,
+                                                                     vars.us_dollar(item_price)))
+
+                                # Epson.text('\r\x1b@\x1b\x61\x02{}\n'.format(vars.us_dollar(item_price)))
+                                if len(item_memo) > 0:
+                                    Epson.control('HT')
+                                    Epson.control('HT')
+                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                              density=5, invert=False, smooth=False, flip=False)
+                                    Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                if len(item_color_string) > 0:
+                                    Epson.control('HT')
+                                    Epson.control('HT')
+                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                              density=5, invert=False, smooth=False, flip=False)
+                                    Epson.text('  {}\n'.format(', '.join(item_color_string)))
+
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('------------------------------------------\n')
+                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{} PCS\n'.format(self.quantity))
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('------------------------------------------\n')
+                        Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('    SUBTOTAL:')
+                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        string_length = len(vars.us_dollar(self.subtotal))
+                        string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                        Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                   vars.us_dollar(self.subtotal)))
+                        Epson.set(align=u"RIGHT", text_type=u'B')
+                        Epson.text('         TAX:')
+                        string_length = len(vars.us_dollar(self.tax))
+                        string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                   vars.us_dollar(self.tax)))
+                        Epson.set(align=u"RIGHT", text_type=u'B')
+                        Epson.text('       TOTAL:')
+                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        string_length = len(vars.us_dollar(self.total))
+                        string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                        Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                   vars.us_dollar(self.total)))
+                        Epson.set(align=u"RIGHT", text_type=u'B')
+                        Epson.text('     BALANCE:')
+                        string_length = len(vars.us_dollar(self.total))
+                        string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                        Epson.text('{}{}\n\n'.format(' ' * string_offset,
+                                                     vars.us_dollar(self.total)))
+                        if customers.invoice_memo:
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('{}\n'.format(customers.invoice_memo))
+                        if item_type == 'L':
+                            # get customer mark
+                            marks = Custid()
+                            marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                            if marks_list:
+                                m_list = []
+                                for mark in marks_list:
+                                    m_list.append(mark['mark'])
+                                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                          density=8, invert=False, smooth=False, flip=False)
+                                Epson.text('{}\n\n'.format(', '.join(m_list)))
+
+                        # Cut paper
+                        Epson.cut(mode=u"PART")
+        except USBNotFoundError:
+            popup = Popup()
+            popup.title = 'Printer Error'
+            content = KV.popup_alert('Unable to locate usb printer.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            sys.stdout.write('\a')
+            sys.stdout.flush()
 
         self.set_result_status()
         self.print_popup.dismiss()
@@ -3592,11 +4832,20 @@ class HistoryScreen(Screen):
     invs_results_label = ObjectProperty(None)
     history_popup = ObjectProperty(None)
     status_spinner = ObjectProperty(None)
+    starch = None
 
     def get_history(self):
         # check if an invoice was previously selected
         self.invoices_table.clear_widgets()
         self.items_table.clear_widgets()
+
+        # set any necessary variables
+        customers = User().where({'user_id': vars.CUSTOMER_ID})
+        if customers:
+            for customer in customers:
+                self.starch = vars.get_starch_by_code(customer['starch'])
+        else:
+            self.starch = vars.get_starch_by_code(None)
 
         # create the invoice count list
         invoices = Invoice()
@@ -3774,7 +5023,7 @@ class HistoryScreen(Screen):
                 invoice_deleted = True if invoice['deleted_at'] else False
         else:
             invoice_deleted = False
-        print(invoice_deleted)
+
         iitems = InvoiceItem()
         data = {'invoice_id': vars.INVOICE_ID}
         inv_items = iitems.where(data,
@@ -3797,12 +5046,21 @@ class HistoryScreen(Screen):
                 if itm_srch:
                     for itm in itm_srch:
                         item_name = itm['name']
+                        inventory_id = itm['inventory_id']
                 else:
                     item_name = ''
+                    inventory_id = None
+
+                inventories = Inventory().where({'inventory_id': inventory_id})
+                if inventories:
+                    for inventory in inventories:
+                        laundry = inventory['laundry']
+                else:
+                    laundry = 0
 
                 items[item_id] = {
                     'id': invoice_item['id'],
-                    'name': item_name,
+                    'name': '{} ({})'.format(item_name, self.starch) if laundry else item_name,
                     'total': 0,
                     'quantity': 0,
                     'color': {},
@@ -3843,7 +5101,6 @@ class HistoryScreen(Screen):
                     item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=value['name'],
                                                                                 color_s=', '.join(color_string),
                                                                                 memo_s='/ '.join(value['memo']))
-                    # print(item_string)
                     tr2 = KV.sized_invoice_tr(1,
                                               item_string,
                                               text_wrap=True,
@@ -4020,6 +5277,1034 @@ class HistoryScreen(Screen):
         popup.open()
         self.history_popup.dismiss()
         self.get_history()
+
+    def reprint_popup(self):
+        popup = Popup()
+        popup.title = 'Reprint Invoice #{}'.format(vars.INVOICE_ID)
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Store Copy',
+                                         on_release=partial(self.reprint_invoice, 1)))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Customer Copy',
+                                         on_release=partial(self.reprint_invoice, 2)))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Tags',
+                                         on_release=self.reprint_tags))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(text='Cancel',
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def reprint_invoice(self, type, *args, **kwargs):
+        if vars.INVOICE_ID:
+            # print invoices
+            try:
+                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+                companies = Company()
+                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+
+                if comps:
+                    for company in comps:
+                        companies.id = company['id']
+                        companies.company_id = company['company_id']
+                        companies.name = company['name']
+                        companies.street = company['street']
+                        companies.suite = company['suite']
+                        companies.city = company['city']
+                        companies.state = company['state']
+                        companies.zip = company['zip']
+                        companies.email = company['email']
+                        companies.phone = Job.make_us_phone(company['phone'])
+                customers = User()
+                custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+                if custs:
+                    for user in custs:
+                        customers.id = user['id']
+                        customers.user_id = user['user_id']
+                        customers.company_id = user['company_id']
+                        customers.username = user['username']
+                        customers.first_name = user['first_name']
+                        customers.last_name = user['last_name']
+                        customers.street = user['street']
+                        customers.suite = user['suite']
+                        customers.city = user['city']
+                        customers.state = user['state']
+                        customers.zipcode = user['zipcode']
+                        customers.email = user['email']
+                        customers.phone = Job.make_us_phone(user['phone'])
+                        customers.intercom = user['intercom']
+                        customers.concierge_name = user['concierge_name']
+                        customers.concierge_number = user['concierge_number']
+                        customers.special_instructions = user['special_instructions']
+                        customers.shirt_old = user['shirt_old']
+                        customers.shirt = user['shirt']
+                        customers.delivery = user['delivery']
+                        customers.profile_id = user['profile_id']
+                        customers.payment_status = user['payment_status']
+                        customers.payment_id = user['payment_id']
+                        customers.token = user['token']
+                        customers.api_token = user['api_token']
+                        customers.reward_status = user['reward_status']
+                        customers.reward_points = user['reward_points']
+                        customers.account = user['account']
+                        customers.starch = user['starch']
+                        customers.important_memo = user['important_memo']
+                        customers.invoice_memo = user['invoice_memo']
+                        customers.password = user['password']
+                        customers.role_id = user['role_id']
+                        customers.remember_token = user['remember_token']
+                invoices = Invoice()
+                invs = invoices.where({'invoice_id': vars.INVOICE_ID})
+                if invs:
+                    for invoice in invs:
+                        invoice_quantity = invoice['quantity']
+                        invoice_subtotal = invoice['pretax']
+                        invoice_tax = invoice['tax']
+                        invoice_total = invoice['total']
+                        invoice_due_date = datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S")
+                invoice_items = InvoiceItem()
+                inv_items = invoice_items.where({'invoice_id': vars.INVOICE_ID})
+
+                print_sync_invoice = {vars.INVOICE_ID: {}}
+                if inv_items:
+                    colors = {}
+                    for invoice_item in inv_items:
+                        item_id = invoice_item['item_id']
+                        items = InventoryItem().where({'item_id': item_id})
+                        if items:
+                            for item in items:
+                                item_name = item['name']
+                                inventory_id = item['inventory_id']
+                        else:
+                            item_name = None
+                            inventory_id = None
+
+                        inventories = Inventory()
+                        invs = inventories.where({'inventory_id': inventory_id})
+                        if invs:
+                            if invs:
+                                for inventory in invs:
+                                    inventory_init = inventory['name'][:1].capitalize()
+                                    laundry = inventory['laundry']
+                            else:
+                                inventory_init = ''
+                                laundry = 0
+
+                        display_name = '{} ({})'.format(item_name, vars.get_starch_by_code(
+                            customers.starch)) if laundry else item_name
+
+                        item_color = invoice_item['color']
+                        if item_color in colors:
+                            colors[item_color] += 1
+                        else:
+                            colors[item_color] = 1
+                        item_memo = invoice_item['memo']
+                        item_subtotal = invoice_item['pretax']
+                        if item_id in print_sync_invoice[vars.INVOICE_ID]:
+                            print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_subtotal
+                            print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
+                            if item_memo:
+                                print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
+                            print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
+                        else:
+                            print_sync_invoice[vars.INVOICE_ID][item_id] = {
+                                'item_id': item_id,
+                                'type': inventory_init,
+                                'name': display_name,
+                                'item_price': item_subtotal,
+                                'qty': 1,
+                                'memos': [item_memo] if item_memo else [],
+                                'colors': {item_color: 1}
+                            }
+                now = datetime.datetime.now()
+                if type == 2:
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("{}\n".format(companies.name))
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("{}\n".format(companies.street))
+                    Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                              invert=False, smooth=False, flip=False)
+
+                    Epson.text("{}\n".format(companies.phone))
+                    Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                    # Print barcode
+                    Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{}\n'.format(customers.phone))
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('------------------------------------------\n')
+
+                    if print_sync_invoice[vars.INVOICE_ID]:
+                        for item_id, invoice_item in print_sync_invoice[vars.INVOICE_ID].items():
+                            item_name = invoice_item['name']
+                            item_price = invoice_item['item_price']
+                            item_qty = invoice_item['qty']
+                            item_color_string = []
+                            item_memo = invoice_item['memos']
+                            item_type = invoice_item['type']
+                            if invoice_item['colors']:
+                                for color_name, color_qty in invoice_item['colors'].items():
+                                    if color_name:
+                                        item_color_string.append('{}-{}'.format(color_qty, color_name))
+                            Epson.text('{} {}   {}\n'.format(item_type, item_qty, item_name))
+
+                            if len(item_memo) > 0:
+                                Epson.control('HT')
+                                Epson.control('HT')
+                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                          height=1,
+                                          density=5, invert=False, smooth=False, flip=False)
+                                Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                            if len(item_color_string) > 0:
+                                Epson.control('HT')
+                                Epson.control('HT')
+                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                          height=1,
+                                          density=5, invert=False, smooth=False, flip=False)
+                                Epson.text('  {}\n'.format(', '.join(item_color_string)))
+
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('------------------------------------------\n')
+                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{} PCS\n'.format(invoice_quantity))
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('------------------------------------------\n')
+
+                    if customers.invoice_memo:
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{}\n'.format(customers.invoice_memo))
+                    # Cut paper
+                    Epson.cut(mode=u"PART")
+
+                if type == 1:
+                    # Print store copies
+                    if print_sync_invoice:  # if invoices synced
+                        for invoice_id, item_id in print_sync_invoice.items():
+
+                            # start invoice
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text("::COPY::\n")
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text("{}\n".format(companies.name))
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text("{}\n".format(companies.phone))
+                            Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
+                                      density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text(
+                                "READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                            # Print barcode
+                            Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
+                                          'B', 'B')
+
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                                      density=6,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text(
+                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=2,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('{}\n'.format(customers.phone))
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=1,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('------------------------------------------\n')
+
+                            if print_sync_invoice[invoice_id]:
+                                for item_id, invoice_item in print_sync_invoice[invoice_id].items():
+                                    item_name = invoice_item['name']
+                                    item_price = invoice_item['item_price']
+                                    item_qty = invoice_item['qty']
+                                    item_color_string = []
+                                    item_memo = invoice_item['memos']
+                                    item_type = invoice_item['type']
+                                    if invoice_item['colors']:
+                                        for color_name, color_qty in invoice_item['colors'].items():
+                                            if color_name:
+                                                item_color_string.append('{}-{}'.format(color_qty, color_name))
+                                    string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
+                                        vars.us_dollar(item_price)) + 4
+                                    string_offset = 42 - string_length if 42 - string_length > 0 else 0
+                                    Epson.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                         item_qty,
+                                                                         item_name,
+                                                                         ' ' * string_offset,
+                                                                         vars.us_dollar(item_price)))
+
+                                    if len(item_memo) > 0:
+                                        Epson.control('HT')
+                                        Epson.control('HT')
+                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                  height=1,
+                                                  density=5, invert=False, smooth=False, flip=False)
+                                        Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                    if len(item_color_string) > 0:
+                                        Epson.control('HT')
+                                        Epson.control('HT')
+                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                  height=1,
+                                                  density=5, invert=False, smooth=False, flip=False)
+                                        Epson.text('  {}\n'.format(', '.join(item_color_string)))
+
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=1,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('------------------------------------------\n')
+                            Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('{} PCS\n'.format(invoice_quantity))
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=1,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('------------------------------------------\n')
+                            Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('    SUBTOTAL:')
+                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            string_length = len(vars.us_dollar(invoice_subtotal))
+                            string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                            Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
+                            Epson.set(align=u"RIGHT", text_type=u'B')
+                            Epson.text('         TAX:')
+                            string_length = len(vars.us_dollar(invoice_tax))
+                            string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_tax)))
+                            Epson.set(align=u"RIGHT", text_type=u'B')
+                            Epson.text('       TOTAL:')
+                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            string_length = len(vars.us_dollar(invoice_total))
+                            string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                            Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                       vars.us_dollar(invoice_total)))
+                            Epson.set(align=u"RIGHT", text_type=u'B')
+                            Epson.text('     BALANCE:')
+                            string_length = len(vars.us_dollar(invoice_total))
+                            string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                            Epson.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(invoice_total)))
+                            if customers.invoice_memo:
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('{}\n'.format(customers.invoice_memo))
+                            if item_type == 'L':
+                                # get customer mark
+                                marks = Custid()
+                                marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                                if marks_list:
+                                    m_list = []
+                                    for mark in marks_list:
+                                        m_list.append(mark['mark'])
+                                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                              density=8, invert=False, smooth=False, flip=False)
+                                    Epson.text('{}\n\n'.format(', '.join(m_list)))
+
+                            # Cut paper
+                            Epson.cut(mode=u"PART")
+            except USBNotFoundError:
+                popup = Popup()
+                popup.title = 'Printer Error'
+                content = KV.popup_alert('No printer found. Please try again.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+        else:
+            popup = Popup()
+            popup.title = 'Reprint Error'
+            content = KV.popup_alert('Please select an invoice.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
+    def reprint_tags(self, *args, **kwargs):
+        print('here')
+
+
+class InventoriesScreen(Screen):
+    inventory_table = ObjectProperty(None)
+    inventory_name = ObjectProperty(None)
+    inventory_desc = ObjectProperty(None)
+    inventory_order = ObjectProperty(None)
+    inventory_laundry = 0
+    inventory_id = None
+    edit_popup = Popup()
+    add_popup = Popup()
+
+    def reset(self):
+        self.inventory_id = None
+        self.inventory_laundry = 0
+        self.update_inventory_table()
+
+    def update_inventory_table(self):
+        self.inventory_table.clear_widgets()
+        h1 = KV.sized_invoice_tr(0, 'ID', 0.1)
+        h2 = KV.sized_invoice_tr(0, 'Name', 0.4)
+        h3 = KV.sized_invoice_tr(0, 'Order', 0.1)
+        h4 = KV.sized_invoice_tr(0, 'Laundry', 0.1)
+        h5 = KV.sized_invoice_tr(0, 'Action', 0.1)
+        h6 = KV.sized_invoice_tr(0, 'Move', 0.1)
+        h7 = KV.sized_invoice_tr(0, 'Move', 0.1)
+        self.inventory_table.add_widget(Builder.load_string(h1))
+        self.inventory_table.add_widget(Builder.load_string(h2))
+        self.inventory_table.add_widget(Builder.load_string(h3))
+        self.inventory_table.add_widget(Builder.load_string(h4))
+        self.inventory_table.add_widget(Builder.load_string(h5))
+        self.inventory_table.add_widget(Builder.load_string(h6))
+        self.inventory_table.add_widget(Builder.load_string(h7))
+
+        inventories = Inventory().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        if inventories:
+            for inventory in inventories:
+                c1 = KV.sized_invoice_tr(1, inventory['id'], 0.1)
+                c2 = KV.sized_invoice_tr(state=1,
+                                         data='{}\\n{}'.format(inventory['name'], inventory['description']),
+                                         size_hint_x=0.4,
+                                         text_wrap=True)
+                c3 = KV.sized_invoice_tr(1, inventory['ordered'], 0.1)
+                c4 = KV.sized_invoice_tr(1, 'True' if inventory['laundry'] else 'False', 0.1)
+                c5 = Button(text="Edit",
+                            size_hint_x=0.1,
+                            on_release=partial(self.edit_invoice_popup, inventory['id']))
+                c6 = Factory.CenterGlyphUpButton(size_hint_x=0.1,
+                                                 on_release=partial(self.inventory_move, 'up', inventory['id']))
+                c7 = Factory.CenterGlyphDownButton(size_hint_x=0.1,
+                                                   on_release=partial(self.inventory_move, 'down', inventory['id']))
+                self.inventory_table.add_widget(Builder.load_string(c1))
+                self.inventory_table.add_widget(Builder.load_string(c2))
+                self.inventory_table.add_widget(Builder.load_string(c3))
+                self.inventory_table.add_widget(Builder.load_string(c4))
+                self.inventory_table.add_widget(c5)
+                self.inventory_table.add_widget(c6)
+                self.inventory_table.add_widget(c7)
+
+    def inventory_move(self, pos, id, *args, **kwargs):
+        orders = []
+        inventories = Inventory().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        row_selected = False
+        if inventories:
+            idx = -1
+            for inventory in inventories:
+                idx += 1
+                inventory_id = inventory['id']
+                inventory_order = inventory['ordered']
+                orders.append({'id': inventory_id, 'ordered': inventory_order})
+                if inventory_id == id:
+                    row_selected = idx
+
+        if row_selected:
+            row_previous = row_selected - 1
+            row_next = row_selected + 1
+            if pos == 'up':
+                try:
+                    alist = orders[row_previous]
+                    blist = orders[row_selected]
+                    orders[row_previous] = blist
+                    orders[row_selected] = alist
+                except IndexError:
+                    pass
+
+
+            else:
+                try:
+                    alist = orders[row_next]
+                    blist = orders[row_selected]
+                    orders[row_next] = blist
+                    orders[row_selected] = alist
+                except IndexError:
+                    pass
+        idx = -1
+        if orders:
+            ordered = 0
+            for order in orders:
+                idx += 1
+                ordered += 1
+                orders[idx]['ordered'] = ordered
+
+        # save new order
+        if orders:
+            for order in orders:
+                Inventory().put(where={'id': order['id']}, data={'ordered': order['ordered']})
+            self.reset()
+
+    def edit_invoice_popup(self, id, *args, **kwargs):
+        self.inventory_id = id
+        self.edit_popup.title = 'Edit Invoice'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = GridLayout(size_hint=(1, 0.9),
+                                    cols=2,
+                                    rows=4,
+                                    row_force_default=True,
+                                    row_default_height='50sp',
+                                    spacing='2sp')
+        inventories = Inventory().where({'id': id})
+        if inventories:
+            for inventory in inventories:
+                inventory_name = inventory['name']
+                inventory_desc = inventory['description']
+                inventory_order = inventory['ordered']
+                inventory_laundry = inventory['laundry']
+        else:
+            inventory_name = ''
+            inventory_desc = ''
+            inventory_order = ''
+            inventory_laundry = False
+        inv_laundry_display = 'True' if inventory_laundry else 'False'
+        self.inventory_name = Factory.CenterVerticalTextInput(text=inventory_name)
+        self.inventory_desc = Factory.CenterVerticalTextInput(text=inventory_desc)
+        self.inventory_order = Factory.CenterVerticalTextInput(text='{}'.format(str(inventory_order)))
+        laundry = ['False', 'True']
+        c4 = Spinner(text='{}'.format(inv_laundry_display),
+                     values=laundry)
+        c4.bind(text=self.set_laundry)
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Name:'))
+        inner_layout_1.add_widget(self.inventory_name)
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Description:'))
+        inner_layout_1.add_widget(self.inventory_desc)
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Order:'))
+        inner_layout_1.add_widget(self.inventory_order)
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Laundry:'))
+        inner_layout_1.add_widget(c4)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(text='Cancel',
+                                         on_release=self.edit_popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=0AAC00][b]Save[/b][/color]',
+                                         on_release=self.edit_inventory))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.edit_popup.content = layout
+        self.edit_popup.open()
+
+    def edit_inventory(self, *args, **kwargs):
+        inventories = Inventory()
+        put = inventories.put(where={'id': self.inventory_id},
+                              data={'name': self.inventory_name.text,
+                                    'description': self.inventory_desc.text,
+                                    'ordered': self.inventory_order.text,
+                                    'laundry': self.inventory_laundry})
+        if put:
+            self.edit_popup.dismiss()
+            vars.WORKLIST.append("Sync")
+            threads_start()
+            popup = Popup()
+            popup.title = 'Inventory Update'
+            content = KV.popup_alert('Successfully updated inventory!')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            self.edit_popup.dismiss()
+            self.reset()
+
+    def set_laundry(self, item, value, *args, **kwargs):
+        if value == 'True':
+            self.inventory_laundry = 1
+        else:
+            self.inventory_laundry = 0
+        print(self.inventory_laundry)
+
+    def add_inventory_popup(self):
+        self.add_popup.title = 'Add Inventory'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = GridLayout(size_hint=(1, 0.9),
+                                    cols=2,
+                                    rows=4,
+                                    row_force_default=True,
+                                    row_default_height='50sp')
+        self.inventory_name = Factory.CenterVerticalTextInput(text='')
+        self.inventory_desc = Factory.CenterVerticalTextInput(text='')
+        self.inventory_order = Factory.CenterVerticalTextInput(text='')
+        laundry = ['False', 'True']
+        c4 = Spinner(text='{}'.format('True' if self.inventory_laundry else 'False'),
+                     values=laundry)
+        c4.bind(text=self.set_laundry)
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Name:'))
+        inner_layout_1.add_widget(self.inventory_name)
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Description:'))
+        inner_layout_1.add_widget(self.inventory_desc)
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Order:'))
+        inner_layout_1.add_widget(self.inventory_order)
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Laundry:'))
+        inner_layout_1.add_widget(c4)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(text='Cancel',
+                                         on_release=self.add_popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=0AAC00][b]Add[/b][/color]',
+                                         on_release=self.add_inventory))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.add_popup.content = layout
+        self.add_popup.open()
+
+    def add_inventory(self, *args, **kwargs):
+        inventories = Inventory()
+        inventories.company_id = auth_user.company_id
+        inventories.name = self.inventory_name.text
+        inventories.description = self.inventory_desc.text
+        inventories.ordered = self.inventory_order.text
+        inventories.laundry = self.inventory_laundry
+        inventories.status = 1
+
+        if inventories.add():
+            # set invoice_items data to save
+            vars.WORKLIST.append("Sync")
+            threads_start()
+
+            popup = Popup()
+            popup.title = 'Added Inventory'
+            popup.content = Builder.load_string(KV.popup_alert('Successfully created a new inventory!'))
+            popup.open()
+            self.add_popup.dismiss()
+            self.reset()
+
+
+class InventoryItemsScreen(Screen):
+    img_address = ObjectProperty(None)
+    items_panel = ObjectProperty(None)
+    fc = ObjectProperty(None)
+    inventory_id = None
+    item_id = None
+    inventory_image = Image()
+    r1c2 = ObjectProperty(None)
+    r2c2 = ObjectProperty(None)
+    r3c2 = ObjectProperty(None)
+    r4c2 = ObjectProperty(None)
+    r5c2 = ObjectProperty(None)
+    r6c2 = ObjectProperty(None)
+    add_popup = Popup()
+    edit_popup = Popup()
+    from_id = None
+    reorder_list = {}
+
+    def loading(self):
+        popup = Popup()
+        popup.title = 'Loading Screen'
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text='Loading Screen...'))
+        popup.content = layout
+        run_page = Thread(target=self.reset)
+        run_page.start()
+        # run_page.join()
+        # popup.dismiss
+
+    def reset(self):
+        self.inventory_id = None
+        self.get_inventory()
+        self.item_id = None
+        self.inventory_image.source = ''
+        self.from_id = None
+        self.reorder_list = {}
+
+    def get_inventory(self):
+        inventories = Inventory().where({'company_id': '{}'.format(auth_user.company_id),
+                                         'ORDER_BY': 'ordered ASC'})
+        if inventories:
+            idx = 0
+            self.items_panel.clear_tabs()
+            self.items_panel.clear_widgets()
+            for inventory in inventories:
+                idx += 1
+                inventory_id = inventory['inventory_id']
+                self.reorder_list[inventory_id] = []
+                if not self.inventory_id and idx == 1:
+                    self.inventory_id = inventory_id
+                inventory_name = inventory['name']
+                iitems = InventoryItem()
+                inventory_items = iitems.where({'inventory_id': inventory_id, 'ORDER_BY': 'ordered ASC'})
+                tph = TabbedPanelHeader(text='{}'.format(inventory_name),
+                                        on_release=partial(self.set_inventory, inventory_id))
+                layout = ScrollView()
+                content = Factory.GridLayoutForScrollView()
+
+                if inventory_items:
+                    for item in inventory_items:
+                        item_id = item['item_id']
+                        item_price = '${:,.2f}'.format(item['price'])
+                        self.reorder_list[inventory_id].append(item_id)
+
+                        if self.item_id == item_id:
+                            items_button = Factory.ItemsFromButton(text='[b]{}[/b]\n[i]{}[/i]'.format(item['name'],
+                                                                                                      item_price),
+                                                                   on_release=partial(self.set_item, item_id))
+                            self.from_id = self.item_id
+                        else:
+                            items_button = Factory.ItemsButton(text='[b]{}[/b]\n[i]{}[/i]'.format(item['name'],
+                                                                                                  item_price),
+                                                               on_release=partial(self.set_item, item_id))
+                        content.add_widget(items_button)
+                layout.add_widget(content)
+                tph.content = layout
+                self.items_panel.add_widget(tph)
+                if self.inventory_id == inventory_id:
+                    self.items_panel.switch_to(tph)
+
+    def set_inventory(self, inventory_id, *args, **kwargs):
+        self.inventory_id = inventory_id
+
+    def set_item(self, item_id, *args, **kwargs):
+        self.item_id = item_id
+        if self.from_id:
+            if self.reorder_list[self.inventory_id]:
+                idx = -1
+                for list_id in self.reorder_list[self.inventory_id]:
+                    idx += 1
+                    if list_id == self.item_id:
+                        self.reorder_list[self.inventory_id][idx] = self.from_id
+                    if list_id == self.from_id:
+                        self.reorder_list[self.inventory_id][idx] = self.item_id
+                row = 0
+                inv_items = InventoryItem()
+                for list_id in self.reorder_list[self.inventory_id]:
+                    row += 1
+                    inv_items.put(where={'company_id':auth_user.company_id,
+                                         'item_id':list_id},
+                                  data={'ordered':row})
+            self.from_id = None
+            self.item_id = None
+            self.reorder_list = {}
+            self.get_inventory()
+        else:
+            self.add_popup.size_hint = (None, None)
+            self.add_popup.size = (800, 400)
+            self.add_popup.title = 'Select Inventory Method'
+            layout = BoxLayout(orientation='vertical')
+            inner_layout_1 = BoxLayout(orientation='horizontal',
+                                       size_hint=(1, 0.6))
+            inner_layout_1.add_widget(Button(text='Reorder',
+                                             on_release=self.reorder_item))
+            inner_layout_1.add_widget(Button(text='Edit',
+                                             on_release=self.edit_show))
+            inner_layout_1.add_widget(Button(text='Delete',
+                                             on_release=self.delete_item))
+            inner_layout_2 = BoxLayout(orientation='horizontal',
+                                       size_hint=(1, 0.3))
+            inner_layout_2.add_widget(Button(text='Cancel',
+                                             on_release=self.add_popup.dismiss))
+            layout.add_widget(inner_layout_1)
+            layout.add_widget(inner_layout_2)
+            self.add_popup.content = layout
+            self.add_popup.open()
+
+    def reorder_item(self, *args, **kwargs):
+        self.get_inventory()
+        self.add_popup.dismiss()
+
+    def edit_show(self, *args, **kwargs):
+        self.add_popup.dismiss()
+
+        self.edit_popup.title = 'Edit Item'
+        inventory_items = InventoryItem()
+        invitems = inventory_items.where({'company_id': auth_user.company_id,
+                                          'item_id': self.item_id})
+        if invitems:
+            for item in invitems:
+                ordered = item['ordered']
+                name = item['name']
+                description = item['description']
+                tags = item['tags']
+                quantity = item['quantity']
+                price = item['price']
+                image_src = inventory_items.get_image_src(item['item_id'])
+        else:
+            name = ''
+            description = ''
+            tags = ''
+            quantity = ''
+            price = ''
+            image_src = ''
+
+
+        layout = BoxLayout(orientation='vertical',
+                           pos_hint={'top': 1})
+        inner_layout_1 = BoxLayout(orientation='horizontal')
+        inner_group_1 = BoxLayout(orientation='vertical',
+                                  size_hint=(0.5, 0.9))
+        inner_form = GridLayout(cols=2,
+                                rows=7,
+                                row_force_default=True,
+                                row_default_height='50sp',
+                                spacing='3dp')
+        r1c1 = Factory.CenteredFormLabel(text='Name')
+        self.r1c2 = Factory.CenterVerticalTextInput(text=str(name))
+        r2c1 = Factory.CenteredFormLabel(text='Description')
+        self.r2c2 = Factory.CenterVerticalTextInput(text=str(description))
+        r3c1 = Factory.CenteredFormLabel(text='Tags')
+        self.r3c2 = Factory.CenterVerticalTextInput(text=str(tags))
+        r4c1 = Factory.CenteredFormLabel(text='Quantity')
+        self.r4c2 = Factory.CenterVerticalTextInput(text=str(quantity))
+        r5c1 = Factory.CenteredFormLabel(text='Ordered')
+        self.r5c2 = Factory.CenterVerticalTextInput(text=str(ordered))
+        r6c1 = Factory.CenteredFormLabel(text='Price')
+        self.r6c2 = Factory.CenterVerticalTextInput(text='{0:0>2}'.format(price))
+        inner_form.add_widget(r1c1)
+        inner_form.add_widget(self.r1c2)
+        inner_form.add_widget(r2c1)
+        inner_form.add_widget(self.r2c2)
+        inner_form.add_widget(r3c1)
+        inner_form.add_widget(self.r3c2)
+        inner_form.add_widget(r4c1)
+        inner_form.add_widget(self.r4c2)
+        inner_form.add_widget(r5c1)
+        inner_form.add_widget(self.r5c2)
+        inner_form.add_widget(r6c1)
+        inner_form.add_widget(self.r6c2)
+        inner_group_1.add_widget(inner_form)
+        inner_layout_1.add_widget(inner_group_1)
+        inner_layout_1_2 = BoxLayout(orientation='vertical',
+                                     size_hint=(0.5, 0.9))
+        self.fc = Factory.ImageFileChooser()
+        inner_layout_1_2.add_widget(self.fc)
+        self.fc.ids.inventory_image.source = '{}'.format(image_src)
+        inner_layout_1.add_widget(inner_layout_1_2)
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                   orientation='horizontal')
+        cancel_button = Button(markup=True,
+                               text='Cancel',
+                               on_release=self.edit_popup.dismiss)
+        add_button = Button(markup=True,
+                            text='[color=0AAC00][b]Edit[/b][/color]',
+                            on_release=self.edit_item)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(add_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.edit_popup.content = layout
+        self.edit_popup.open()
+
+    def delete_confirm(self, *args, **kwargs):
+        pass
+
+    def delete_item(self, *args, **kwargs):
+        self.add_popup.dismiss()
+
+        inventory_items = InventoryItem()
+        deleted = inventory_items.where({'company_id':auth_user.company_id,
+                                         'item_id':self.item_id})
+        if deleted:
+            for deleted_items in deleted:
+                inventory_items.id = deleted_items['id']
+                if inventory_items.delete():
+                    popup = Popup()
+                    popup.title = 'Delete C'
+
+    def add_item_popup(self):
+        inventory_items = InventoryItem()
+        invitems = inventory_items.where({'company_id': auth_user.company_id,
+                                          'inventory_id': self.inventory_id,
+                                          'ORDER_BY': 'ordered desc',
+                                          'LIMIT': 1})
+        next_ordered = 1
+        if invitems:
+            for item in invitems:
+                ordered = item['ordered']
+                next_ordered += ordered
+
+        self.add_popup.title = 'Add A New Item'
+        layout = BoxLayout(orientation='vertical',
+                           pos_hint={'top': 1})
+        inner_layout_1 = BoxLayout(orientation='horizontal')
+        inner_group_1 = BoxLayout(orientation='vertical',
+                                  size_hint=(0.5, 0.9))
+        inner_form = GridLayout(cols=2,
+                                rows=7,
+                                row_force_default=True,
+                                row_default_height='50sp',
+                                spacing='3dp')
+        r1c1 = Factory.CenteredFormLabel(text='Name')
+        self.r1c2 = Factory.CenterVerticalTextInput()
+        r2c1 = Factory.CenteredFormLabel(text='Description')
+        self.r2c2 = Factory.CenterVerticalTextInput()
+        r3c1 = Factory.CenteredFormLabel(text='Tags')
+        self.r3c2 = Factory.CenterVerticalTextInput()
+        r4c1 = Factory.CenteredFormLabel(text='Quantity')
+        self.r4c2 = Factory.CenterVerticalTextInput()
+        r5c1 = Factory.CenteredFormLabel(text='Ordered')
+        self.r5c2 = Factory.CenterVerticalTextInput()
+        r6c1 = Factory.CenteredFormLabel(text='Price')
+        self.r6c2 = Factory.CenterVerticalTextInput()
+        inner_form.add_widget(r1c1)
+        inner_form.add_widget(self.r1c2)
+        inner_form.add_widget(r2c1)
+        inner_form.add_widget(self.r2c2)
+        inner_form.add_widget(r3c1)
+        inner_form.add_widget(self.r3c2)
+        inner_form.add_widget(r4c1)
+        inner_form.add_widget(self.r4c2)
+        inner_form.add_widget(r5c1)
+        inner_form.add_widget(self.r5c2)
+        inner_form.add_widget(r6c1)
+        inner_form.add_widget(self.r6c2)
+        inner_group_1.add_widget(inner_form)
+        inner_layout_1.add_widget(inner_group_1)
+        self.r5c2.text = '{}'.format(str(next_ordered))
+        inner_layout_1_2 = BoxLayout(orientation='vertical',
+                                     size_hint=(0.5, 0.9))
+        self.fc = Factory.ImageFileChooser()
+        inner_layout_1_2.add_widget(self.fc)
+        inner_layout_1.add_widget(inner_layout_1_2)
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                   orientation='horizontal')
+        cancel_button = Button(markup=True,
+                               text='Cancel',
+                               on_release=self.add_popup.dismiss)
+        add_button = Button(markup=True,
+                            text='[color=0AAC00][b]Add[/b][/color]',
+                            on_release=self.add_item)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(add_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.add_popup.content = layout
+        self.add_popup.open()
+
+    def add_item(self, *args, **kwargs):
+        # validate
+        errors = 0
+
+        if not self.r1c2.text:
+            errors += 1
+
+        if not self.r2c2.text:
+            errors += 1
+
+        if not self.r3c2.text:
+            errors += 1
+
+        if not self.r4c2.text:
+            errors += 1
+
+        if not self.r5c2.text:
+            errors += 1
+
+        if not self.r6c2.text:
+            errors += 1
+
+        img = self.fc.ids.inventory_image.source.replace('/', ' ').split() if self.fc.ids.inventory_image.source else [
+            'question.png']
+        img_name = img[-1]
+        if errors == 0:
+            inventory_items = InventoryItem()
+            inventory_items.company_id = auth_user.company_id
+            inventory_items.inventory_id = self.inventory_id
+            inventory_items.name = self.r1c2.text
+            inventory_items.description = self.r2c2.text
+            inventory_items.tags = self.r3c2.text
+            inventory_items.quantity = self.r4c2.text
+            inventory_items.ordered = self.r5c2.text
+            inventory_items.price = self.r6c2.text
+            inventory_items.image = img_name
+            if inventory_items.add():
+                popup = Popup()
+                popup.title = 'Form Success'
+                content = KV.popup_alert('Successfully created a new inventory item!')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                self.add_popup.dismiss()
+                self.reset()
+        else:
+            popup = Popup()
+            popup.title = 'Form Error'
+            content = KV.popup_alert('{} form errors'.format(errors))
+            popup.content = Builder.load_string(content)
+            popup.open()
+
+    def edit_item(self, *args, **kwargs):
+        # validate
+        errors = 0
+
+        if not self.r1c2.text:
+            errors += 1
+
+        if not self.r2c2.text:
+            errors += 1
+
+        if not self.r3c2.text:
+            errors += 1
+
+        if not self.r4c2.text:
+            errors += 1
+
+        if not self.r5c2.text:
+            errors += 1
+
+        if not self.r6c2.text:
+            errors += 1
+
+        img = self.fc.ids.inventory_image.source.replace('/', ' ').split() if self.fc.ids.inventory_image.source else [
+            'question.png']
+        img_name = img[-1]
+        if errors == 0:
+            inventory_items = InventoryItem()
+            put = inventory_items.put(where={'company_id':auth_user.company_id,
+                                             'item_id':self.item_id},
+                                      data={'name':self.r1c2.text,
+                                            'description':self.r2c2.text,
+                                            'tags':self.r3c2.text,
+                                            'quantity':self.r4c2.text,
+                                            'ordered':self.r5c2.text,
+                                            'price':self.r6c2.text,
+                                            'image':img_name})
+            if put:
+                popup = Popup()
+                popup.title = 'Form Success'
+                content = KV.popup_alert('Successfully updated item!')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                self.edit_popup.dismiss()
+                self.from_id = None
+                self.item_id = None
+                self.reorder_list = {}
+                self.get_inventory()
+        else:
+            popup = Popup()
+            popup.title = 'Form Error'
+            content = KV.popup_alert('{} form errors'.format(errors))
+            popup.content = Builder.load_string(content)
+            popup.open()
 
 
 class ItemDetailsScreen(Screen):
@@ -4412,7 +6697,7 @@ class Last10Screen(Screen):
                                              background_rgba=background_rgba, text_color=text_color)
                         tr5 = KV.widget_item(type='Label', data=cust['first_name'], rgba=rgba,
                                              background_rgba=background_rgba, text_color=text_color)
-                        tr6 = KV.widget_item(type='Label', data=cust['phone'], rgba=rgba,
+                        tr6 = KV.widget_item(type='Label', data=Job.make_us_phone(cust['phone']), rgba=rgba,
                                              background_rgba=background_rgba, text_color=text_color)
                         tr7 = KV.widget_item(type='Button', data='View',
                                              callback='self.parent.parent.parent.customer_select({})'
@@ -4975,9 +7260,9 @@ class PickupScreen(Screen):
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.9))
-        button_1 = Factory.PrintButton(text='Finish + Customer Invoice',
+        button_1 = Factory.PrintButton(text='Finish + Receipt',
                                        on_press=partial(self.finish_transaction, 1))
-        button_2 = Factory.PrintButton(text='Finish + No Invoice',
+        button_2 = Factory.PrintButton(text='Finish + No Receipt',
                                        on_press=partial(self.finish_transaction, 2))
         if self.payment_type == 'cc':
             if self.card_location == 1:
@@ -5019,7 +7304,8 @@ class PickupScreen(Screen):
             elif self.change_due == 0:
                 change_due_text = '[b]$0.00[/b]'
             elif self.change_due < 0:
-                change_due_text = '[color=FF0000][b][i]Remaining Due: {}[/i][/b][/color]'.format(vars.us_dollar(self.change_due))
+                change_due_text = '[color=FF0000][b][i]Remaining Due: {}[/i][/b][/color]'.format(
+                    vars.us_dollar(self.change_due))
             cash_change = Factory.CenteredLabel(markup=True,
                                                 text=change_due_text)
             cash_inner_layout_1.add_widget(cash_change)
@@ -5053,8 +7339,6 @@ class PickupScreen(Screen):
         pass
 
     def finish_transaction(self, print, *args, **kwargs):
-        if print == 1:  # customer copy of invoice and finish
-            pass
 
         transaction = Transaction()
         transaction.company_id = auth_user.company_id
@@ -5106,9 +7390,758 @@ class PickupScreen(Screen):
                                      data={'status': 5, 'transaction_id': transaction_id})
                     self.set_result_status()
                     self.finish_popup.dismiss()
+        if print == 1:  # customer copy of invoice and finish
+            try:
+                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+                companies = Company()
+                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+
+                if comps:
+                    for company in comps:
+                        companies.id = company['id']
+                        companies.company_id = company['company_id']
+                        companies.name = company['name']
+                        companies.street = company['street']
+                        companies.suite = company['suite']
+                        companies.city = company['city']
+                        companies.state = company['state']
+                        companies.zip = company['zip']
+                        companies.email = company['email']
+                        companies.phone = company['phone']
+                customers = User()
+                custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+                if custs:
+                    for user in custs:
+                        customers.id = user['id']
+                        customers.user_id = user['user_id']
+                        customers.company_id = user['company_id']
+                        customers.username = user['username']
+                        customers.first_name = user['first_name']
+                        customers.last_name = user['last_name']
+                        customers.street = user['street']
+                        customers.suite = user['suite']
+                        customers.city = user['city']
+                        customers.state = user['state']
+                        customers.zipcode = user['zipcode']
+                        customers.email = user['email']
+                        customers.phone = user['phone']
+                        customers.intercom = user['intercom']
+                        customers.concierge_name = user['concierge_name']
+                        customers.concierge_number = user['concierge_number']
+                        customers.special_instructions = user['special_instructions']
+                        customers.shirt_old = user['shirt_old']
+                        customers.shirt = user['shirt']
+                        customers.delivery = user['delivery']
+                        customers.profile_id = user['profile_id']
+                        customers.payment_status = user['payment_status']
+                        customers.payment_id = user['payment_id']
+                        customers.token = user['token']
+                        customers.api_token = user['api_token']
+                        customers.reward_status = user['reward_status']
+                        customers.reward_points = user['reward_points']
+                        customers.account = user['account']
+                        customers.starch = user['starch']
+                        customers.important_memo = user['important_memo']
+                        customers.invoice_memo = user['invoice_memo']
+                        customers.password = user['password']
+                        customers.role_id = user['role_id']
+                        customers.remember_token = user['remember_token']
+                if self.selected_invoices:
+                    # invoices = Invoice()
+                    print_sync_invoice = {}
+
+                    for invoice_id in self.selected_invoices:
+                        print_sync_invoice[invoice_id] = {}
+                        invoice_items = InvoiceItem()
+                        inv_items = invoice_items.where({'invoice_id': invoice_id})
+                        colors = {}
+
+                        if inv_items:
+                            for invoice_item in inv_items:
+                                item_id = invoice_item['item_id']
+                                items = InventoryItem().where({'item_id': item_id})
+                                if items:
+                                    for item in items:
+                                        item_name = item['name']
+                                        inventory_id = item['inventory_id']
+                                else:
+                                    item_name = None
+                                    inventory_id = None
+
+                                inventories = Inventory()
+                                invs = inventories.where({'inventory_id': inventory_id})
+                                if invs:
+                                    if invs:
+                                        for inventory in invs:
+                                            inventory_init = inventory['name'][:1].capitalize()
+                                            laundry = inventory['laundry']
+                                    else:
+                                        inventory_init = ''
+                                        laundry = 0
+
+                                display_name = '{} ({})'.format(item_name, vars.get_starch_by_code(
+                                    customers.starch)) if laundry else item_name
+
+                                item_color = invoice_item['color']
+                                if item_color in colors:
+                                    colors[item_color] += 1
+                                else:
+                                    colors[item_color] = 1
+                                item_memo = invoice_item['memo']
+                                item_subtotal = invoice_item['pretax']
+                                if item_id in print_sync_invoice[invoice_id]:
+                                    print_sync_invoice[invoice_id][item_id]['item_price'] += item_subtotal
+                                    print_sync_invoice[invoice_id][item_id]['qty'] += 1
+                                    if item_memo:
+                                        print_sync_invoice[invoice_id][item_id]['memos'].append(item_memo)
+                                    print_sync_invoice[invoice_id][item_id]['colors'] = colors
+                                else:
+                                    print_sync_invoice[invoice_id][item_id] = {
+                                        'item_id': item_id,
+                                        'type': inventory_init,
+                                        'name': display_name,
+                                        'item_price': item_subtotal,
+                                        'qty': 1,
+                                        'memos': [item_memo] if item_memo else [],
+                                        'colors': {item_color: 1}
+                                    }
+                        now = datetime.datetime.now()
+                # Print payment copies
+                if print_sync_invoice:  # if invoices synced
+                    # start invoice
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                              density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("::Payment Copy::\n")
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("{}\n".format(companies.name))
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("{}\n".format(companies.street))
+                    Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                              invert=False, smooth=False, flip=False)
+
+                    Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                    Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                              density=6,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text(
+                        '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                              density=2,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                              density=1,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('------------------------------------------\n')
+                    for invoice_id, item_id in print_sync_invoice.items():
+
+                        if print_sync_invoice[invoice_id]:
+                            for item_id, invoice_item in print_sync_invoice[invoice_id].items():
+                                item_name = invoice_item['name']
+                                item_price = invoice_item['item_price']
+                                item_qty = invoice_item['qty']
+                                item_color_string = []
+                                item_memo = invoice_item['memos']
+                                item_type = invoice_item['type']
+                                if invoice_item['colors']:
+                                    for color_name, color_qty in invoice_item['colors'].items():
+                                        if color_name:
+                                            item_color_string.append('{}-{}'.format(color_qty, color_name))
+                                string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
+                                    vars.us_dollar(item_price)) + 4
+                                string_offset = 42 - string_length if 42 - string_length > 0 else 0
+                                Epson.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                     item_qty,
+                                                                     item_name,
+                                                                     ' ' * string_offset,
+                                                                     vars.us_dollar(item_price)))
+
+                                if len(item_memo) > 0:
+                                    Epson.control('HT')
+                                    Epson.control('HT')
+                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                              height=1,
+                                              density=5, invert=False, smooth=False, flip=False)
+                                    Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                if len(item_color_string) > 0:
+                                    Epson.control('HT')
+                                    Epson.control('HT')
+                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                              height=1,
+                                              density=5, invert=False, smooth=False, flip=False)
+                                    Epson.text('  {}\n'.format(', '.join(item_color_string)))
+
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                              density=1,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('------------------------------------------\n')
+                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{} PCS\n'.format(self.total_quantity))
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                              density=1,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('------------------------------------------\n')
+                    Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('    SUBTOTAL:')
+                    Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                    string_length = len(vars.us_dollar(self.total_subtotal))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_subtotal)))
+                    Epson.set(align=u"RIGHT", text_type=u'B')
+                    Epson.text('         TAX:')
+                    string_length = len(vars.us_dollar(self.total_tax))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                    Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_tax)))
+                    Epson.set(align=u"RIGHT", text_type=u'B')
+                    Epson.text('       TOTAL:')
+                    Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                    string_length = len(vars.us_dollar(self.total_due))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_due)))
+                    Epson.set(align=u"RIGHT", text_type=u'B')
+                    Epson.text('     TENDERED:')
+                    string_length = len(vars.us_dollar(self.amount_tendered))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    Epson.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(self.amount_tendered)))
+                    Epson.set(align=u"RIGHT", text_type=u'B')
+                    Epson.text('     BALANCE:')
+                    balance = 0 if (
+                                       self.amount_tendered - self.total_due) < 0  else self.amount_tendered - self.total_due
+                    string_length = len(vars.us_dollar(balance))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    Epson.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(balance)))
+                    # Cut paper
+                    Epson.cut(mode=u"PART")
+            except USBNotFoundError:
+                popup = Popup()
+                popup.title = 'Printer Error'
+                content = KV.popup_alert('Usb device not found')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
 
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
+
+
+class PrinterScreen(Screen):
+    printer_name = ObjectProperty(None)
+    printer_model_number = ObjectProperty(None)
+    printer_nick_name = ObjectProperty(None)
+    printer_vendor = ObjectProperty(None)
+    printer_product = ObjectProperty(None)
+    printer_type = ObjectProperty(None)
+    printer_table = ObjectProperty(None)
+    r1c2 = ObjectProperty(None)
+    r2c2 = ObjectProperty(None)
+    r3c2 = ObjectProperty(None)
+    r4c2 = ObjectProperty(None)
+    r5c2 = ObjectProperty(None)
+    r6c2 = ObjectProperty(None)
+    edit_popup = Popup()
+    validated = 0
+    edit_printer_id = None
+
+    def reset(self):
+        self.printer_name.text = ''
+        self.printer_model_number.text = ''
+        self.printer_nick_name.text = ''
+        self.printer_vendor.text = ''
+        self.printer_product.text = ''
+        self.printer_type.text = ''
+        self.printer_table.clear_widgets()
+        self.validated = 0
+
+        self.update_printer_table()
+        self.edit_printer_id = None
+
+    def update_printer_table(self):
+        h1 = KV.sized_invoice_tr(0, '[color=000000][b]#[/b][/color]', 0.1)
+        h2 = KV.sized_invoice_tr(0, '[color=000000][b]Name[/b][/color]', 0.7)
+        h3 = KV.sized_invoice_tr(0, '[color=000000][b]Type[/b][/color]', 0.2)
+
+        self.printer_table.add_widget(Builder.load_string(h1))
+        self.printer_table.add_widget(Builder.load_string(h2))
+        self.printer_table.add_widget(Builder.load_string(h3))
+
+        # update saved printers
+        printers = Printer()
+        prs = printers.where({'company_id': auth_user.company_id})
+        if prs:
+            idx = 0
+            for printer in prs:
+                printer_id = printer['id']
+                idx += 1
+                col1 = Button(markup=True,
+                              size_hint_x=0.1,
+                              size_hint_y=None,
+                              text='[color=ffffff]{}[/color]'.format(idx),
+                              on_release=partial(self.edit_printer_popup, printer_id))
+                col2 = Button(markup=True,
+                              size_hint_x=0.7,
+                              size_hint_y=None,
+                              text='[color=ffffff]{}[/color]'.format(printer['name']),
+                              on_release=partial(self.edit_printer_popup, printer_id))
+                col3 = Button(markup=True,
+                              size_hint_x=0.2,
+                              size_hint_y=None,
+                              text='[color=ffffff]{}[/color]'.format(printer['type']),
+                              on_release=partial(self.edit_printer_popup, printer_id))
+                self.printer_table.add_widget(col1)
+                self.printer_table.add_widget(col2)
+                self.printer_table.add_widget(col3)
+
+    def edit_printer_popup(self, id, *args, **kwargs):
+        self.edit_printer_id = id
+        self.edit_popup = Popup()
+        self.edit_popup.title = 'Edit Printer'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='vertical',
+                                   size_hint=(1, 0.9))
+        edit_table = GridLayout(cols=2,
+                                rows=7,
+                                row_force_default=True,
+                                row_default_height='50sp',
+                                spacing='2sp')
+        printers = Printer()
+        prs = printers.where({'id': id})
+        if prs:
+            for printer in prs:
+                r1c1 = Factory.CenteredFormLabel(text='Name:')
+                self.r1c2 = Factory.CenterVerticalTextInput(padding='10cp',
+                                                            text='{}'.format(printer['name']))
+                edit_table.add_widget(r1c1)
+                edit_table.add_widget(self.r1c2)
+                r2c1 = Factory.CenteredFormLabel(text='Model #:')
+                self.r2c2 = Factory.CenterVerticalTextInput(padding='10cp',
+                                                            text='{}'.format(printer['model']))
+                edit_table.add_widget(r2c1)
+                edit_table.add_widget(self.r2c2)
+                r3c1 = Factory.CenteredFormLabel(text=' Nick Name:')
+                self.r3c2 = Factory.CenterVerticalTextInput(padding='10cp',
+                                                            text='{}'.format(printer['nick_name']))
+                edit_table.add_widget(r3c1)
+                edit_table.add_widget(self.r3c2)
+                r4c1 = Factory.CenteredFormLabel(text=' Vendor ID:')
+                self.r4c2 = Factory.CenterVerticalTextInput(padding='10cp',
+                                                            text='{}'.format(printer['vendor_id']))
+                edit_table.add_widget(r4c1)
+                edit_table.add_widget(self.r4c2)
+                r5c1 = Factory.CenteredFormLabel(text=' Product ID:')
+                self.r5c2 = Factory.CenterVerticalTextInput(padding='10cp',
+                                                            text='{}'.format(printer['product_id']))
+                edit_table.add_widget(r5c1)
+                edit_table.add_widget(self.r5c2)
+                r6c1 = Factory.CenteredFormLabel(text=' Type:')
+                self.r6c2 = Factory.CenterVerticalTextInput(padding='10cp',
+                                                            text='{}'.format(printer['type']))
+                edit_table.add_widget(r6c1)
+                edit_table.add_widget(self.r6c2)
+        inner_layout_1.add_widget(edit_table)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(markup=True,
+                               text="Cancel",
+                               on_release=self.edit_popup.dismiss)
+        edit_button = Button(markup=True,
+                             text="Edit",
+                             on_release=self.validate_edit)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(edit_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.edit_popup.content = layout
+        self.edit_popup.open()
+
+    def validate_edit(self, *args, **kwargs):
+        self.validated = 0
+        if self.r1c2.text == '':
+            self.validated += 1
+            self.r1c2.hint_text_color = ERROR_COLOR
+            self.r1c2.hint_text = "Please enter a printer name"
+        else:
+            self.r1c2.hint_text_color = DEFAULT_COLOR
+            self.r1c2.hint_text = ""
+
+        if self.r2c2.text == '':
+            self.validated += 1
+            self.r2c2.hint_text_color = ERROR_COLOR
+            self.r2c2.hint_text = "Please enter a model number"
+        else:
+            self.r2c2.hint_text_color = DEFAULT_COLOR
+            self.r2c2.hint_text = ""
+
+        if self.r3c2.text == '':
+            self.validated += 1
+            self.r3c2.hint_text_color = ERROR_COLOR
+            self.r3c2.hint_text = "Please enter a printer nick name"
+        else:
+            self.r3c2.hint_text_color = DEFAULT_COLOR
+            self.r3c2.hint_text = ""
+
+        if self.r4c2.text == '':
+            self.validated += 1
+            self.r4c2.hint_text_color = ERROR_COLOR
+            self.r4c2.hint_text = "Please enter a vendor id"
+        else:
+            self.r4c2.hint_text_color = DEFAULT_COLOR
+            self.r4c2.hint_text = ""
+
+        if self.r5c2.text == '':
+            self.validated += 1
+            self.r5c2.hint_text_color = ERROR_COLOR
+            self.r5c2.hint_text = "Please enter a product id"
+        else:
+
+            self.r5c2.hint_text_color = DEFAULT_COLOR
+            self.r5c2.hint_text = ""
+
+        if self.r6c2.text == '':
+            self.validated += 0  # todo
+            self.r6c2.hint_text_color = ERROR_COLOR
+            self.r6c2.hint_text = "Please enter a printer name"
+        else:
+            self.r6c2.hint_text_color = DEFAULT_COLOR
+            self.r6c2.hint_text = ""
+
+        if self.validated == 0:
+            self.edit_printer()
+            self.reset()
+        else:
+            self.reset()
+            popup = Popup()
+            popup.title = "Printer Setting"
+            content = KV.popup_alert("There are some errors with your printer edit form! Please review and try again.")
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
+    def validate(self):
+        self.validated = 0
+        if self.printer_name.text == '':
+            self.validated += 1
+            self.printer_name.hint_text_color = ERROR_COLOR
+            self.printer_name.hint_text = "Please enter a printer name"
+        else:
+            self.printer_name.hint_text_color = DEFAULT_COLOR
+            self.printer_name.hint_text = ""
+
+        if self.printer_model_number.text == '':
+            self.validated += 1
+            self.printer_model_number.hint_text_color = ERROR_COLOR
+            self.printer_model_number.hint_text = "Please enter a model number"
+        else:
+            self.printer_model_number.hint_text_color = DEFAULT_COLOR
+            self.printer_model_number.hint_text = ""
+
+        if self.printer_nick_name.text == '':
+            self.validated += 1
+            self.printer_nick_name.hint_text_color = ERROR_COLOR
+            self.printer_nick_name.hint_text = "Please enter a printer nick name"
+        else:
+            self.printer_nick_name.hint_text_color = DEFAULT_COLOR
+            self.printer_nick_name.hint_text = ""
+
+        if self.printer_vendor.text == '':
+            self.validated += 1
+            self.printer_vendor.hint_text_color = ERROR_COLOR
+            self.printer_vendor.hint_text = "Please enter a vendor id"
+        else:
+            self.printer_vendor.hint_text_color = DEFAULT_COLOR
+            self.printer_vendor.hint_text = ""
+
+        if self.printer_product.text == '':
+            self.validated += 1
+            self.printer_product.hint_text_color = ERROR_COLOR
+            self.printer_product.hint_text = "Please enter a product id"
+        else:
+
+            self.printer_product.hint_text_color = DEFAULT_COLOR
+            self.printer_product.hint_text = ""
+
+        if self.printer_type.text == '':
+            self.validated += 0  # todo
+            self.printer_type.hint_text_color = ERROR_COLOR
+            self.printer_type.hint_text = "Please enter a printer name"
+        else:
+            self.printer_type.hint_text_color = DEFAULT_COLOR
+            self.printer_type.hint_text = ""
+
+        if self.validated == 0:
+            self.add_printer()
+            self.reset()
+        else:
+            self.reset()
+            popup = Popup()
+            popup.title = "Printer Setting"
+            content = KV.popup_alert("There are some errors with your printer form! Please review and try again.")
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
+    def add_printer(self):
+        printer = Printer()
+        printer.company_id = auth_user.company_id
+        printer.name = self.printer_name.text
+        printer.model = self.printer_model_number.text
+        printer.nick_name = self.printer_nick_name.text
+        printer.vendor_id = self.printer_vendor.text
+        printer.product_id = self.printer_product.text
+        printer.type = self.printer_type.text
+        printer.status = 1
+        if printer.add():
+            # set invoice_items data to save
+            run_sync = threading.Thread(target=SYNC.db_sync)
+            try:
+                run_sync.start()
+            finally:
+                run_sync.join()
+                print('successfully synced a printer')
+                popup = Popup()
+                popup.title = "Printer Setting"
+                content = KV.popup_alert("Successfully added a printer!")
+                popup.content = Builder.load_string(content)
+                popup.open()
+
+    def edit_printer(self):
+        printer = Printer()
+        print(self.edit_printer_id)
+        printer.put(where={'id': self.edit_printer_id}, data={'name': self.r1c2.text,
+                                                              'model': self.r2c2.text,
+                                                              'nick_name': self.r3c2.text,
+                                                              'vendor_id': self.r4c2.text,
+                                                              'product_id': self.r5c2.text,
+                                                              'type': self.r6c2.text})
+
+        # set invoice_items data to save
+        run_sync = threading.Thread(target=SYNC.db_sync)
+        try:
+            run_sync.start()
+        finally:
+            run_sync.join()
+            print('successfully edited a printer')
+        popup = Popup()
+        popup.title = "Printer Setting"
+        content = KV.popup_alert("Successfully edited printer - {}!".format(self.r1c2.text))
+        popup.content = Builder.load_string(content)
+        popup.open()
+        self.edit_popup.dismiss()
+
+
+class RackScreen(Screen):
+    invoice_number = ObjectProperty(None)
+    rack_number = ObjectProperty(None)
+    rack_table = ObjectProperty(None)
+    racks = OrderedDict()
+    parent_scroll = ObjectProperty(None)
+    marked_invoice_number = None
+    edited_rack = False
+    if auth_user.company_id:
+        try:
+            Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+        except USBNotFoundError:
+            print('USB not found')
+            Epson = False
+
+    def reset(self):
+        self.racks = OrderedDict()
+        self.rack_number.text = ''
+        self.invoice_number.text = ''
+        self.invoice_number.focus = True
+        self.marked_invoice_number = None
+        self.edited_rack = False
+        self.update_rack_table()
+
+    def set_result_status(self):
+        vars.SEARCH_RESULTS_STATUS = True
+        self.reset()
+
+    def update_rack_table(self):
+        self.rack_table.clear_widgets()
+        h1 = KV.invoice_tr(0, '#')
+        h2 = KV.invoice_tr(0, 'Invoice #')
+        h3 = KV.invoice_tr(0, 'Rack #')
+        h4 = KV.invoice_tr(0, 'Action')
+        self.rack_table.add_widget(Builder.load_string(h1))
+        self.rack_table.add_widget(Builder.load_string(h2))
+        self.rack_table.add_widget(Builder.load_string(h3))
+        self.rack_table.add_widget(Builder.load_string(h4))
+        if self.racks:
+            idx = 0
+            marked_tr4 = False
+            for invoice_number, rack_number in self.racks.items():
+                idx += 1
+                if invoice_number == self.marked_invoice_number:
+                    tr1 = Factory.CenteredHighlightedLabel(text='[color=000000]{}[/color]'.format(idx))
+                    tr2 = Factory.CenteredHighlightedLabel(text='[color=000000]{}[/color]'.format(invoice_number))
+                    tr3 = Factory.CenteredHighlightedLabel(
+                        text='[color=000000]{}[/color]'.format(rack_number if rack_number else ''))
+                    tr4 = Button(markup=True,
+                                 text='Edit')
+                    marked_tr4 = tr4
+                else:
+                    tr1 = Factory.CenteredLabel(text='[color=000000]{}[/color]'.format(idx))
+                    tr2 = Factory.CenteredLabel(text='[color=000000]{}[/color]'.format(invoice_number))
+                    tr3 = Factory.CenteredLabel(
+                        text='[color=000000]{}[/color]'.format(rack_number if rack_number else ''))
+                    tr4 = Button(markup=True,
+                                 text='Edit')
+                    marked_tr4 = False
+                self.rack_table.add_widget(tr1)
+                self.rack_table.add_widget(tr2)
+                self.rack_table.add_widget(tr3)
+                self.rack_table.add_widget(tr4)
+            if marked_tr4:
+                self.parent_scroll.scroll_to(marked_tr4)
+            else:
+                self.parent_scroll.scroll_to(tr4)
+
+    def set_invoice_number(self):
+        invoices = Invoice()
+        search = None if not self.invoice_number.text else self.invoice_number.text
+        found_invoices = invoices.where({'invoice_id': search})
+        if not self.invoice_number.text:
+            popup = Popup()
+            popup.title = 'Error: Rack process error'
+            popup.size_hint = None, None
+            popup.size = 800, 600
+            body = KV.popup_alert(
+                msg='Invoice number cannot be left empty.')
+            popup.content = Builder.load_string(body)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        elif not found_invoices:
+            popup = Popup()
+            popup.title = 'Error: Rack process error'
+            popup.size_hint = None, None
+            popup.size = 800, 600
+            body = KV.popup_alert(
+                msg='No such invoice number.')
+            popup.content = Builder.load_string(body)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        elif self.invoice_number.text in self.racks:
+            self.edited_rack = self.racks[self.invoice_number.text]
+            self.racks[self.invoice_number.text] = False
+            self.rack_number.focus = True
+        else:
+            self.edited_rack = False
+            self.racks[self.invoice_number.text] = False
+            self.rack_number.focus = True
+            self.marked_invoice_number = self.invoice_number.text
+
+        self.update_rack_table()
+
+    def set_rack_number(self):
+        if not self.invoice_number.text:
+            popup = Popup()
+            popup.title = 'Error: Rack process error'
+            popup.size_hint = None, None
+            popup.size = 800, 600
+            body = KV.popup_alert(
+                msg='Please provide an invoice number.')
+            popup.content = Builder.load_string(body)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
+
+        else:
+            try:
+                self.Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=3,
+                               invert=False, smooth=False, flip=False)
+                if self.edited_rack:
+                    self.Epson.text('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
+                        self.invoice_number.text,
+                        self.edited_rack,
+                        self.rack_number.text))
+                    self.edited_rack = False
+                else:
+                    self.Epson.text('{} - {}\n'.format(self.invoice_number.text, self.rack_number.text))
+            except USBNotFoundError:
+                popup = Popup()
+                popup.title = 'Printer Error'
+                content = KV.popup_alert('Unable to locate usb printer.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+            except AttributeError:
+                popup = Popup()
+                popup.title = 'Printer Error'
+                content = KV.popup_alert('Unable to locate usb printer.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+
+            self.racks[self.invoice_number.text] = self.rack_number.text
+            self.invoice_number.text = ''
+            self.rack_number.text = ''
+            self.update_rack_table()
+            self.marked_invoice_number = self.invoice_number.text
+
+        self.invoice_number.focus = True
+
+    def save_racks(self):
+        # save rows
+        if self.racks:
+            invoices = Invoice()
+            for invoice_id, rack in self.racks.items():
+                invoices.put(where={'invoice_id': invoice_id},
+                             data={'rack': rack, 'status': 2})  # rack and update status
+
+        # set user to go back to search screen
+        if vars.CUSTOMER_ID:
+            self.set_result_status()
+
+        # Cut paper
+        try:
+            self.Epson.set(align=u"CENTER", font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                           invert=False, smooth=False, flip=False)
+            self.Epson.text('{}'.format((datetime.datetime.now().strftime('%a %m/%d/%Y %I:%M %p'))))
+            self.Epson.cut(mode=u"PART")
+        except USBNotFoundError:
+            popup = Popup()
+            popup.title = 'Printer Error'
+            content = KV.popup_alert('Unable to locate usb printer.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        except AttributeError:
+            popup = Popup()
+            popup.title = 'Printer Error'
+            content = KV.popup_alert('Unable to locate usb printer.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
 
 
 class ReportsScreen(Screen):
@@ -5180,6 +8213,7 @@ class SearchScreen(Screen):
             self.invoice_table.clear_widgets()
             # add the table headers
             self.create_invoice_headers()
+        self.search.focus = True
 
         vars.SEARCH_RESULTS_STATUS = False
 
@@ -5187,71 +8221,75 @@ class SearchScreen(Screen):
         popup = Popup()
         search_text = self.search.text
         customers = User()
+        if len(self.search.text) > 0:
+            data = {'mark': '"%{}%"'.format(self.search.text)}
+            marks = Custid()
+            custids = marks.like(data)
+            where = []
+            for custid in custids:
+                cust_id = custid['customer_id']
+                where.append(cust_id)
 
-        data = {'mark': '"%{}%"'.format(self.search.text)}
-        marks = Custid()
-        custids = marks.like(data)
-        where = []
-        for custid in custids:
-            cust_id = custid['customer_id']
-            where.append(cust_id)
-
-        if len(where) == 1:
-            data = {'user_id': where[0]}
-            cust1 = customers.where(data)
-            self.customer_results(cust1)
-        elif len(where) > 1:
-            cust1 = customers.or_search(where=where)
-            self.customer_results(cust1)
-
-        elif Job.is_int(search_text):
-            # check to see if length is 7 or greater
-            if len(search_text) >= 7:  # This is a phone number
-                # First check to see if the number is exact
-                data = {'phone': '"%{}%"'.format(self.search.text)}
-                cust1 = customers.like(data)
-                self.customer_results(cust1)
-
-            elif len(search_text) == 6:  # this is an invoice number
-                data = {
-                    'invoice_id': '"{}"'.format(int(self.search.text))
-                }
-                inv = Invoice()
-                inv_1 = inv.where(data)
-                if len(inv_1) > 0:
-                    for invoice in inv_1:
-                        vars.INVOICE_ID = self.search.text
-                        vars.CUSTOMER_ID = invoice['customer_id']
-                        self.invoice_selected(invoice_id=vars.INVOICE_ID)
-
-                else:
-                    popup.title = 'No such invoice'
-                    popup.size_hint = None, None
-                    popup.size = 800, 600
-                    content = KV.popup_alert(msg="Could not find an invoice with this invoice id. Please try again")
-                    popup.content = Builder.load_string(content)
-                    popup.open()
-
-            else:  # look for a customer id
-                data = {'user_id': self.search.text}
+            if len(where) == 1:
+                data = {'user_id': where[0]}
                 cust1 = customers.where(data)
                 self.customer_results(cust1)
+            elif len(where) > 1:
+                cust1 = customers.or_search(where=where)
+                self.customer_results(cust1)
 
-        else:  # Lookup by last name || mark
+            elif Job.is_int(search_text):
+                # check to see if length is 7 or greater
+                if len(search_text) >= 7:  # This is a phone number
+                    # First check to see if the number is exact
+                    data = {'phone': '"%{}%"'.format(self.search.text)}
+                    cust1 = customers.like(data)
+                    self.customer_results(cust1)
 
-            data = {'last_name': '"%{}%"'.format(self.search.text)}
-            vars.ROW_CAP = len(customers.like(data))
-            vars.SEARCH_TEXT = self.search.text
+                elif len(search_text) == 6:  # this is an invoice number
+                    data = {
+                        'invoice_id': '"{}"'.format(int(self.search.text))
+                    }
+                    inv = Invoice()
+                    inv_1 = inv.where(data)
+                    if len(inv_1) > 0:
+                        for invoice in inv_1:
+                            vars.INVOICE_ID = self.search.text
+                            vars.CUSTOMER_ID = invoice['customer_id']
+                            self.invoice_selected(invoice_id=vars.INVOICE_ID)
 
-            data = {
-                'last_name': '"%{}%"'.format(self.search.text),
-                'ORDER_BY': 'last_name ASC',
-                'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
-            }
+                    else:
+                        popup.title = 'No such invoice'
+                        popup.size_hint = None, None
+                        popup.size = 800, 600
+                        content = KV.popup_alert(msg="Could not find an invoice with this invoice id. Please try again")
+                        popup.content = Builder.load_string(content)
+                        popup.open()
 
-            cust1 = customers.like(data)
-            self.customer_results(cust1)
+                else:  # look for a customer id
+                    data = {'user_id': self.search.text}
+                    cust1 = customers.where(data)
+                    self.customer_results(cust1)
 
+            else:  # Lookup by last name || mark
+
+                data = {'last_name': '"%{}%"'.format(self.search.text)}
+                vars.ROW_CAP = len(customers.like(data))
+                vars.SEARCH_TEXT = self.search.text
+
+                data = {
+                    'last_name': '"%{}%"'.format(self.search.text),
+                    'ORDER_BY': 'last_name ASC',
+                    'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
+                }
+
+                cust1 = customers.like(data)
+                self.customer_results(cust1)
+        else:
+            popup = Popup()
+            popup.title = 'Search Error'
+            popup.content = Builder.load_string(KV.popup_alert('Search cannot be an empty value. Please try again.'))
+            popup.open()
         customers.close_connection()
 
     def create_invoice_headers(self):
@@ -5398,9 +8436,9 @@ class SearchScreen(Screen):
 
                 # display data
                 self.cust_mark_label.text = custid_string
-                self.cust_last_name.text = result['last_name'] if result['last_name'] else '';
-                self.cust_first_name.text = result['first_name'] if result['first_name'] else '';
-                self.cust_phone.text = result['phone'] if result['phone'] else ''
+                self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
+                self.cust_first_name.text = result['first_name'] if result['first_name'] else ''
+                self.cust_phone.text = Job.make_us_phone(result['phone']) if result['phone'] else ''
                 self.cust_last_drop.text = last_drop
                 self.cust_starch.text = self.get_starch_by_id(result['starch'])
                 self.cust_credit.text = '0.00'
@@ -5455,6 +8493,388 @@ class SearchScreen(Screen):
             return 'Heavy'
         else:
             return 'Not Set'
+
+    def reprint_popup(self):
+        popup = Popup()
+        popup.title = 'Reprint Invoice #{}'.format(vars.INVOICE_ID)
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Store Copy',
+                                         on_release=partial(self.reprint_invoice, 1)))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Customer Copy',
+                                         on_release=partial(self.reprint_invoice, 2)))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text='Tags',
+                                         on_release=self.reprint_tags))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(text='Cancel',
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def reprint_invoice(self, type, *args, **kwargs):
+        if vars.INVOICE_ID:
+            # print invoices
+            try:
+                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+                companies = Company()
+                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+
+                if comps:
+                    for company in comps:
+                        companies.id = company['id']
+                        companies.company_id = company['company_id']
+                        companies.name = company['name']
+                        companies.street = company['street']
+                        companies.suite = company['suite']
+                        companies.city = company['city']
+                        companies.state = company['state']
+                        companies.zip = company['zip']
+                        companies.email = company['email']
+                        companies.phone = Job.make_us_phone(company['phone'])
+                customers = User()
+                custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+                if custs:
+                    for user in custs:
+                        customers.id = user['id']
+                        customers.user_id = user['user_id']
+                        customers.company_id = user['company_id']
+                        customers.username = user['username']
+                        customers.first_name = user['first_name']
+                        customers.last_name = user['last_name']
+                        customers.street = user['street']
+                        customers.suite = user['suite']
+                        customers.city = user['city']
+                        customers.state = user['state']
+                        customers.zipcode = user['zipcode']
+                        customers.email = user['email']
+                        customers.phone = Job.make_us_phone(user['phone'])
+                        customers.intercom = user['intercom']
+                        customers.concierge_name = user['concierge_name']
+                        customers.concierge_number = user['concierge_number']
+                        customers.special_instructions = user['special_instructions']
+                        customers.shirt_old = user['shirt_old']
+                        customers.shirt = user['shirt']
+                        customers.delivery = user['delivery']
+                        customers.profile_id = user['profile_id']
+                        customers.payment_status = user['payment_status']
+                        customers.payment_id = user['payment_id']
+                        customers.token = user['token']
+                        customers.api_token = user['api_token']
+                        customers.reward_status = user['reward_status']
+                        customers.reward_points = user['reward_points']
+                        customers.account = user['account']
+                        customers.starch = user['starch']
+                        customers.important_memo = user['important_memo']
+                        customers.invoice_memo = user['invoice_memo']
+                        customers.password = user['password']
+                        customers.role_id = user['role_id']
+                        customers.remember_token = user['remember_token']
+                invoices = Invoice()
+                invs = invoices.where({'invoice_id': vars.INVOICE_ID})
+                if invs:
+                    for invoice in invs:
+                        invoice_quantity = invoice['quantity']
+                        invoice_subtotal = invoice['pretax']
+                        invoice_tax = invoice['tax']
+                        invoice_total = invoice['total']
+
+                        try:
+                            invoice_due_date = datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S")
+                        except ValueError:
+                            invoice_due_date = datetime.datetime.now()
+
+                invoice_items = InvoiceItem()
+                inv_items = invoice_items.where({'invoice_id': vars.INVOICE_ID})
+                colors = {}
+                print_sync_invoice = {vars.INVOICE_ID: {}}
+                if inv_items:
+                    for invoice_item in inv_items:
+                        item_id = invoice_item['item_id']
+                        items = InventoryItem().where({'item_id': item_id})
+                        if items:
+                            for item in items:
+                                item_name = item['name']
+                                inventory_id = item['inventory_id']
+                        else:
+                            item_name = None
+                            inventory_id = None
+
+                        inventories = Inventory()
+                        invs = inventories.where({'inventory_id': inventory_id})
+                        if invs:
+                            if invs:
+                                for inventory in invs:
+                                    inventory_init = inventory['name'][:1].capitalize()
+                                    laundry = inventory['laundry']
+                            else:
+                                inventory_init = ''
+                                laundry = 0
+
+                        display_name = '{} ({})'.format(item_name, vars.get_starch_by_code(
+                            customers.starch)) if laundry else item_name
+
+                        item_color = invoice_item['color']
+                        if item_color in colors:
+                            colors[item_color] += 1
+                        else:
+                            colors[item_color] = 1
+                        item_memo = invoice_item['memo']
+                        item_subtotal = invoice_item['pretax']
+                        if item_id in print_sync_invoice[vars.INVOICE_ID]:
+                            print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_subtotal
+                            print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
+                            if item_memo:
+                                print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
+                            print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
+                        else:
+                            print_sync_invoice[vars.INVOICE_ID][item_id] = {
+                                'item_id': item_id,
+                                'type': inventory_init,
+                                'name': display_name,
+                                'item_price': item_subtotal,
+                                'qty': 1,
+                                'memos': [item_memo] if item_memo else [],
+                                'colors': {item_color: 1}
+                            }
+                now = datetime.datetime.now()
+                if type == 2:
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("{}\n".format(companies.name))
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("{}\n".format(companies.street))
+                    Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                              invert=False, smooth=False, flip=False)
+
+                    Epson.text("{}\n".format(companies.phone))
+                    Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                    # Print barcode
+                    Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{}\n'.format(customers.phone))
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('------------------------------------------\n')
+
+                    if print_sync_invoice[vars.INVOICE_ID]:
+                        for item_id, invoice_item in print_sync_invoice[vars.INVOICE_ID].items():
+                            item_name = invoice_item['name']
+                            item_price = invoice_item['item_price']
+                            item_qty = invoice_item['qty']
+                            item_color_string = []
+                            item_memo = invoice_item['memos']
+                            item_type = invoice_item['type']
+                            if invoice_item['colors']:
+                                for color_name, color_qty in invoice_item['colors'].items():
+                                    if color_name:
+                                        item_color_string.append('{}-{}'.format(color_qty, color_name))
+                            Epson.text('{} {}   {}\n'.format(item_type, item_qty, item_name))
+
+                            if len(item_memo) > 0:
+                                Epson.control('HT')
+                                Epson.control('HT')
+                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                          height=1,
+                                          density=5, invert=False, smooth=False, flip=False)
+                                Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                            if len(item_color_string) > 0:
+                                Epson.control('HT')
+                                Epson.control('HT')
+                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                          height=1,
+                                          density=5, invert=False, smooth=False, flip=False)
+                                Epson.text('  {}\n'.format(', '.join(item_color_string)))
+
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('------------------------------------------\n')
+                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{} PCS\n'.format(invoice_quantity))
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('------------------------------------------\n')
+
+                    if customers.invoice_memo:
+                        Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                  invert=False, smooth=False, flip=False)
+                        Epson.text('{}\n'.format(customers.invoice_memo))
+                    # Cut paper
+                    Epson.cut(mode=u"PART")
+
+                if type == 1:
+                    # Print store copies
+                    if print_sync_invoice:  # if invoices synced
+                        for invoice_id, item_id in print_sync_invoice.items():
+
+                            # start invoice
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text("::COPY::\n")
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text("{}\n".format(companies.name))
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text("{}\n".format(companies.phone))
+                            Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
+                                      density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text(
+                                "READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                            Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                            # Print barcode
+                            Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
+                                          'B', 'B')
+
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                                      density=6,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text(
+                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=2,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('{}\n'.format(customers.phone))
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=1,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('------------------------------------------\n')
+
+                            if print_sync_invoice[invoice_id]:
+                                for item_id, invoice_item in print_sync_invoice[invoice_id].items():
+                                    item_name = invoice_item['name']
+                                    item_price = invoice_item['item_price']
+                                    item_qty = invoice_item['qty']
+                                    item_color_string = []
+                                    item_memo = invoice_item['memos']
+                                    item_type = invoice_item['type']
+                                    if invoice_item['colors']:
+                                        for color_name, color_qty in invoice_item['colors'].items():
+                                            if color_name:
+                                                item_color_string.append('{}-{}'.format(color_qty, color_name))
+                                    string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
+                                        vars.us_dollar(item_price)) + 4
+                                    string_offset = 42 - string_length if 42 - string_length > 0 else 0
+                                    Epson.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                         item_qty,
+                                                                         item_name,
+                                                                         ' ' * string_offset,
+                                                                         vars.us_dollar(item_price)))
+
+                                    if len(item_memo) > 0:
+                                        Epson.control('HT')
+                                        Epson.control('HT')
+                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                  height=1,
+                                                  density=5, invert=False, smooth=False, flip=False)
+                                        Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                    if len(item_color_string) > 0:
+                                        Epson.control('HT')
+                                        Epson.control('HT')
+                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                  height=1,
+                                                  density=5, invert=False, smooth=False, flip=False)
+                                        Epson.text('  {}\n'.format(', '.join(item_color_string)))
+
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=1,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('------------------------------------------\n')
+                            Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('{} PCS\n'.format(invoice_quantity))
+                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                      density=1,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('------------------------------------------\n')
+                            Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                      invert=False, smooth=False, flip=False)
+                            Epson.text('    SUBTOTAL:')
+                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            string_length = len(vars.us_dollar(invoice_subtotal))
+                            string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                            Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
+                            Epson.set(align=u"RIGHT", text_type=u'B')
+                            Epson.text('         TAX:')
+                            string_length = len(vars.us_dollar(invoice_tax))
+                            string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_tax)))
+                            Epson.set(align=u"RIGHT", text_type=u'B')
+                            Epson.text('       TOTAL:')
+                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            string_length = len(vars.us_dollar(invoice_total))
+                            string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                            Epson.text('{}{}\n'.format(' ' * string_offset,
+                                                       vars.us_dollar(invoice_total)))
+                            Epson.set(align=u"RIGHT", text_type=u'B')
+                            Epson.text('     BALANCE:')
+                            string_length = len(vars.us_dollar(invoice_total))
+                            string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                            Epson.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(invoice_total)))
+                            if customers.invoice_memo:
+                                Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                          invert=False, smooth=False, flip=False)
+                                Epson.text('{}\n'.format(customers.invoice_memo))
+                            if item_type == 'L':
+                                # get customer mark
+                                marks = Custid()
+                                marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                                if marks_list:
+                                    m_list = []
+                                    for mark in marks_list:
+                                        m_list.append(mark['mark'])
+                                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                              density=8, invert=False, smooth=False, flip=False)
+                                    Epson.text('{}\n\n'.format(', '.join(m_list)))
+
+                            # Cut paper
+                            Epson.cut(mode=u"PART")
+            except USBNotFoundError:
+                popup = Popup()
+                popup.title = 'Printer Error'
+                content = KV.popup_alert('No printer found. Please try again.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+        else:
+            popup = Popup()
+            popup.title = 'Reprint Error'
+            content = KV.popup_alert('Please select an invoice.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+
+    def reprint_tags(self, *args, **kwargs):
+        print('here')
 
 
 class SearchResultsScreen(Screen):

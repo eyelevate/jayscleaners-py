@@ -1,0 +1,55 @@
+<InventoriesScreen>:
+    id: screen_inventories
+    name: "inventories"
+    inventory_table: inventory_table
+
+    on_pre_enter: root.reset()
+
+    BoxLayout:
+        orientation: 'vertical'
+        ActionBar:
+            id: _action_settings
+            size_hint: 1,0.1
+            pos_hint: {'top':1}
+            ActionView:
+                use_separator: True
+                ActionPrevious:
+                    title: 'Inventory Update'
+                    with_previous: False
+                    previous_image: ''
+                    on_release: root.manager.current = "settings"
+                    pos_hint: {'left':0}
+                ActionGroup:
+                    text: '          File          '
+                    mode: 'spinner'
+                    width: 500
+                    ActionButton:
+                        text: 'Quit'
+                        on_release: app.get_running_app().stop()
+        ScrollView:
+            size_hint: 1,0.8
+            GridLayout:
+                id: inventory_table
+                cols: 7
+                size_hint_y:None
+                height: self.minimum_height
+                row_force_default: True
+                row_default_height: '50sp'
+
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1,0.1
+            Button:
+                markup: True
+                text: 'Cancel'
+                on_press: root.reset()
+                on_release: app.root.current = "inventories"
+            Button:
+                markup: True
+                text: 'Inventory Items'
+                on_release: app.root.current = "inventory_items"
+            Button:
+                markup: True
+                text: 'New Inventory'
+                on_release: root.add_inventory_popup()

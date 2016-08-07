@@ -15,6 +15,7 @@ class Inventory:
     name = None
     description = None
     ordered = None
+    laundry = None
     status = None
     deleted_at = None
     created_at = None
@@ -36,6 +37,7 @@ class Inventory:
                                   CharField(column='name', max_length=50).data_type(),
                                   TextField(column='description').data_type(),
                                   IntegerField(column='ordered').data_type(),
+                                  IntegerField(column='laundry').data_type(),
                                   IntegerField(column='status').data_type(),
                                   TextField(column='deleted_at').data_type(),
                                   TextField(column='created_at').data_type(),
@@ -50,21 +52,21 @@ class Inventory:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.created_at = now
-        self.c.execute('''INSERT INTO {t}(inventory_id,company_id,name,description,ordered,status,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.inventory_id,
-                                             self.company_id,
-                                             self.name,
-                                             self.description,
-                                             self.ordered,
-                                             self.status,
-                                             self.created_at,
-                                             self.updated_at)
+        self.c.execute('''INSERT INTO {t}(company_id,name,description,ordered,laundry,status,created_at,
+updated_at) VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.company_id,
+                                                         self.name,
+                                                         self.description,
+                                                         self.ordered,
+                                                         self.laundry,
+                                                         self.status,
+                                                         self.created_at,
+                                                         self.updated_at)
                        )
 
         self.conn.commit()
         return True
 
-    def put(self, where = False, data = False):
+    def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
@@ -93,14 +95,15 @@ VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.inventory_id,
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.c.execute('''UPDATE {t} SET inventory_id = ?, company_id = ?, name = ?, description = ?, ordered = ?,
-status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
-                                                             self.company_id,
-                                                             self.name,
-                                                             self.description,
-                                                             self.ordered,
-                                                             self.status,
-                                                             self.updated_at,
-                                                             self.id)
+laundry = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
+                                                                            self.company_id,
+                                                                            self.name,
+                                                                            self.description,
+                                                                            self.ordered,
+                                                                            self.laundry,
+                                                                            self.status,
+                                                                            self.updated_at,
+                                                                            self.id)
                        )
 
         self.conn.commit()

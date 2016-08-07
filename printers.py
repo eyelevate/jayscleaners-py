@@ -16,6 +16,8 @@ class Printer:
     model = None
     nick_name = None
     type = None
+    vendor_id = None
+    product_id = None
     status = None
     deleted_at = None
     created_at = now
@@ -37,6 +39,8 @@ class Printer:
                                   CharField(column='name', max_length=100).data_type(),
                                   CharField(column='model', max_length=100).data_type(),
                                   CharField(column='nick_name', max_length=100).data_type(),
+                                  CharField(column='vendor_id', max_length=100).data_type(),
+                                  CharField(column='product_id', max_length=100).data_type(),
                                   IntegerField(column='type').data_type(),
                                   IntegerField(column='status').data_type(),
                                   TextField(column='deleted_at').data_type(),
@@ -52,16 +56,18 @@ class Printer:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.created_at = now
-        self.c.execute('''INSERT INTO {t}(printer_id,company_id,name,model,nick_name,type,status,city,state,created_at,
-updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.printer_id,
-                                                               self.company_id,
-                                                               self.name,
-                                                               self.model,
-                                                               self.nick_name,
-                                                               self.type,
-                                                               self.status,
-                                                               self.created_at,
-                                                               self.updated_at)
+        self.c.execute('''INSERT INTO {t}(printer_id,company_id,name,model,nick_name,vendor_id,product_id,type,status,
+created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.printer_id,
+                                                                          self.company_id,
+                                                                          self.name,
+                                                                          self.model,
+                                                                          self.nick_name,
+                                                                          self.vendor_id,
+                                                                          self.product_id,
+                                                                          self.type,
+                                                                          self.status,
+                                                                          self.created_at,
+                                                                          self.updated_at)
                        )
 
         self.conn.commit()
@@ -74,8 +80,11 @@ updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.printer_id,
         sql = '''UPDATE {t} SET '''.format(t=table)
         if len(data) > 0:
             for key, value in data.items():
-                sql += '''{k} = "{v}", '''.format(k=key, v=value)
-            sql += '''updated_at = {v} '''.format(v=self.updated_at)
+                if value is None:
+                    sql += '''{k} = NULL, '''.format(k=key, v=value)
+                else:
+                    sql += '''{k} = "{v}", '''.format(k=key, v=value)
+            sql += '''updated_at = "{v}" '''.format(v=self.updated_at)
         sql += '''WHERE '''
         idx = 0
         if len(where) > 0:
@@ -96,15 +105,17 @@ updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.printer_id,
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.c.execute('''UPDATE {t} SET printer_id = ?, company_id = ?, name = ?, model = ?, nick_name = ?,
-type = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.printer_id,
-                                                                       self.company_id,
-                                                                       self.name,
-                                                                       self.model,
-                                                                       self.nick_name,
-                                                                       self.type,
-                                                                       self.status,
-                                                                       self.updated_at,
-                                                                       self.id)
+vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.printer_id,
+                                                                                                    self.company_id,
+                                                                                                    self.name,
+                                                                                                    self.model,
+                                                                                                    self.nick_name,
+                                                                                                    self.vendor_id,
+                                                                                                    self.product_id,
+                                                                                                    self.type,
+                                                                                                    self.status,
+                                                                                                    self.updated_at,
+                                                                                                    self.id)
                        )
 
         self.conn.commit()
@@ -242,6 +253,20 @@ type = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.prin
             return True
         else:
             return False
+
+    def get_printer_ids(self, company_id, type):
+
+        printers = self.where({'company_id': company_id,
+                               'type': type})
+        if printers:
+            for printer in printers:
+                vendor_id = printer['vendor_id']
+                product_id = printer['product_id']
+                ids = (vendor_id, product_id)
+        else:
+            ids = False
+
+        return ids
 
     def close_connection(self):
         self.c.close()

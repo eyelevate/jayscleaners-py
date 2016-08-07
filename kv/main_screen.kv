@@ -15,25 +15,19 @@
         pos_hint: {'top':1}
         ActionView:
             use_separator: True
+            title: 'Jays Cleaners POS'
             ActionPrevious:
                 title: 'Jays Cleaners POS'
                 with_previous: False
+                previous_image: ''
                 on_release: root.manager.current = "main"
             ActionGroup:
-                text: 'File'
+                text: '          File          '
                 mode: 'spinner'
-                size_hint_x: None
-                width: 250
-                ActionButton:
-                    text: 'New'
-                ActionButton:
-                    text: 'Open'
-                ActionButton:
-                    text: 'Save'
-                ActionButton:
-                    text: 'Save As'
+                width: 500
                 ActionButton:
                     text: 'Quit'
+                    on_release: app.get_running_app().stop()
 
     GridLayout:
         cols: 2
@@ -81,7 +75,7 @@
         id: update_button
         text:"Update"
         disabled:False
-        on_release: root.printer_test()
+        on_release: root.test_sys()
         size_hint: 0.1,0.1
         pos_hint: {'x':0, 'y':0}
         font_size:'20sp'

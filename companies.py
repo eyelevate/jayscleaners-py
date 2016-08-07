@@ -101,7 +101,10 @@ class Company:
         sql = '''UPDATE {t} SET '''.format(t=table)
         if len(data) > 0:
             for key, value in data.items():
-                sql += '''{k} = "{v}", '''.format(k=key, v=value)
+                if key == 'store_hours':
+                    sql += '''{k} = '{v}', '''.format(k=key, v=json.dumps(value))
+                else:
+                    sql += '''{k} = "{v}", '''.format(k=key, v=value)
             sql += '''updated_at = "{v}" '''.format(v=self.updated_at)
         sql += '''WHERE '''
         idx = 0
@@ -138,6 +141,8 @@ updated_at = ?, server_at = ? WHERE id = ?'''.format(
              self.store_hours,
              self.turn_around,
              self.api_token,
+             self.payment_gateway_id,
+             self.payment_api_login,
              self.updated_at,
              self.server_at,
              self.id)
@@ -174,7 +179,7 @@ updated_at = ?, server_at = ? WHERE id = ?'''.format(
         else:
             return False
 
-    def where(self, data=False, deleted_at=True):
+    def where(self, data=False, deleted_at=True, set=False):
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
@@ -219,7 +224,25 @@ updated_at = ?, server_at = ? WHERE id = ?'''.format(
 
             self.c.execute(sql)
             self.conn.commit()
+            
+            if set:
+                companies = self.c.fetchall()
+                if companies:
+                    for company in companies:
+                        self.id = company['id']
+                        self.company_id = company['company_id']
+                        self.name = company['name']
+                        self.street = company['street']
+                        self.suite = company['suite']
+                        self.city = company['city']
+                        self.state = company['state']
+                        self.zip = company['zip']
+                        self.email = company['email']
+                        self.phone = company['phone']
+            
             return self.c.fetchall()
+        
+        
         else:
             return False
 

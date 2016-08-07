@@ -254,7 +254,7 @@ WHERE id = ?'''.format(t=table), (self.user_id,
         else:
             return False
 
-    def where(self, data=False, deleted_at=True):
+    def where(self, data=False, deleted_at=True, set=False):
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
             idx = 0
@@ -299,6 +299,44 @@ WHERE id = ?'''.format(t=table), (self.user_id,
 
             self.c.execute(sql)
             self.conn.commit()
+            if set:
+                users = self.c.fetchall()
+                if users:
+                    for user in users:
+                        self.id = user['id']
+                        self.user_id = user['user_id']
+                        self.company_id = user['company_id']
+                        self.username = user['username']
+                        self.first_name = user['first_name']
+                        self.last_name = user['last_name']
+                        self.street = user['street']
+                        self.suite = user['suite']
+                        self.city = user['city']
+                        self.state = user['state']
+                        self.zipcode = user['zipcode']
+                        self.email = user['email']
+                        self.phone = user['phone']
+                        self.intercom = user['intercom']
+                        self.concierge_name = user['concierge_name']
+                        self.concierge_number = user['concierge_number']
+                        self.special_instructions = user['special_instructions']
+                        self.shirt_old = user['shirt_old']
+                        self.shirt = user['shirt']
+                        self.delivery = user['delivery']
+                        self.profile_id = user['profile_id']
+                        self.payment_status = user['payment_status']
+                        self.payment_id = user['payment_id']
+                        self.token = user['token']
+                        self.api_token = user['api_token']
+                        self.reward_status = user['reward_status']
+                        self.reward_points = user['reward_points']
+                        self.account = user['account']
+                        self.starch = user['starch']
+                        self.important_memo = user['important_memo']
+                        self.invoice_memo = user['invoice_memo']
+                        self.password = user['password']
+                        self.role_id = user['role_id']
+                        self.remember_token = user['remember_token']
             return self.c.fetchall()
         else:
             return False

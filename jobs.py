@@ -1,6 +1,7 @@
 import re
 import time
 import datetime
+import phonenumbers
 
 
 class Job:
@@ -37,5 +38,11 @@ class Job:
 
     def date_leading_zeroes(self, num):
         return "%02d" % (num,)
+
+    def make_us_phone(self, num):
+        country_code = '+1'
+        x_phone = phonenumbers.parse('{}{}'.format(country_code,str(num)),None)
+        return phonenumbers.format_number(x_phone, phonenumbers.PhoneNumberFormat.NATIONAL)
+
 
 

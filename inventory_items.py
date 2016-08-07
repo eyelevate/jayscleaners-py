@@ -282,7 +282,7 @@ WHERE id = ?'''.format(t=table), (self.item_id,
 
     def get_image_src(self, item_id):
         src = 'src/imgs'
-        inventory_items = InventoryItem().where({'item_id':item_id})
+        inventory_items = self.where({'item_id':item_id})
         if inventory_items:
             for inventory_item in inventory_items:
                 img = inventory_item['image'].replace('/',' ').split() if inventory_item['image'] else ['question.png']
@@ -290,6 +290,5 @@ WHERE id = ?'''.format(t=table), (self.item_id,
 
         else:
             img_src = '{}/{}'.format(src,'question.png')
-
 
         return img_src

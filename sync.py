@@ -33,6 +33,7 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 from threading import Thread
 from static import Static
+from kivy.properties import ObjectProperty, partial
 
 ERROR_COLOR = 0.94, 0.33, 0.33, 1
 DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
@@ -147,7 +148,7 @@ class Sync:
         printers_1 = Printer().where({'printer_id': None})
         if printers_1:
             to_upload['printers'] = printers_1
-            to_upload_rows += len(to_upload['colors'])
+            to_upload_rows += len(to_upload['printers'])
 
         reward_transactions_1 = RewardTransaction().where({'reward_id': None})
         if reward_transactions_1:
@@ -236,12 +237,14 @@ class Sync:
             to_update['invoice_items'] = invoice_items_2
             to_update_rows += len(to_update['invoice_items']) if to_update['invoice_items'] else 0
 
-        inventories_2 = Inventory().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        inventories_2 = Inventory().where({'inventory_id': {'!=': '""'},
+                                           'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if inventories_2:
             to_update['inventories'] = inventories_2
             to_update_rows += len(to_update['inventories'])
 
-        inventory_items_2 = InventoryItem().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        inventory_items_2 = InventoryItem().where({'item_id': {'!=': '""'},
+                                                   'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if inventory_items_2:
             to_update['inventory_items'] = inventory_items_2
             to_update_rows += len(to_update['inventory_items'])
@@ -251,10 +254,11 @@ class Sync:
             to_update['memos'] = memos_2
             to_update_rows += len(to_update['memos'])
 
-        printers_2 = Printer().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        printers_2 = Printer().where({'printer_id': {'!=': '""'},
+                                      'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if printers_2:
             to_update['printers'] = printers_2
-            to_update_rows += len(to_update['colors'])
+            to_update_rows += len(to_update['printers'])
 
         reward_transactions_2 = RewardTransaction().where({'updated_at': {'>': '"{}"'.format(server_at)}},
                                                           deleted_at=False)
@@ -288,14 +292,12 @@ class Sync:
             to_update['users'] = users_2
             to_update_rows += len(to_update['users'])
 
-        print(to_update_rows)
-
         url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
             cid=company.id,
             api=company.api_token,
             servat=company.server_at,
-            upload=json.dumps(to_upload).replace(" ", ""),
-            update=json.dumps(to_update).replace(" ", "")
+            upload=json.dumps(to_upload).replace(" ", "__"),
+            update=json.dumps(to_update).replace(" ", "__")
         )
 
         print(url)
@@ -320,6 +322,152 @@ class Sync:
 
             except urllib.error.URLError as e:
                 print(e.reason)  # could not save this time around because no internet, move on
+                if e.reason == 'Forbidden':  # url is too long try breaking it down into smaller chunks then send
+                    print('Request was too large for server, sending again in chunks.')
+                    try:
+                        # break up url into smaller chunks
+                        upload_string = json.dumps(to_upload).replace(" ", "__")
+                        update_string = json.dumps(to_update).replace(" ", "__")
+
+                        # first check the length of update
+                        url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+                            cid=company.id,
+                            api=company.api_token,
+                            servat=company.server_at,
+                            upload=upload_string,
+                            update='{}'
+                        )
+                        # upload Chunk
+                        if len(url) <= 2000:
+                            print('sending upload chunk in whole')
+                            run_page = Thread(target=partial(self.send_chunk, url))
+                            run_page.start()
+                        else:
+                            print('starting upload in chunks')
+                            if to_upload:
+                                chunk_up_list = {}
+                                for table, table_rows in to_upload.items():
+                                    chunk_up_list[table] = {0: []}
+                                    idx = 0
+                                    chunk_up_count = 0
+
+                                    if table_rows:
+                                        for row in table_rows:
+                                            row_string = json.dumps(row).replace(" ", "__")
+                                            chunk_up_count += len(str(row_string))
+
+                                            if chunk_up_count <= 2000:
+                                                chunk_up_list[table][idx].append(row)
+                                            else:
+                                                chunk_up_count = 0
+                                                idx += 1
+                                                chunk_up_list[table][idx] = [row]
+                            if chunk_up_list:
+                                to_upload_chunk = {}
+                                for table, rows in chunk_up_list.items():
+                                    if rows:
+                                        for row in rows:
+                                            to_upload_chunk[table] = chunk_up_list[table][row]
+                                            url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+                                                cid=company.id,
+                                                api=company.api_token,
+                                                servat=company.server_at,
+                                                upload=json.dumps(to_upload_chunk).replace(" ", "__"),
+                                                update='{}'
+                                            )
+                                            run_page = Thread(target=partial(self.send_chunk, url))
+                                            run_page.start()
+                                            run_page.join()
+                                            print('sent update #{}'.format(row))
+                                
+                            # Update chunk
+                            url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+                                cid=company.id,
+                                api=company.api_token,
+                                servat=company.server_at,
+                                upload='{}',
+                                update=json.dumps(to_update).replace(" ", "__")
+                            )
+                            if len(update_string) <= 2000:
+                                print('sending update chunk in whole')
+                                run_page = Thread(target=partial(self.send_chunk, url))
+                                run_page.start()
+                            else:
+                                if to_update:
+                                    chunk_upd_list = {}
+                                    for table, table_rows in to_update.items():
+                                        chunk_upd_list[table] = {0: []}
+                                        idx = 0
+                                        chunk_upd_count = 0
+
+                                        if table_rows:
+                                            for row in table_rows:
+                                                row_string = json.dumps(row).replace(" ", "__")
+                                                chunk_upd_count += len(str(row_string))
+                                                print(chunk_upd_count)
+
+                                                if chunk_upd_count <= 2000:
+                                                    chunk_upd_list[table][idx].append(row)
+                                                else:
+                                                    chunk_upd_count = 0
+                                                    idx += 1
+                                                    chunk_upd_list[table][idx] = [row]
+                                if chunk_upd_list:
+                                    to_update_chunk = {}
+                                    for table, rows in chunk_upd_list.items():
+
+                                        if rows:
+                                            for row in rows:
+                                                to_update_chunk[table] = chunk_upd_list[table][row]
+                                                url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+                                                    cid=company.id,
+                                                    api=company.api_token,
+                                                    servat=company.server_at,
+                                                    upload='{}',
+                                                    update=json.dumps(to_update_chunk).replace(" ", "__")
+                                                )
+                                                run_page = Thread(target=partial(self.send_chunk, url))
+                                                run_page.start()
+                                                run_page.join()
+                                                print('sent update #{}'.format(row))
+
+                    except urllib.error.URLError as e:
+                        print(e.reason)
+                if e.reason == 'Not Found': # we found a / in the string replace it with a OR
+                    upload = json.dumps(to_upload).replace(" ", "__").replace("/","OR")
+                    update = json.dumps(to_update).replace(" ", "__").replace("/","OR")
+                    url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+                        cid=company.id,
+                        api=company.api_token,
+                        servat=company.server_at,
+                        upload=upload,
+                        update=update
+                    )
+                    run_page = Thread(target=partial(self.send_chunk, url))
+                    run_page.start()
+                    run_page.join()
+                    print('Improper url formed, found a / in the json. replacing with OR and resending')
+
+    def send_chunk(self, url=False):
+        if url:
+            try:
+                r = request.urlopen(url)
+                data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+                if data_1['status'] is 200:
+                    # Save the local data
+                    sync_from_server(data=data_1)
+                    # update ids with saved data & update company table with server_at timestamp
+                    update_database(data=data_1)
+                    # update server_at in companies with most current timestamp
+
+                    where = {'company_id': self.company_id}
+                    dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    self.server_at = dt
+                    data = {'server_at': dt}
+                    Company().server_at_update(where, data)
+
+            except urllib.error.URLError as e:
+                print('This is a chunk error: {}'.format(e.reason))
 
     def get_chunk(self, table=False, start=False, end=False):
         company_id = 1

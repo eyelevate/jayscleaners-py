@@ -7,28 +7,45 @@
         ActionView:
             use_separator: True
             ActionPrevious:
-                title: 'Previous Slide'
+                title: 'Settings'
                 with_previous: False
+                previous_image: ''
                 on_release: root.manager.current = "main"
                 pos_hint: {'left':0}
             ActionGroup:
-                text: 'File'
+                text: '          File          '
                 mode: 'spinner'
-                size_hint_x: None
-                width: 90
-                ActionButton:
-                    text: 'New'
-                ActionButton:
-                    text: 'Open'
-                ActionButton:
-                    text: 'Save'
-                ActionButton:
-                    text: 'Save As'
+                width: 500
                 ActionButton:
                     text: 'Quit'
-    Button:
-        on_release: app.root.current = "main"
-        text: "Back Home"
-        font_size: 20
-        size_hint: 0.1,0.1
-        pos_hint: {'x':0,'y':0}
+                    on_release: app.get_running_app().stop()
+    GridLayout:
+        size_hint: 1,0.9
+        pos_hint: {'top':0.9}
+        cols: 4
+        rows: 2
+        Button:
+            text:'Company'
+            on_release: root.manager.current = 'company'
+        Button:
+            text:'Printer'
+            on_release: root.manager.current = 'printer'
+        Button:
+            text:'Inventory'
+            on_release: root.manager.current = 'inventories'
+        Button:
+            text:'Tax'
+            on_release: root.manager.current = 'printer'
+        Button:
+            text:'Colors'
+            on_release: root.manager.current = 'printer'
+        Button:
+            text:'Printers'
+            on_release: root.manager.current = 'printer'
+        Button:
+            text:'Users'
+            on_release: root.manager.current = 'printer'
+        Button:
+            text:'Memo'
+            on_release: root.manager.current = 'printer'
+
