@@ -1,8 +1,7 @@
-<InventoriesScreen>:
-    id: screen_inventories
-    name: "inventories"
-    inventory_table: inventory_table
-
+<TaxesScreen>:
+    id: screen_taxes
+    name: "taxes"
+    tax_rate_input: tax_rate_input
     on_pre_enter: root.reset()
 
     BoxLayout:
@@ -14,7 +13,7 @@
             ActionView:
                 use_separator: True
                 ActionPrevious:
-                    title: 'Inventory Update'
+                    title: 'Tax Update'
                     with_previous: False
                     previous_image: ''
                     on_release: root.manager.current = "settings"
@@ -26,16 +25,22 @@
                     ActionButton:
                         text: 'Quit'
                         on_release: app.get_running_app().stop()
-        ScrollView:
+        BoxLayout:
             size_hint: 1,0.8
+            orientation: 'vertical'
             GridLayout:
-                id: inventory_table
-                cols: 7
-                size_hint_y:None
-                height: self.minimum_height
+                id: taxes_table
+                cols: 3
+                rows: 1
                 row_force_default: True
                 row_default_height: '50sp'
-
+                CenteredFormLabel:
+                    text: 'Tax Rate'
+                CenterVerticalTextInput:
+                    id: tax_rate_input
+                CenteredFormLabel:
+                    text: '%'
+                    halign: 'left'
 
         BoxLayout:
             orientation: 'horizontal'
@@ -47,9 +52,5 @@
                 on_release: app.root.current = "settings"
             Button:
                 markup: True
-                text: 'Inventory Items'
-                on_release: app.root.current = "inventory_items"
-            Button:
-                markup: True
-                text: 'New Inventory'
-                on_release: root.add_inventory_popup()
+                text: 'Update'
+                on_release: root.update()

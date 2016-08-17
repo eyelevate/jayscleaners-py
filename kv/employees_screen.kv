@@ -1,12 +1,12 @@
-<InventoriesScreen>:
-    id: screen_inventories
-    name: "inventories"
-    inventory_table: inventory_table
-
+<EmployeesScreen>:
+    id: screen_employees
+    name: "employees"
+    employees_table: employees_table
     on_pre_enter: root.reset()
 
     BoxLayout:
         orientation: 'vertical'
+        size_hint:1,1
         ActionBar:
             id: _action_settings
             size_hint: 1,0.1
@@ -14,7 +14,7 @@
             ActionView:
                 use_separator: True
                 ActionPrevious:
-                    title: 'Inventory Update'
+                    title: 'Employees Update'
                     with_previous: False
                     previous_image: ''
                     on_release: root.manager.current = "settings"
@@ -26,15 +26,20 @@
                     ActionButton:
                         text: 'Quit'
                         on_release: app.get_running_app().stop()
-        ScrollView:
+        BoxLayout:
             size_hint: 1,0.8
-            GridLayout:
-                id: inventory_table
-                cols: 7
-                size_hint_y:None
-                height: self.minimum_height
-                row_force_default: True
-                row_default_height: '50sp'
+            pos_hint: {'top':1}
+            orientation: 'horizontal'
+            ScrollView:
+                pos_hint:{'top':1}
+                GridLayout:
+                    pos_hint:{'top':1}
+                    id: employees_table
+                    cols: 7
+                    size_hint_y:None
+                    height: self.minimum_height
+                    row_force_default: True
+                    row_default_height: '50sp'
 
 
         BoxLayout:
@@ -47,9 +52,5 @@
                 on_release: app.root.current = "settings"
             Button:
                 markup: True
-                text: 'Inventory Items'
-                on_release: app.root.current = "inventory_items"
-            Button:
-                markup: True
-                text: 'New Inventory'
-                on_release: root.add_inventory_popup()
+                text: '[color=0AAC00][b]New Employee[/b][/color]'
+                on_release: root.add_employee_popup()

@@ -58,6 +58,7 @@ from kivy.app import App
 from kivy.factory import Factory
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.carousel import Carousel
+from kivy.uix.colorpicker import ColorPicker
 from kivy.uix.dropdown import DropDown
 from kivy.uix.filechooser import FileChooser
 from kivy.uix.filechooser import FileChooserListView
@@ -68,7 +69,7 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.lang import Builder
 from kivy.uix.button import Button
 from kivy.uix.image import Image
-from kivy.properties import ObjectProperty, partial
+from kivy.properties import ObjectProperty, partial, StringProperty
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import Screen
 from kivy.uix.screenmanager import FadeTransition
@@ -439,6 +440,332 @@ class MainScreen(Screen):
         # # Cut paper
         # Epson.cut()
         # print("done")
+
+
+class ColorsScreen(Screen):
+    select_color = ObjectProperty(None)
+    colors_table = ObjectProperty(None)
+    add_popup = Popup()
+    color_name = ObjectProperty(None)
+    color_hex = None
+    color_id = None
+    color_rgba = StringProperty(None)
+    reorder_start_id = False
+    reorder_end_id = False
+
+    def reset(self):
+        self.set_color_table()
+        self.color_hex = ''
+        self.color_id = ''
+        self.reorder_end_id = False
+
+    pass
+
+    def set_color_table(self):
+        self.colors_table.clear_widgets()
+
+        colored = Colored()
+        colorings = colored.where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+
+        if colorings:
+            for clr in colorings:
+                if self.reorder_start_id and clr['color_id'] == self.reorder_start_id:
+                    c1 = '''
+Button:
+    font_size:'17sp'
+    markup:True
+    text: '[b]{color_name}[/b]'
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    on_release: root.parent.parent.parent.parent.parent.action_popup({color_id})
+    background_normal: ''
+    background_color: {background_rgba}
+    Label:
+        id: color_label
+        size: '50sp','50sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        canvas.before:
+            Color:
+                rgba: {color_rgba}
+            Rectangle:
+                pos: self.pos
+                size: self.size
+'''.format(color_name=clr['name'],
+           color_id=clr['color_id'],
+           background_rgba=(0, 0.64, 0.149, 1),
+           color_rgba=vars.color_rgba(clr['color']))
+                elif self.reorder_start_id and clr['color_id'] != self.reorder_start_id:
+                    c1 = '''
+Button:
+    font_size:'17sp'
+    markup:True
+    text: '[b]{color_name}[/b]'
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    on_release: root.parent.parent.parent.parent.parent.change_order({color_id})
+    Label:
+        id: color_label
+        size: '50sp','50sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        canvas.before:
+            Color:
+                rgba: {color_rgba}
+            Rectangle:
+                pos: self.pos
+                size: self.size
+'''.format(color_name=clr['name'],
+           color_id=clr['color_id'],
+           color_rgba=vars.color_rgba(clr['color']))
+                else:
+                    c1 = '''
+Button:
+    font_size:'17sp'
+    markup:True
+    text: '[b]{color_name}[/b]'
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    on_release: root.parent.parent.parent.parent.parent.action_popup({color_id})
+    Label:
+        id: color_label
+        size: '50sp','50sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        canvas.before:
+            Color:
+                rgba: {color_rgba}
+            Rectangle:
+                pos: self.pos
+                size: self.size
+'''.format(color_name=clr['name'],
+           color_id=clr['color_id'],
+           color_rgba=vars.color_rgba(clr['color']))
+
+                self.colors_table.add_widget(Builder.load_string(c1))
+
+    def change_order(self, color_id, *args, **kwargs):
+        self.reorder_end_id = color_id
+        swap_order = {self.reorder_start_id: '', self.reorder_end_id: ''}
+        coloreds = Colored()
+        start_colors = coloreds.where({'color_id': self.reorder_start_id, 'company_id': auth_user.company_id})
+        if start_colors:
+            for clr in start_colors:
+                swap_order[self.reorder_end_id] = clr['ordered']
+
+        end_colors = coloreds.where({'color_id': self.reorder_end_id, 'company_id': auth_user.company_id})
+        if end_colors:
+            for clr in end_colors:
+                swap_order[self.reorder_start_id] = clr['ordered']
+        if swap_order:
+            for key, index in swap_order.items():
+                coloreds.put(where={'color_id': key, 'company_id': auth_user.company_id},
+                             data={'ordered': index})
+
+        self.reorder_end_id = False
+        self.reorder_start_id = False
+        self.reset()
+
+    def popup_add(self):
+        self.add_popup.title = 'Add Color'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                   orientation='vertical')
+        color_widget = ColorPicker()
+        color_widget.bind(color=self.set_color)
+        color_grid = GridLayout(size_hint_x=1,
+                                size_hint_y=None,
+                                cols=2,
+                                rows=1,
+                                row_force_default=True,
+                                row_default_height='40sp',
+                                padding=[10, 10, 10, 10])
+        self.color_name = Factory.CenterVerticalTextInput()
+        color_grid.add_widget(Factory.CenteredFormLabel(text='Color Name:'))
+        color_grid.add_widget(self.color_name)
+        inner_layout_1.add_widget(color_grid)
+        inner_layout_1.add_widget(color_widget)
+
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                   orientation='horizontal')
+        inner_layout_2.add_widget(Button(text='Cancel',
+                                         on_release=self.add_popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=19ff52][b]Add[/b][/color]',
+                                         on_release=self.add_color))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.add_popup.content = layout
+        self.add_popup.open()
+
+    def popup_edit(self, *args, **kwargs):
+        coloreds = Colored()
+        clrds = coloreds.where({'color_id':self.color_id,'company_id':auth_user.company_id})
+        color_name = ''
+        color_hex = ''
+        if clrds:
+            for clr in clrds:
+                color_name = clr['name']
+                color_hex = clr['color']
+
+        self.add_popup.title = 'Add Color'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                   orientation='vertical')
+        color_widget = ColorPicker(hex_color=color_hex)
+        color_widget.bind(color=self.set_color)
+        color_grid = GridLayout(size_hint_x=1,
+                                size_hint_y=None,
+                                cols=2,
+                                rows=1,
+                                row_force_default=True,
+                                row_default_height='40sp',
+                                padding=[10, 10, 10, 10])
+        self.color_name = Factory.CenterVerticalTextInput(text='{}'.format(color_name))
+        color_grid.add_widget(Factory.CenteredFormLabel(text='Color Name:'))
+        color_grid.add_widget(self.color_name)
+        inner_layout_1.add_widget(color_grid)
+        inner_layout_1.add_widget(color_widget)
+
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                   orientation='horizontal')
+        inner_layout_2.add_widget(Button(text='Cancel',
+                                         on_release=self.add_popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=19ff52][b]Edit[/b][/color]',
+                                         on_release=self.edit_color))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.add_popup.content = layout
+        self.add_popup.open()
+
+    def set_color(self, instance, *args, **kwargs):
+        self.color_hex = instance.hex_color
+
+    def add_color(self, *args, **kwargs):
+
+        coloreds = Colored()
+        # get new ordered number
+        new_orders = coloreds.where({'company_id': auth_user.company_id, 'ORDER_BY': 'id desc', 'LIMIT': 1})
+        new_order = 1
+        if new_orders:
+            for no in new_orders:
+                ordered = no['ordered']
+                new_order = ordered + 1
+        coloreds.company_id = auth_user.company_id
+        coloreds.color = self.color_hex
+        coloreds.name = self.color_name.text
+        coloreds.ordered = new_order
+        coloreds.status = 1
+        if coloreds.add():
+            popup = Popup()
+            popup.title = 'New Color'
+            popup.size_hint = (None, None)
+            popup.size = (800, 600)
+            popup.content = Builder.load_string(KV.popup_alert('Succesfully added a new color.'))
+            popup.open()
+            self.add_popup.dismiss()
+
+    def edit_color(self, *args, **kwargs):
+
+        coloreds = Colored()
+        # get new ordered number
+        put = coloreds.put(where={'color_id':self.color_id,'company_id':auth_user.company_id},
+                           data={'color':self.color_hex,
+                                 'name': self.color_name.text})
+
+        if put:
+            popup = Popup()
+            popup.title = 'Edit Color'
+            popup.size_hint = (None, None)
+            popup.size = (800, 600)
+            popup.content = Builder.load_string(KV.popup_alert('Succesfully edited color.'))
+            popup.open()
+            self.add_popup.dismiss()
+
+    def action_popup(self, id, *args, **kwargs):
+        self.color_id = id
+        popup = Popup()
+        popup.title = 'Edit Color'
+        popup.size_hint = (None, None)
+        popup.size = (800, 600)
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.7))
+        inner_layout_1.add_widget(Button(text='Reorder',
+                                         on_press=popup.dismiss,
+                                         on_release=self.reorder_start))
+        inner_layout_1.add_widget(Button(text='Edit',
+                                         on_press=popup.dismiss,
+                                         on_release=self.popup_edit))
+        inner_layout_1.add_widget(Button(text='Delete',
+                                         on_release=self.delete_confirm))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.3))
+        inner_layout_2.add_widget(Button(text='Cancel',
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def reorder_start(self, *args, **kwargs):
+        self.reorder_start_id = self.color_id
+        self.reset()
+
+    def delete_confirm(self, *args, **kwargs):
+        print('here')
+        popup = Popup()
+        popup.size_hint = (None, None)
+        popup.size = (800, 600)
+        popup.title = 'Delete Confirmation'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = Label(size_hint=(1, 0.7),
+                               markup=True,
+                               text='Are you sure you wish to delete this Color (#{})?'.format(self.color_id))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.3))
+        inner_layout_2.add_widget(Button(text='Cancel',
+                                         on_release=popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=FF0000][b]Delete[/b][/color]',
+                                         on_press=self.delete_item,
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def delete_item(self, *args, **kwargs):
+        coloreds = Colored()
+        deleted = coloreds.where({'company_id': auth_user.company_id,
+                                  'color_id': self.color_id})
+        if deleted:
+            for deleted_color in deleted:
+                coloreds.id = deleted_color['id']
+                if coloreds.delete():
+                    popup = Popup()
+                    popup.title = 'Deleted Color Notification'
+                    popup.size_hint = (None, None)
+                    popup.size = (800, 600)
+                    content = KV.popup_alert('Successfully deleted color')
+                    popup.content = Builder.load_string(content)
+                    popup.open()
+        else:
+            popup = Popup()
+            popup.title = 'Deleted Color Notification'
+            popup.size_hint = (None, None)
+            popup.size = (800, 600)
+            content = KV.popup_alert('Could not delete color. Try again.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+        self.reset()
 
 
 class CompanyScreen(Screen):
@@ -4825,6 +5152,370 @@ class EditCustomerScreen(Screen):
         vars.update_last_10()
 
 
+class EmployeesScreen(Screen):
+    employees_table = ObjectProperty(None)
+    employee_id = None
+    employee_popup = Popup()
+    username = None
+    first_name = None
+    last_name = None
+    phone = None
+    email = None
+    role_id = None
+    password = None
+
+    def reset(self):
+        self.create_table()
+        self.employee_id = None
+        self.username = None
+        self.first_name = None
+        self.last_name = None
+        self.phone = None
+        self.email = None
+        self.role_id = None
+        self.password = None
+        pass
+    pass
+
+    def create_table(self):
+        self.employees_table.clear_widgets()
+        h1 = KV.invoice_tr(0, 'Role')
+        h2 = KV.invoice_tr(0, 'User')
+        h3 = KV.invoice_tr(0, 'First')
+        h4 = KV.invoice_tr(0, 'Last')
+        h5 = KV.invoice_tr(0, 'Phone')
+        h6 = KV.invoice_tr(0, 'Email')
+        h7 = KV.invoice_tr(0, 'A')
+
+        self.employees_table.add_widget(Builder.load_string(h1))
+        self.employees_table.add_widget(Builder.load_string(h2))
+        self.employees_table.add_widget(Builder.load_string(h3))
+        self.employees_table.add_widget(Builder.load_string(h4))
+        self.employees_table.add_widget(Builder.load_string(h5))
+        self.employees_table.add_widget(Builder.load_string(h6))
+        self.employees_table.add_widget(Builder.load_string(h7))
+
+        users = User()
+        employees = users.where({'company_id':auth_user.company_id,
+                                 'role_id':{'<':5}})
+
+        if employees:
+            for employee in employees:
+                c1 = Label(text=str(employee['role_id']))
+                c2 = Label(text=str(employee['username']))
+                c3 = Label(text=str(employee['first_name']))
+                c4 = Label(text=str(employee['last_name']))
+                c5 = Label(text=str(employee['phone']))
+                c6 = Label(text=str(employee['email']))
+                c7 = BoxLayout(orientation='horizontal')
+                edit_button = Button(text='edit',
+                                     on_press = partial(self.set_employee,employee['user_id']),
+                                     on_release=self.edit_employee_popup)
+                remove_button = Button(markup=True,
+                                       text='[color=ff0000][b]delete[/b][/color]',
+                                       on_press=partial(self.set_employee,employee['user_id']),
+                                       on_release=self.delete_employee_confirm)
+                c7.add_widget(edit_button)
+                c7.add_widget(remove_button)
+                self.employees_table.add_widget(c1)
+                self.employees_table.add_widget(c2)
+                self.employees_table.add_widget(c3)
+                self.employees_table.add_widget(c4)
+                self.employees_table.add_widget(c5)
+                self.employees_table.add_widget(c6)
+                self.employees_table.add_widget(c7)
+
+    def set_employee(self, id,*args, **kwargs):
+        self.employee_id = id
+
+    def add_employee_popup(self):
+        self.employee_popup.title = 'Add Employee Info'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='vertical')
+        add_table = GridLayout(size_hint=(1,0.9),
+                                cols=2,
+                                rows=7,
+                                row_force_default=True,
+                                row_default_height='50sp',
+                                spacing='5sp')
+        add_table.add_widget(Factory.CenteredFormLabel(text='Username:'))
+        self.username = Factory.CenterVerticalTextInput()
+        add_table.add_widget(self.username)
+        add_table.add_widget(Factory.CenteredFormLabel(text='First Name:'))
+        self.first_name = Factory.CenterVerticalTextInput()
+        add_table.add_widget(self.first_name)
+        add_table.add_widget(Factory.CenteredFormLabel(text='Last Name:'))
+        self.last_name = Factory.CenterVerticalTextInput()
+        add_table.add_widget(self.last_name)
+        add_table.add_widget(Factory.CenteredFormLabel(text='Phone:'))
+        self.phone = Factory.CenterVerticalTextInput()
+        add_table.add_widget(self.phone)
+        add_table.add_widget(Factory.CenteredFormLabel(text='Email:'))
+        self.email = Factory.CenterVerticalTextInput()
+        add_table.add_widget(self.email)
+        add_table.add_widget(Factory.CenteredFormLabel(text='Password:'))
+        self.password = Factory.CenterVerticalTextInput()
+        add_table.add_widget(self.password)
+        inner_layout_1.add_widget(add_table)
+        inner_layout_2 = BoxLayout(size_hint=(1,0.1),
+                                   orientation='horizontal')
+        inner_layout_2.add_widget(Button(text='cancel',
+                                         on_release= self.employee_popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=00ff00][b]add[/b][/color]',
+                                         on_release=self.add_employee))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.employee_popup.content = layout
+        self.employee_popup.open()
+
+    def edit_employee_popup(self, *args, **kwargs):
+        username = ''
+        first_name = ''
+        last_name = ''
+        phone = ''
+        email = ''
+        password = ''
+        users = User()
+        employees = users.where({'user_id':self.employee_id})
+        if employees:
+            for employee in employees:
+                username = employee['username']
+                first_name = employee['first_name']
+                last_name = employee['last_name']
+                phone = employee['phone']
+                email = employee['email']
+                password = employee['password']
+        self.employee_popup.title = 'Edit Employee Info'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='vertical')
+        edit_table = GridLayout(size_hint=(1,0.9),
+                                cols=2,
+                                rows=7,
+                                row_force_default=True,
+                                row_default_height='50sp',
+                                spacing='5sp')
+        edit_table.add_widget(Factory.CenteredFormLabel(text='Username:'))
+        self.username = Factory.CenterVerticalTextInput(text=str(username))
+        edit_table.add_widget(self.username)
+        edit_table.add_widget(Factory.CenteredFormLabel(text='First Name:'))
+        self.first_name = Factory.CenterVerticalTextInput(text=str(first_name))
+        edit_table.add_widget(self.first_name)
+        edit_table.add_widget(Factory.CenteredFormLabel(text='Last Name:'))
+        self.last_name = Factory.CenterVerticalTextInput(text=str(last_name))
+        edit_table.add_widget(self.last_name)
+        edit_table.add_widget(Factory.CenteredFormLabel(text='Phone:'))
+        self.phone = Factory.CenterVerticalTextInput(text=str(phone))
+        edit_table.add_widget(self.phone)
+        edit_table.add_widget(Factory.CenteredFormLabel(text='Email:'))
+        self.email = Factory.CenterVerticalTextInput(text=str(email))
+        edit_table.add_widget(self.email)
+        edit_table.add_widget(Factory.CenteredFormLabel(text='New Password:'))
+        self.password = Factory.CenterVerticalTextInput(text=str(password),
+                                                     hint_text = 'Optional')
+        edit_table.add_widget(self.password)
+        inner_layout_1.add_widget(edit_table)
+        inner_layout_2 = BoxLayout(size_hint=(1,0.1),
+                                   orientation='horizontal')
+        inner_layout_2.add_widget(Button(text='cancel',
+                                         on_release= self.employee_popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=00ff00][b]edit[/b][/color]',
+                                         on_release=self.edit_employee))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.employee_popup.content = layout
+        self.employee_popup.open()
+        pass
+
+    def add_employee(self, *args, **kwargs):
+
+        errors = 0
+
+        if self.username.text is None:
+            errors += 1
+            self.username.hint_text_color = ERROR_COLOR
+            self.username.hint_text = 'Cannot be empty'
+        else:
+            self.username.hint_text_color = DEFAULT_COLOR
+            self.username.hint_text = ''
+
+        if self.first_name.text is None:
+            errors += 1
+            self.first_name.hint_text_color = ERROR_COLOR
+            self.first_name.hint_text = 'Cannot be empty'
+        else:
+            self.first_name.hint_text_color = DEFAULT_COLOR
+            self.first_name.hint_text = ''
+
+        if self.last_name.text is None:
+            errors += 1
+            self.last_name.hint_text_color = ERROR_COLOR
+            self.last_name.hint_text = 'Cannot be empty'
+        else:
+            self.last_name.hint_text_color = DEFAULT_COLOR
+            self.last_name.hint_text = ''
+
+        if self.phone.text is None:
+            errors += 1
+            self.phone.hint_text_color = ERROR_COLOR
+            self.phone.hint_text = 'Cannot be empty'
+        else:
+            self.phone.hint_text_color = DEFAULT_COLOR
+            self.phone.hint_text = ''
+
+        if self.email.text is None:
+            errors += 1
+            self.email.hint_text_color = ERROR_COLOR
+            self.email.hint_text = 'Cannot be empty'
+        else:
+            self.email.hint_text_color = DEFAULT_COLOR
+            self.email.hint_text = ''
+
+        if self.password.text is None:
+            errors += 1
+            self.password.hint_text_color = ERROR_COLOR
+            self.password.hint_text = 'Cannot be empty'
+        else:
+            self.password.hint_text_color = DEFAULT_COLOR
+            self.password.hint_text = ''
+
+        if errors == 0:
+            users = User()
+            users.company_id = auth_user.company_id
+            users.username = self.username.text
+            users.first_name = self.first_name.text
+            users.last_name = self.last_name.text
+            users.phone = self.phone.text
+            users.email = self.email.text
+            users.password = self.password.text
+            users.role_id = 3 # employees
+
+
+            if users.add():
+                popup = Popup()
+                popup.title = 'Add Employee'
+                popup.content = Builder.load_string(KV.popup_alert('Successfully Added employee!'))
+                popup.open()
+        else:
+            popup = Popup()
+            popup.title = 'Add Employee'
+            popup.content = Builder.load_string(KV.popup_alert('{} errors. Please fix then continue.'.format(errors)))
+            popup.open()
+        self.employee_popup.dismiss()
+        self.reset()
+
+    def edit_employee(self, *args, **kwargs):
+
+        errors = 0
+
+        if self.username.text is None:
+            errors += 1
+            self.username.hint_text_color = ERROR_COLOR
+            self.username.hint_text = 'Cannot be empty'
+        else:
+            self.username.hint_text_color = DEFAULT_COLOR
+            self.username.hint_text = ''
+
+        if self.first_name.text is None:
+            errors += 1
+            self.first_name.hint_text_color = ERROR_COLOR
+            self.first_name.hint_text = 'Cannot be empty'
+        else:
+            self.first_name.hint_text_color = DEFAULT_COLOR
+            self.first_name.hint_text = ''
+        
+        if self.last_name.text is None:
+            errors += 1
+            self.last_name.hint_text_color = ERROR_COLOR
+            self.last_name.hint_text = 'Cannot be empty'
+        else:
+            self.last_name.hint_text_color = DEFAULT_COLOR
+            self.last_name.hint_text = ''
+        
+        if self.phone.text is None:
+            errors += 1
+            self.phone.hint_text_color = ERROR_COLOR
+            self.phone.hint_text = 'Cannot be empty'
+        else:
+            self.phone.hint_text_color = DEFAULT_COLOR
+            self.phone.hint_text = ''
+        
+        if self.email.text is None:
+            errors += 1
+            self.email.hint_text_color = ERROR_COLOR
+            self.email.hint_text = 'Cannot be empty'
+        else:
+            self.email.hint_text_color = DEFAULT_COLOR
+            self.email.hint_text = ''
+
+        if errors == 0:
+            users = User()
+            if self.password.text is None:
+                put = users.put(where={'user_id':self.employee_id},
+                                data={'username':self.username.text,
+                                      'first_name':self.first_name.text,
+                                      'last_name':self.last_name.text,
+                                      'phone':self.phone.text,
+                                      'email':self.email.text})
+            else:
+                put = users.put(where={'user_id':self.employee_id},
+                                data={'username':self.username.text,
+                                      'first_name':self.first_name.text,
+                                      'last_name':self.last_name.text,
+                                      'phone':self.phone.text,
+                                      'email':self.email.text,
+                                      'password':self.password.text})
+            if put:
+                popup = Popup()
+                popup.title = 'Edit Employee'
+                popup.content = Builder.load_string(KV.popup_alert('Successfully edited employee!'))
+                popup.open()
+        else:
+            popup = Popup()
+            popup.title = 'Edit Employee'
+            popup.content = Builder.load_string(KV.popup_alert('{} errors. Please fix then continue.'.format(errors)))
+            popup.open()
+        self.employee_popup.dismiss()
+        self.reset()
+
+    def delete_employee_confirm(self, *args, **kwargs):
+        popup = Popup()
+        popup.title = 'Delete Confirmation'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='vertical',
+                                   size_hint=(1,0.9))
+        inner_layout_1.add_widget(Label(text='Are you sure you wish to delete employee?'))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1,0.1))
+        inner_layout_2.add_widget(Button(text='cancel',
+                                         on_release=popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=00ff00][b]Delete[/b][/color]',
+                                         on_release=self.delete_employee))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def delete_employee(self, *args, **kwargs):
+        users = User()
+        employees = users.where({'user_id':self.employee_id})
+        count = 0
+        if employees:
+            for employee in employees:
+                e_id = employee['id']
+                users.id = e_id
+                if users.delete():
+                    count += 1
+
+        popup = Popup()
+        popup.title = 'Employee Deleted'
+        popup.content = Builder.load_string(KV.popup_alert('{} employee(s) deleted.'.format(count)))
+        popup.open()
+
+        self.reset()
+
 class HistoryScreen(Screen):
     invoices_table = ObjectProperty(None)
     item_image = ObjectProperty(None)
@@ -6000,9 +6691,9 @@ class InventoryItemsScreen(Screen):
                 inv_items = InventoryItem()
                 for list_id in self.reorder_list[self.inventory_id]:
                     row += 1
-                    inv_items.put(where={'company_id':auth_user.company_id,
-                                         'item_id':list_id},
-                                  data={'ordered':row})
+                    inv_items.put(where={'company_id': auth_user.company_id,
+                                         'item_id': list_id},
+                                  data={'ordered': row})
             self.from_id = None
             self.item_id = None
             self.reorder_list = {}
@@ -6019,7 +6710,7 @@ class InventoryItemsScreen(Screen):
             inner_layout_1.add_widget(Button(text='Edit',
                                              on_release=self.edit_show))
             inner_layout_1.add_widget(Button(text='Delete',
-                                             on_release=self.delete_item))
+                                             on_release=self.delete_confirm))
             inner_layout_2 = BoxLayout(orientation='horizontal',
                                        size_hint=(1, 0.3))
             inner_layout_2.add_widget(Button(text='Cancel',
@@ -6056,7 +6747,6 @@ class InventoryItemsScreen(Screen):
             quantity = ''
             price = ''
             image_src = ''
-
 
         layout = BoxLayout(orientation='vertical',
                            pos_hint={'top': 1})
@@ -6116,20 +6806,52 @@ class InventoryItemsScreen(Screen):
         self.edit_popup.open()
 
     def delete_confirm(self, *args, **kwargs):
-        pass
+        popup = Popup()
+        popup.size_hint = (None, None)
+        popup.size = (800, 600)
+        popup.title = 'Delete Confirmation'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = Label(size_hint=(1, 0.7),
+                               markup=True,
+                               text='Are you sure you wish to delete this inventory item (#{})?'.format(self.item_id))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.3))
+        inner_layout_2.add_widget(Button(text='Cancel',
+                                         on_release=popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=FF0000][b]Delete[/b][/color]',
+                                         on_press=self.delete_item,
+                                         on_release=popup.dismiss))
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
 
     def delete_item(self, *args, **kwargs):
         self.add_popup.dismiss()
 
         inventory_items = InventoryItem()
-        deleted = inventory_items.where({'company_id':auth_user.company_id,
-                                         'item_id':self.item_id})
+        deleted = inventory_items.where({'company_id': auth_user.company_id,
+                                         'item_id': self.item_id})
         if deleted:
             for deleted_items in deleted:
                 inventory_items.id = deleted_items['id']
                 if inventory_items.delete():
                     popup = Popup()
-                    popup.title = 'Delete C'
+                    popup.title = 'Deleted Item Notification'
+                    popup.size_hint = (None, None)
+                    popup.size = (800, 600)
+                    content = KV.popup_alert('Successfully deleted item')
+                    popup.content = Builder.load_string(content)
+                    popup.open()
+        else:
+            popup = Popup()
+            popup.title = 'Deleted Item Notification'
+            popup.size_hint = (None, None)
+            popup.size = (800, 600)
+            content = KV.popup_alert('Could not delete item. Try again.')
+            popup.content = Builder.load_string(content)
+            popup.open()
 
     def add_item_popup(self):
         inventory_items = InventoryItem()
@@ -6279,15 +7001,15 @@ class InventoryItemsScreen(Screen):
         img_name = img[-1]
         if errors == 0:
             inventory_items = InventoryItem()
-            put = inventory_items.put(where={'company_id':auth_user.company_id,
-                                             'item_id':self.item_id},
-                                      data={'name':self.r1c2.text,
-                                            'description':self.r2c2.text,
-                                            'tags':self.r3c2.text,
-                                            'quantity':self.r4c2.text,
-                                            'ordered':self.r5c2.text,
-                                            'price':self.r6c2.text,
-                                            'image':img_name})
+            put = inventory_items.put(where={'company_id': auth_user.company_id,
+                                             'item_id': self.item_id},
+                                      data={'name': self.r1c2.text,
+                                            'description': self.r2c2.text,
+                                            'tags': self.r3c2.text,
+                                            'quantity': self.r4c2.text,
+                                            'ordered': self.r5c2.text,
+                                            'price': self.r6c2.text,
+                                            'image': img_name})
             if put:
                 popup = Popup()
                 popup.title = 'Form Success'
@@ -6727,6 +7449,9 @@ class Last10Screen(Screen):
 class LoginScreen(Screen):
     pass
 
+class MemosScreen(Screen):
+    def reset(self):
+        pass
 
 class NewCustomerScreen(Screen):
     last_name = ObjectProperty(None)
@@ -9009,6 +9734,50 @@ class SearchResultsScreen(Screen):
 
 class SettingsScreen(Screen):
     pass
+
+
+class TaxesScreen(Screen):
+    tax_rate_input = ObjectProperty(None)
+
+    def reset(self):
+        taxes = Tax()
+        tax_rate = None
+        tax_data = taxes.where({'company_id': auth_user.company_id, 'ORDER_BY': 'id asc', 'LIMIT': 1})
+        if tax_data:
+            for tax in tax_data:
+                tax_rate = tax['rate']
+        self.tax_rate_input.text = '{0:0>4}'.format((tax_rate * 100)) if tax_rate else ''
+
+    def update(self):
+        tax_rate = False
+        if self.tax_rate_input.text:
+            # convert tax rate into decimal / 100
+            tax_rate = float(self.tax_rate_input.text) / 100 if self.tax_rate_input.text else False
+
+        if tax_rate:
+            self.tax_rate_input.hint_text = ""
+            self.tax_rate_input.hint_text_color = DEFAULT_COLOR
+            taxes = Tax()
+            taxes.company_id = auth_user.company_id
+            taxes.rate = tax_rate
+            taxes.status = 1
+            if taxes.add():
+                popup = Popup()
+                popup.title = 'Update Taxes'
+                popup.size_hint = (None, None)
+                popup.size = (800, 600)
+                popup.content = Builder.load_string(KV.popup_alert('Successfully updated tax!'))
+                popup.open()
+            else:
+                popup = Popup()
+                popup.title = 'Error On Update'
+                popup.size_hint = (None, None)
+                popup.size = (800, 600)
+                popup.content = Builder.load_string(KV.popup_alert('Could not update tax rate! Please try again.'))
+                popup.open()
+        else:
+            self.tax_rate_input.hint_text = "Enter Tax Rate"
+            self.tax_rate_input.hint_text_color = ERROR_COLOR
 
 
 class ScreenManagement(ScreenManager):

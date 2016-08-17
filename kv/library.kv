@@ -175,6 +175,27 @@
         center_y: self.parent.center_y + sp(20)
         allow_stretch: True
 
+<ColorsFromButton@Button>
+    id: color_button
+    font_size:'17sp'
+    markup:True
+    text: ''
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    Label:
+        id: color_label
+        size: '50sp','50sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        canvas.before:
+            Color:
+                rgba: 0,0.64,0.149,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
 <ImageFileChooser@BoxLayout>
     orientation: 'vertical'
     Image:

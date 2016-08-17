@@ -276,7 +276,8 @@ class Sync:
             to_update['schedules'] = schedules_2
             to_update_rows += len(to_update['schedules'])
 
-        taxes_2 = Tax().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        taxes_2 = Tax().where({'tax_id': {'!=': '""'},
+                               'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if taxes_2:
             to_update['taxes'] = taxes_2
             to_update_rows += len(to_update['taxes'])
@@ -287,7 +288,8 @@ class Sync:
             to_update['transactions'] = transactions_2
             to_update_rows += len(to_update['transactions'])
 
-        users_2 = User().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        users_2 = User().where({'user_id': {'!=':'""'},
+                                'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if users_2:
             to_update['users'] = users_2
             to_update_rows += len(to_update['users'])
@@ -322,7 +324,7 @@ class Sync:
 
             except urllib.error.URLError as e:
                 print(e.reason)  # could not save this time around because no internet, move on
-                if e.reason == 'Forbidden':  # url is too long try breaking it down into smaller chunks then send
+                if e.reason == 'Forbidden' or e.reason == 'Request-URI Too Long':  # url is too long try breaking it down into smaller chunks then send
                     print('Request was too large for server, sending again in chunks.')
                     try:
                         # break up url into smaller chunks
