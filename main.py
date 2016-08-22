@@ -606,7 +606,7 @@ Button:
 
     def popup_edit(self, *args, **kwargs):
         coloreds = Colored()
-        clrds = coloreds.where({'color_id':self.color_id,'company_id':auth_user.company_id})
+        clrds = coloreds.where({'color_id': self.color_id, 'company_id': auth_user.company_id})
         color_name = ''
         color_hex = ''
         if clrds:
@@ -676,8 +676,8 @@ Button:
 
         coloreds = Colored()
         # get new ordered number
-        put = coloreds.put(where={'color_id':self.color_id,'company_id':auth_user.company_id},
-                           data={'color':self.color_hex,
+        put = coloreds.put(where={'color_id': self.color_id, 'company_id': auth_user.company_id},
+                           data={'color': self.color_hex,
                                  'name': self.color_name.text})
 
         if put:
@@ -1039,6 +1039,7 @@ class DropoffScreen(Screen):
     print_popup = ObjectProperty(None)
     deleted_rows = []
     starch = None
+    memo_list = []
 
     def reset(self):
         # reset the inventory table
@@ -1099,6 +1100,7 @@ class DropoffScreen(Screen):
         self.summary_table.add_widget(Builder.load_string(h4))
         self.get_inventory()
         self.deleted_rows = []
+        self.memo_list = []
         taxes = Tax().where({'company_id': auth_user.company_id, 'status': 1})
         if taxes:
             for tax in taxes:
@@ -1441,27 +1443,47 @@ GridLayout:
         # memo section
         memo_layout = BoxLayout(orientation='vertical',
                                 size_hint=(1, 0.5))
+        memo_inner_layout_1 = BoxLayout(orientation='vertical',
+                                        size_hint=(1, 0.8))
+        memo_scroll_view = ScrollView()
+        memo_grid_layout = Factory.GridLayoutForScrollView(row_default_height='50sp',
+                                                           cols=4)
+        mmos = Memo()
+        memos = mmos.where({'company_id':auth_user.company_id,
+                            'ORDER_BY':'ordered asc'})
+        if memos:
+            for memo in memos:
+                btn_memo = Factory.LongButton(text=str(memo['memo']),
+                                              on_release=partial(self.append_memo,memo['memo']))
+                memo_grid_layout.add_widget(btn_memo)
+
+        memo_scroll_view.add_widget(memo_grid_layout)
+
+        memo_inner_layout_2 = BoxLayout(orientation='horizontal',
+                                        size_hint=(1, 0.2))
         memo_title = Label(markup=True,
                            pos_hint={'top': 1},
                            text='[b]Create Memo[/b]',
                            size_hint=(1, 0.1))
-        memo_inner_layout = BoxLayout(orientation='horizontal',
-                                      size_hint=(1, 0.4))
-        memo_layout.add_widget(memo_title)
-        memo_text_input = TextInput(text='',
-                                    size_hint=(0.9, 1),
-                                    multiline=True)
+        memo_text_input = Factory.CenterVerticalTextInput(text='',
+                                                          size_hint=(0.7, 1),
+                                                          multiline=False)
+        memo_inner_layout_1.add_widget(memo_title)
+        memo_inner_layout_1.add_widget(memo_scroll_view)
+
         try:
-            memo_inner_layout.add_widget(memo_text_input)
+            memo_inner_layout_2.add_widget(memo_text_input)
         except WidgetException:
-            memo_inner_layout.remove_widget(memo_text_input)
-            memo_inner_layout.add_widget(memo_text_input)
+            memo_inner_layout_2.remove_widget(memo_text_input)
+            memo_inner_layout_2.add_widget(memo_text_input)
+        memo_layout.add_widget(memo_inner_layout_1)
+        memo_layout.add_widget(memo_inner_layout_2)
         self.memo_text_input = memo_text_input
         memo_add_button = Button(text='Add',
-                                 size_hint=(0.1, 1),
+                                 size_hint=(0.3, 1),
                                  on_press=self.add_memo)
-        memo_inner_layout.add_widget(memo_add_button)
-        memo_layout.add_widget(memo_inner_layout)
+        memo_inner_layout_2.add_widget(memo_add_button)
+
         memo_color_layout.add_widget(color_layout)
         memo_color_layout.add_widget(memo_layout)
         # make items side
@@ -1493,6 +1515,14 @@ GridLayout:
         self.memo_color_popup.content = layout
         # show layout
         self.memo_color_popup.open()
+
+    def append_memo(self, msg, *args, **kwargs):
+        if not self.memo_list:
+            self.memo_list = [msg]
+        else:
+            self.memo_list.append(msg)
+        self.memo_text_input.text = ', '.join(self.memo_list)
+
 
     def make_items_table(self):
         self.items_grid.clear_widgets()
@@ -1618,6 +1648,7 @@ GridLayout:
 
     def remove_memo(self, *args, **kwargs):
         if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
+            self.memo_list = []
             self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
             self.make_items_table()
 
@@ -5175,6 +5206,7 @@ class EmployeesScreen(Screen):
         self.role_id = None
         self.password = None
         pass
+
     pass
 
     def create_table(self):
@@ -5196,8 +5228,8 @@ class EmployeesScreen(Screen):
         self.employees_table.add_widget(Builder.load_string(h7))
 
         users = User()
-        employees = users.where({'company_id':auth_user.company_id,
-                                 'role_id':{'<':5}})
+        employees = users.where({'company_id': auth_user.company_id,
+                                 'role_id': {'<': 5}})
 
         if employees:
             for employee in employees:
@@ -5209,11 +5241,11 @@ class EmployeesScreen(Screen):
                 c6 = Label(text=str(employee['email']))
                 c7 = BoxLayout(orientation='horizontal')
                 edit_button = Button(text='edit',
-                                     on_press = partial(self.set_employee,employee['user_id']),
+                                     on_press=partial(self.set_employee, employee['user_id']),
                                      on_release=self.edit_employee_popup)
                 remove_button = Button(markup=True,
                                        text='[color=ff0000][b]delete[/b][/color]',
-                                       on_press=partial(self.set_employee,employee['user_id']),
+                                       on_press=partial(self.set_employee, employee['user_id']),
                                        on_release=self.delete_employee_confirm)
                 c7.add_widget(edit_button)
                 c7.add_widget(remove_button)
@@ -5225,19 +5257,19 @@ class EmployeesScreen(Screen):
                 self.employees_table.add_widget(c6)
                 self.employees_table.add_widget(c7)
 
-    def set_employee(self, id,*args, **kwargs):
+    def set_employee(self, id, *args, **kwargs):
         self.employee_id = id
 
     def add_employee_popup(self):
         self.employee_popup.title = 'Add Employee Info'
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='vertical')
-        add_table = GridLayout(size_hint=(1,0.9),
-                                cols=2,
-                                rows=7,
-                                row_force_default=True,
-                                row_default_height='50sp',
-                                spacing='5sp')
+        add_table = GridLayout(size_hint=(1, 0.9),
+                               cols=2,
+                               rows=7,
+                               row_force_default=True,
+                               row_default_height='50sp',
+                               spacing='5sp')
         add_table.add_widget(Factory.CenteredFormLabel(text='Username:'))
         self.username = Factory.CenterVerticalTextInput()
         add_table.add_widget(self.username)
@@ -5257,10 +5289,10 @@ class EmployeesScreen(Screen):
         self.password = Factory.CenterVerticalTextInput()
         add_table.add_widget(self.password)
         inner_layout_1.add_widget(add_table)
-        inner_layout_2 = BoxLayout(size_hint=(1,0.1),
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
                                    orientation='horizontal')
         inner_layout_2.add_widget(Button(text='cancel',
-                                         on_release= self.employee_popup.dismiss))
+                                         on_release=self.employee_popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=00ff00][b]add[/b][/color]',
                                          on_release=self.add_employee))
@@ -5277,7 +5309,7 @@ class EmployeesScreen(Screen):
         email = ''
         password = ''
         users = User()
-        employees = users.where({'user_id':self.employee_id})
+        employees = users.where({'user_id': self.employee_id})
         if employees:
             for employee in employees:
                 username = employee['username']
@@ -5289,7 +5321,7 @@ class EmployeesScreen(Screen):
         self.employee_popup.title = 'Edit Employee Info'
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='vertical')
-        edit_table = GridLayout(size_hint=(1,0.9),
+        edit_table = GridLayout(size_hint=(1, 0.9),
                                 cols=2,
                                 rows=7,
                                 row_force_default=True,
@@ -5312,13 +5344,13 @@ class EmployeesScreen(Screen):
         edit_table.add_widget(self.email)
         edit_table.add_widget(Factory.CenteredFormLabel(text='New Password:'))
         self.password = Factory.CenterVerticalTextInput(text=str(password),
-                                                     hint_text = 'Optional')
+                                                        hint_text='Optional')
         edit_table.add_widget(self.password)
         inner_layout_1.add_widget(edit_table)
-        inner_layout_2 = BoxLayout(size_hint=(1,0.1),
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
                                    orientation='horizontal')
         inner_layout_2.add_widget(Button(text='cancel',
-                                         on_release= self.employee_popup.dismiss))
+                                         on_release=self.employee_popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=00ff00][b]edit[/b][/color]',
                                          on_release=self.edit_employee))
@@ -5389,8 +5421,7 @@ class EmployeesScreen(Screen):
             users.phone = self.phone.text
             users.email = self.email.text
             users.password = self.password.text
-            users.role_id = 3 # employees
-
+            users.role_id = 3  # employees
 
             if users.add():
                 popup = Popup()
@@ -5424,7 +5455,7 @@ class EmployeesScreen(Screen):
         else:
             self.first_name.hint_text_color = DEFAULT_COLOR
             self.first_name.hint_text = ''
-        
+
         if self.last_name.text is None:
             errors += 1
             self.last_name.hint_text_color = ERROR_COLOR
@@ -5432,7 +5463,7 @@ class EmployeesScreen(Screen):
         else:
             self.last_name.hint_text_color = DEFAULT_COLOR
             self.last_name.hint_text = ''
-        
+
         if self.phone.text is None:
             errors += 1
             self.phone.hint_text_color = ERROR_COLOR
@@ -5440,7 +5471,7 @@ class EmployeesScreen(Screen):
         else:
             self.phone.hint_text_color = DEFAULT_COLOR
             self.phone.hint_text = ''
-        
+
         if self.email.text is None:
             errors += 1
             self.email.hint_text_color = ERROR_COLOR
@@ -5452,20 +5483,20 @@ class EmployeesScreen(Screen):
         if errors == 0:
             users = User()
             if self.password.text is None:
-                put = users.put(where={'user_id':self.employee_id},
-                                data={'username':self.username.text,
-                                      'first_name':self.first_name.text,
-                                      'last_name':self.last_name.text,
-                                      'phone':self.phone.text,
-                                      'email':self.email.text})
+                put = users.put(where={'user_id': self.employee_id},
+                                data={'username': self.username.text,
+                                      'first_name': self.first_name.text,
+                                      'last_name': self.last_name.text,
+                                      'phone': self.phone.text,
+                                      'email': self.email.text})
             else:
-                put = users.put(where={'user_id':self.employee_id},
-                                data={'username':self.username.text,
-                                      'first_name':self.first_name.text,
-                                      'last_name':self.last_name.text,
-                                      'phone':self.phone.text,
-                                      'email':self.email.text,
-                                      'password':self.password.text})
+                put = users.put(where={'user_id': self.employee_id},
+                                data={'username': self.username.text,
+                                      'first_name': self.first_name.text,
+                                      'last_name': self.last_name.text,
+                                      'phone': self.phone.text,
+                                      'email': self.email.text,
+                                      'password': self.password.text})
             if put:
                 popup = Popup()
                 popup.title = 'Edit Employee'
@@ -5484,10 +5515,10 @@ class EmployeesScreen(Screen):
         popup.title = 'Delete Confirmation'
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='vertical',
-                                   size_hint=(1,0.9))
+                                   size_hint=(1, 0.9))
         inner_layout_1.add_widget(Label(text='Are you sure you wish to delete employee?'))
         inner_layout_2 = BoxLayout(orientation='horizontal',
-                                   size_hint=(1,0.1))
+                                   size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='cancel',
                                          on_release=popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
@@ -5500,7 +5531,7 @@ class EmployeesScreen(Screen):
 
     def delete_employee(self, *args, **kwargs):
         users = User()
-        employees = users.where({'user_id':self.employee_id})
+        employees = users.where({'user_id': self.employee_id})
         count = 0
         if employees:
             for employee in employees:
@@ -5515,6 +5546,7 @@ class EmployeesScreen(Screen):
         popup.open()
 
         self.reset()
+
 
 class HistoryScreen(Screen):
     invoices_table = ObjectProperty(None)
@@ -7449,9 +7481,241 @@ class Last10Screen(Screen):
 class LoginScreen(Screen):
     pass
 
+
 class MemosScreen(Screen):
+    popup_memo = Popup()
+    memo_id = None
+    memos_table = ObjectProperty(None)
+    reorder_start_id = None
+    reorder_end_id = None
+    msg = None
+
     def reset(self):
+        self.memo_id = None
+        self.create_memo_table()
         pass
+
+    def create_memo_table(self):
+        self.memos_table.clear_widgets()
+        mmos = Memo()
+        memos = mmos.where({'company_id': auth_user.company_id,
+                            'ORDER_BY': 'ordered asc'})
+        if memos:
+            for memo in memos:
+                m_id = memo['id']
+                memo_msg = memo['memo']
+                if self.reorder_start_id is None:
+                    memo_item = Factory.LongButton(text='{}'.format(memo_msg),
+                                                   on_press=partial(self.set_memo_id, m_id),
+                                                   on_release=self.memo_actions_popup)
+                elif self.reorder_start_id == m_id:
+                    memo_item = Factory.LongButton(text='{}'.format(memo_msg),
+                                                   markup=True,
+                                                   on_press=partial(self.set_memo_id, m_id),
+                                                   on_release=self.memo_actions_popup,
+                                                   background_normal='',
+                                                   background_color=(0, 0.64, 0.149, 1))
+                elif self.reorder_start_id != None and self.reorder_start_id != m_id:
+                    memo_item = Factory.LongButton(text='{}'.format(memo_msg),
+                                                   on_release=partial(self.set_reorder_end_id, m_id))
+
+                self.memos_table.add_widget(memo_item)
+
+    def memo_actions_popup(self, *args, **kwargs):
+        popup = Popup()
+        popup.title = 'Memo Actions'
+        popup.size_hint = (None, None)
+        popup.size = (800, 600)
+        content = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        inner_layout_1.add_widget(Button(text='reorder',
+                                         on_press=self.reorder_start,
+                                         on_release=popup.dismiss))
+        inner_layout_1.add_widget(Button(text='edit',
+                                         on_press=popup.dismiss,
+                                         on_release=self.popup_memos_edit))
+        inner_layout_1.add_widget(Button(text='delete',
+                                         on_press=self.delete_confirm))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(text='cancel',
+                                         on_release=popup.dismiss))
+        content.add_widget(inner_layout_1)
+        content.add_widget(inner_layout_2)
+        popup.content = content
+        popup.open()
+
+    def set_memo_id(self, id, *args, **kwargs):
+        self.memo_id = id
+
+    def reorder_start(self, *args, **kwargs):
+        self.reorder_start_id = self.memo_id
+        self.reset()
+
+    def set_reorder_end_id(self, id, *args, **kwargs):
+        print('end set')
+        self.reorder_end_id = id
+        self.reorder()
+
+    def reorder(self, *args, **kwargs):
+        mmos = Memo()
+        memo_start = mmos.where({'id': self.reorder_start_id})
+        order_start = None
+        if memo_start:
+            for memo in memo_start:
+                order_start = memo['ordered']
+        memo_end = mmos.where({'id': self.reorder_end_id})
+        order_end = None
+        if memo_end:
+            for memo in memo_end:
+                order_end = memo['ordered']
+
+        put_start = mmos.put(where={'id': self.reorder_start_id},
+                             data={'ordered': order_end})
+
+        put_end = mmos.put(where={'id': self.reorder_end_id},
+                           data={'ordered': order_start})
+        if put_start and put_end:
+            self.reorder_start_id = None
+            self.reorder_end_id = None
+            self.reset()
+
+        else:
+            popup = Popup()
+            popup.title = 'Reorder Status'
+            popup.content = Builder.load_string(KV.popup_alert('Could not reorder. Try again.'))
+            popup.open()
+        pass
+
+    def popup_memos_add(self):
+        self.popup_memo.title = 'Add A Memo'
+        content = BoxLayout(orientation='vertical')
+        inner_layout_1 = GridLayout(cols=2,
+                                    size_hint=(1, 0.9),
+                                    row_force_default=True,
+                                    row_default_height='50sp')
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Memo'))
+        self.msg = Factory.CenterVerticalTextInput()
+        inner_layout_1.add_widget(self.msg)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(text='cancel',
+                                         on_release=self.popup_memo.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=00ff00][b]Add[/b][/color]',
+                                         on_release=self.add_memo))
+        content.add_widget(inner_layout_1)
+        content.add_widget(inner_layout_2)
+        self.popup_memo.content = content
+        self.popup_memo.open()
+
+    def add_memo(self, *args, **kwargs):
+        mmos = Memo()
+        search = mmos.where({'company_id': auth_user.company_id,
+                             'ORDER_BY': 'ordered desc',
+                             'LIMIT': 1})
+        next_ordered = 1
+        if search:
+            for memo in search:
+                next_ordered = int(memo['ordered']) + 1
+
+        if self.msg.text is not None:
+            mmos.company_id = auth_user.company_id
+            mmos.memo = self.msg.text
+            mmos.ordered = next_ordered
+            mmos.status = 1
+
+            if mmos.add():
+                popup = Popup()
+                popup.title = 'Memo'
+                popup.content = Builder.load_string(KV.popup_alert('Successfully added new memo'))
+                popup.open()
+                self.popup_memo.dismiss()
+                self.memo_id = None
+                self.reorder_start_id = None
+                self.reorder_end_id = None
+                self.reset()
+
+    def delete_confirm(self, *args, **kwargs):
+        popup = Popup()
+        popup.title = 'Delete Confirmation'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='vertical',
+                                   size_hint=(1, 0.9))
+        inner_layout_1.add_widget(Label(text='Are you sure?'))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(text='cancel',
+                                         on_release=popup.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=00ff00][b]cancel[/b][/color]',
+                                         on_press=popup.dismiss,
+                                         on_release=self.delete_memo))
+        popup.content = layout
+        popup.open()
+
+    def delete_memo(self, *args, **kwargs):
+        mmos = Memo()
+        mmos.id = self.memo_id
+        if mmos.delete():
+            popup = Popup()
+            popup.title = 'Deleted Memo'
+            popup.content = Builder.load_string(KV.popup_alert('Successfully removed memo'))
+            popup.open()
+            self.reset()
+
+    def popup_memos_edit(self, *args, **kwargs):
+
+        mmos = Memo()
+        memos = mmos.where({'id': self.memo_id})
+        msg = ''
+        if memos:
+            for memo in memos:
+                msg = memo['memo']
+        self.popup_memo.title = 'Edit Memo'
+        content = BoxLayout(orientation='vertical')
+        inner_layout_1 = GridLayout(cols=2,
+                                    size_hint=(1, 0.9),
+                                    row_force_default=True,
+                                    row_default_height='50sp')
+        inner_layout_1.add_widget(Factory.CenteredFormLabel(text='Memo'))
+        self.msg = Factory.CenterVerticalTextInput(text=str(msg))
+        inner_layout_1.add_widget(self.msg)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        inner_layout_2.add_widget(Button(text='cancel',
+                                         on_release=self.popup_memo.dismiss))
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text='[color=00ff00][b]Edit[/b][/color]',
+                                         on_release=self.edit_memo))
+        content.add_widget(inner_layout_1)
+        content.add_widget(inner_layout_2)
+        self.popup_memo.content = content
+        self.popup_memo.open()
+
+    def edit_memo(self, *args, **kwargs):
+        mmos = Memo()
+        mmos.memo = self.msg.text
+        put = mmos.put(where={'id': self.memo_id},
+                       data={'memo': self.msg.text})
+        if put:
+            popup = Popup()
+            popup.title = 'Updated Memo'
+            popup.content = Builder.load_string(KV.popup_alert('Successfully updated memo'))
+            popup.open()
+
+            self.popup_memo.dismiss()
+            self.reset()
+            self.memo_id = None
+            self.reorder_start_id = None
+            self.reorder_end_id = None
+        else:
+            popup = Popup()
+            popup.title = 'Updated Memo'
+            popup.content = Builder.load_string(KV.popup_alert('Could not edit memo. Please try again.'))
+            popup.open()
+
 
 class NewCustomerScreen(Screen):
     last_name = ObjectProperty(None)

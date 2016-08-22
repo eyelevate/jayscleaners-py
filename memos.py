@@ -223,7 +223,7 @@ WHERE id = ?'''.format(t=table), (self.memo_id,
         self.updated_at = now
         if self.id:
 
-            self.c.execute("""UPDATE {t} SET deleted_at = ?, updated_at = ? WHERE id = ?""".format(table),
+            self.c.execute("""UPDATE {t} SET deleted_at = ?, updated_at = ? WHERE id = ?""".format(t=table),
                            (self.updated_at,
                             self.updated_at,
                             self.id)

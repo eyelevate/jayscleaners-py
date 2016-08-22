@@ -2,22 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="44fffa09-638c-484a-90f8-bbe28d93b5f2" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/kv/colors_screen.kv" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/kv/employees_screen.kv" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/kv/memos_screen.kv" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/kv/taxes_screen.kv" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db/jayscleaners.db" afterPath="$PROJECT_DIR$/db/jayscleaners.db" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/colors.py" afterPath="$PROJECT_DIR$/colors.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/inventory_items.py" afterPath="$PROJECT_DIR$/inventory_items.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/inventories_screen.kv" afterPath="$PROJECT_DIR$/kv/inventories_screen.kv" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/library.kv" afterPath="$PROJECT_DIR$/kv/library.kv" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/main.kv" afterPath="$PROJECT_DIR$/kv/main.kv" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/memos_screen.kv" afterPath="$PROJECT_DIR$/kv/memos_screen.kv" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/settings_screen.kv" afterPath="$PROJECT_DIR$/kv/settings_screen.kv" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main.py" afterPath="$PROJECT_DIR$/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static.py" afterPath="$PROJECT_DIR$/static.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/memos.py" afterPath="$PROJECT_DIR$/memos.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sync.py" afterPath="$PROJECT_DIR$/sync.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/users.py" afterPath="$PROJECT_DIR$/users.py" />
     </list>
     <ignored path="jayscleaners.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -37,11 +27,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="246">
-              <caret line="7453" column="12" selection-start-line="7453" selection-start-column="12" selection-end-line="7453" selection-end-column="12" />
+            <state relative-caret-position="126">
+              <caret line="1657" column="0" selection-start-line="1657" selection-start-column="0" selection-end-line="1657" selection-end-column="0" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -49,11 +39,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="memos_screen.kv" pinned="false" current-in-tab="true">
+      <file leaf-file-name="memos.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/memos.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="390">
+              <caret line="225" column="101" selection-start-line="225" selection-start-column="101" selection-end-line="225" selection-end-column="101" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="memos_screen.kv" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/kv/memos_screen.kv">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="285">
+              <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="41" selection-end-column="47" />
               <folding />
             </state>
           </provider>
@@ -69,21 +69,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="colors_screen.kv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/kv/colors_screen.kv">
+      <file leaf-file-name="server.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="187">
-              <caret line="41" column="41" selection-start-line="0" selection-start-column="0" selection-end-line="55" selection-end-column="44" />
+            <state relative-caret-position="450">
+              <caret line="457" column="47" selection-start-line="457" selection-start-column="47" selection-end-line="457" selection-end-column="47" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.kv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/kv/main.kv">
+      <file leaf-file-name="sync.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/sync.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="510">
-              <caret line="57" column="18" selection-start-line="57" selection-start-column="18" selection-end-line="57" selection-end-column="18" />
+            <state relative-caret-position="255">
+              <caret line="253" column="19" selection-start-line="253" selection-start-column="19" selection-end-line="253" selection-end-column="19" />
               <folding />
             </state>
           </provider>
@@ -92,7 +92,7 @@
       <file leaf-file-name="main_screen.kv" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="267">
+            <state relative-caret-position="450">
               <caret line="77" column="33" selection-start-line="77" selection-start-column="33" selection-end-line="77" selection-end-column="33" />
               <folding />
             </state>
@@ -102,18 +102,8 @@
       <file leaf-file-name="library.kv" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/kv/library.kv">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="382">
-              <caret line="88" column="24" selection-start-line="88" selection-start-column="1" selection-end-line="88" selection-end-column="24" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="employees_screen.kv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/kv/employees_screen.kv">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="630">
-              <caret line="55" column="51" selection-start-line="55" selection-start-column="51" selection-end-line="55" selection-end-column="51" />
+            <state relative-caret-position="1905">
+              <caret line="127" column="24" selection-start-line="127" selection-start-column="1" selection-end-line="127" selection-end-column="24" />
               <folding />
             </state>
           </provider>
@@ -134,7 +124,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/kv/edit_customer_screen.kv" />
         <option value="$PROJECT_DIR$/edit_customer_screen.kv" />
         <option value="$PROJECT_DIR$/main.kv" />
         <option value="$PROJECT_DIR$/main.spec" />
@@ -145,7 +134,6 @@
         <option value="$PROJECT_DIR$/custids.py" />
         <option value="$PROJECT_DIR$/deliveries.py" />
         <option value="$PROJECT_DIR$/discounts.py" />
-        <option value="$PROJECT_DIR$/memos.py" />
         <option value="$PROJECT_DIR$/reward_transactions.py" />
         <option value="$PROJECT_DIR$/rewards.py" />
         <option value="$PROJECT_DIR$/schedules.py" />
@@ -178,18 +166,20 @@
         <option value="$PROJECT_DIR$/kv/library.kv" />
         <option value="$PROJECT_DIR$/static.py" />
         <option value="$PROJECT_DIR$/colors.py" />
-        <option value="$PROJECT_DIR$/kv/settings_screen.kv" />
         <option value="$PROJECT_DIR$/users.py" />
         <option value="$PROJECT_DIR$/kv/employees_screen.kv" />
-        <option value="$PROJECT_DIR$/sync.py" />
         <option value="$PROJECT_DIR$/server.py" />
         <option value="$PROJECT_DIR$/kv/main.kv" />
+        <option value="$PROJECT_DIR$/kv/memos_screen.kv" />
+        <option value="$PROJECT_DIR$/kv/settings_screen.kv" />
+        <option value="$PROJECT_DIR$/memos.py" />
+        <option value="$PROJECT_DIR$/sync.py" />
         <option value="$PROJECT_DIR$/main.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="y" value="23" />
+    <option name="y" value="33" />
     <option name="width" value="1371" />
     <option name="height" value="817" />
   </component>
@@ -553,7 +543,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="1371" height="817" extended-state="0" />
+    <frame x="0" y="33" width="1371" height="817" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25528812" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -588,7 +578,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="7" />
+      <option name="time" value="8" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -597,13 +587,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="207">
           <caret line="93" column="70" selection-start-line="93" selection-start-column="70" selection-end-line="93" selection-end-column="70" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/memos.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="297">
-          <caret line="71" column="70" selection-start-line="71" selection-start-column="70" selection-end-line="71" selection-end-column="70" />
         </state>
       </provider>
     </entry>
@@ -835,14 +818,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="267">
-          <caret line="77" column="33" selection-start-line="77" selection-start-column="33" selection-end-line="77" selection-end-column="33" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/inventory_items.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3945">
@@ -875,66 +850,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/kv/settings_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="322">
-          <caret line="46" column="57" selection-start-line="46" selection-start-column="57" selection-end-line="46" selection-end-column="57" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/colors_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="41" column="41" selection-start-line="0" selection-start-column="0" selection-end-line="55" selection-end-column="44" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/library.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="382">
-          <caret line="88" column="24" selection-start-line="88" selection-start-column="1" selection-end-line="88" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/users.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="352">
           <caret line="409" column="101" selection-start-line="409" selection-start-column="101" selection-end-line="409" selection-end-column="101" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/employees_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="630">
-          <caret line="55" column="51" selection-start-line="55" selection-start-column="51" selection-end-line="55" selection-end-column="51" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/static.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="457">
-          <caret line="98" column="28" selection-start-line="98" selection-start-column="28" selection-end-line="98" selection-end-column="28" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sync.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2180">
-          <caret line="290" column="55" selection-start-line="290" selection-start-column="55" selection-end-line="290" selection-end-column="55" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/server.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="450">
-          <caret line="457" column="47" selection-start-line="457" selection-start-column="47" selection-end-line="457" selection-end-column="47" />
           <folding />
         </state>
       </provider>
@@ -947,6 +866,46 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/kv/settings_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="600">
+          <caret line="49" column="53" selection-start-line="49" selection-start-column="53" selection-end-line="49" selection-end-column="53" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/employees_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="630">
+          <caret line="55" column="51" selection-start-line="55" selection-start-column="51" selection-end-line="55" selection-end-column="51" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="450">
+          <caret line="77" column="33" selection-start-line="77" selection-start-column="33" selection-end-line="77" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/memos.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="390">
+          <caret line="225" column="101" selection-start-line="225" selection-start-column="101" selection-end-line="225" selection-end-column="101" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="450">
+          <caret line="457" column="47" selection-start-line="457" selection-start-column="47" selection-end-line="457" selection-end-column="47" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/kv/main.kv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="510">
@@ -955,21 +914,53 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
+    <entry file="file://$PROJECT_DIR$/sync.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="246">
-          <caret line="7453" column="12" selection-start-line="7453" selection-start-column="12" selection-end-line="7453" selection-end-column="12" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="255">
+          <caret line="253" column="19" selection-start-line="253" selection-start-column="19" selection-end-line="253" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/colors_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="24" column="30" selection-start-line="24" selection-start-column="30" selection-end-line="24" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/static.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="457">
+          <caret line="98" column="28" selection-start-line="98" selection-start-column="28" selection-end-line="98" selection-end-column="28" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/kv/memos_screen.kv">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state relative-caret-position="285">
+          <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="41" selection-end-column="47" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/library.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1905">
+          <caret line="127" column="24" selection-start-line="127" selection-start-column="1" selection-end-line="127" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="1657" column="0" selection-start-line="1657" selection-start-column="0" selection-end-line="1657" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

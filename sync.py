@@ -249,7 +249,8 @@ class Sync:
             to_update['inventory_items'] = inventory_items_2
             to_update_rows += len(to_update['inventory_items'])
 
-        memos_2 = Memo().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        memos_2 = Memo().where({'memo_id': {'!=': '""'},
+                                'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if memos_2:
             to_update['memos'] = memos_2
             to_update_rows += len(to_update['memos'])
