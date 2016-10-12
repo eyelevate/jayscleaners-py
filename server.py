@@ -1,6 +1,8 @@
 import datetime
 import time
 
+from addresses import Address
+from cards import Card
 from colors import Colored
 from companies import Company
 from custids import Custid
@@ -12,12 +14,14 @@ from invoices import Invoice
 from invoice_items import InvoiceItem
 from memos import Memo
 from printers import Printer
+from profiles import Profile
 from reward_transactions import RewardTransaction
 from rewards import Reward
 from schedules import Schedule
 from taxes import Tax
 from transactions import Transaction
 from users import User
+from zipcodes import Zipcode
 
 unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -27,6 +31,67 @@ def sync_from_server(data):
     # start upload text
     if int(data['rows_to_create']) > 0:
         updates = data['updates']
+        
+        if 'addresses' in updates:
+            for addresses in updates['addresses']:
+                address = Address()
+                address.address_id = addresses['id']
+                address.user_id = addresses['user_id']
+                address.name = addresses['name']
+                address.street = addresses['street']
+                address.suite = addresses['suite']
+                address.city = addresses['city']
+                address.state = addresses['state']
+                address.zipcode = addresses['zipcode']
+                address.primary_address = addresses['primary_address']
+                address.concierge_name = addresses['concierge_name']
+                address.concierge_number = addresses['concierge_number']
+                address.status = addresses['status']
+                address.deleted_at = addresses['deleted_at']
+                address.created_at = addresses['created_at']
+                address.updated_at = addresses['updated_at']
+                # check to see if color_id already exists and update
+
+                count_address = address.where({'address_id': address.address_id})
+                if len(count_address) > 0:
+                    for data in count_address:
+                        address.id = data['id']
+                        address.update()
+                else:
+                    address.add()
+            address.close_connection()
+ 
+        if 'cards' in updates:
+            for cards in updates['cards']:
+                card = Card()
+                card.card_id = cards['id']
+                card.company_id = cards['company_id']
+                card.user_id = cards['user_id']
+                card.profile_id = cards['profile_id']
+                card.payment_id = cards['payment_id']
+                card.root_payment_id = cards['root_payment_id']
+                card.street = cards['street']
+                card.suite = cards['suite']
+                card.city = cards['city']
+                card.state = cards['state']
+                card.zipcode = cards['zipcode']
+                card.exp_month = cards['exp_month']
+                card.exp_year = cards['exp_year']
+                card.status = cards['status']
+                card.deleted_at = cards['deleted_at']
+                card.created_at = cards['created_at']
+                card.updated_at = cards['updated_at']
+                # check to see if color_id already exists and update
+
+                count_card = card.where({'card_id': card.card_id})
+                if len(count_card) > 0:
+                    for data in count_card:
+                        card.id = data['id']
+                        card.update()
+                else:
+                    card.add()
+            card.close_connection()
+        
         if 'colors' in updates:
             for colors in updates['colors']:
                 color = Colored()
@@ -202,7 +267,7 @@ def sync_from_server(data):
         if 'invoices' in updates:
             for invoices in updates['invoices']:
                 invoice = Invoice()
-                invoice.invoice_id = invoices['invoice_id']
+                invoice.invoice_id = invoices['id']
                 invoice.company_id = invoices['company_id']
                 invoice.customer_id = invoices['customer_id']
                 invoice.quantity = invoices['quantity']
@@ -216,6 +281,7 @@ def sync_from_server(data):
                 invoice.due_date = invoices['due_date']
                 invoice.memo = invoices['memo']
                 invoice.transaction_id = invoices['transaction_id']
+                invoice.schedule_id = invoices['schedule_id']
                 invoice.status = invoices['status']
                 invoice.deleted_at = invoices['deleted_at']
                 invoice.created_at = invoices['created_at']
@@ -300,6 +366,27 @@ def sync_from_server(data):
                     printer.add()
             printer.close_connection()
 
+        if 'profiles' in updates:
+            for profiles in updates['profiles']:
+                profile = Profile()
+                profile.p_id = profiles['id']
+                profile.company_id = profiles['company_id']
+                profile.user_id = profiles['user_id']
+                profile.profile_id = profiles['profile_id']
+                profile.status = profiles['status']
+                profile.deleted_at = profiles['deleted_at']
+                profile.created_at = profiles['created_at']
+                profile.updated_at = profiles['updated_at']
+                count_profile = profile.where({'p_id': profile.p_id})
+                if len(count_profile) > 0:
+                    for data in count_profile:
+                        profile.id = data['id']
+                        profile.update()
+                else:
+                    profile.add()
+            profile.close_connection()
+
+
         if 'reward_transactions' in updates:
             for reward_transactions in updates['reward_transactions']:
                 reward_transaction = RewardTransaction()
@@ -354,6 +441,8 @@ def sync_from_server(data):
                 schedule = Schedule()
                 schedule.schedule_id = schedules['id']
                 schedule.company_id = schedules['company_id']
+                schedule.customer_id = schedules['customer_id']
+                schedule.card_id = schedules['card_id']
                 schedule.pickup_delivery_id = schedules['pickup_delivery_id']
                 schedule.pickup_date = schedules['pickup_date']
                 schedule.dropoff_delivery_id = schedules['dropoff_delivery_id']
@@ -469,11 +558,41 @@ def sync_from_server(data):
             user.close_connection()
 
 
+        if 'zipcodes' in updates:
+            for zipcodes in updates['zipcodes']:
+                zipcode = Zipcode()
+                zipcode.zipcode_id = zipcodes['id']
+                zipcode.company_id = zipcodes['company_id']
+                zipcode.zipcode = zipcodes['zipcode']
+                zipcode.status = zipcodes['status']
+                zipcode.deleted_at = zipcodes['deleted_at']
+                zipcode.created_at = zipcodes['created_at']
+                zipcode.updated_at = zipcodes['updated_at']
+                # check to see if color_id already exists and update
+        
+                count_zipcode = zipcode.where({'zipcode_id': zipcode.zipcode_id})
+                if len(count_zipcode) > 0:
+                    for data in count_zipcode:
+                        zipcode.id = data['id']
+                        zipcode.update()
+                else:
+                    zipcode.add()
+            zipcode.close_connection()
+
 def update_database(data):
     # start upload text
     if int(data['rows_saved']) > 0:
         if 'saved' in data:
             for up in data['saved']:
+                
+                if up == 'addresses':
+                    for addresses in data['saved']['addresses']:
+                        address = Address()
+                        where = {'id': addresses['id']}
+                        data = {'color_id': addresses['color_id']}
+                        address.put(where=where, data=data)
+                        address.close_connection()
+                        
                 if up == 'colors':
                     for colors in data['saved']['colors']:
                         color = Colored()
@@ -481,6 +600,14 @@ def update_database(data):
                         data = {'color_id': colors['color_id']}
                         color.put(where=where, data=data)
                         color.close_connection()
+
+                if up == 'cards':
+                    for cards in data['saved']['cards']:
+                        card = Card()
+                        where = {'id': cards['id']}
+                        data = {'card_id': cards['card_id']}
+                        card.put(where=where, data=data)
+                        card.close_connection()
 
                 if up == 'companies':
                     for companies in data['saved']['companies']:
@@ -561,7 +688,15 @@ def update_database(data):
                         data = {'printer_id': printers['printer_id']}
                         printer.put(where=where, data=data)
                         printer.close_connection()
-
+                        
+                if up == 'profiles':
+                    for profiles in data['saved']['profiles']:
+                        profile = Profile()
+                        where = {'id': profiles['id']}
+                        data = {'p_id': profiles['p_id']}
+                        profile.put(where=where, data=data)
+                        profile.close_connection()
+                        
                 if up == 'reward_transactions':
                     for reward_transactions in data['saved']['reward_transactions']:
                         reward_transaction = RewardTransaction()
@@ -609,3 +744,11 @@ def update_database(data):
                         data = {'user_id': users['user_id']}
                         user.put(where=where, data=data)
                         user.close_connection()
+
+                if up == 'zipcodes':
+                    for zipcodes in data['saved']['zipcodes']:
+                        zipcode = Zipcode()
+                        where = {'id': zipcodes['id']}
+                        data = {'zipcode_id': zipcodes['zipcode_id']}
+                        zipcode.put(where=where, data=data)
+                        zipcode.close_connection()

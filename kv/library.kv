@@ -211,3 +211,20 @@
         FileChooserListLayout
 #        FileChooserIconLayout
 #        FileChooserListLayout
+
+
+<CreditCardDropDown@DropDown>
+
+    Button:
+        id: btn
+        text: 'Select Card'
+        on_release: dropdown.open(self)
+        size_hint_y: None
+        size_hint_x: 1
+        height: sp(40)
+
+    DropDown:
+        size_hint: (1,1)
+        id: dropdown
+        on_parent: self.dismiss()
+        on_select: btn.text = '{}'.format(args[1])

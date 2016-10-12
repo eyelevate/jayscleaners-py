@@ -17,6 +17,8 @@ os.environ['TZ'] = 'US/Pacific'
 time.tzset()
 
 # Models
+from addresses import Address
+from cards import Card
 from colors import Colored
 from companies import Company
 from custids import Custid
@@ -30,6 +32,7 @@ from memos import Memo
 from server import sync_from_server
 from server import update_database
 from printers import Printer
+from profiles import Profile
 from reward_transactions import RewardTransaction
 from rewards import Reward
 from schedules import Schedule
@@ -37,6 +40,7 @@ from sync import Sync
 from taxes import Tax
 from transactions import Transaction
 from users import User
+from zipcodes import Zipcode
 
 # Helpers
 import calendar
@@ -388,7 +392,7 @@ class MainScreen(Screen):
         sys.stdout.write('There are ' + len(printers) + ' in the system\n.')
 
     def test_sys(self):
-        print(len(''))
+        Sync().migrate()
 
     def test_mark(self):
         # marks = Custid()
@@ -1449,12 +1453,12 @@ GridLayout:
         memo_grid_layout = Factory.GridLayoutForScrollView(row_default_height='50sp',
                                                            cols=4)
         mmos = Memo()
-        memos = mmos.where({'company_id':auth_user.company_id,
-                            'ORDER_BY':'ordered asc'})
+        memos = mmos.where({'company_id': auth_user.company_id,
+                            'ORDER_BY': 'ordered asc'})
         if memos:
             for memo in memos:
                 btn_memo = Factory.LongButton(text=str(memo['memo']),
-                                              on_release=partial(self.append_memo,memo['memo']))
+                                              on_release=partial(self.append_memo, memo['memo']))
                 memo_grid_layout.add_widget(btn_memo)
 
         memo_scroll_view.add_widget(memo_grid_layout)
@@ -1522,7 +1526,6 @@ GridLayout:
         else:
             self.memo_list.append(msg)
         self.memo_text_input.text = ', '.join(self.memo_list)
-
 
     def make_items_table(self):
         self.items_grid.clear_widgets()
@@ -5173,6 +5176,7 @@ class EditCustomerScreen(Screen):
         customers.close_connection()
 
     def customer_select(self, customer_id, *args, **kwargs):
+        print(customer_id)
         vars.SEARCH_RESULTS_STATUS = True
         vars.ROW_CAP = 0
         vars.CUSTOMER_ID = customer_id
@@ -7993,6 +7997,9 @@ class PickupScreen(Screen):
     payment_type = 'cc'
     card_location = 1
     finish_popup = Popup()
+    card_id_spinner = Spinner()
+    cards = None;
+    card_id = None;
 
     def reset(self):
         self.selected_invoices = []
@@ -8018,10 +8025,25 @@ class PickupScreen(Screen):
         self.card_location = 1
         self.due_label.text = '[color=000000][b]$0.00[/b][/color]'
         self.check_number.text = ''
+        self.card_id_spinner = Spinner()
+        self.card_id = None
 
         # reset states
         self.instore_button.state = 'down'
         self.online_button.state = 'normal'
+
+        # reset cards on file ids
+        vars.PROFILE_ID = None
+        vars.PAYMENT_ID = None
+        pro = Profile()
+        profiles = pro.where({'user_id': vars.CUSTOMER_ID,
+                              'company_id': auth_user.company_id})
+        if profiles:
+            for profile in profiles:
+                vars.PROFILE_ID = profile['profile_id']
+
+        cards_db = Card()
+        self.cards = cards_db.collect(auth_user.company_id, vars.PROFILE_ID)
 
     def invoice_create_rows(self):
         self.invoice_table.clear_widgets()
@@ -8219,18 +8241,59 @@ class PickupScreen(Screen):
             self.card_location = 2
             self.instore_button.state = 'normal'
             self.online_button.state = 'down'
-            inner_layout_1 = GridLayout(size_hint=(1, 0.6), cols=2, rows=2)
-            # get card expiration date and display it to screen
-            inner_layout_1.add_widget(Label(text='Exp: {}'.format('12/16')))
-            # get status for card expiration and validation and send it to screen
-            inner_layout_1.add_widget(Factory.OkayLabel())
+            inner_layout_1 = BoxLayout(orientation='vertical',
+                                       size_hint=(1, 1))
+            card_string = []
+            if self.cards:
+                for card in self.cards:
+                    card_string.append("{} {} {}/{}".format(card['card_type'],
+                                                            card['last_four'],
+                                                            card['exp_month'],
+                                                            card['exp_year']))
+            self.card_id_spinner = Spinner(
+                # default value shown
+                text='Select Card',
+                # available values
+                values=card_string,
+                # just for positioning in our example
+                size_hint_x=1,
+                size_hint_y=0.5,
+                pos_hint={'center_x': .5, 'center_y': .5})
+            self.card_id_spinner.bind(text=self.select_online_card)
+            inner_layout_1.add_widget(self.card_id_spinner)
+
             # make the update and add buttons and send it to screen
-            inner_layout_1.add_widget(Button(text="Update", on_release=self.update_card))
-            inner_layout_1.add_widget(Button(text="Add", on_release=self.add_card))
+            credit_card_action_box = BoxLayout(orientation="horizontal",
+                                               size_hint=(1, 0.5))
+            credit_card_action_box.add_widget(Button(text="Update", on_release=self.update_card))
+            credit_card_action_box.add_widget(Button(text="Add", on_release=self.add_card))
+            inner_layout_1.add_widget(credit_card_action_box)
             self.credit_card_data_layout.add_widget(inner_layout_1)
 
+    def select_online_card(self, *args, **kwargs):
+        card_string = self.card_id_spinner.text
+        if self.cards:
+            for card in self.cards:
+                check_string = "{} {} {}/{}".format(card['card_type'],
+                                                    card['last_four'],
+                                                    card['exp_month'],
+                                                    card['exp_year'])
+                if check_string == card_string:
+                    self.card_id = card['id']
+                    print(self.card_id)
+        pass
+
     def update_card(self, *args, **kwargs):
-        print('update_card')
+        card_string = self.card_id_spinner.text
+        if self.cards:
+            for card in self.cards:
+                check_string = "{} {} {}/{}".format(card['card_type'],
+                                                    card['last_four'],
+                                                    card['exp_month'],
+                                                    card['exp_year'])
+                if check_string == card_string:
+                    self.card_id = card['id']
+                    print(self.card_id)
         pass
 
     def add_card(self, *args, **kwargs):
@@ -9096,12 +9159,24 @@ class RackScreen(Screen):
         self.invoice_number.focus = True
 
     def save_racks(self):
+        now = datetime.datetime.now()
+        rack_date = datetime.datetime.strftime(now, "%Y-%m-%d %H:%M:%S")
         # save rows
         if self.racks:
             invoices = Invoice()
             for invoice_id, rack in self.racks.items():
                 invoices.put(where={'invoice_id': invoice_id},
-                             data={'rack': rack, 'status': 2})  # rack and update status
+                             data={'rack': rack,
+                                   'rack_date': rack_date,
+                                   'status': 2})  # rack and update status
+
+            # update db
+            run_sync = threading.Thread(target=SYNC.run_sync)
+            try:
+                run_sync.start()
+            finally:
+                run_sync.join()
+                print('sync now finished')
 
         # set user to go back to search screen
         if vars.CUSTOMER_ID:

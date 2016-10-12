@@ -12,6 +12,8 @@ class Static:
     ROW_SEARCH = 0,9
     ROW_CAP = 0
     TAX_RATE = 1
+    PAYMENT_ID = None
+    PROFILE_ID = None
     #sync.py used for mutlithreading
     WORKLIST = []
     EXITFLAG = False

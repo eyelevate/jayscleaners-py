@@ -12,6 +12,8 @@ class Schedule:
     id = None
     schedule_id = None
     company_id = None
+    customer_id = None
+    card_id = None
     pickup_delivery_id = None
     pickup_date = None
     dropoff_delivery_id = None
@@ -37,6 +39,8 @@ class Schedule:
         table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
                                   IntegerField(column='schedule_id').data_type(),
                                   IntegerField(column='company_id').data_type(),
+                                  IntegerField(column='customer_id').data_type(),
+                                  IntegerField(column='card_id').data_type(),
                                   IntegerField(column='pickup_delivery_id').data_type(),
                                   TextField(column='pickup_date').data_type(),
                                   IntegerField(column='dropoff_delivery_id').data_type(),
@@ -58,26 +62,28 @@ class Schedule:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.created_at = now
-        self.c.execute('''INSERT INTO {t}(schedule_id,company_id,pickup_delivery_id,pickup_date,dropoff_delivery_id,
-dropoff_date,special_instructions,type,token,status,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
-                                                     self.company_id,
-                                                     self.pickup_delivery_id,
-                                                     self.pickup_date,
-                                                     self.dropoff_delivery_id,
-                                                     self.dropoff_date,
-                                                     self.special_instructions,
-                                                     self.type,
-                                                     self.token,
-                                                     self.status,
-                                                     self.created_at,
-                                                     self.updated_at)
+        self.c.execute('''INSERT INTO {t}(schedule_id,company_id,customer_id, card_id,pickup_delivery_id,
+pickup_date,dropoff_delivery_id, dropoff_date,special_instructions,type,token,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
+                                                         self.company_id,
+                                                         self.customer_id,
+                                                         self.card_id,
+                                                         self.pickup_delivery_id,
+                                                         self.pickup_date,
+                                                         self.dropoff_delivery_id,
+                                                         self.dropoff_date,
+                                                         self.special_instructions,
+                                                         self.type,
+                                                         self.token,
+                                                         self.status,
+                                                         self.created_at,
+                                                         self.updated_at)
                        )
 
         self.conn.commit()
         return True
 
-    def put(self, where = False, data = False):
+    def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
@@ -105,20 +111,22 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
-        self.c.execute('''UPDATE {t} SET schedule_id = ?, company_id = ?, pickup_delivery_id = ?, pickup_date = ?,
-dropoff_delivery_id = ?, dropoff_date = ?, special_instructions = ?, type = ?, token = ?, status = ?, updated_at = ?
-WHERE id = ?'''.format(t=table), (self.schedule_id,
-                                  self.company_id,
-                                  self.pickup_delivery_id,
-                                  self.pickup_date,
-                                  self.dropoff_delivery_id,
-                                  self.dropoff_date,
-                                  self.special_instructions,
-                                  self.type,
-                                  self.token,
-                                  self.status,
-                                  self.updated_at,
-                                  self.id)
+        self.c.execute('''UPDATE {t} SET schedule_id = ?, company_id = ?, customer_id = ?, card_id = ?,
+pickup_delivery_id = ?, pickup_date = ?, dropoff_delivery_id = ?, dropoff_date = ?, special_instructions = ?,
+type = ?, token = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.schedule_id,
+                                                                                  self.company_id,
+                                                                                  self.customer_id,
+                                                                                  self.card_id,
+                                                                                  self.pickup_delivery_id,
+                                                                                  self.pickup_date,
+                                                                                  self.dropoff_delivery_id,
+                                                                                  self.dropoff_date,
+                                                                                  self.special_instructions,
+                                                                                  self.type,
+                                                                                  self.token,
+                                                                                  self.status,
+                                                                                  self.updated_at,
+                                                                                  self.id)
                        )
 
         self.conn.commit()

@@ -23,6 +23,7 @@ class Invoice:
     rack_date = None
     due_date = None
     memo = None
+    schedule_id = None
     transaction_id = None
     status = None
     deleted_at = None
@@ -55,6 +56,7 @@ class Invoice:
                                   TextField(column='due_date').data_type(),
                                   TextField(column='memo').data_type(),
                                   IntegerField(column='transaction_id').data_type(),
+                                  IntegerField(column='schedule_id').data_type(),
                                   IntegerField(column='status').data_type(),
                                   TextField(column='deleted_at').data_type(),
                                   TextField(column='created_at').data_type(),
@@ -70,30 +72,31 @@ class Invoice:
         self.updated_at = now
         self.created_at = now
         self.c.execute('''INSERT INTO {t}(invoice_id,company_id,customer_id,quantity,pretax,tax,reward_id,discount_id,
-total,rack,rack_date,due_date,memo,transaction_id,status,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_id,
-                                                               self.company_id,
-                                                               self.customer_id,
-                                                               self.quantity,
-                                                               self.pretax,
-                                                               self.tax,
-                                                               self.reward_id,
-                                                               self.discount_id,
-                                                               self.total,
-                                                               self.rack,
-                                                               self.rack_date,
-                                                               self.due_date,
-                                                               self.memo,
-                                                               self.transaction_id,
-                                                               self.status,
-                                                               self.created_at,
-                                                               self.updated_at)
+total,rack,rack_date,due_date,memo,transaction_id,schedule_id,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_id,
+                                                                 self.company_id,
+                                                                 self.customer_id,
+                                                                 self.quantity,
+                                                                 self.pretax,
+                                                                 self.tax,
+                                                                 self.reward_id,
+                                                                 self.discount_id,
+                                                                 self.total,
+                                                                 self.rack,
+                                                                 self.rack_date,
+                                                                 self.due_date,
+                                                                 self.memo,
+                                                                 self.transaction_id,
+                                                                 self.schedule_id,
+                                                                 self.status,
+                                                                 self.created_at,
+                                                                 self.updated_at)
                        )
 
         self.conn.commit()
         return True
 
-    def put(self, where = False, data = False):
+    def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
@@ -126,23 +129,24 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_id,
         self.updated_at = now
         self.c.execute('''UPDATE {t} SET invoice_id = ?, company_id = ?, customer_id = ?, quantity = ?, pretax = ?,
 tax = ?, reward_id = ?, discount_id = ?, total = ?, rack = ?, rack_date = ?, due_date = ?, memo = ?, transaction_id =?,
-status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
-                                                             self.company_id,
-                                                             self.customer_id,
-                                                             self.quantity,
-                                                             self.pretax,
-                                                             self.tax,
-                                                             self.reward_id,
-                                                             self.discount_id,
-                                                             self.total,
-                                                             self.rack,
-                                                             self.rack_date,
-                                                             self.due_date,
-                                                             self.memo,
-                                                             self.transaction_id,
-                                                             self.status,
-                                                             self.updated_at,
-                                                             self.id)
+schedule_id = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
+                                                                              self.company_id,
+                                                                              self.customer_id,
+                                                                              self.quantity,
+                                                                              self.pretax,
+                                                                              self.tax,
+                                                                              self.reward_id,
+                                                                              self.discount_id,
+                                                                              self.total,
+                                                                              self.rack,
+                                                                              self.rack_date,
+                                                                              self.due_date,
+                                                                              self.memo,
+                                                                              self.transaction_id,
+                                                                              self.schedule_id,
+                                                                              self.status,
+                                                                              self.updated_at,
+                                                                              self.id)
                        )
 
         self.conn.commit()
@@ -178,7 +182,7 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
         else:
             return False
 
-    def where(self, data=False, deleted_at= True):
+    def where(self, data=False, deleted_at=True):
 
         if data:
             sql = '''SELECT * FROM {t} WHERE '''.format(t=table)
@@ -287,8 +291,8 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
         else:
             return False
 
-    def get_id(self,invoice_id):
-        invoices = self.where({'invoice_id':invoice_id})
+    def get_id(self, invoice_id):
+        invoices = self.where({'invoice_id': invoice_id})
         if invoices:
             for invoice in invoices:
                 id = invoice['id']
@@ -296,14 +300,12 @@ status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
         else:
             return False
 
-
     def get_last_insert_id(self):
         sql = '''SELECT last_insert_rowid();'''
         self.c.execute(sql)
         self.conn.commit()
         rows = self.c.fetchone()
         return rows['last_insert_rowid()']
-
 
     def close_connection(self):
         self.c.close()

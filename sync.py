@@ -5,6 +5,8 @@ import time
 import datetime
 
 # Models
+from addresses import Address
+from cards import Card
 from colors import Colored
 from companies import Company
 from custids import Custid
@@ -18,12 +20,14 @@ from memos import Memo
 from server import sync_from_server
 from server import update_database
 from printers import Printer
+from profiles import Profile
 from reward_transactions import RewardTransaction
 from rewards import Reward
 from schedules import Schedule
 from taxes import Tax
 from transactions import Transaction
 from users import User
+from zipcodes import Zipcode
 
 import urllib
 from urllib import error
@@ -72,11 +76,19 @@ class Sync:
             company.server_at = 0
             company.api_token = '2064535930-1'
 
-        print(server_at)
-
         # create an array of data that need to be uploaded to the server
         to_upload = {}
         to_upload_rows = 0
+
+        addresses_1 = Address().where({'address_id': None})
+        if addresses_1:
+            to_upload['addresses'] = addresses_1
+            to_upload_rows += len(to_upload['addresses'])
+
+        cards_1 = Card().where({'card_id': None})
+        if cards_1:
+            to_upload['cards'] = cards_1
+            to_upload_rows += len(to_upload['cards'])
 
         colors_1 = Colored().where({'color_id': None})
         if colors_1:
@@ -150,6 +162,11 @@ class Sync:
             to_upload['printers'] = printers_1
             to_upload_rows += len(to_upload['printers'])
 
+        profiles_1 = Profile().where({'profile_id': None})
+        if profiles_1:
+            to_upload['profiles'] = profiles_1
+            to_upload_rows += len(to_upload['profiles'])
+
         reward_transactions_1 = RewardTransaction().where({'reward_id': None})
         if reward_transactions_1:
             to_upload['reward_transactions'] = reward_transactions_1
@@ -180,9 +197,26 @@ class Sync:
             to_upload['users'] = users_1
             to_upload_rows += len(to_upload['users'])
 
+        zipcodes_1 = Zipcode().where({'zipcode_id': None})
+        if zipcodes_1:
+            to_upload['zipcodes'] = users_1
+            to_upload_rows += len(to_upload['zipcodes'])
         # # update columns
         to_update = {}
         to_update_rows = 0
+
+        addresses_2 = Address().where({'address_id': {'!=': '""'},
+                                             'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if addresses_2:
+            to_update['addresses'] = addresses_2
+            to_update_rows += len(to_update['addresses'])
+
+        cards_2 = Card().where({'card_id': {'!=': '""'},
+                                         'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if cards_2:
+            to_update['cards'] = cards_2
+            to_update_rows += len(to_update['cards'])
+
         colors_2 = Colored().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if colors_2:
             to_update['colors'] = colors_2
@@ -261,6 +295,12 @@ class Sync:
             to_update['printers'] = printers_2
             to_update_rows += len(to_update['printers'])
 
+        profiles_2 = Profile().where({'profile_id': {'!=': '""'},
+                                      'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if profiles_2:
+            to_update['profiles'] = profiles_2
+            to_update_rows += len(to_update['profiles'])
+
         reward_transactions_2 = RewardTransaction().where({'updated_at': {'>': '"{}"'.format(server_at)}},
                                                           deleted_at=False)
         if reward_transactions_2:
@@ -289,11 +329,17 @@ class Sync:
             to_update['transactions'] = transactions_2
             to_update_rows += len(to_update['transactions'])
 
-        users_2 = User().where({'user_id': {'!=':'""'},
+        users_2 = User().where({'user_id': {'!=': '""'},
                                 'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if users_2:
             to_update['users'] = users_2
             to_update_rows += len(to_update['users'])
+
+        zipcodes_2 = Zipcode().where({'zipcode_id': {'!=': '""'},
+                                            'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if zipcodes_2:
+            to_update['zipcodes'] = zipcodes_2
+            to_update_rows += len(to_update['zipcodes'])
 
         url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
             cid=company.id,
@@ -382,7 +428,7 @@ class Sync:
                                             run_page.start()
                                             run_page.join()
                                             print('sent update #{}'.format(row))
-                                
+
                             # Update chunk
                             url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
                                 cid=company.id,
@@ -436,9 +482,9 @@ class Sync:
 
                     except urllib.error.URLError as e:
                         print(e.reason)
-                if e.reason == 'Not Found': # we found a / in the string replace it with a OR
-                    upload = json.dumps(to_upload).replace(" ", "__").replace("/","OR")
-                    update = json.dumps(to_update).replace(" ", "__").replace("/","OR")
+                if e.reason == 'Not Found':  # we found a / in the string replace it with a OR
+                    upload = json.dumps(to_upload).replace(" ", "__").replace("/", "OR")
+                    update = json.dumps(to_update).replace(" ", "__").replace("/", "OR")
                     url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
                         cid=company.id,
                         api=company.api_token,
@@ -496,6 +542,8 @@ class Sync:
             print(e.reason)  # could not save this time around because no internet, move on
 
     def migrate(self, *args, **kwargs):
+        address = Address()
+        card = Card()
         color = Colored()
         company = Company()
         custid = Custid()
@@ -513,6 +561,9 @@ class Sync:
         tax = Tax()
         transaction = Transaction()
         user = User()
+        zipcode = Zipcode()
+        address.create_table()
+        card.create_table()
         color.create_table()
         company.create_table()
         custid.create_table()
@@ -530,6 +581,9 @@ class Sync:
         tax.create_table()
         transaction.create_table()
         user.create_table()
+        zipcode.create_table()
+        address.close_connection()
+        card.close_connection()
         color.close_connection()
         company.close_connection()
         custid.close_connection()
@@ -547,6 +601,8 @@ class Sync:
         tax.close_connection()
         transaction.close_connection()
         user.close_connection()
+        zipcode.close_connection()
+
 
     def server_login(self, username, password):
         users = User()
