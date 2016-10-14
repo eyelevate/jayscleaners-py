@@ -228,3 +228,128 @@
         id: dropdown
         on_parent: self.dismiss()
         on_select: btn.text = '{}'.format(args[1])
+
+<ValidateBox@BoxLayout>
+    orientation:'vertical'
+    size_hint:(1,1)
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    GridLayout:
+        cols:2
+        rows:3
+        row_default_height:sp(44)
+        row_force_default:True
+        Label:
+            id:credit_card_number
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            width: '200sp'
+            padding_x: '20sp'
+            text:'[color=5e5e5e]XXXX 0270[/color]'
+        Label:
+            id:credit_card_type
+            text: '[color=5e5e5e]Visa[/color]'
+            markup: True
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_y:0.2
+            padding_x: '20sp'
+        Label:
+            id:credit_card_full_name
+            text: '[color=5e5e5e]Wondo Choung[/color]'
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            size_hint_y:0.8
+            padding_x: '20sp'
+            width:sp(200)
+        Label:
+            id:credit_card_exp_date
+            text:"[color=5e5e5e][b]EXP:[/b] 07/2020[/color]"
+            markup: True
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_y:0.2
+            padding_x: '20sp'
+        Label:
+            id:credit_billing_address
+            text:'[color=5e5e5e]2350 24th Ave E Seattle, WA 98112[/color]'
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            size_hint_y:0.8
+            width:sp(200)
+            padding_x: '20sp'
+        Label:
+            id:credit_card_cvv
+            text:'[color=5e5e5e]XXX[/color]'
+            markup: True
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_y:0.2
+            padding_x: '20sp'
+    BoxLayout:
+        orientation:'horizontal'
+        Button:
+            id: validate_button
+            markup:True
+            text:'Validate'
+    GridLayout:
+        cols:2
+        rows:2
+        Label:
+            markup: True
+            text:'[color=5e5e5e][b]Status[/b][/color]'
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            width: '175sp'
+            padding_x: '20sp'
+        TextInput:
+            id:card_status
+            markup:True
+            write_tab: False
+            disabled: True
+            font_size: '20sp'
+            multiline: False
+            padding: [5, ( self.height - self.line_height ) / 2]
+        Label:
+            markup: True
+            text:'[color=5e5e5e][b]Message[/b][/color]'
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            width: '175sp'
+            padding_x: '20sp'
+        TextInput:
+            id:card_message
+            markup:True
+            write_tab: False
+            disabled: True
+            font_size: '20sp'
+            multiline: False
+            padding: [5, ( self.height - self.line_height ) / 2]

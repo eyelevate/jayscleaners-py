@@ -17,6 +17,7 @@ class Card:
     user_id = None
     profile_id = None
     payment_id = None
+    root_payment_id = None
     street = None
     suite = None
     city = None
@@ -47,6 +48,7 @@ class Card:
                                   IntegerField(column='user_id').data_type(),
                                   IntegerField(column='profile_id').data_type(),
                                   IntegerField(column='payment_id').data_type(),
+                                  IntegerField(column='root_payment_id').data_type(),
                                   TextField(column='street').data_type(),
                                   TextField(column='suite').data_type(),
                                   TextField(column='city').data_type(),
@@ -68,23 +70,24 @@ class Card:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.created_at = now
-        self.c.execute('''INSERT INTO {t}(card_id,company_id,user_id,profile_id,payment_id,street,suite,city,state,
-zipcode,exp_month, exp_year,status,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.card_id,
-                                                           self.company_id,
-                                                           self.user_id,
-                                                           self.profile_id,
-                                                           self.payment_id,
-                                                           self.street,
-                                                           self.suite,
-                                                           self.city,
-                                                           self.state,
-                                                           self.zipcode,
-                                                           self.exp_month,
-                                                           self.exp_year,
-                                                           self.status,
-                                                           self.created_at,
-                                                           self.updated_at)
+        self.c.execute('''INSERT INTO {t}(card_id,company_id,user_id,profile_id,payment_id,root_payment_id,street,suite,
+city,state,zipcode,exp_month, exp_year,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.card_id,
+                                                             self.company_id,
+                                                             self.user_id,
+                                                             self.profile_id,
+                                                             self.payment_id,
+                                                             self.root_payment_id,
+                                                             self.street,
+                                                             self.suite,
+                                                             self.city,
+                                                             self.state,
+                                                             self.zipcode,
+                                                             self.exp_month,
+                                                             self.exp_year,
+                                                             self.status,
+                                                             self.created_at,
+                                                             self.updated_at)
                        )
 
         self.conn.commit()
@@ -119,22 +122,23 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.card_id,
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.c.execute('''UPDATE {t} SET card_id = ?, company_id = ?, user_id = ?, profile_id = ?, payment_id = ?,
-street = ?, suite = ?, city = ?, state = ?, zipcode = ?, exp_month = ?, exp_year = ?, status = ?, updated_at = ?
-WHERE id = ?'''.format(t=table), (self.card_id,
-                                  self.company_id,
-                                  self.user_id,
-                                  self.profile_id,
-                                  self.payment_id,
-                                  self.street,
-                                  self.suite,
-                                  self.city,
-                                  self.state,
-                                  self.zipcode,
-                                  self.exp_month,
-                                  self.exp_year,
-                                  self.status,
-                                  self.updated_at,
-                                  self.id)
+root_payment_id = ?, street = ?, suite = ?, city = ?, state = ?, zipcode = ?, exp_month = ?, exp_year = ?, status = ?,
+updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
+                                                 self.company_id,
+                                                 self.user_id,
+                                                 self.profile_id,
+                                                 self.payment_id,
+                                                 self.root_payment_id,
+                                                 self.street,
+                                                 self.suite,
+                                                 self.city,
+                                                 self.state,
+                                                 self.zipcode,
+                                                 self.exp_month,
+                                                 self.exp_year,
+                                                 self.status,
+                                                 self.updated_at,
+                                                 self.id)
                        )
 
         self.conn.commit()
@@ -277,33 +281,40 @@ WHERE id = ?'''.format(t=table), (self.card_id,
         self.c.close()
         self.conn.close()
 
-    def collect(self, company_id, profile_id):
-        comps = Company()
-        companies = comps.where({'id': company_id})
-        profile_id = str(profile_id)
+    def connectAuthNet(self, company_id):
         payment_api_login = False
         payment_gateway_id = False
+        comps = Company()
+        companies = comps.where({'id': company_id})
+        if companies:
+            for company in companies:
+                payment_api_login = str(company['payment_api_login'])
+                payment_gateway_id = str(company['payment_gateway_id'])
+        if payment_api_login and payment_gateway_id:
+            authorize.Configuration.configure(
+                authorize.Environment.TEST,
+                payment_api_login,
+                payment_gateway_id,
+            )
+            # authorize.Configuration.configure(
+            #     authorize.Environment.PRODUCTION,
+            #     'api_login_id',
+            #     'api_transaction_key',
+            # )
 
-        if profile_id:
+            return True
+        else:
+            return False
 
-            if companies:
-                for company in companies:
-                    payment_api_login = str(company['payment_api_login'])
-                    payment_gateway_id = str(company['payment_gateway_id'])
-            if payment_api_login and payment_gateway_id:
-                authorize.Configuration.configure(
-                    authorize.Environment.TEST,
-                    payment_api_login,
-                    payment_gateway_id,
-                )
-                # authorize.Configuration.configure(
-                #     authorize.Environment.PRODUCTION,
-                #     'api_login_id',
-                #     'api_transaction_key',
-                # )
+    def collect(self, company_id, profile_id):
+        profile_id = str(profile_id)
+        auth_connect = self.connectAuthNet(company_id)
+        if profile_id and profile_id is not None :
+
+            if auth_connect:
 
                 cards = self.where({'company_id': company_id, 'profile_id': profile_id})
-                cards_update = [];
+                cards_update = []
                 if cards:
                     for card in cards:
                         payment_id = str(card['payment_id'])
@@ -312,10 +323,137 @@ WHERE id = ?'''.format(t=table), (self.card_id,
                         card_type = result.payment_profile.payment.credit_card.card_type
                         card['last_four'] = last_four
                         card['card_type'] = card_type
-                        cards_update.append(card);
+                        card['first_name'] = result.payment_profile.bill_to.first_name
+                        card['last_name'] = result.payment_profile.bill_to.last_name
+                        cards_update.append(card)
 
-                return cards_update;
+                return cards_update
             else:
-                return False;
+                return False
         else:
-            return False;
+            return False
+
+    def create_profile(self, company_id, data):
+
+        if self.connectAuthNet(company_id):
+            try:
+                result = authorize.Customer.create(data)
+                print(result)
+                if result.messages:
+                    for response in result.messages:
+                        if response['result_code'] == 'Ok':
+
+                            return {'status': True,
+                                    'profile_id': result.customer_id,
+                                    'payment_id': result.payment_ids[0]}
+                        else:
+                            return {
+                                'status': False,
+                                'message': result.messages.text
+                            }
+                else:
+                    return {
+                        'status':False,
+                        'message': 'Could not connect to server. Please try again'
+                    }
+            except authorize.exceptions.AuthorizeResponseError:
+                return {'status':False,
+                        'message': authorize.exceptions.AuthorizeResponseError}
+            except authorize.exceptions.AuthorizeInvalidError:
+                error_message = 'There were problems validating your card. Please try again.'
+
+
+                return {'status':False,
+                        'message': error_message}
+
+        else:
+            return {'status':False,
+                    'message': 'Could not authenticate with authorize.net'}
+        pass
+
+    def create_card(self,company_id, profile_id, data):
+        if self.connectAuthNet(company_id):
+            try:
+                result = authorize.CreditCard.create(str(profile_id), data)
+                print(result)
+                if result.messages:
+                    for response in result.messages:
+                        if response['result_code'] == 'Ok':
+
+                            return {'status': True,
+                                    'profile_id': result.customer_id,
+                                    'payment_id': result.payment_id}
+                        else:
+                            return {
+                                'status': False,
+                                'message': response['messages']
+                            }
+                else:
+                    return {
+                        'status':False,
+                        'message': 'Could not connect to server. Please try again'
+                    }
+
+            except authorize.exceptions.AuthorizeResponseError:
+                return {'status':False,
+                        'message':authorize.exceptions.AuthorizeResponseError}
+            except authorize.exceptions.AuthorizeInvalidError:
+                error_message = ''
+                for key, value in authorize.exceptions.AuthorizeInvalidError:
+                    error_message = 'Error: {} field has an error of "{}"'.format(key, value)
+                return {'status':False,
+                        'message':error_message}
+        else:
+            return {'status': False,
+                    'message': 'Could not authenticate with server'}
+
+    def card_update(self,company_id, profile_id, payment_id, data):
+
+        if self.connectAuthNet(company_id):
+
+            try:
+                result = authorize.CreditCard.update(str(profile_id), str(payment_id),data)
+                return {'status':True,
+                        'message':'Successfully updated credit cards with all companies'}
+            except authorize.exceptions.AuthorizeResponseError:
+                return {'status':False,
+                        'message':authorize.exceptions.AuthorizeResponseError}
+        else:
+            return {'status': False,
+                    'message': 'Could not authenticate with server'}
+
+    def validate_card(self, company_id, profile_id, payment_id):
+        if self.connectAuthNet(company_id):
+            try:
+                result = authorize.CreditCard.validate(str(profile_id), str(payment_id), {
+                    'validationMode': 'liveMode'
+                })
+                print(result)
+                if result.messages:
+                    for response in result.messages:
+                        if response['result_code'] == 'Ok':
+
+                            return {'status': True,
+                                    'message': 'Card has been validated, and can can be used for this transaction.'}
+                        else:
+                            return {
+                                'status': False,
+                                'message': response['message']['text ']
+                            }
+                else:
+                    return {
+                        'status': False,
+                        'message': 'Could not connect to server. Please try again'
+                    }
+
+            except authorize.exceptions.AuthorizeResponseError:
+                return {'status': False,
+                        'message': authorize.exceptions.AuthorizeResponseError}
+            except authorize.exceptions.AuthorizeInvalidError:
+                error_message = 'Error: there were problems with your validation. please use another card'
+
+                return {'status': False,
+                        'message': error_message}
+        else:
+            return {'status': False,
+                    'message': 'Could not authenticate with server'}

@@ -29,9 +29,9 @@ now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
 def sync_from_server(data):
     # start upload text
+    print(data)
     if int(data['rows_to_create']) > 0:
         updates = data['updates']
-        
         if 'addresses' in updates:
             for addresses in updates['addresses']:
                 address = Address()
@@ -583,172 +583,149 @@ def update_database(data):
     # start upload text
     if int(data['rows_saved']) > 0:
         if 'saved' in data:
-            for up in data['saved']:
-                
-                if up == 'addresses':
-                    for addresses in data['saved']['addresses']:
-                        address = Address()
-                        where = {'id': addresses['id']}
-                        data = {'color_id': addresses['color_id']}
-                        address.put(where=where, data=data)
-                        address.close_connection()
-                        
-                if up == 'colors':
-                    for colors in data['saved']['colors']:
-                        color = Colored()
-                        where = {'id': colors['id']}
-                        data = {'color_id': colors['color_id']}
-                        color.put(where=where, data=data)
-                        color.close_connection()
+            saved = data['saved']
+            if 'addresses' in saved:
+                for addresses in saved['addresses']:
+                    address = Address()
+                    where = {'id': addresses['id']}
+                    data = {'address_id': addresses['address_id']}
+                    address.put(where=where, data=data)
 
-                if up == 'cards':
-                    for cards in data['saved']['cards']:
-                        card = Card()
-                        where = {'id': cards['id']}
-                        data = {'card_id': cards['card_id']}
-                        card.put(where=where, data=data)
-                        card.close_connection()
+            if 'colors' in saved:
+                for colors in saved['colors']:
+                    color = Colored()
+                    where = {'id': colors['id']}
+                    data = {'color_id': colors['color_id']}
+                    color.put(where=where, data=data)
+                    
+            if 'cards' in saved:
+                for cards in saved['cards']:
+                    card = Card()
+                    where = {'id': cards['id']}
+                    data = {'card_id': cards['card_id']}
+                    card.put(where=where, data=data)
 
-                if up == 'companies':
-                    for companies in data['saved']['companies']:
-                        company = Company()
-                        where = {'id': companies['id']}
-                        data = {'company_id': companies['company_id']}
-                        company.put(where=where, data=data)
-                        company.close_connection()
+            if 'companies' in saved:
+                for companies in saved['companies']:
+                    company = Company()
+                    where = {'id': companies['id']}
+                    data = {'company_id': companies['company_id']}
+                    company.put(where=where, data=data)
 
-                if up == 'custids':
-                    for custids in data['saved']['custids']:
-                        custid = Custid()
-                        where = {'id': custids['id']}
-                        data = {'cust_id': custids['cust_id']}
-                        custid.put(where=where, data=data)
-                        custid.close_connection()
+            if 'custids' in saved:
+                for custids in saved['custids']:
+                    custid = Custid()
+                    where = {'id': custids['id']}
+                    data = {'cust_id': custids['cust_id']}
+                    custid.put(where=where, data=data)
 
-                if up == 'deliveries':
-                    for deliveries in data['saved']['deliveries']:
-                        delivery = Delivery()
-                        where = {'id': deliveries['id']}
-                        data = {'delivery_id': deliveries['delivery_id']}
-                        delivery.put(where=where, data=data)
-                        delivery.close_connection()
+            if 'deliveries' in saved:
+                for deliveries in saved['deliveries']:
+                    delivery = Delivery()
+                    where = {'id': deliveries['id']}
+                    data = {'delivery_id': deliveries['delivery_id']}
+                    delivery.put(where=where, data=data)
 
-                if up == 'discounts':
-                    for discounts in data['saved']['discounts']:
-                        discount = Discount()
-                        where = {'id': discounts['id']}
-                        data = {'discount_id': discounts['discount_id']}
-                        discount.put(where=where, data=data)
-                        discount.close_connection()
+            if 'discounts' in saved:
+                for discounts in saved['discounts']:
+                    discount = Discount()
+                    where = {'id': discounts['id']}
+                    data = {'discount_id': discounts['discount_id']}
+                    discount.put(where=where, data=data)
 
-                if up == 'inventories':
-                    for inventories in data['saved']['inventories']:
-                        inventory = Inventory()
-                        where = {'id': inventories['id']}
-                        data = {'inventory_id': inventories['inventory_id']}
-                        inventory.put(where=where, data=data)
-                        inventory.close_connection()
+            if 'inventories' in saved:
+                for inventories in saved['inventories']:
+                    inventory = Inventory()
+                    where = {'id': inventories['id']}
+                    data = {'inventory_id': inventories['inventory_id']}
+                    inventory.put(where=where, data=data)
 
-                if up == 'inventory_items':
-                    for inventory_items in data['saved']['inventory_items']:
-                        inventory_item = InventoryItem()
-                        where = {'id': inventory_items['id']}
-                        data = {'item_id': inventory_items['item_id']}
-                        inventory_item.put(where=where, data=data)
-                        inventory_item.close_connection()
+            if 'inventory_items' in saved:
+                for inventory_items in saved['inventory_items']:
+                    inventory_item = InventoryItem()
+                    where = {'id': inventory_items['id']}
+                    data = {'item_id': inventory_items['item_id']}
+                    inventory_item.put(where=where, data=data)
 
-                if up == 'invoices':
-                    for invoices in data['saved']['invoices']:
-                        invoice = Invoice()
-                        where = {'id': invoices['id']}
-                        data = {'invoice_id': invoices['invoice_id']}
-                        invoice.put(where=where, data=data)
-                        invoice.close_connection()
+            if 'invoices' in saved:
+                for invoices in saved['invoices']:
+                    invoice = Invoice()
+                    where = {'id': invoices['id']}
+                    data = {'invoice_id': invoices['invoice_id']}
+                    invoice.put(where=where, data=data)
 
-                if up == 'invoice_items':
-                    for invoice_items in data['saved']['invoice_items']:
-                        invoice_item = InvoiceItem()
-                        where = {'id': invoice_items['id']}
-                        data = {'invoice_items_id': invoice_items['invoice_items_id']}
-                        invoice_item.put(where=where, data=data)
-                        invoice_item.close_connection()
+            if 'invoice_items' in saved:
+                for invoice_items in saved['invoice_items']:
+                    invoice_item = InvoiceItem()
+                    where = {'id': invoice_items['id']}
+                    data = {'invoice_items_id': invoice_items['invoice_items_id']}
+                    invoice_item.put(where=where, data=data)
 
-                if up == 'memos':
-                    for memos in data['saved']['memos']:
-                        memo = Memo()
-                        where = {'id': memos['id']}
-                        data = {'memo_id': memos['memo_id']}
-                        memo.put(where=where, data=data)
-                        memo.close_connection()
+            if 'memos' in saved:
+                for memos in saved['memos']:
+                    memo = Memo()
+                    where = {'id': memos['id']}
+                    data = {'memo_id': memos['memo_id']}
+                    memo.put(where=where, data=data)
+            if 'printers' in saved:
+                for printers in saved['printers']:
+                    printer = Printer()
+                    where = {'id': printers['id']}
+                    data = {'printer_id': printers['printer_id']}
+                    printer.put(where=where, data=data)
+                    
+            if 'profiles' in saved:
+                for profiles in saved['profiles']:
+                    profile = Profile()
+                    where = {'id': profiles['id']}
+                    data = {'p_id': profiles['p_id']}
+                    profile.put(where=where, data=data)
+                    
+            if 'reward_transactions' in saved:
+                for reward_transactions in saved['reward_transactions']:
+                    reward_transaction = RewardTransaction()
+                    where = {'id': reward_transactions['id']}
+                    data = {'reward_id': reward_transactions['reward_id']}
+                    reward_transaction.put(where=where, data=data)
 
-                if up == 'printers':
-                    for printers in data['saved']['printers']:
-                        printer = Printer()
-                        where = {'id': printers['id']}
-                        data = {'printer_id': printers['printer_id']}
-                        printer.put(where=where, data=data)
-                        printer.close_connection()
-                        
-                if up == 'profiles':
-                    for profiles in data['saved']['profiles']:
-                        profile = Profile()
-                        where = {'id': profiles['id']}
-                        data = {'p_id': profiles['p_id']}
-                        profile.put(where=where, data=data)
-                        profile.close_connection()
-                        
-                if up == 'reward_transactions':
-                    for reward_transactions in data['saved']['reward_transactions']:
-                        reward_transaction = RewardTransaction()
-                        where = {'id': reward_transactions['id']}
-                        data = {'reward_id': reward_transactions['reward_id']}
-                        reward_transaction.put(where=where, data=data)
-                        reward_transaction.close_connection()
+            if 'rewards' in saved:
+                for rewards in saved['rewards']:
+                    reward = Reward()
+                    where = {'id': rewards['id']}
+                    data = {'reward_id': rewards['reward_id']}
+                    reward.put(where=where, data=data)
 
-                if up == 'rewards':
-                    for rewards in data['saved']['rewards']:
-                        reward = Reward()
-                        where = {'id': rewards['id']}
-                        data = {'reward_id': rewards['reward_id']}
-                        reward.put(where=where, data=data)
-                        reward.close_connection()
+            if 'schedules' in saved:
+                for schedules in saved['schedules']:
+                    schedule = Schedule()
+                    where = {'id': schedules['id']}
+                    data = {'schedule_id': schedules['schedule_id']}
+                    schedule.put(where=where, data=data)
 
-                if up == 'schedules':
-                    for schedules in data['saved']['schedules']:
-                        schedule = Schedule()
-                        where = {'id': schedules['id']}
-                        data = {'schedule_id': schedules['schedule_id']}
-                        schedule.put(where=where, data=data)
-                        schedule.close_connection()
+            if 'taxes' in saved:
+                for taxes in saved['taxes']:
+                    tax = Tax()
+                    where = {'id': taxes['id']}
+                    data = {'tax_id': taxes['tax_id']}
+                    tax.put(where=where, data=data)
 
-                if up == 'taxes':
-                    for taxes in data['saved']['taxes']:
-                        tax = Tax()
-                        where = {'id': taxes['id']}
-                        data = {'tax_id': taxes['tax_id']}
-                        tax.put(where=where, data=data)
-                        tax.close_connection()
+            if 'transactions' in saved:
+                for transactions in saved['transactions']:
+                    transaction = Transaction()
+                    where = {'id': transactions['id']}
+                    data = {'transaction_id': transactions['transaction_id']}
+                    transaction.put(where=where, data=data)
 
-                if up == 'transactions':
-                    for transactions in data['saved']['transactions']:
-                        transaction = Transaction()
-                        where = {'id': transactions['id']}
-                        data = {'transaction_id': transactions['transaction_id']}
-                        transaction.put(where=where, data=data)
-                        transaction.close_connection()
+            if 'users' in saved:
+                for users in saved['users']:
+                    user = User()
+                    where = {'id': users['id']}
+                    data = {'user_id': users['user_id']}
+                    user.put(where=where, data=data)
 
-                if up == 'users':
-                    for users in data['saved']['users']:
-                        user = User()
-                        where = {'id': users['id']}
-                        data = {'user_id': users['user_id']}
-                        user.put(where=where, data=data)
-                        user.close_connection()
-
-                if up == 'zipcodes':
-                    for zipcodes in data['saved']['zipcodes']:
-                        zipcode = Zipcode()
-                        where = {'id': zipcodes['id']}
-                        data = {'zipcode_id': zipcodes['zipcode_id']}
-                        zipcode.put(where=where, data=data)
-                        zipcode.close_connection()
+            if 'zipcodes' in saved:
+                for zipcodes in saved['zipcodes']:
+                    zipcode = Zipcode()
+                    where = {'id': zipcodes['id']}
+                    data = {'zipcode_id': zipcodes['zipcode_id']}
+                    zipcode.put(where=where, data=data)

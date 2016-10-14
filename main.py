@@ -43,6 +43,7 @@ from users import User
 from zipcodes import Zipcode
 
 # Helpers
+import asyncio
 import calendar
 from calendar import Calendar
 from kv_generator import KvString
@@ -5931,7 +5932,7 @@ class HistoryScreen(Screen):
                 Label(markup=True,
                       text="[b]Change #{} Status To[b]".format(invoice_id)))
             self.status_spinner = Spinner(text='Select Status',
-                                          values=('Not Ready', 'Racked', 'Picked Up'),
+                                          values=('Not Ready', 'Racked', 'Prepaid', 'Gone Np', 'Picked Up'),
                                           size_hint_y=None,
                                           height='48sp')
             inner_content_1.add_widget(self.status_spinner)
@@ -5962,12 +5963,18 @@ class HistoryScreen(Screen):
         self.history_popup.open()
 
     def undo_invoice(self, *args, **kwargs):
+        print(self.status_spinner.text)
         if self.status_spinner.text == 'Not Ready':
             status = 1
-        elif self.status_spinner.text == 'Racked':
+        elif self.status_spinner.text == "Racked":
+            status = 2
+        elif self.status_spinner.text == "Prepaid":
             status = 3
-        elif self.status_spinner.text == 'Picked Up':
+        elif self.status_spinner.text == "Gone Np":
+            status = 4
+        else:  # picked up
             status = 5
+        print(status)
         popup = Popup()
         popup.title = 'Undo Invoice'
         popup.size_hint = (None, None)
@@ -5978,11 +5985,31 @@ class HistoryScreen(Screen):
                 invoices = inv.where({'invoice_id': vars.INVOICE_ID}, deleted_at=False)
                 if invoices:
                     for invoice in invoices:
-                        transaction_id = invoice['transaction_id']
-                        status = 5 if transaction_id else status
                         inv.id = invoice['id']
-                        data = {'deleted_at': None,
-                                'status': status}
+                        original_status = invoice['status']
+                        transaction_id = invoice['transaction_id']
+                        if status < 5 and original_status is 5 and transaction_id:  # remove transaction_id and delete
+                            # get all invoices with the same transaction_id
+                            all_invoices = inv.where({'transaction_id': transaction_id})
+                            if all_invoices:
+                                for ainv in all_invoices:
+                                    remove_trans_inv = Invoice()
+                                    data = {'deleted_at': None,
+                                            'status': status,
+                                            'transaction_id': None}
+                                    remove_trans_inv.put(where={'id': ainv['id']},
+                                                         data=data)
+
+                            transactions = Transaction()
+                            trans = transactions.where({'transaction_id': transaction_id})
+                            if trans:
+                                for transaction in trans:
+                                    tr_id = transaction['id']
+                                    transactions.id = tr_id
+                                    transactions.delete()
+                        else:
+                            data = {'deleted_at': None,
+                                    'status': status}
                         where = {'id': invoice['id']}
                         inv.put(where=where, data=data)
 
@@ -7998,8 +8025,20 @@ class PickupScreen(Screen):
     card_location = 1
     finish_popup = Popup()
     card_id_spinner = Spinner()
-    cards = None;
-    card_id = None;
+    cards = None
+    card_id = None
+    root_payment_id = None
+    edit_card_number = None
+    edit_card_exp_month = None
+    edit_card_exp_year = None
+    edit_card_billing_street = None
+    edit_card_billing_suite = None
+    edit_card_billing_city = None
+    edit_card_billing_state = None
+    edit_card_billing_zipcode = None
+    edit_card_billing_first_name = None
+    edit_card_billing_last_name = None
+    card_box = None
 
     def reset(self):
         self.selected_invoices = []
@@ -8027,6 +8066,18 @@ class PickupScreen(Screen):
         self.check_number.text = ''
         self.card_id_spinner = Spinner()
         self.card_id = None
+        self.root_payment_id = None
+        self.edit_card_number = None
+        self.edit_card_exp_month = None
+        self.edit_card_exp_year = None
+        self.edit_card_billing_street = None
+        self.edit_card_billing_suite = None
+        self.edit_card_billing_city = None
+        self.edit_card_billing_state = None
+        self.edit_card_billing_zipcode = None
+        self.edit_card_billing_first_name = None
+        self.edit_card_billing_last_name = None
+        self.card_box = None
 
         # reset states
         self.instore_button.state = 'down'
@@ -8042,8 +8093,11 @@ class PickupScreen(Screen):
             for profile in profiles:
                 vars.PROFILE_ID = profile['profile_id']
 
-        cards_db = Card()
-        self.cards = cards_db.collect(auth_user.company_id, vars.PROFILE_ID)
+            cards_db = Card()
+            self.cards = cards_db.collect(auth_user.company_id, vars.PROFILE_ID)
+        else:
+            self.cards = False
+        self.select_card_location('1')
 
     def invoice_create_rows(self):
         self.invoice_table.clear_widgets()
@@ -8266,7 +8320,7 @@ class PickupScreen(Screen):
             credit_card_action_box = BoxLayout(orientation="horizontal",
                                                size_hint=(1, 0.5))
             credit_card_action_box.add_widget(Button(text="Update", on_release=self.update_card))
-            credit_card_action_box.add_widget(Button(text="Add", on_release=self.add_card))
+            credit_card_action_box.add_widget(Button(text="Add", on_release=self.add_card_popup))
             inner_layout_1.add_widget(credit_card_action_box)
             self.credit_card_data_layout.add_widget(inner_layout_1)
 
@@ -8279,26 +8333,532 @@ class PickupScreen(Screen):
                                                     card['exp_month'],
                                                     card['exp_year'])
                 if check_string == card_string:
-                    self.card_id = card['id']
+                    self.card_id = card['card_id']
                     print(self.card_id)
         pass
 
     def update_card(self, *args, **kwargs):
-        card_string = self.card_id_spinner.text
-        if self.cards:
-            for card in self.cards:
-                check_string = "{} {} {}/{}".format(card['card_type'],
-                                                    card['last_four'],
-                                                    card['exp_month'],
-                                                    card['exp_year'])
-                if check_string == card_string:
-                    self.card_id = card['id']
-                    print(self.card_id)
+        self.finish_popup.title = 'Update Credit Card'
+        if self.card_id is None:
+            popup = Popup()
+            popup.title = 'Card Error'
+            content = KV.popup_alert('Credit Card Not Selected. Please select card and try again.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        else:
+
+            if self.cards:
+                for card in self.cards:
+                    if self.card_id == card['card_id']:
+                        # setup card form
+                        edit_card_label = Factory.CenteredFormLabel(text="Card #")
+                        self.edit_card_number = Factory.CenterVerticalTextInput(hint_text=card['last_four'])
+                        edit_card_exp_month_label = Factory.CenteredFormLabel(text="Exp Month")
+                        self.edit_card_exp_month = Factory.CenterVerticalTextInput(text=card['exp_month'])
+                        edit_card_exp_year_label = Factory.CenteredFormLabel(text="Exp Year")
+                        self.edit_card_exp_year = Factory.CenterVerticalTextInput(text=card['exp_year'])
+                        edit_card_billing_street_label = Factory.CenteredFormLabel(text="Street")
+                        self.edit_card_billing_street = Factory.CenterVerticalTextInput(text=card['street'])
+                        edit_card_billing_suite_label = Factory.CenteredFormLabel(text="Suite")
+                        self.edit_card_billing_suite = Factory.CenterVerticalTextInput(text=card['suite'])
+                        edit_card_billing_city_label = Factory.CenteredFormLabel(text="City")
+                        self.edit_card_billing_city = Factory.CenterVerticalTextInput(text=card['city'])
+                        edit_card_billing_state_label = Factory.CenteredFormLabel(text="State")
+                        self.edit_card_billing_state = Factory.CenterVerticalTextInput(text=card['state'])
+                        edit_card_billing_zipcode_label = Factory.CenteredFormLabel(text="Zipcode")
+                        self.edit_card_billing_zipcode = Factory.CenterVerticalTextInput(text=card['zipcode'])
+                        edit_card_billing_first_name_label = Factory.CenteredFormLabel(text="First Name")
+                        self.edit_card_billing_first_name = Factory.CenterVerticalTextInput(text=card['first_name'])
+                        edit_card_billing_last_name_label = Factory.CenteredFormLabel(text="Last Name")
+                        self.edit_card_billing_last_name = Factory.CenterVerticalTextInput(text=card['last_name'])
+                        base_layout = BoxLayout(orientation='vertical',
+                                                size_hint=(1, 1))
+                        inner_layout_1 = GridLayout(size_hint=(1, 0.9),
+                                                    cols=2,
+                                                    rows=10)
+                        inner_layout_1.add_widget(edit_card_label)
+                        inner_layout_1.add_widget(self.edit_card_number)
+                        inner_layout_1.add_widget(edit_card_exp_month_label)
+                        inner_layout_1.add_widget(self.edit_card_exp_month)
+                        inner_layout_1.add_widget(edit_card_exp_year_label)
+                        inner_layout_1.add_widget(self.edit_card_exp_year)
+                        inner_layout_1.add_widget(edit_card_billing_first_name_label)
+                        inner_layout_1.add_widget(self.edit_card_billing_first_name)
+                        inner_layout_1.add_widget(edit_card_billing_last_name_label)
+                        inner_layout_1.add_widget(self.edit_card_billing_last_name)
+                        inner_layout_1.add_widget(edit_card_billing_street_label)
+                        inner_layout_1.add_widget(self.edit_card_billing_street)
+                        inner_layout_1.add_widget(edit_card_billing_suite_label)
+                        inner_layout_1.add_widget(self.edit_card_billing_suite)
+                        inner_layout_1.add_widget(edit_card_billing_city_label)
+                        inner_layout_1.add_widget(self.edit_card_billing_city)
+                        inner_layout_1.add_widget(edit_card_billing_state_label)
+                        inner_layout_1.add_widget(self.edit_card_billing_state)
+                        inner_layout_1.add_widget(edit_card_billing_zipcode_label)
+                        inner_layout_1.add_widget(self.edit_card_billing_zipcode)
+
+                        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                                   size_hint=(1, 0.1))
+                        cancel_button = Button(text="cancel",
+                                               on_release=self.finish_popup.dismiss)
+                        save_button = Button(text="save",
+                                             on_release=self.edit_card)
+                        inner_layout_2.add_widget(cancel_button)
+                        inner_layout_2.add_widget(save_button)
+                        base_layout.add_widget(inner_layout_1)
+                        base_layout.add_widget(inner_layout_2)
+                        self.finish_popup.content = base_layout
+                        self.finish_popup.open()
+            else:
+                popup = Popup()
+                popup.title = 'Card Error'
+                content = KV.popup_alert(
+                    'Card selected but could not locate card in local db. Please add a new card instead')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+
+        pass
+
+    def edit_card(self, *args, **kwargs):
+        # validate
+        errors = 0
+        if not self.edit_card_number.text:
+            errors += 1
+            self.edit_card_number.text_color = ERROR_COLOR
+            self.edit_card_number.hint_text = 'Must enter card number'
+        else:
+            self.edit_card_number.text_color = DEFAULT_COLOR
+            self.edit_card_number.hint_text = ""
+
+        if not self.edit_card_exp_month.text:
+            errors += 1
+            self.edit_card_exp_month.text_color = ERROR_COLOR
+            self.edit_card_exp_month.hint_text = 'Must enter expired month'
+        else:
+            self.edit_card_exp_month.text_color = DEFAULT_COLOR
+            self.edit_card_exp_month.hint_text = ""
+
+        if not self.edit_card_exp_year.text:
+            errors += 1
+            self.edit_card_exp_year.text_color = ERROR_COLOR
+            self.edit_card_exp_year.hint_text = 'Must enter expired year'
+        else:
+            self.edit_card_exp_year.text_color = DEFAULT_COLOR
+            self.edit_card_exp_year.hint_text = ""
+
+        if not self.edit_card_billing_first_name.text:
+            errors += 1
+            self.edit_card_billing_first_name.text_color = ERROR_COLOR
+            self.edit_card_billing_first_name.hint_text = 'Must enter first name'
+        else:
+            self.edit_card_billing_first_name.text_color = DEFAULT_COLOR
+            self.edit_card_billing_first_name.hint_text = ""
+
+        if not self.edit_card_billing_last_name.text:
+            errors += 1
+            self.edit_card_billing_last_name.text_color = ERROR_COLOR
+            self.edit_card_billing_last_name.hint_text = 'Must enter last name'
+        else:
+            self.edit_card_billing_last_name.text_color = DEFAULT_COLOR
+            self.edit_card_billing_last_name.hint_text = ""
+
+        if not self.edit_card_billing_street.text:
+            errors += 1
+            self.edit_card_billing_street.text_color = ERROR_COLOR
+            self.edit_card_billing_street.hint_text = 'Must enter street address'
+        else:
+            self.edit_card_billing_street.text_color = DEFAULT_COLOR
+            self.edit_card_billing_street.hint_text = ""
+
+        if not self.edit_card_billing_city.text:
+            errors += 1
+            self.edit_card_billing_city.text_color = ERROR_COLOR
+            self.edit_card_billing_city.hint_text = 'Must enter city'
+        else:
+            self.edit_card_billing_city.text_color = DEFAULT_COLOR
+            self.edit_card_billing_city.hint_text = ""
+
+        if not self.edit_card_billing_state.text:
+            errors += 1
+            self.edit_card_billing_state.text_color = ERROR_COLOR
+            self.edit_card_billing_state.hint_text = 'Must enter state'
+        else:
+            self.edit_card_billing_state.text_color = DEFAULT_COLOR
+            self.edit_card_billing_state.hint_text = ""
+
+        if not self.edit_card_billing_zipcode.text:
+            errors += 1
+            self.edit_card_billing_zipcode.text_color = ERROR_COLOR
+            self.edit_card_billing_zipcode.hint_text = 'Must enter zipcode'
+        else:
+            self.edit_card_billing_zipcode.text_color = DEFAULT_COLOR
+            self.edit_card_billing_zipcode.hint_text = ""
+
+        if errors == 0:
+            # prepare for saving into db
+
+            cards = Card()
+            get_original_card = cards.where({'card_id': self.card_id})
+
+            if get_original_card:
+                for card in get_original_card:
+                    root_payment_id = card['root_payment_id']
+            get_root_payment = cards.where({'root_payment_id': root_payment_id})
+            if get_root_payment:
+                loop = asyncio.new_event_loop()
+                for grp in get_root_payment:
+                    loop.run_until_complete(self.run_edit_task(grp))
+                loop.close()
+
+            # save to server
+            run_sync = threading.Thread(target=SYNC.run_sync)
+            try:
+                run_sync.start()
+            finally:
+                run_sync.join()
+                print('sync now finished')
+            # finish and reset
+            popup = Popup()
+            popup.title = 'Card Update Successful'
+            content = KV.popup_alert(
+                'Successfully updated card. Please reselect your card and invoices before making the online payment.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+            self.finish_popup.dismiss()
+            self.reset()
+            self.select_card_location('1')
+
+        pass
+
+    async def run_edit_task(self, grp):
+        save_data = {
+            'customer_type': 'individual',
+            'card_number': str(self.edit_card_number.text.rstrip()),
+            'expiration_month': str(self.edit_card_exp_month.text.rstrip()),
+            'expiration_year': str(self.edit_card_exp_year.text.rstrip()),
+            'billing': {
+                'first_name': str(self.edit_card_billing_first_name.text),
+                'last_name': str(self.edit_card_billing_last_name.text),
+                'company': '',
+                'address': str(self.edit_card_billing_street.text),
+                'city': str(self.edit_card_billing_city.text),
+                'state': str(self.edit_card_billing_state.text),
+                'zip': str(self.edit_card_billing_zipcode.text),
+                'country': 'US'
+            },
+        }
+        suite = self.edit_card_billing_suite.text if self.edit_card_billing_suite.text else ''
+        result = Card().card_update(grp['company_id'], grp['profile_id'], grp['payment_id'], save_data)
+        Card().put(where={'card_id': grp['card_id']},
+                   data={
+                       'street': self.edit_card_billing_street.text,
+                       'suite': suite,
+                       'city': self.edit_card_billing_city.text,
+                       'state': self.edit_card_billing_state.text,
+                       'exp_month': self.edit_card_exp_month.text,
+                       'exp_year': self.edit_card_exp_year.text
+                   })
+
+    def add_card_popup(self, *args, **kwargs):
+        self.finish_popup.title = 'Add Credit Card'
+        # setup card form
+        edit_card_label = Factory.CenteredFormLabel(text="Card #")
+        self.edit_card_number = Factory.CenterVerticalTextInput(hint_text="XXXXXXXXXXXXXXXX")
+        edit_card_exp_month_label = Factory.CenteredFormLabel(text="Exp Month")
+        self.edit_card_exp_month = Factory.CenterVerticalTextInput(hint_text="XX")
+        edit_card_exp_year_label = Factory.CenteredFormLabel(text="Exp Year")
+        self.edit_card_exp_year = Factory.CenterVerticalTextInput(hint_text="XXXX")
+        edit_card_billing_street_label = Factory.CenteredFormLabel(text="Street")
+        self.edit_card_billing_street = Factory.CenterVerticalTextInput()
+        edit_card_billing_suite_label = Factory.CenteredFormLabel(text="Suite")
+        self.edit_card_billing_suite = Factory.CenterVerticalTextInput()
+        edit_card_billing_city_label = Factory.CenteredFormLabel(text="City")
+        self.edit_card_billing_city = Factory.CenterVerticalTextInput()
+        edit_card_billing_state_label = Factory.CenteredFormLabel(text="State")
+        self.edit_card_billing_state = Factory.CenterVerticalTextInput()
+        edit_card_billing_zipcode_label = Factory.CenteredFormLabel(text="Zipcode")
+        self.edit_card_billing_zipcode = Factory.CenterVerticalTextInput()
+        edit_card_billing_first_name_label = Factory.CenteredFormLabel(text="First Name")
+        self.edit_card_billing_first_name = Factory.CenterVerticalTextInput()
+        edit_card_billing_last_name_label = Factory.CenteredFormLabel(text="Last Name")
+        self.edit_card_billing_last_name = Factory.CenterVerticalTextInput()
+        base_layout = BoxLayout(orientation='vertical',
+                                size_hint=(1, 1))
+        inner_layout_1 = GridLayout(size_hint=(1, 0.9),
+                                    cols=2,
+                                    rows=10)
+        inner_layout_1.add_widget(edit_card_label)
+        inner_layout_1.add_widget(self.edit_card_number)
+        inner_layout_1.add_widget(edit_card_exp_month_label)
+        inner_layout_1.add_widget(self.edit_card_exp_month)
+        inner_layout_1.add_widget(edit_card_exp_year_label)
+        inner_layout_1.add_widget(self.edit_card_exp_year)
+        inner_layout_1.add_widget(edit_card_billing_first_name_label)
+        inner_layout_1.add_widget(self.edit_card_billing_first_name)
+        inner_layout_1.add_widget(edit_card_billing_last_name_label)
+        inner_layout_1.add_widget(self.edit_card_billing_last_name)
+        inner_layout_1.add_widget(edit_card_billing_street_label)
+        inner_layout_1.add_widget(self.edit_card_billing_street)
+        inner_layout_1.add_widget(edit_card_billing_suite_label)
+        inner_layout_1.add_widget(self.edit_card_billing_suite)
+        inner_layout_1.add_widget(edit_card_billing_city_label)
+        inner_layout_1.add_widget(self.edit_card_billing_city)
+        inner_layout_1.add_widget(edit_card_billing_state_label)
+        inner_layout_1.add_widget(self.edit_card_billing_state)
+        inner_layout_1.add_widget(edit_card_billing_zipcode_label)
+        inner_layout_1.add_widget(self.edit_card_billing_zipcode)
+
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=self.finish_popup.dismiss)
+        save_button = Button(text="save",
+                             on_release=self.add_card)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(save_button)
+        base_layout.add_widget(inner_layout_1)
+        base_layout.add_widget(inner_layout_2)
+        self.finish_popup.content = base_layout
+        self.finish_popup.open()
         pass
 
     def add_card(self, *args, **kwargs):
-        print('add card')
+        # validate
+        errors = 0
+        if not self.edit_card_number.text:
+            errors += 1
+            self.edit_card_number.text_color = ERROR_COLOR
+            self.edit_card_number.hint_text = 'Must enter card number'
+        else:
+            self.edit_card_number.text_color = DEFAULT_COLOR
+            self.edit_card_number.hint_text = ""
+
+        if not self.edit_card_exp_month.text:
+            errors += 1
+            self.edit_card_exp_month.text_color = ERROR_COLOR
+            self.edit_card_exp_month.hint_text = 'Must enter expired month'
+        else:
+            self.edit_card_exp_month.text_color = DEFAULT_COLOR
+            self.edit_card_exp_month.hint_text = ""
+
+        if not self.edit_card_exp_year.text:
+            errors += 1
+            self.edit_card_exp_year.text_color = ERROR_COLOR
+            self.edit_card_exp_year.hint_text = 'Must enter expired year'
+        else:
+            self.edit_card_exp_year.text_color = DEFAULT_COLOR
+            self.edit_card_exp_year.hint_text = ""
+
+        if not self.edit_card_billing_first_name.text:
+            errors += 1
+            self.edit_card_billing_first_name.text_color = ERROR_COLOR
+            self.edit_card_billing_first_name.hint_text = 'Must enter first name'
+        else:
+            self.edit_card_billing_first_name.text_color = DEFAULT_COLOR
+            self.edit_card_billing_first_name.hint_text = ""
+
+        if not self.edit_card_billing_last_name.text:
+            errors += 1
+            self.edit_card_billing_last_name.text_color = ERROR_COLOR
+            self.edit_card_billing_last_name.hint_text = 'Must enter last name'
+        else:
+            self.edit_card_billing_last_name.text_color = DEFAULT_COLOR
+            self.edit_card_billing_last_name.hint_text = ""
+
+        if not self.edit_card_billing_street.text:
+            errors += 1
+            self.edit_card_billing_street.text_color = ERROR_COLOR
+            self.edit_card_billing_street.hint_text = 'Must enter street address'
+        else:
+            self.edit_card_billing_street.text_color = DEFAULT_COLOR
+            self.edit_card_billing_street.hint_text = ""
+
+        if not self.edit_card_billing_city.text:
+            errors += 1
+            self.edit_card_billing_city.text_color = ERROR_COLOR
+            self.edit_card_billing_city.hint_text = 'Must enter city'
+        else:
+            self.edit_card_billing_city.text_color = DEFAULT_COLOR
+            self.edit_card_billing_city.hint_text = ""
+
+        if not self.edit_card_billing_state.text:
+            errors += 1
+            self.edit_card_billing_state.text_color = ERROR_COLOR
+            self.edit_card_billing_state.hint_text = 'Must enter state'
+        else:
+            self.edit_card_billing_state.text_color = DEFAULT_COLOR
+            self.edit_card_billing_state.hint_text = ""
+
+        if not self.edit_card_billing_zipcode.text:
+            errors += 1
+            self.edit_card_billing_zipcode.text_color = ERROR_COLOR
+            self.edit_card_billing_zipcode.hint_text = 'Must enter zipcode'
+        else:
+            self.edit_card_billing_zipcode.text_color = DEFAULT_COLOR
+            self.edit_card_billing_zipcode.hint_text = ""
+
+        if errors == 0:
+            # loop through each company and save
+            companies = Company().where({'id': {'>': 0}})
+            save_success = 0
+            if companies:
+                for company in companies:
+                    company_id = company['id']
+                    cards = Card()
+                    cards.company_id = company_id
+                    cards.user_id = vars.CUSTOMER_ID
+                    # search for a profile
+                    profiles = Profile().where({'company_id': company_id, 'user_id': vars.CUSTOMER_ID})
+                    profile_id = False
+                    if profiles:
+                        for profile in profiles:
+                            profile_id = profile['profile_id']
+                        cards.profile_id = profile_id
+                        # make just payment_id
+                        new_card = {
+                            'customer_type': 'individual',
+                            'card_number': str(self.edit_card_number.text.rstrip()),
+                            'expiration_month': str(self.edit_card_exp_month.text.rstrip()),
+                            'expiration_year': str(self.edit_card_exp_year.text.rstrip()),
+                            'billing': {
+                                'first_name': str(self.edit_card_billing_first_name.text),
+                                'last_name': str(self.edit_card_billing_last_name.text),
+                                'company': '',
+                                'address': str(self.edit_card_billing_street.text),
+                                'city': str(self.edit_card_billing_city.text),
+                                'state': str(self.edit_card_billing_state.text),
+                                'zip': str(self.edit_card_billing_zipcode.text),
+                                'country': 'USA'
+                            }
+                        }
+                        result = Card().create_card(company_id, profile_id, new_card)
+                        if result['status']:
+                            save_success += 1
+                            payment_id = result['payment_id']
+
+                            cards.payment_id = payment_id
+                            if company_id is 1:
+                                self.root_payment_id = payment_id
+                            cards.root_payment_id = self.root_payment_id
+                            cards.street = self.edit_card_billing_street.text
+                            cards.suite = self.edit_card_billing_suite.text
+                            cards.city = self.edit_card_billing_city.text
+                            cards.state = self.edit_card_billing_state.text
+                            cards.zipcode = self.edit_card_billing_zipcode.text
+                            cards.exp_month = self.edit_card_exp_month.text
+                            cards.exp_year = self.edit_card_exp_year.text
+                            cards.status = 1
+                            cards.add()
+                        else:
+                            popup = Popup()
+                            popup.title = 'Card Error'
+                            content = KV.popup_alert(result['message'])
+                            popup.content = Builder.load_string(content)
+                            popup.open()
+                            # Beep Sound
+                            sys.stdout.write('\a')
+                            sys.stdout.flush()
+                    else:
+                        # make profile_id and payment_id
+                        customers = User().where({'user_id': vars.CUSTOMER_ID})
+                        if customers:
+                            for customer in customers:
+                                first_name = customer['first_name']
+                                last_name = customer['last_name']
+                        new_data = {
+                            'merchant_id': str(vars.CUSTOMER_ID),
+                            'description': '{}, {}'.format(last_name, first_name),
+                            'customer_type': 'individual',
+                            'billing': {
+                                'first_name': str(self.edit_card_billing_first_name.text),
+                                'last_name': str(self.edit_card_billing_last_name.text),
+                                'company': '',
+                                'address': '{}'.format(self.edit_card_billing_street.text),
+                                'city': str(self.edit_card_billing_city.text),
+                                'state': str(self.edit_card_billing_state.text),
+                                'zip': str(self.edit_card_billing_zipcode.text),
+                                'country': 'USA'
+                            },
+                            'credit_card': {
+                                'card_number': str(self.edit_card_number.text.rstrip()),
+                                'card_code': '',
+                                'expiration_month': str(self.edit_card_exp_month.text.rstrip()),
+                                'expiration_year': str(self.edit_card_exp_year.text.rstrip()),
+                            }
+                        }
+                        make_profile = Card().create_profile(company_id, new_data)
+
+                        if make_profile['status']:
+                            save_success += 1
+                            profile_id = make_profile['profile_id']
+                            payment_id = make_profile['payment_id']
+                            new_profiles = Profile()
+                            new_profiles.company_id = company_id
+                            new_profiles.user_id = vars.CUSTOMER_ID
+                            new_profiles.profile_id = profile_id
+                            new_profiles.status = 1
+                            new_profiles.add()
+
+                            cards.profile_id = profile_id
+                            cards.payment_id = payment_id
+                            cards.street = self.edit_card_billing_street.text
+                            cards.suite = self.edit_card_billing_suite.text
+                            cards.city = self.edit_card_billing_city.text
+                            cards.state = self.edit_card_billing_state.text
+                            cards.zipcode = self.edit_card_billing_zipcode.text
+                            cards.exp_month = self.edit_card_exp_month.text
+                            cards.exp_year = self.edit_card_exp_year.text
+                            if company_id is 1:
+                                self.root_payment_id = payment_id
+                            cards.root_payment_id = self.root_payment_id
+                            cards.status = 1
+                            cards.add()
+
+                        else:
+                            popup = Popup()
+                            popup.title = 'Add Card Error'
+                            content = KV.popup_alert(make_profile['message'])
+                            popup.content = Builder.load_string(content)
+                            popup.open()
+                            # Beep Sound
+                            sys.stdout.write('\a')
+                            sys.stdout.flush()
+            if save_success > 0:
+                # finish and reset
+                popup = Popup()
+                popup.title = 'Card Add Successful'
+                content = KV.popup_alert('Successfully added a card.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+                self.send_to_db()
+                self.finish_popup.dismiss()
+                self.reset()
+                self.select_card_location('1')
+            else:
+                popup = Popup()
+                popup.title = 'Card Add Unsuccessful'
+                content = KV.popup_alert('There were problems saving your card. Please try again')
+                popup.content = Builder.load_string(content)
+                popup.open()
+
         pass
+
+    def send_to_db(self):
+        # save to server
+        vars.WORKLIST.append("Sync")
+        threads_start()
 
     def cash_tendered(self, amount):
         total = vars.us_dollar(int(''.join(amount)))
@@ -8322,22 +8882,49 @@ class PickupScreen(Screen):
                 inner_layout_1.add_widget(button_2)
             else:
                 validate_layout = BoxLayout(orientation='vertical')
-                validate_inner_layout_1 = GridLayout(cols=2,
-                                                     rows=2,
-                                                     size_hint=(1, 0.4),
-                                                     row_force_default=True,
-                                                     row_default_height='50sp')
-                validate_inner_layout_1.add_widget(Label(text='status: '))
-                # results from validation
-                validate_status = Factory.OkayLabel()
-                validate_inner_layout_1.add_widget(validate_status)
-                validate_inner_layout_1.add_widget(Label(text='reason: '))
-                validate_reason = Factory.OkayLabel()
-                validate_inner_layout_1.add_widget(validate_reason)
-                validate_button = Button(text='Validate Card')
+                validate_inner_layout_1 = BoxLayout(orientation="horizontal",
+                                                    size_hint=(1, 0.8))
+                self.card_box = Factory.ValidateBox()
+                self.card_box.ids.validate_button.bind(on_release= self.validate_card)
+                # get card information
+                if self.cards:
+                    for card in self.cards:
+                        if self.card_id == card['card_id']:
+                            card_first_name = card['first_name']
+                            card_last_name = card['last_name']
+                            card_street = card['street']
+                            card_suite = card['suite']
+                            card_city = card['city']
+                            card_state = card['state']
+                            card_zipcode = card['zipcode']
+                            card_last_four = card['last_four']
+                            card_type = card['card_type']
+                            card_exp_month = card['exp_month']
+                            card_exp_year = card['exp_year']
+                            if card_suite:
+                                card_billing_address = '[color=5e5e5e]{} {} {},{} {}[/color]'.format(card_street,
+                                                                                                     card_suite,
+                                                                                                     card_city,
+                                                                                                     card_state,
+                                                                                                     card_zipcode)
+                            else:
+                                card_billing_address = '[color=5e5e5e]{} {},{} {}[/color]'.format(card_street,
+                                                                                                  card_city,
+                                                                                                  card_state,
+                                                                                                  card_zipcode)
+                            self.card_box.ids.credit_card_number.text = '[color=5e5e5e]{}[/color]'.format(card_last_four)
+                            self.card_box.ids.credit_card_type.text = '[color]{}[/color]'.format(card_type)
+                            self.card_box.ids.credit_card_full_name.text = '[color="5e5e5e"]{} {}[/color]'.format(
+                                card_first_name,
+                                card_last_name)
+                            self.card_box.ids.credit_card_exp_date.text = '[color="5e5e5e"]{}/{}[/color]'.format(
+                                card_exp_month,
+                                card_exp_year)
+                            self.card_box.ids.credit_billing_address.text = card_billing_address
+
+                validate_inner_layout_1.add_widget(self.card_box)
                 validate_inner_layout_2 = BoxLayout(orientation='horizontal',
-                                                    size_hint=(1, 0.6))
-                validate_inner_layout_2.add_widget(validate_button)
+                                                    size_hint=(1, 0.2))
                 validate_inner_layout_2.add_widget(button_1)
                 validate_inner_layout_2.add_widget(button_2)
                 validate_layout.add_widget(validate_inner_layout_1)
@@ -8387,7 +8974,20 @@ class PickupScreen(Screen):
         self.finish_popup.content = layout
         self.finish_popup.open()
 
-    def validate_card(self):
+    def validate_card(self, *args, **kwargs):
+        if self.cards:
+            for card in self.cards:
+                if self.card_id == card['card_id']:
+                    profile_id = card['profile_id']
+                    payment_id = card['payment_id']
+                    result = Card().validate_card(auth_user.company_id,profile_id, payment_id)
+                    self.card_box.ids.card_status.text = "Passed" if result['status'] else "Failed"
+                    self.card_box.ids.card_message.text = result['message']
+        else:
+            self.card_box.ids.card_status.text = "Failed"
+            self.card_box.ids.card_message = "Could not locate card on file. Please try again."
+
+
         pass
 
     def finish_transaction(self, print, *args, **kwargs):
