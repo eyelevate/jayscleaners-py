@@ -353,3 +353,80 @@
             font_size: '20sp'
             multiline: False
             padding: [5, ( self.height - self.line_height ) / 2]
+
+
+<QuickBox@GridLayout>
+    cols:1
+    rows:2
+    spacing:sp(10)
+    size_hint:(1,1)
+    row_force_default: True
+    row_default_height:sp(125)
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    GridLayout:
+        cols:2
+        rows:2
+        row_default_height:sp(44)
+        row_force_default:True
+        spacing:sp(5)
+        Label:
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            width: '200sp'
+            padding_x: '20sp'
+            text:'[color=5e5e5e]Dropoff Count[/color]'
+
+        TextInput:
+            id:quick_count
+            markup:True
+            write_tab: False
+            font_size: '20sp'
+            multiline: False
+            hint_text:'Enter dropoff count'
+            padding: [5, ( self.height - self.line_height ) / 2]
+        Label:
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            width: '200sp'
+            padding_x: '20sp'
+            text:'[color=5e5e5e]Due Date[/color]'
+
+        Button:
+            id:quick_due_date
+            text:'[color=ffffff][b]Mon 10/10[/b][/color]'
+            markup:True
+            write_tab: False
+            font_size: '20sp'
+    GridLayout:
+        cols:2
+        rows:3
+        row_default_height:sp(100)
+        row_force_default:True
+        Label:
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            width: '200sp'
+            padding_x: '20sp'
+            text:'[color=5e5e5e]Invoice Memo[/color]'
+
+        TextInput:
+            id:quick_invoice_memo
+            markup:True
+            write_tab: False
+            font_size: '20sp'
+            multiline: True
+

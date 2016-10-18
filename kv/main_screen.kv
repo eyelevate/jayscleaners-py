@@ -45,15 +45,19 @@
 
             Button:
                 id: reports_button
-                on_release: app.root.current = "reports"
-                text: "Reports"
+                on_release: root.reports_page()
+                text: "[color=#AED6F1]Reports[/color]"
+                markup:True
+                underline:True
                 disabled: True
                 font_size:'20sp'
 
             Button:
                 id: delivery_button
-                on_release: app.root.current = "delivery"
-                text: "Delivery"
+                on_release: root.delivery_page()
+                text: "[color=#AED6F1]Delivery[/color]"
+                markup:True
+                underline:True
                 disabled: True
                 font_size:'20sp'
 

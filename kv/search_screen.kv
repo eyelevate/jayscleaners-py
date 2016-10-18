@@ -347,10 +347,10 @@
 
         Button:
             id: quick_btn
-            on_release: app.root.current = "calc"
             font_size:'20sp'
             text: "Quick"
             disabled: True
+            on_release: root.quick_popup()
         Button:
             id: pickup_btn
             on_release: app.root.current = "pickup"

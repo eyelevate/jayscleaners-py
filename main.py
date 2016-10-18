@@ -58,6 +58,7 @@ import phonenumbers
 from threading import Thread
 import usb.core
 import usb.util
+import webbrowser
 
 from kivy.app import App
 from kivy.factory import Factory
@@ -445,6 +446,12 @@ class MainScreen(Screen):
         # # Cut paper
         # Epson.cut()
         # print("done")
+
+    def reports_page(self):
+        webbrowser.open("http://74.207.240.88/reports")
+
+    def delivery_page(self):
+        webbrowser.open("http://74.207.240.88/delivery/overview")
 
 
 class ColorsScreen(Screen):
@@ -1611,6 +1618,7 @@ GridLayout:
             self.item_selected_row = next_row
             self.make_items_table()
             self.memo_text_input.text = ''
+            self.memo_list = []
 
     def color_selected(self, color=False, *args, **kwargs):
         if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
@@ -4297,7 +4305,7 @@ GridLayout:
         threads_start()
 
         Invoice().put(where={'invoice_id': vars.INVOICE_ID},
-                      data={'quantity': self.quantity,
+                      data={'quantity': self.tags,
                             'pretax': '%.2f' % self.subtotal,
                             'tax': '%.2f' % self.tax,
                             'total': '%.2f' % self.total,
@@ -5633,6 +5641,8 @@ class HistoryScreen(Screen):
         total = '${:,.2f}'.format(row['total'])
         due = row['due_date']
         status = row['status']
+        invoice_items = InvoiceItem().where({'invoice_id': invoice_id})
+        count_invoice_items = len(invoice_items)
         deleted_at = row['deleted_at']
         transaction_id = row['transaction_id']
         try:
@@ -5648,16 +5658,25 @@ class HistoryScreen(Screen):
             dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
 
         now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-        if deleted_at:  # deleted
+        invoice_status = row['status']
+        if deleted_at:
             state = 4
-        elif transaction_id:  # picked up and done
-            state = 5
-        elif rack and not transaction_id:  # racked and ready
-            state = 3
-        elif due_strtotime < now_strtotime:  # overdue
-            state = 2
-        else:  # Not ready yet
-            state = 1
+        else:
+            if invoice_status is 5:
+                state = 5
+            elif invoice_status is 4:
+                state = 4
+            elif invoice_status is 3:
+                state = 4
+            elif invoice_status is 2:
+                state = 3
+            else:
+                if due_strtotime < now_strtotime: #overdue
+                    state = 2
+                elif count_invoice_items == 0: # #quick drop
+                    state = 6
+                else:
+                    state = 1
 
         selected = True if invoice_id == check_invoice_id else False
 
@@ -8885,7 +8904,7 @@ class PickupScreen(Screen):
                 validate_inner_layout_1 = BoxLayout(orientation="horizontal",
                                                     size_hint=(1, 0.8))
                 self.card_box = Factory.ValidateBox()
-                self.card_box.ids.validate_button.bind(on_release= self.validate_card)
+                self.card_box.ids.validate_button.bind(on_release=self.validate_card)
                 # get card information
                 if self.cards:
                     for card in self.cards:
@@ -8912,7 +8931,8 @@ class PickupScreen(Screen):
                                                                                                   card_city,
                                                                                                   card_state,
                                                                                                   card_zipcode)
-                            self.card_box.ids.credit_card_number.text = '[color=5e5e5e]{}[/color]'.format(card_last_four)
+                            self.card_box.ids.credit_card_number.text = '[color=5e5e5e]{}[/color]'.format(
+                                card_last_four)
                             self.card_box.ids.credit_card_type.text = '[color]{}[/color]'.format(card_type)
                             self.card_box.ids.credit_card_full_name.text = '[color="5e5e5e"]{} {}[/color]'.format(
                                 card_first_name,
@@ -8980,13 +9000,12 @@ class PickupScreen(Screen):
                 if self.card_id == card['card_id']:
                     profile_id = card['profile_id']
                     payment_id = card['payment_id']
-                    result = Card().validate_card(auth_user.company_id,profile_id, payment_id)
+                    result = Card().validate_card(auth_user.company_id, profile_id, payment_id)
                     self.card_box.ids.card_status.text = "Passed" if result['status'] else "Failed"
                     self.card_box.ids.card_message.text = result['message']
         else:
             self.card_box.ids.card_status.text = "Failed"
             self.card_box.ids.card_message = "Could not locate card on file. Please try again."
-
 
         pass
 
@@ -9837,11 +9856,28 @@ class SearchScreen(Screen):
     search_popup = ObjectProperty(None)
     search_results_table = ObjectProperty(None)
     search_results_footer = ObjectProperty(None)
+    main_popup = Popup()
+    date_picker = ObjectProperty(None)
+    due_date = None
+    due_date_string = None
+    now = datetime.datetime.now()
+    month = now.month
+    year = now.year
+    day = now.day
+    calendar_layout = ObjectProperty(None)
+    month_button = ObjectProperty(None)
+    year_button = ObjectProperty(None)
+    print_popup = ObjectProperty(None)
+    calendar_layout = ObjectProperty(None)
+    create_calendar_table = ObjectProperty(None)
+    quick_box = None
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
         vars.ROW_CAP = 0
         vars.SEARCH_TEXT = None
+        self.quick_box = None
+
         if vars.SEARCH_RESULTS_STATUS:
 
             self.edit_invoice_btn.disabled = False if vars.INVOICE_ID is not None else True
@@ -9849,6 +9885,7 @@ class SearchScreen(Screen):
             customers = User()
             results = customers.where(data)
             self.customer_results(results)
+
         else:
             vars.CUSTOMER_ID = None
             vars.INVOICE_ID = None
@@ -9877,6 +9914,8 @@ class SearchScreen(Screen):
             self.invoice_table.clear_widgets()
             # add the table headers
             self.create_invoice_headers()
+            self.due_date = None
+            self.due_date_string = None
         self.search.focus = True
 
         vars.SEARCH_RESULTS_STATUS = False
@@ -9977,10 +10016,13 @@ class SearchScreen(Screen):
         check_invoice_id = int(vars.INVOICE_ID) if vars.INVOICE_ID else vars.INVOICE_ID
         invoice_id = row['invoice_id']
         company_id = row['company_id']
+        company_name = 'R' if company_id is 1 else 'M'
         quantity = row['quantity']
         rack = row['rack']
         total = vars.us_dollar(row['total'])
         due = row['due_date']
+        invoice_items = InvoiceItem().where({'invoice_id':invoice_id})
+        count_invoice_items = len(invoice_items)
         try:
             dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
         except ValueError:
@@ -9994,18 +10036,34 @@ class SearchScreen(Screen):
         now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
         # check to see if invoice is overdue
 
-        if rack:  # racked and ready
+        invoice_status = row['status']
+        if invoice_status is 5:
+            state = 5
+        elif invoice_status is 4:
+            state = 4
+        elif invoice_status is 3:
+            state = 4
+        elif invoice_status is 2:
             state = 3
-        elif due_strtotime < now_strtotime:  # overdue
-            state = 2
-        else:  # Not ready yet
-            state = 1
+        else:
+            if due_strtotime < now_strtotime: #overdue
+                state = 2
+            elif count_invoice_items == 0: # #quick drop
+                state = 6
+            else:
+                state = 1
+        # if rack:  # racked and ready
+        #     state = 3
+        # elif due_strtotime < now_strtotime:  # overdue
+        #     state = 2
+        # else:  # Not ready yet
+        #     state = 1
 
         selected = True if invoice_id == check_invoice_id else False
 
-        tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id,
+        tr_1 = KV.invoice_tr(state, '{0:06d}'.format(invoice_id), selected=selected, invoice_id=invoice_id,
                              callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
-        tr_2 = KV.invoice_tr(state, company_id, selected=selected, invoice_id=invoice_id,
+        tr_2 = KV.invoice_tr(state, company_name, selected=selected, invoice_id=invoice_id,
                              callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
         tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
                              callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
@@ -10039,7 +10097,7 @@ class SearchScreen(Screen):
 
     def customer_select(self, customer_id):
         users = User()
-        data = {'customer_id': customer_id}
+        data = {'user_id': customer_id}
         customers = users.where(data)
         self.customer_results(customers)
         vars.INVOICE_ID = None
@@ -10181,6 +10239,639 @@ class SearchScreen(Screen):
         layout.add_widget(inner_layout_2)
         popup.content = layout
         popup.open()
+
+    def quick_popup(self, *args, **kwargs):
+        # setup calendar default date
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today = datetime.datetime.today()
+        dow = int(datetime.datetime.today().strftime("%w"))
+        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        new_date = today + datetime.timedelta(days=turn_around_day)
+        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(
+                                               turn_around_hour) + 12,
+                                           turn_around_minutes)
+        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+
+        # create popup
+        self.main_popup.title = 'Quick Ticket'
+        base_layout = BoxLayout(orientation="vertical",
+                                size_hint=(1, 1))
+        self.quick_box = Factory.QuickBox()
+        # add due date
+        self.quick_box.ids.quick_due_date.text = self.due_date_string
+        self.quick_box.ids.quick_due_date.bind(on_release=self.make_calendar)
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                   orientation="horizontal")
+        cancel_button = Button(text="Cancel",
+                               markup=True,
+                               on_release=self.main_popup.dismiss)
+        print_button = Button(text="Print",
+                              markup=True,
+                              on_release=self.quick_print)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(print_button)
+        base_layout.add_widget(self.quick_box)
+        base_layout.add_widget(inner_layout_2)
+
+        self.main_popup.content = base_layout
+        self.main_popup.open()
+
+        pass
+
+    def make_calendar(self, *args, **kwargs):
+
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today = datetime.datetime.today()
+        dow = int(datetime.datetime.today().strftime("%w"))
+        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        new_date = today + datetime.timedelta(days=turn_around_day)
+        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+        due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.month = int(due_date.strftime('%m'))
+
+        popup = Popup()
+        popup.title = 'Calendar'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                   orientation='vertical')
+        calendar_selection = GridLayout(cols=4,
+                                        rows=1,
+                                        size_hint=(1, 0.1))
+        prev_month = Button(markup=True,
+                            text="<",
+                            font_size="30sp",
+                            on_release=self.prev_month)
+        next_month = Button(markup=True,
+                            text=">",
+                            font_size="30sp",
+                            on_release=self.next_month)
+        select_month = Factory.SelectMonth()
+        self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
+                                   on_release=select_month.open)
+        for index in range(12):
+            month_options = Button(text='{}'.format(vars.month_by_number(index)),
+                                   size_hint_y=None,
+                                   height=40,
+                                   on_release=partial(self.select_calendar_month, index))
+            select_month.add_widget(month_options)
+
+        select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+        select_year = Factory.SelectMonth()
+
+        self.year_button = Button(text="{}".format(self.year),
+                                  on_release=select_year.open)
+        for index in range(10):
+            year_options = Button(text='{}'.format(int(self.year) + index),
+                                  size_hint_y=None,
+                                  height=40,
+                                  on_release=partial(self.select_calendar_year, index))
+            select_year.add_widget(year_options)
+
+        select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+        calendar_selection.add_widget(prev_month)
+        calendar_selection.add_widget(self.month_button)
+        calendar_selection.add_widget(self.year_button)
+        calendar_selection.add_widget(next_month)
+        self.calendar_layout = GridLayout(cols=7,
+                                          rows=8,
+                                          size_hint=(1, 0.9))
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today_date = datetime.datetime.today()
+        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
+        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
+
+        self.create_calendar_table()
+
+        inner_layout_1.add_widget(calendar_selection)
+        inner_layout_1.add_widget(self.calendar_layout)
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                   orientation='horizontal')
+        inner_layout_2.add_widget(Button(markup=True,
+                                         text="Okay",
+                                         on_release=popup.dismiss))
+
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def create_calendar_table(self):
+        # set the variables
+
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        today_date = datetime.datetime.today()
+        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
+        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
+
+        self.calendar_layout.clear_widgets()
+        calendars = Calendar()
+        calendars.setfirstweekday(calendar.SUNDAY)
+        selected_month = self.month - 1
+        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+        th1 = KV.invoice_tr(0, 'Su')
+        th2 = KV.invoice_tr(0, 'Mo')
+        th3 = KV.invoice_tr(0, 'Tu')
+        th4 = KV.invoice_tr(0, 'We')
+        th5 = KV.invoice_tr(0, 'Th')
+        th6 = KV.invoice_tr(0, 'Fr')
+        th7 = KV.invoice_tr(0, 'Sa')
+        self.calendar_layout.add_widget(Builder.load_string(th1))
+        self.calendar_layout.add_widget(Builder.load_string(th2))
+        self.calendar_layout.add_widget(Builder.load_string(th3))
+        self.calendar_layout.add_widget(Builder.load_string(th4))
+        self.calendar_layout.add_widget(Builder.load_string(th5))
+        self.calendar_layout.add_widget(Builder.load_string(th6))
+        self.calendar_layout.add_widget(Builder.load_string(th7))
+        if year_dates[selected_month]:
+            for month in year_dates[selected_month]:
+                for week in month:
+                    for day in week:
+                        if day[0] > 0:
+                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                           Job.date_leading_zeroes(self.month),
+                                                                           Job.date_leading_zeroes(day[0]))
+                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                            check_date = today_base.timestamp()
+                            dow_check = today_base.strftime("%w")
+                            # rule #1 remove all past dates so users cannot set a due date previous to today
+                            if check_date < check_today:
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                if check_date == check_today:
+                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                elif check_date == check_due_date:
+                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(
+                                                                      0.2156862, 0.9921568, 0.98823529, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                elif check_today < check_date < check_due_date:
+                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0.878431372549020, 1, 1, 1),
+                                                                  background_normal='',
+                                                                  on_release=partial(self.select_due_date, today_base))
+                                else:
+                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                  on_release=partial(self.select_due_date, today_base))
+                            else:  # store is closed
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                        else:
+                            item = Factory.CalendarButton(disabled=True)
+                        self.calendar_layout.add_widget(item)
+
+    def prev_month(self, *args, **kwargs):
+        if self.month == 1:
+            self.month = 12
+            self.year -= 1
+        else:
+            self.month -= 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_calendar_table()
+
+    def next_month(self, *args, **kwargs):
+        if self.month == 12:
+            self.month = 1
+            self.year += 1
+        else:
+            self.month += 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_calendar_table()
+
+    def select_calendar_month(self, month, *args, **kwargs):
+        self.month = month
+        self.create_calendar_table()
+
+    def select_calendar_year(self, year, *args, **kwargs):
+        self.year = year
+        self.create_calendar_table()
+
+    def select_due_date(self, selected_date, *args, **kwargs):
+        store_hours = Company().get_store_hours(auth_user.company_id)
+
+        dow = int(selected_date.strftime("%w"))
+        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+        self.quick_box.ids.quick_due_date.text = self.due_date_string
+        self.create_calendar_table()
+
+    def quick_print(self, *args, **kwargs):
+        popup = Popup()
+        popup.size_hint = (None, None)
+        popup.size = (800, 600)
+        popup.title = 'Quick Drop Print Selection'
+        layout = BoxLayout(orientation="vertical",
+                           size_hint=(1, 1))
+        inner_layout_1 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1, 0.7))
+        no_copy = Button(text="Store Copy Only",
+                         on_press=self.quick_print_store_copy,
+                         on_release = popup.dismiss)
+        both = Button(text="Print Both",
+                      on_press=self.quick_print_both,
+                      on_release=popup.dismiss)
+        inner_layout_1.add_widget(no_copy)
+        inner_layout_1.add_widget(both)
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1, 0.3))
+        cancel = Button(text="cancel",
+                        on_release=popup.dismiss)
+        inner_layout_2.add_widget(cancel)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+        pass
+
+    def quick_print_store_copy(self, *args, **kwargs):
+        # save the invoice
+        invoices = Invoice()
+        invoices.company_id = auth_user.company_id
+        invoices.quantity = self.quick_box.ids.quick_count.text
+        invoices.pretax = 0
+        invoices.tax = 0
+        invoices.total = 0
+        invoices.customer_id = vars.CUSTOMER_ID
+        invoices.status = 1
+        invoices.memo = self.quick_box.ids.quick_invoice_memo.text
+        if invoices.add():
+            # save the invoices to the db and return the proper invoice_ids
+            run_sync = threading.Thread(target=SYNC.run_sync)
+            try:
+                run_sync.start()
+            finally:
+                run_sync.join()
+                print('sync now finished')
+
+            # print invoices
+            try:
+                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+                companies = Company()
+                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+
+                if comps:
+                    for company in comps:
+                        companies.id = company['id']
+                        companies.company_id = company['company_id']
+                        companies.name = company['name']
+                        companies.street = company['street']
+                        companies.suite = company['suite']
+                        companies.city = company['city']
+                        companies.state = company['state']
+                        companies.zip = company['zip']
+                        companies.email = company['email']
+                        companies.phone = company['phone']
+                customers = User()
+                custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+                if custs:
+                    for user in custs:
+                        customers.id = user['id']
+                        customers.user_id = user['user_id']
+                        customers.company_id = user['company_id']
+                        customers.username = user['username']
+                        customers.first_name = user['first_name']
+                        customers.last_name = user['last_name']
+                        customers.street = user['street']
+                        customers.suite = user['suite']
+                        customers.city = user['city']
+                        customers.state = user['state']
+                        customers.zipcode = user['zipcode']
+                        customers.email = user['email']
+                        customers.phone = user['phone']
+                        customers.intercom = user['intercom']
+                        customers.concierge_name = user['concierge_name']
+                        customers.concierge_number = user['concierge_number']
+                        customers.special_instructions = user['special_instructions']
+                        customers.shirt_old = user['shirt_old']
+                        customers.shirt = user['shirt']
+                        customers.delivery = user['delivery']
+                        customers.profile_id = user['profile_id']
+                        customers.payment_status = user['payment_status']
+                        customers.payment_id = user['payment_id']
+                        customers.token = user['token']
+                        customers.api_token = user['api_token']
+                        customers.reward_status = user['reward_status']
+                        customers.reward_points = user['reward_points']
+                        customers.account = user['account']
+                        customers.starch = user['starch']
+                        customers.important_memo = user['important_memo']
+                        customers.invoice_memo = user['invoice_memo']
+                        customers.password = user['password']
+                        customers.role_id = user['role_id']
+                        customers.remember_token = user['remember_token']
+
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("QUICK DROP - STORE COPY\n")
+                Epson.text("{}\n".format(companies.name))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("{}\n".format(companies.street))
+                Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                          invert=False, smooth=False, flip=False)
+
+                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                # Print barcode
+                Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('------------------------------------------\n')
+
+                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text(
+                    '{} PCS\n'.format(
+                        self.quick_box.ids.quick_count.text if self.quick_box.ids.quick_count.text else '0'))
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('------------------------------------------\n')
+                if self.quick_box.ids.quick_invoice_memo.text:
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
+
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                # Cut paper
+                Epson.cut(mode=u"PART")
+
+            except USBNotFoundError:
+                popup = Popup()
+                popup.title = 'Printer Error'
+                content = KV.popup_alert('Could not find usb.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+
+
+        else:
+            popup = Popup()
+            popup.title = 'Error!'
+            popup.size_hint = None, None
+            popup.size = 800, 600
+            content = KV.popup_alert(msg="Could not save quick drop! Please try again!")
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
+            pass
+
+        self.main_popup.dismiss()
+        self.customer_select(vars.CUSTOMER_ID)
+
+    def quick_print_both(self, *args, **kwargs):
+        # save the invoice
+        invoices = Invoice()
+        invoices.company_id = auth_user.company_id
+        invoices.quantity = self.quick_box.ids.quick_count.text
+        invoices.pretax = 0
+        invoices.tax = 0
+        invoices.total = 0
+        invoices.customer_id = vars.CUSTOMER_ID
+        invoices.status = 1
+        invoices.due_date = self.due_date.strftime('%Y-%m-%d %H:%M:%S')
+        invoices.memo = self.quick_box.ids.quick_invoice_memo.text
+        if invoices.add():
+            # save the invoices to the db and return the proper invoice_ids
+            run_sync = threading.Thread(target=SYNC.run_sync)
+            try:
+                run_sync.start()
+            finally:
+                run_sync.join()
+                print('sync now finished')
+
+            # print invoices
+            try:
+                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+                companies = Company()
+                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+
+                if comps:
+                    for company in comps:
+                        companies.id = company['id']
+                        companies.company_id = company['company_id']
+                        companies.name = company['name']
+                        companies.street = company['street']
+                        companies.suite = company['suite']
+                        companies.city = company['city']
+                        companies.state = company['state']
+                        companies.zip = company['zip']
+                        companies.email = company['email']
+                        companies.phone = company['phone']
+                customers = User()
+                custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+                if custs:
+                    for user in custs:
+                        customers.id = user['id']
+                        customers.user_id = user['user_id']
+                        customers.company_id = user['company_id']
+                        customers.username = user['username']
+                        customers.first_name = user['first_name']
+                        customers.last_name = user['last_name']
+                        customers.street = user['street']
+                        customers.suite = user['suite']
+                        customers.city = user['city']
+                        customers.state = user['state']
+                        customers.zipcode = user['zipcode']
+                        customers.email = user['email']
+                        customers.phone = user['phone']
+                        customers.intercom = user['intercom']
+                        customers.concierge_name = user['concierge_name']
+                        customers.concierge_number = user['concierge_number']
+                        customers.special_instructions = user['special_instructions']
+                        customers.shirt_old = user['shirt_old']
+                        customers.shirt = user['shirt']
+                        customers.delivery = user['delivery']
+                        customers.profile_id = user['profile_id']
+                        customers.payment_status = user['payment_status']
+                        customers.payment_id = user['payment_id']
+                        customers.token = user['token']
+                        customers.api_token = user['api_token']
+                        customers.reward_status = user['reward_status']
+                        customers.reward_points = user['reward_points']
+                        customers.account = user['account']
+                        customers.starch = user['starch']
+                        customers.important_memo = user['important_memo']
+                        customers.invoice_memo = user['invoice_memo']
+                        customers.password = user['password']
+                        customers.role_id = user['role_id']
+                        customers.remember_token = user['remember_token']
+
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("QUICK DROP\n")
+                Epson.text("{}\n".format(companies.name))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("{}\n".format(companies.street))
+                Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                          invert=False, smooth=False, flip=False)
+
+                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                # Print barcode
+                Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('------------------------------------------\n')
+
+                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{} PCS\n'.format(
+                    self.quick_box.ids.quick_count.text if self.quick_box.ids.quick_count.text else '0'))
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('------------------------------------------\n')
+                if self.quick_box.ids.quick_invoice_memo.text:
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
+
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                # Cut paper
+                Epson.cut(mode=u"PART")
+
+                # SECOND Copy
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("QUICK DROP - STORE COPY\n")
+                Epson.text("{}\n".format(companies.name))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("{}\n".format(companies.street))
+                Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                          invert=False, smooth=False, flip=False)
+
+                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                # Print barcode
+                Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('------------------------------------------\n')
+
+                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                          invert=False, smooth=False, flip=False)
+                Epson.text(
+                    '{} PCS\n'.format(
+                        self.quick_box.ids.quick_count.text if self.quick_box.ids.quick_count.text else '0'))
+                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                Epson.text('------------------------------------------\n')
+                if self.quick_box.ids.quick_invoice_memo.text:
+                    Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                              invert=False, smooth=False, flip=False)
+                    Epson.text('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
+
+                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
+                          invert=False, smooth=False, flip=False)
+                # Cut paper
+                Epson.cut(mode=u"PART")
+
+            except USBNotFoundError:
+                popup = Popup()
+                popup.title = 'Printer Error'
+                content = KV.popup_alert('Could not find usb.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+
+        else:
+            popup = Popup()
+            popup.title = 'Error!'
+            popup.size_hint = None, None
+            popup.size = 800, 600
+            content = KV.popup_alert(msg="Could not save quick drop! Please try again!")
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
+        self.main_popup.dismiss()
+        self.customer_select(vars.CUSTOMER_ID)
 
     def reprint_invoice(self, type, *args, **kwargs):
         if vars.INVOICE_ID:
