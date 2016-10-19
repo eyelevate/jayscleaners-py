@@ -41,7 +41,7 @@
             font_size:'20sp'
             text: "Search"
         Button:
-            on_release: app.root.current = "calc"
+            on_release: root.calculator_popup()
             font_size:'20sp'
             text: "Calculator"
         Button:
@@ -309,7 +309,7 @@
                     disabled: True
                 Button:
                     id: print_card_btn
-                    on_release: app.root.current = "rack"
+                    on_release: root.print_card()
                     font_size:'15sp'
                     text: "Print Card"
                     disabled: True

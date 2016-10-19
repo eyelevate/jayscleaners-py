@@ -2,6 +2,7 @@ import datetime
 import time
 import sqlite3
 from model import *
+from escpos.connections import getUSBPrinter
 
 unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -271,3 +272,19 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
     def close_connection(self):
         self.c.close()
         self.conn.close()
+
+
+    def convert_to_hex(self, key):
+        data = {
+            'HT':'/x09', # Horizontal Tab
+            'LF':'/x0a', # Print and Line Feed
+            'CR':'/x0d', # Print and Carriage Return
+            'PFP' : '/x1B/x4A/xn', # print and feed paper
+            'PFL': '/x1b/x60/xn', # print and feed line
+            'INIT': '/x1b/x40', # Initialize Printer
+            'PARTIAL_CUT':'/x1b/x6d', # Partial Cut
+            'INCH1' : '/x1B/x31', # 1/9 inch paper feed
+            'INCH2': '/x1B/x32',  # 2/9 inch paper feed
+        }
+
+        return data[key]

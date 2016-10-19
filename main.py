@@ -53,7 +53,10 @@ import threading
 import queue
 import authorize
 from escpos import *
+from escpos.printer import Usb
 from escpos.exceptions import USBNotFoundError
+from escpos.exceptions import TextError
+from escpos.connections import getUSBPrinter
 import phonenumbers
 from threading import Thread
 import usb.core
@@ -281,13 +284,10 @@ class MainScreen(Screen):
                     auth_user.username = user1['username']
                     auth_user.company_id = user1['company_id']
                     SYNC.company_id = user1['company_id']
-                print_data = Printer().where({'company_id': auth_user.company_id})
+                print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
                 if print_data:
-                    for printer in print_data:
-                        printer_list[printer['type']] = {
-                            'vendor_id': printer['vendor_id'],
-                            'product_id': printer['product_id'],
-                        }
+                    for pr in print_data:
+                        self.print_setup(hex(int(pr['vendor_id'], 16)), hex(int(pr['product_id'], 16)))
 
                 popup.title = 'Authentication Success!'
                 popup.content = Builder.load_string(
@@ -310,13 +310,14 @@ class MainScreen(Screen):
 
                     auth_user.username = user.username
                     auth_user.company_id = data['company_id']
-                    print_data = Printer().where({'company_id': auth_user.company_id})
+                    print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
                     if print_data:
                         for printer in print_data:
                             printer_list[printer['type']] = {
-                                'vendor_id': printer['vendor_id'],
-                                'product_id': printer['product_id'],
+                                'vendor_id': hex(int(printer['vendor_id'], 16)),
+                                'product_id': hex(int(printer['product_id'], 16)),
                             }
+                            print(printer_list[1]['vendor_id'])
 
                     SYNC.company_id = data['company_id']
                     popup.title = 'Authentication Success!'
@@ -362,9 +363,9 @@ class MainScreen(Screen):
         # self.update_label.text = 'Server updated at {}'.format()
 
     def printer_test(self):
-
+        print('starting')
         # find our device
-        dev = usb.core.find(idVendor=0x067b, idProduct=0x2303)
+        dev = usb.core.find(idVendor=printer_list[1]['vendor_id'], idProduct=printer_list[1]['product_id'])
 
         # was it found?
         if dev is None:
@@ -434,18 +435,134 @@ class MainScreen(Screen):
         print(server_at)
         pass
 
-    def test_print(self, *args, **kwargs):
+    def print_setup_tag(self, vendor_id, product_id):
+        vendor_int = int(vendor_id, 16)
+        vendor_id_hex = hex(vendor_int)
+        product_int = int(product_id, 16)
+        product_id_hex = hex(product_int)
+        pc = Printer()
+        print(pc.convert_to_hex("INIT"))
+        interface_number = 0
+        in_ep = 0x81
+        out_ep = 0x02
+        try:
+            dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
+            print(dev)
+            # was it found?
+            if dev is None:
+                print('Device not found')
 
-        pass
-        # Epson = Network("10.1.10.10")
-        # Epson.text("Hello World\n")
-        # # Print QR Code
-        # # Epson.qr("You can readme from your smartphone")
-        # # Print barcode
-        # # Epson.barcode('1324354657687','EAN13',64,2,'','')
-        # # Cut paper
-        # Epson.cut()
-        # print("done")
+            # set the active configuration. With no arguments, the first
+            # configuration will be the active one
+            dev.set_configuration()
+
+            # get an endpoint instance
+            cfg = dev.get_active_configuration()
+            for cfg in dev:
+                sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
+                for intf in cfg:
+                    interface_number = intf.bInterfaceNumber
+                    idx = 0
+                    for ep in intf:
+                        print(hex(ep.bEndpointAddress))
+                        idx += 1
+                        if idx is 1:
+                            in_ep = ep.bEndpointAddress
+                        elif idx is 2:
+                            out_ep = ep.bEndpointAddress
+
+            print('{} {} {}'.format(hex(interface_number),hex(in_ep),hex(out_ep)))
+        except AttributeError:
+            print('Error Attribute')
+        except TypeError:
+            print('Type Error')
+
+        try:
+            # vars.BIXOLON = printer.Usb(idVendor=vendor_int,
+            #                            idProduct=product_int,
+            #                            interface=interface_number,
+            #                            in_ep = in_ep,
+            #                            out_ep = out_ep)  # Create the printer object with the connection params
+            # # vars.BIXOLON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
+            # vars.BIXOLON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+            #                density=5,
+            #                invert=False, smooth=False, flip=False)
+            # vars.BIXOLON.text("::Payment Copy::\n")
+
+            # Print a barcode
+            p = Usb(0x067b, 0x2303, 0, 0x83, 0x2)
+            p.text("Hello World\n")
+            p.cut()
+
+            # print('{} {} {}'.format(interface_number, in_ep, out_ep))
+            print('printer set')
+        except USBNotFoundError:
+            vars.BIXOLON = False
+            popup = Popup()
+            popup.title = 'Tag Printer Error'
+            content = KV.popup_alert('Unable to locate tag usb printer.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        except TextError:
+            print('Text error')
+
+    def print_setup(self, vendor_id, product_id):
+
+        vendor_int = int(vendor_id, 16)
+        vendor_id_hex = hex(vendor_int)
+        product_int = int(product_id, 16)
+        product_id_hex = hex(product_int)
+        print('{} - {}'.format(vendor_id_hex, product_id_hex))
+        interface_number = 0
+        in_ep = 0x81
+        out_ep = 0x02
+        try:
+            dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
+            # was it found?
+            if dev is None:
+                print('Device not found')
+
+            # set the active configuration. With no arguments, the first
+            # configuration will be the active one
+            dev.set_configuration()
+
+            # get an endpoint instance
+            cfg = dev.get_active_configuration()
+            for cfg in dev:
+                sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
+                for intf in cfg:
+                    interface_number = intf.bInterfaceNumber
+                    idx = 0
+                    for ep in intf:
+                        idx += 1
+                        if idx is 1:
+                            in_ep = ep.bEndpointAddress
+                        else:
+                            out_ep = ep.bEndpointAddress
+
+        except AttributeError:
+            print('Error Attribute')
+        except TypeError:
+            print('Type Error')
+
+        try:
+            vars.EPSON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
+            print('printer set')
+        except USBNotFoundError:
+            vars.EPSON = False
+            popup = Popup()
+            popup.title = 'Printer Error'
+            content = KV.popup_alert('Unable to locate usb printer.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        except TextError:
+            print('Text error')
 
     def reports_page(self):
         webbrowser.open("http://74.207.240.88/reports")
@@ -2450,8 +2567,8 @@ GridLayout:
                 print('sync invoice items now finished')
 
                 # print invoices
-                try:
-                    Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+                if vars.EPSON:
+
                     companies = Company()
                     comps = companies.where({'company_id': auth_user.company_id}, set=True)
 
@@ -2506,38 +2623,38 @@ GridLayout:
                             customers.role_id = user['role_id']
                             customers.remember_token = user['remember_token']
                     if type == 2:
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("{}\n".format(companies.name))
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("{}\n".format(companies.street))
-                        Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                                  invert=False, smooth=False, flip=False)
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("{}\n".format(companies.name))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("{}\n".format(companies.street))
+                        vars.EPSON.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                       invert=False, smooth=False, flip=False)
 
-                        Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                        Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                        vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                        vars.EPSON.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("{}\n".format(vars.CUSTOMER_ID))
                         # Print barcode
-                        Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+                        vars.EPSON.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
 
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('------------------------------------------\n')
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('------------------------------------------\n')
 
                         # display invoice details
                         if self.invoice_list:
@@ -2567,81 +2684,81 @@ GridLayout:
                                             if color_name:
                                                 color_string.append('{}-{}'.format(color_amount, color_name))
 
-                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                              density=5, invert=False, smooth=False, flip=False)
-                                    Epson.text('{} {}   '.format(item_type, total_qty, item_name))
-                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'B', width=1, height=1,
-                                              density=5, invert=False, smooth=False, flip=False)
-                                    Epson.text('{}\n'.format(item_name))
+                                    vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                                   density=5, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('{} {}   '.format(item_type, total_qty, item_name))
+                                    vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'B', width=1, height=1,
+                                                   density=5, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('{}\n'.format(item_name))
                                     if len(memo_string) > 0:
-                                        Epson.control('HT')
-                                        Epson.control('HT')
-                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                                  density=5, invert=False, smooth=False, flip=False)
-                                        Epson.text('  {}\n'.format('/ '.join(memo_string)))
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                                       density=5, invert=False, smooth=False, flip=False)
+                                        vars.EPSON.text('  {}\n'.format('/ '.join(memo_string)))
                                     if len(color_string):
-                                        Epson.control('HT')
-                                        Epson.control('HT')
-                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                                  density=5, invert=False, smooth=False, flip=False)
-                                        Epson.text('  {}\n'.format(', '.join(color_string)))
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                                       density=5, invert=False, smooth=False, flip=False)
+                                        vars.EPSON.text('  {}\n'.format(', '.join(color_string)))
 
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('------------------------------------------\n')
-                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{} PCS\n'.format(self.quantity))
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('------------------------------------------\n')
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('------------------------------------------\n')
+                        vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{} PCS\n'.format(self.quantity))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('------------------------------------------\n')
                         # Cut paper
-                        Epson.cut(mode=u"PART")
+                        vars.EPSON.cut(mode=u"PART")
 
                         # Print store copies
                         if print_sync_invoice:  # if invoices synced
                             for invoice_id, item_id in print_sync_invoice.items():
 
                                 # start invoice
-                                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text("::COPY::\n")
-                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text("{}\n".format(companies.name))
-                                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
-                                          density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text(
+                                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text("::COPY::\n")
+                                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text("{}\n".format(companies.name))
+                                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                                vars.EPSON.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
+                                               density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text(
                                     "READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text("{}\n".format('{0:06d}'.format(invoice_id)))
                                 # Print barcode
-                                Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
-                                              'B', 'B')
+                                vars.EPSON.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
+                                                   'B', 'B')
 
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
-                                          density=6,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text(
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                                               density=6,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text(
                                     '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=2,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=1,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('------------------------------------------\n')
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=2,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=1,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('------------------------------------------\n')
 
                                 if print_sync_invoice[invoice_id]:
                                     for item_id, invoice_item in print_sync_invoice[invoice_id].items():
@@ -2658,69 +2775,69 @@ GridLayout:
                                         string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
                                             vars.us_dollar(item_price)) + 4
                                         string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                        Epson.text('{} {}   {}{}{}\n'.format(item_type,
-                                                                             item_qty,
-                                                                             item_name,
-                                                                             ' ' * string_offset,
-                                                                             vars.us_dollar(item_price)))
+                                        vars.EPSON.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                                  item_qty,
+                                                                                  item_name,
+                                                                                  ' ' * string_offset,
+                                                                                  vars.us_dollar(item_price)))
 
-                                        # Epson.text('\r\x1b@\x1b\x61\x02{}\n'.format(vars.us_dollar(item_price)))
+                                        # vars.EPSON.text('\r\x1b@\x1b\x61\x02{}\n'.format(vars.us_dollar(item_price)))
                                         if len(item_memo) > 0:
-                                            Epson.control('HT')
-                                            Epson.control('HT')
-                                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                      height=1,
-                                                      density=5, invert=False, smooth=False, flip=False)
-                                            Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                            vars.EPSON.control('HT')
+                                            vars.EPSON.control('HT')
+                                            vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                           height=1,
+                                                           density=5, invert=False, smooth=False, flip=False)
+                                            vars.EPSON.text('  {}\n'.format('/ '.join(item_memo)))
                                         if len(item_color_string) > 0:
-                                            Epson.control('HT')
-                                            Epson.control('HT')
-                                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                      height=1,
-                                                      density=5, invert=False, smooth=False, flip=False)
-                                            Epson.text('  {}\n'.format(', '.join(item_color_string)))
+                                            vars.EPSON.control('HT')
+                                            vars.EPSON.control('HT')
+                                            vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                           height=1,
+                                                           density=5, invert=False, smooth=False, flip=False)
+                                            vars.EPSON.text('  {}\n'.format(', '.join(item_color_string)))
 
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=1,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('------------------------------------------\n')
-                                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('{} PCS\n'.format(print_sync_totals[invoice_id]['quantity']))
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=1,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('------------------------------------------\n')
-                                Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('    SUBTOTAL:')
-                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=1,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('------------------------------------------\n')
+                                vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('{} PCS\n'.format(print_sync_totals[invoice_id]['quantity']))
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=1,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('------------------------------------------\n')
+                                vars.EPSON.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('    SUBTOTAL:')
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                                 string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['subtotal']))
                                 string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                                Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                           vars.us_dollar(
-                                                               print_sync_totals[invoice_id]['subtotal'])))
-                                Epson.set(align=u"RIGHT", text_type=u'B')
-                                Epson.text('         TAX:')
+                                vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                                vars.us_dollar(
+                                                                    print_sync_totals[invoice_id]['subtotal'])))
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                                vars.EPSON.text('         TAX:')
                                 string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['tax']))
                                 string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
-                                Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                           vars.us_dollar(print_sync_totals[invoice_id]['tax'])))
-                                Epson.set(align=u"RIGHT", text_type=u'B')
-                                Epson.text('       TOTAL:')
-                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
+                                vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                                vars.us_dollar(print_sync_totals[invoice_id]['tax'])))
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                                vars.EPSON.text('       TOTAL:')
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                                 string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['total']))
                                 string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                                Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                           vars.us_dollar(print_sync_totals[invoice_id]['total'])))
-                                Epson.set(align=u"RIGHT", text_type=u'B')
-                                Epson.text('     BALANCE:')
+                                vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                                vars.us_dollar(print_sync_totals[invoice_id]['total'])))
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                                vars.EPSON.text('     BALANCE:')
                                 string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['total']))
                                 string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                                Epson.text('{}{}\n\n'.format(' ' * string_offset,
-                                                             vars.us_dollar(
-                                                                 print_sync_totals[invoice_id]['total'])))
+                                vars.EPSON.text('{}{}\n\n'.format(' ' * string_offset,
+                                                                  vars.us_dollar(
+                                                                      print_sync_totals[invoice_id]['total'])))
                                 if item_type == 'L':
                                     # get customer mark
                                     marks = Custid()
@@ -2729,50 +2846,50 @@ GridLayout:
                                         m_list = []
                                         for mark in marks_list:
                                             m_list.append(mark['mark'])
-                                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
-                                                  density=8, invert=False, smooth=False, flip=False)
-                                        Epson.text('{}\n\n'.format(', '.join(m_list)))
+                                        vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                                       density=8, invert=False, smooth=False, flip=False)
+                                        vars.EPSON.text('{}\n\n'.format(', '.join(m_list)))
 
                                 # Cut paper
-                                Epson.cut(mode=u"PART")
+                                vars.EPSON.cut(mode=u"PART")
                         else:
                             for invoice_id, item_id in print_invoice.items():
 
                                 # start invoice
-                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text("{}\n".format(companies.name))
-                                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=2, height=3, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text(
+                                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text("{}\n".format(companies.name))
+                                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                                vars.EPSON.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=2, height=3, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text(
                                     "READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text("--{}--\n".format('{0:06d}'.format(invoice_id)))
+                                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text("--{}--\n".format('{0:06d}'.format(invoice_id)))
                                 # Print barcode
-                                Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
-                                              'B', 'B')
+                                vars.EPSON.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
+                                                   'B', 'B')
 
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
-                                          density=6,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text(
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                                               density=6,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text(
                                     '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=2,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=1,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('------------------------------------------\n')
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=2,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=1,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('------------------------------------------\n')
 
                                 if print_sync_invoice[invoice_id][item_id]:
                                     for invoice_item in print_sync_invoice[invoice_id][item_id]:
@@ -2789,70 +2906,71 @@ GridLayout:
                                         string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
                                             vars.us_dollar(item_price)) + 4
                                         string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                        Epson.text('{} {}   {}{}{}\n'.format(item_type,
-                                                                             item_qty,
-                                                                             item_name,
-                                                                             ' ' * string_offset,
-                                                                             vars.us_dollar(item_price)))
+                                        vars.EPSON.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                                  item_qty,
+                                                                                  item_name,
+                                                                                  ' ' * string_offset,
+                                                                                  vars.us_dollar(item_price)))
 
                                         if len(item_memo) > 0:
-                                            Epson.control('HT')
-                                            Epson.control('HT')
-                                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                      height=1,
-                                                      density=5, invert=False, smooth=False, flip=False)
-                                            Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                            vars.EPSON.control('HT')
+                                            vars.EPSON.control('HT')
+                                            vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                           height=1,
+                                                           density=5, invert=False, smooth=False, flip=False)
+                                            vars.EPSON.text('  {}\n'.format('/ '.join(item_memo)))
                                         if len(item_color_string) > 0:
-                                            Epson.control('HT')
-                                            Epson.control('HT')
-                                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                      height=1,
-                                                      density=5, invert=False, smooth=False, flip=False)
-                                            Epson.text('  {}\n'.format(', '.join(item_color_string)))
+                                            vars.EPSON.control('HT')
+                                            vars.EPSON.control('HT')
+                                            vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                           height=1,
+                                                           density=5, invert=False, smooth=False, flip=False)
+                                            vars.EPSON.text('  {}\n'.format(', '.join(item_color_string)))
 
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=1,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('------------------------------------------\n')
-                                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('{} PCS\n'.format(print_sync_totals[invoice_id]['quantity']))
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=1,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('------------------------------------------\n')
-                                Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('    SUBTOTAL:')
-                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=1,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('------------------------------------------\n')
+                                vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('{} PCS\n'.format(print_sync_totals[invoice_id]['quantity']))
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=1,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('------------------------------------------\n')
+                                vars.EPSON.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('    SUBTOTAL:')
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                                 string_length = len(vars.us_dollar(print_totals[invoice_id]['subtotal']))
                                 string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                                Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                           vars.us_dollar(print_totals[invoice_id]['subtotal'])))
-                                Epson.set(align=u"RIGHT", text_type=u'B')
-                                Epson.text('         TAX:')
+                                vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                                vars.us_dollar(print_totals[invoice_id]['subtotal'])))
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                                vars.EPSON.text('         TAX:')
                                 string_length = len(vars.us_dollar(print_totals[invoice_id]['tax']))
                                 string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
-                                Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                           vars.us_dollar(print_totals[invoice_id]['tax'])))
-                                Epson.set(align=u"RIGHT", text_type=u'B')
-                                Epson.text('       TOTAL:')
-                                Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
+                                vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                                vars.us_dollar(print_totals[invoice_id]['tax'])))
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                                vars.EPSON.text('       TOTAL:')
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                                 string_length = len(vars.us_dollar(print_totals[invoice_id]['total']))
                                 string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                                Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                           vars.us_dollar(print_totals[invoice_id]['total'])))
-                                Epson.set(align=u"RIGHT", text_type=u'B')
-                                Epson.text('     BALANCE:')
+                                vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                                vars.us_dollar(print_totals[invoice_id]['total'])))
+                                vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                                vars.EPSON.text('     BALANCE:')
                                 string_length = len(vars.us_dollar(print_totals[invoice_id]['total']))
                                 string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                                Epson.text('{}{}\n\n'.format(' ' * string_offset,
-                                                             vars.us_dollar(print_totals[invoice_id]['total'])))
+                                vars.EPSON.text('{}{}\n\n'.format(' ' * string_offset,
+                                                                  vars.us_dollar(print_totals[invoice_id]['total'])))
                                 if customers.invoice_memo:
-                                    Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                              invert=False, smooth=False, flip=False)
-                                    Epson.text('{}\n'.format(customers.invoice_memo))
+                                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3,
+                                                   density=5,
+                                                   invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('{}\n'.format(customers.invoice_memo))
                                 if item_type == 'L':
                                     # get customer mark
                                     marks = Custid()
@@ -2861,13 +2979,13 @@ GridLayout:
                                         m_list = []
                                         for mark in marks_list:
                                             m_list.append(mark['mark'])
-                                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
-                                                  density=8, invert=False, smooth=False, flip=False)
-                                        Epson.text('{}\n\n'.format(', '.join(m_list)))
+                                        vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                                       density=8, invert=False, smooth=False, flip=False)
+                                        vars.EPSON.text('{}\n\n'.format(', '.join(m_list)))
 
                                 # Cut paper
-                                Epson.cut(mode=u"PART")
-                except USBNotFoundError:
+                                vars.EPSON.cut(mode=u"PART")
+                else:
                     popup = Popup()
                     popup.title = 'Printer Error'
                     content = KV.popup_alert('Could not find usb.')
@@ -4315,8 +4433,7 @@ GridLayout:
         threads_start()
 
         # print invoices
-        try:
-            Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+        if vars.EPSON:
 
             companies = Company()
             comps = companies.where({'company_id': auth_user.company_id}, set=True)
@@ -4371,43 +4488,43 @@ GridLayout:
                     customers.role_id = user['role_id']
                     customers.remember_token = user['remember_token']
 
-            if not type or not Epson:
+            if not type or not vars.EPSON:
                 self.set_result_status()
                 self.print_popup.dismiss()
                 pass
             elif type == 2:
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("{}\n".format(companies.name))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("{}\n".format(companies.street))
-                Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                          invert=False, smooth=False, flip=False)
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("{}\n".format(companies.name))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("{}\n".format(companies.street))
+                vars.EPSON.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                               invert=False, smooth=False, flip=False)
 
-                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                Epson.text("edited on: {}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                vars.EPSON.text("edited on: {}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("{}\n".format(vars.CUSTOMER_ID))
                 # Print barcode
-                Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+                vars.EPSON.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
 
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('------------------------------------------\n')
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('------------------------------------------\n')
 
                 # display invoice details
                 if self.invoice_list:
@@ -4437,72 +4554,72 @@ GridLayout:
                                     if color_name:
                                         color_string.append('{}-{}'.format(color_amount, color_name))
 
-                            Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=5, invert=False, smooth=False, flip=False)
-                            Epson.text('{} {}    '.format(item_type, total_qty, item_name))
-                            Epson.set(align=u'LEFT', font=u'A', text_type=u'B', width=1, height=1,
-                                      density=5, invert=False, smooth=False, flip=False)
-                            Epson.text('{}\n'.format(item_name))
+                            vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=5, invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('{} {}    '.format(item_type, total_qty, item_name))
+                            vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'B', width=1, height=1,
+                                           density=5, invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('{}\n'.format(item_name))
                             if len(memo_string) > 0:
-                                Epson.control('HT')
-                                Epson.control('HT')
-                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=5, invert=False, smooth=False, flip=False)
-                                Epson.text('  {}\n'.format('/ '.join(memo_string)))
+                                vars.EPSON.control('HT')
+                                vars.EPSON.control('HT')
+                                vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=5, invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('  {}\n'.format('/ '.join(memo_string)))
                             if len(color_string):
-                                Epson.control('HT')
-                                Epson.control('HT')
-                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                          density=5, invert=False, smooth=False, flip=False)
-                                Epson.text('  {}\n'.format(', '.join(color_string)))
+                                vars.EPSON.control('HT')
+                                vars.EPSON.control('HT')
+                                vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                               density=5, invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('  {}\n'.format(', '.join(color_string)))
 
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('------------------------------------------\n')
-                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{} PCS\n'.format(self.quantity))
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('------------------------------------------\n')
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('------------------------------------------\n')
+                vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{} PCS\n'.format(self.quantity))
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('------------------------------------------\n')
                 # Cut paper
-                Epson.cut(mode=u"PART")
+                vars.EPSON.cut(mode=u"PART")
 
                 # Print store copies
                 if print_invoice:  # if invoices synced
                     for invoice_id, item_id in print_invoice.items():
 
                         # start invoice
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("::COPY::\n")
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("{}\n".format(companies.name))
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                        Epson.text("edited: {}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("::COPY::\n")
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("{}\n".format(companies.name))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                        vars.EPSON.text("edited: {}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("{}\n".format('{0:06d}'.format(invoice_id)))
                         # Print barcode
-                        Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+                        vars.EPSON.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF', 'B', 'B')
 
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('------------------------------------------\n')
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('------------------------------------------\n')
 
                         if print_invoice[invoice_id]:
                             for item_id, invoice_item in print_invoice[invoice_id].items():
@@ -4519,63 +4636,63 @@ GridLayout:
                                 string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
                                     vars.us_dollar(item_price)) + 4
                                 string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                Epson.text('{} {}   {}{}{}\n'.format(item_type,
-                                                                     item_qty,
-                                                                     item_name,
-                                                                     ' ' * string_offset,
-                                                                     vars.us_dollar(item_price)))
+                                vars.EPSON.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                          item_qty,
+                                                                          item_name,
+                                                                          ' ' * string_offset,
+                                                                          vars.us_dollar(item_price)))
 
-                                # Epson.text('\r\x1b@\x1b\x61\x02{}\n'.format(vars.us_dollar(item_price)))
+                                # vars.EPSON.text('\r\x1b@\x1b\x61\x02{}\n'.format(vars.us_dollar(item_price)))
                                 if len(item_memo) > 0:
-                                    Epson.control('HT')
-                                    Epson.control('HT')
-                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                              density=5, invert=False, smooth=False, flip=False)
-                                    Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                                   density=5, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('  {}\n'.format('/ '.join(item_memo)))
                                 if len(item_color_string) > 0:
-                                    Epson.control('HT')
-                                    Epson.control('HT')
-                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                              density=5, invert=False, smooth=False, flip=False)
-                                    Epson.text('  {}\n'.format(', '.join(item_color_string)))
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                                   density=5, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('  {}\n'.format(', '.join(item_color_string)))
 
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('------------------------------------------\n')
-                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{} PCS\n'.format(self.quantity))
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('------------------------------------------\n')
-                        Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('    SUBTOTAL:')
-                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('------------------------------------------\n')
+                        vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{} PCS\n'.format(self.quantity))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('------------------------------------------\n')
+                        vars.EPSON.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('    SUBTOTAL:')
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                         string_length = len(vars.us_dollar(self.subtotal))
                         string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                        Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                   vars.us_dollar(self.subtotal)))
-                        Epson.set(align=u"RIGHT", text_type=u'B')
-                        Epson.text('         TAX:')
+                        vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                        vars.us_dollar(self.subtotal)))
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                        vars.EPSON.text('         TAX:')
                         string_length = len(vars.us_dollar(self.tax))
                         string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
-                        Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                   vars.us_dollar(self.tax)))
-                        Epson.set(align=u"RIGHT", text_type=u'B')
-                        Epson.text('       TOTAL:')
-                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
+                        vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                        vars.us_dollar(self.tax)))
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                        vars.EPSON.text('       TOTAL:')
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                         string_length = len(vars.us_dollar(self.total))
                         string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                        Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                   vars.us_dollar(self.total)))
-                        Epson.set(align=u"RIGHT", text_type=u'B')
-                        Epson.text('     BALANCE:')
+                        vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                        vars.us_dollar(self.total)))
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                        vars.EPSON.text('     BALANCE:')
                         string_length = len(vars.us_dollar(self.total))
                         string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                        Epson.text('{}{}\n\n'.format(' ' * string_offset,
-                                                     vars.us_dollar(self.total)))
+                        vars.EPSON.text('{}{}\n\n'.format(' ' * string_offset,
+                                                          vars.us_dollar(self.total)))
                         if item_type == 'L':
                             # get customer mark
                             marks = Custid()
@@ -4584,48 +4701,48 @@ GridLayout:
                                 m_list = []
                                 for mark in marks_list:
                                     m_list.append(mark['mark'])
-                                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
-                                          density=8, invert=False, smooth=False, flip=False)
-                                Epson.text('{}\n\n'.format(', '.join(m_list)))
+                                vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                               density=8, invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('{}\n\n'.format(', '.join(m_list)))
 
                         # Cut paper
-                        Epson.cut(mode=u"PART")
+                        vars.EPSON.cut(mode=u"PART")
             else:
                 # Print store copies
                 if print_invoice:  # if invoices synced
                     for invoice_id, item_id in print_invoice.items():
 
                         # start invoice
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("::COPY::\n")
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("{}\n".format(companies.name))
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                        Epson.text("edited: {}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("::COPY::\n")
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("{}\n".format(companies.name))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                        vars.EPSON.text("edited: {}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                        Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                        vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text("{}\n".format('{0:06d}'.format(invoice_id)))
                         # Print barcode
-                        Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+                        vars.EPSON.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF', 'B', 'B')
 
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('------------------------------------------\n')
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('------------------------------------------\n')
 
                         if print_invoice[invoice_id]:
                             for item_id, invoice_item in print_invoice[invoice_id].items():
@@ -4642,67 +4759,67 @@ GridLayout:
                                 string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
                                     vars.us_dollar(item_price)) + 4
                                 string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                Epson.text('{} {}   {}{}{}\n'.format(item_type,
-                                                                     item_qty,
-                                                                     item_name,
-                                                                     ' ' * string_offset,
-                                                                     vars.us_dollar(item_price)))
+                                vars.EPSON.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                          item_qty,
+                                                                          item_name,
+                                                                          ' ' * string_offset,
+                                                                          vars.us_dollar(item_price)))
 
-                                # Epson.text('\r\x1b@\x1b\x61\x02{}\n'.format(vars.us_dollar(item_price)))
+                                # vars.EPSON.text('\r\x1b@\x1b\x61\x02{}\n'.format(vars.us_dollar(item_price)))
                                 if len(item_memo) > 0:
-                                    Epson.control('HT')
-                                    Epson.control('HT')
-                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                              density=5, invert=False, smooth=False, flip=False)
-                                    Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                                   density=5, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('  {}\n'.format('/ '.join(item_memo)))
                                 if len(item_color_string) > 0:
-                                    Epson.control('HT')
-                                    Epson.control('HT')
-                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                              density=5, invert=False, smooth=False, flip=False)
-                                    Epson.text('  {}\n'.format(', '.join(item_color_string)))
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                                   density=5, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('  {}\n'.format(', '.join(item_color_string)))
 
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('------------------------------------------\n')
-                        Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{} PCS\n'.format(self.quantity))
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('------------------------------------------\n')
-                        Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('    SUBTOTAL:')
-                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('------------------------------------------\n')
+                        vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{} PCS\n'.format(self.quantity))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('------------------------------------------\n')
+                        vars.EPSON.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('    SUBTOTAL:')
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                         string_length = len(vars.us_dollar(self.subtotal))
                         string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                        Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                   vars.us_dollar(self.subtotal)))
-                        Epson.set(align=u"RIGHT", text_type=u'B')
-                        Epson.text('         TAX:')
+                        vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                        vars.us_dollar(self.subtotal)))
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                        vars.EPSON.text('         TAX:')
                         string_length = len(vars.us_dollar(self.tax))
                         string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
-                        Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                   vars.us_dollar(self.tax)))
-                        Epson.set(align=u"RIGHT", text_type=u'B')
-                        Epson.text('       TOTAL:')
-                        Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
+                        vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                        vars.us_dollar(self.tax)))
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                        vars.EPSON.text('       TOTAL:')
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                         string_length = len(vars.us_dollar(self.total))
                         string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                        Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                   vars.us_dollar(self.total)))
-                        Epson.set(align=u"RIGHT", text_type=u'B')
-                        Epson.text('     BALANCE:')
+                        vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                        vars.us_dollar(self.total)))
+                        vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                        vars.EPSON.text('     BALANCE:')
                         string_length = len(vars.us_dollar(self.total))
                         string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                        Epson.text('{}{}\n\n'.format(' ' * string_offset,
-                                                     vars.us_dollar(self.total)))
+                        vars.EPSON.text('{}{}\n\n'.format(' ' * string_offset,
+                                                          vars.us_dollar(self.total)))
                         if customers.invoice_memo:
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('{}\n'.format(customers.invoice_memo))
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('{}\n'.format(customers.invoice_memo))
                         if item_type == 'L':
                             # get customer mark
                             marks = Custid()
@@ -4711,13 +4828,13 @@ GridLayout:
                                 m_list = []
                                 for mark in marks_list:
                                     m_list.append(mark['mark'])
-                                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
-                                          density=8, invert=False, smooth=False, flip=False)
-                                Epson.text('{}\n\n'.format(', '.join(m_list)))
+                                vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                               density=8, invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('{}\n\n'.format(', '.join(m_list)))
 
                         # Cut paper
-                        Epson.cut(mode=u"PART")
-        except USBNotFoundError:
+                        vars.EPSON.cut(mode=u"PART")
+        else:
             popup = Popup()
             popup.title = 'Printer Error'
             content = KV.popup_alert('Unable to locate usb printer.')
@@ -5671,9 +5788,9 @@ class HistoryScreen(Screen):
             elif invoice_status is 2:
                 state = 3
             else:
-                if due_strtotime < now_strtotime: #overdue
+                if due_strtotime < now_strtotime:  # overdue
                     state = 2
-                elif count_invoice_items == 0: # #quick drop
+                elif count_invoice_items == 0:  # #quick drop
                     state = 6
                 else:
                     state = 1
@@ -6078,8 +6195,8 @@ class HistoryScreen(Screen):
     def reprint_invoice(self, type, *args, **kwargs):
         if vars.INVOICE_ID:
             # print invoices
-            try:
-                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+            if vars.EPSON:
+
                 companies = Company()
                 comps = companies.where({'company_id': auth_user.company_id}, set=True)
 
@@ -6198,38 +6315,38 @@ class HistoryScreen(Screen):
                             }
                 now = datetime.datetime.now()
                 if type == 2:
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("{}\n".format(companies.name))
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("{}\n".format(companies.street))
-                    Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                              invert=False, smooth=False, flip=False)
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("{}\n".format(companies.name))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("{}\n".format(companies.street))
+                    vars.EPSON.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                   invert=False, smooth=False, flip=False)
 
-                    Epson.text("{}\n".format(companies.phone))
-                    Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                    vars.EPSON.text("{}\n".format(companies.phone))
+                    vars.EPSON.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("{}\n".format(vars.CUSTOMER_ID))
                     # Print barcode
-                    Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+                    vars.EPSON.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
 
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{}\n'.format(customers.phone))
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('------------------------------------------\n')
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{}\n'.format(customers.phone))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('------------------------------------------\n')
 
                     if print_sync_invoice[vars.INVOICE_ID]:
                         for item_id, invoice_item in print_sync_invoice[vars.INVOICE_ID].items():
@@ -6243,39 +6360,39 @@ class HistoryScreen(Screen):
                                 for color_name, color_qty in invoice_item['colors'].items():
                                     if color_name:
                                         item_color_string.append('{}-{}'.format(color_qty, color_name))
-                            Epson.text('{} {}   {}\n'.format(item_type, item_qty, item_name))
+                            vars.EPSON.text('{} {}   {}\n'.format(item_type, item_qty, item_name))
 
                             if len(item_memo) > 0:
-                                Epson.control('HT')
-                                Epson.control('HT')
-                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                          height=1,
-                                          density=5, invert=False, smooth=False, flip=False)
-                                Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                vars.EPSON.control('HT')
+                                vars.EPSON.control('HT')
+                                vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                               height=1,
+                                               density=5, invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('  {}\n'.format('/ '.join(item_memo)))
                             if len(item_color_string) > 0:
-                                Epson.control('HT')
-                                Epson.control('HT')
-                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                          height=1,
-                                          density=5, invert=False, smooth=False, flip=False)
-                                Epson.text('  {}\n'.format(', '.join(item_color_string)))
+                                vars.EPSON.control('HT')
+                                vars.EPSON.control('HT')
+                                vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                               height=1,
+                                               density=5, invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('  {}\n'.format(', '.join(item_color_string)))
 
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('------------------------------------------\n')
-                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{} PCS\n'.format(invoice_quantity))
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('------------------------------------------\n')
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('------------------------------------------\n')
+                    vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{} PCS\n'.format(invoice_quantity))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('------------------------------------------\n')
 
                     if customers.invoice_memo:
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{}\n'.format(customers.invoice_memo))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{}\n'.format(customers.invoice_memo))
                     # Cut paper
-                    Epson.cut(mode=u"PART")
+                    vars.EPSON.cut(mode=u"PART")
 
                 if type == 1:
                     # Print store copies
@@ -6283,45 +6400,45 @@ class HistoryScreen(Screen):
                         for invoice_id, item_id in print_sync_invoice.items():
 
                             # start invoice
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text("::COPY::\n")
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text("{}\n".format(companies.name))
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text("{}\n".format(companies.phone))
-                            Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
-                                      density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text(
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text("::COPY::\n")
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text("{}\n".format(companies.name))
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text("{}\n".format(companies.phone))
+                            vars.EPSON.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
+                                           density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text(
                                 "READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text("{}\n".format('{0:06d}'.format(invoice_id)))
                             # Print barcode
-                            Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
-                                          'B', 'B')
+                            vars.EPSON.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
+                                               'B', 'B')
 
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
-                                      density=6,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text(
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                                           density=6,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text(
                                 '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=2,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('{}\n'.format(customers.phone))
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=1,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('------------------------------------------\n')
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=2,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('{}\n'.format(customers.phone))
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=1,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('------------------------------------------\n')
 
                             if print_sync_invoice[invoice_id]:
                                 for item_id, invoice_item in print_sync_invoice[invoice_id].items():
@@ -6338,67 +6455,67 @@ class HistoryScreen(Screen):
                                     string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
                                         vars.us_dollar(item_price)) + 4
                                     string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                    Epson.text('{} {}   {}{}{}\n'.format(item_type,
-                                                                         item_qty,
-                                                                         item_name,
-                                                                         ' ' * string_offset,
-                                                                         vars.us_dollar(item_price)))
+                                    vars.EPSON.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                              item_qty,
+                                                                              item_name,
+                                                                              ' ' * string_offset,
+                                                                              vars.us_dollar(item_price)))
 
                                     if len(item_memo) > 0:
-                                        Epson.control('HT')
-                                        Epson.control('HT')
-                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                  height=1,
-                                                  density=5, invert=False, smooth=False, flip=False)
-                                        Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                       height=1,
+                                                       density=5, invert=False, smooth=False, flip=False)
+                                        vars.EPSON.text('  {}\n'.format('/ '.join(item_memo)))
                                     if len(item_color_string) > 0:
-                                        Epson.control('HT')
-                                        Epson.control('HT')
-                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                  height=1,
-                                                  density=5, invert=False, smooth=False, flip=False)
-                                        Epson.text('  {}\n'.format(', '.join(item_color_string)))
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                       height=1,
+                                                       density=5, invert=False, smooth=False, flip=False)
+                                        vars.EPSON.text('  {}\n'.format(', '.join(item_color_string)))
 
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=1,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('------------------------------------------\n')
-                            Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('{} PCS\n'.format(invoice_quantity))
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=1,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('------------------------------------------\n')
-                            Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('    SUBTOTAL:')
-                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=1,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('------------------------------------------\n')
+                            vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('{} PCS\n'.format(invoice_quantity))
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=1,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('------------------------------------------\n')
+                            vars.EPSON.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('    SUBTOTAL:')
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                             string_length = len(vars.us_dollar(invoice_subtotal))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
-                            Epson.set(align=u"RIGHT", text_type=u'B')
-                            Epson.text('         TAX:')
+                            vars.EPSON.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                            vars.EPSON.text('         TAX:')
                             string_length = len(vars.us_dollar(invoice_tax))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
-                            Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_tax)))
-                            Epson.set(align=u"RIGHT", text_type=u'B')
-                            Epson.text('       TOTAL:')
-                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
+                            vars.EPSON.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_tax)))
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                            vars.EPSON.text('       TOTAL:')
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                             string_length = len(vars.us_dollar(invoice_total))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                       vars.us_dollar(invoice_total)))
-                            Epson.set(align=u"RIGHT", text_type=u'B')
-                            Epson.text('     BALANCE:')
+                            vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                            vars.us_dollar(invoice_total)))
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                            vars.EPSON.text('     BALANCE:')
                             string_length = len(vars.us_dollar(invoice_total))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            Epson.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(invoice_total)))
+                            vars.EPSON.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(invoice_total)))
                             if customers.invoice_memo:
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('{}\n'.format(customers.invoice_memo))
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('{}\n'.format(customers.invoice_memo))
                             if item_type == 'L':
                                 # get customer mark
                                 marks = Custid()
@@ -6407,13 +6524,13 @@ class HistoryScreen(Screen):
                                     m_list = []
                                     for mark in marks_list:
                                         m_list.append(mark['mark'])
-                                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
-                                              density=8, invert=False, smooth=False, flip=False)
-                                    Epson.text('{}\n\n'.format(', '.join(m_list)))
+                                    vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                                   density=8, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('{}\n\n'.format(', '.join(m_list)))
 
                             # Cut paper
-                            Epson.cut(mode=u"PART")
-            except USBNotFoundError:
+                            vars.EPSON.cut(mode=u"PART")
+            else:
                 popup = Popup()
                 popup.title = 'Printer Error'
                 content = KV.popup_alert('No printer found. Please try again.')
@@ -9062,8 +9179,8 @@ class PickupScreen(Screen):
                     self.set_result_status()
                     self.finish_popup.dismiss()
         if print == 1:  # customer copy of invoice and finish
-            try:
-                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+            if vars.EPSON:
+
                 companies = Company()
                 comps = companies.where({'company_id': auth_user.company_id}, set=True)
 
@@ -9179,38 +9296,39 @@ class PickupScreen(Screen):
                         now = datetime.datetime.now()
                 # Print payment copies
                 if print_sync_invoice:  # if invoices synced
+
                     # start invoice
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                              density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("::Payment Copy::\n")
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("{}\n".format(companies.name))
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("{}\n".format(companies.street))
-                    Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                              invert=False, smooth=False, flip=False)
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                   density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("::Payment Copy::\n")
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("{}\n".format(companies.name))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("{}\n".format(companies.street))
+                    vars.EPSON.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                   invert=False, smooth=False, flip=False)
 
-                    Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                    Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                    vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                    vars.EPSON.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
-                              density=6,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text(
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                                   density=6,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text(
                         '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                              density=2,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                              density=1,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('------------------------------------------\n')
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                   density=2,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                   density=1,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('------------------------------------------\n')
                     for invoice_id, item_id in print_sync_invoice.items():
 
                         if print_sync_invoice[invoice_id]:
@@ -9228,72 +9346,72 @@ class PickupScreen(Screen):
                                 string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
                                     vars.us_dollar(item_price)) + 4
                                 string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                Epson.text('{} {}   {}{}{}\n'.format(item_type,
-                                                                     item_qty,
-                                                                     item_name,
-                                                                     ' ' * string_offset,
-                                                                     vars.us_dollar(item_price)))
+                                vars.EPSON.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                          item_qty,
+                                                                          item_name,
+                                                                          ' ' * string_offset,
+                                                                          vars.us_dollar(item_price)))
 
                                 if len(item_memo) > 0:
-                                    Epson.control('HT')
-                                    Epson.control('HT')
-                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                              height=1,
-                                              density=5, invert=False, smooth=False, flip=False)
-                                    Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                   height=1,
+                                                   density=5, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('  {}\n'.format('/ '.join(item_memo)))
                                 if len(item_color_string) > 0:
-                                    Epson.control('HT')
-                                    Epson.control('HT')
-                                    Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                              height=1,
-                                              density=5, invert=False, smooth=False, flip=False)
-                                    Epson.text('  {}\n'.format(', '.join(item_color_string)))
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.control('HT')
+                                    vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                   height=1,
+                                                   density=5, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('  {}\n'.format(', '.join(item_color_string)))
 
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                              density=1,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('------------------------------------------\n')
-                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{} PCS\n'.format(self.total_quantity))
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                              density=1,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('------------------------------------------\n')
-                    Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('    SUBTOTAL:')
-                    Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                   density=1,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('------------------------------------------\n')
+                    vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{} PCS\n'.format(self.total_quantity))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                   density=1,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('------------------------------------------\n')
+                    vars.EPSON.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('    SUBTOTAL:')
+                    vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                     string_length = len(vars.us_dollar(self.total_subtotal))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_subtotal)))
-                    Epson.set(align=u"RIGHT", text_type=u'B')
-                    Epson.text('         TAX:')
+                    vars.EPSON.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_subtotal)))
+                    vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                    vars.EPSON.text('         TAX:')
                     string_length = len(vars.us_dollar(self.total_tax))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    Epson.set(align=u"RIGHT", text_type=u'NORMAL')
-                    Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_tax)))
-                    Epson.set(align=u"RIGHT", text_type=u'B')
-                    Epson.text('       TOTAL:')
-                    Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                    vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
+                    vars.EPSON.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_tax)))
+                    vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                    vars.EPSON.text('       TOTAL:')
+                    vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                     string_length = len(vars.us_dollar(self.total_due))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_due)))
-                    Epson.set(align=u"RIGHT", text_type=u'B')
-                    Epson.text('     TENDERED:')
+                    vars.EPSON.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_due)))
+                    vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                    vars.EPSON.text('     TENDERED:')
                     string_length = len(vars.us_dollar(self.amount_tendered))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    Epson.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(self.amount_tendered)))
-                    Epson.set(align=u"RIGHT", text_type=u'B')
-                    Epson.text('     BALANCE:')
+                    vars.EPSON.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(self.amount_tendered)))
+                    vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                    vars.EPSON.text('     BALANCE:')
                     balance = 0 if (
                                        self.amount_tendered - self.total_due) < 0  else self.amount_tendered - self.total_due
                     string_length = len(vars.us_dollar(balance))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    Epson.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(balance)))
+                    vars.EPSON.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(balance)))
                     # Cut paper
-                    Epson.cut(mode=u"PART")
-            except USBNotFoundError:
+                    vars.EPSON.cut(mode=u"PART")
+            else:
                 popup = Popup()
                 popup.title = 'Printer Error'
                 content = KV.popup_alert('Usb device not found')
@@ -9623,12 +9741,6 @@ class RackScreen(Screen):
     parent_scroll = ObjectProperty(None)
     marked_invoice_number = None
     edited_rack = False
-    if auth_user.company_id:
-        try:
-            Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
-        except USBNotFoundError:
-            print('USB not found')
-            Epson = False
 
     def reset(self):
         self.racks = OrderedDict()
@@ -9739,35 +9851,17 @@ class RackScreen(Screen):
 
 
         else:
-            try:
-                self.Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=3,
-                               invert=False, smooth=False, flip=False)
+            if vars.EPSON:
+                self.vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=3,
+                                    invert=False, smooth=False, flip=False)
                 if self.edited_rack:
-                    self.Epson.text('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
+                    self.vars.EPSON.text('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
                         self.invoice_number.text,
                         self.edited_rack,
                         self.rack_number.text))
                     self.edited_rack = False
                 else:
-                    self.Epson.text('{} - {}\n'.format(self.invoice_number.text, self.rack_number.text))
-            except USBNotFoundError:
-                popup = Popup()
-                popup.title = 'Printer Error'
-                content = KV.popup_alert('Unable to locate usb printer.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
-            except AttributeError:
-                popup = Popup()
-                popup.title = 'Printer Error'
-                content = KV.popup_alert('Unable to locate usb printer.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                    self.vars.EPSON.text('{} - {}\n'.format(self.invoice_number.text, self.rack_number.text))
 
             self.racks[self.invoice_number.text] = self.rack_number.text
             self.invoice_number.text = ''
@@ -9802,29 +9896,11 @@ class RackScreen(Screen):
             self.set_result_status()
 
         # Cut paper
-        try:
-            self.Epson.set(align=u"CENTER", font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                           invert=False, smooth=False, flip=False)
-            self.Epson.text('{}'.format((datetime.datetime.now().strftime('%a %m/%d/%Y %I:%M %p'))))
-            self.Epson.cut(mode=u"PART")
-        except USBNotFoundError:
-            popup = Popup()
-            popup.title = 'Printer Error'
-            content = KV.popup_alert('Unable to locate usb printer.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
-        except AttributeError:
-            popup = Popup()
-            popup.title = 'Printer Error'
-            content = KV.popup_alert('Unable to locate usb printer.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+        if vars.EPSON:
+            self.vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                invert=False, smooth=False, flip=False)
+            self.vars.EPSON.text('{}'.format((datetime.datetime.now().strftime('%a %m/%d/%Y %I:%M %p'))))
+            self.vars.EPSON.cut(mode=u"PART")
 
 
 class ReportsScreen(Screen):
@@ -10021,7 +10097,7 @@ class SearchScreen(Screen):
         rack = row['rack']
         total = vars.us_dollar(row['total'])
         due = row['due_date']
-        invoice_items = InvoiceItem().where({'invoice_id':invoice_id})
+        invoice_items = InvoiceItem().where({'invoice_id': invoice_id})
         count_invoice_items = len(invoice_items)
         try:
             dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
@@ -10046,9 +10122,9 @@ class SearchScreen(Screen):
         elif invoice_status is 2:
             state = 3
         else:
-            if due_strtotime < now_strtotime: #overdue
+            if due_strtotime < now_strtotime:  # overdue
                 state = 2
-            elif count_invoice_items == 0: # #quick drop
+            elif count_invoice_items == 0:  # #quick drop
                 state = 6
             else:
                 state = 1
@@ -10492,7 +10568,7 @@ class SearchScreen(Screen):
                                    size_hint=(1, 0.7))
         no_copy = Button(text="Store Copy Only",
                          on_press=self.quick_print_store_copy,
-                         on_release = popup.dismiss)
+                         on_release=popup.dismiss)
         both = Button(text="Print Both",
                       on_press=self.quick_print_both,
                       on_release=popup.dismiss)
@@ -10530,8 +10606,8 @@ class SearchScreen(Screen):
                 print('sync now finished')
 
             # print invoices
-            try:
-                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+            if vars.EPSON:
+
                 companies = Company()
                 comps = companies.where({'company_id': auth_user.company_id}, set=True)
 
@@ -10586,59 +10662,59 @@ class SearchScreen(Screen):
                         customers.role_id = user['role_id']
                         customers.remember_token = user['remember_token']
 
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("QUICK DROP - STORE COPY\n")
-                Epson.text("{}\n".format(companies.name))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("{}\n".format(companies.street))
-                Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                          invert=False, smooth=False, flip=False)
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("QUICK DROP - STORE COPY\n")
+                vars.EPSON.text("{}\n".format(companies.name))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("{}\n".format(companies.street))
+                vars.EPSON.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                               invert=False, smooth=False, flip=False)
 
-                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                vars.EPSON.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("{}\n".format(vars.CUSTOMER_ID))
                 # Print barcode
-                Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+                vars.EPSON.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
 
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('------------------------------------------\n')
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('------------------------------------------\n')
 
-                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text(
+                vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text(
                     '{} PCS\n'.format(
                         self.quick_box.ids.quick_count.text if self.quick_box.ids.quick_count.text else '0'))
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('------------------------------------------\n')
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('------------------------------------------\n')
                 if self.quick_box.ids.quick_invoice_memo.text:
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
 
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
                 # Cut paper
-                Epson.cut(mode=u"PART")
+                vars.EPSON.cut(mode=u"PART")
 
-            except USBNotFoundError:
+            else:
                 popup = Popup()
                 popup.title = 'Printer Error'
                 content = KV.popup_alert('Could not find usb.')
@@ -10688,8 +10764,8 @@ class SearchScreen(Screen):
                 print('sync now finished')
 
             # print invoices
-            try:
-                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+            if vars.EPSON:
+
                 companies = Company()
                 comps = companies.where({'company_id': auth_user.company_id}, set=True)
 
@@ -10744,111 +10820,111 @@ class SearchScreen(Screen):
                         customers.role_id = user['role_id']
                         customers.remember_token = user['remember_token']
 
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("QUICK DROP\n")
-                Epson.text("{}\n".format(companies.name))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("{}\n".format(companies.street))
-                Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                          invert=False, smooth=False, flip=False)
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("QUICK DROP\n")
+                vars.EPSON.text("{}\n".format(companies.name))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("{}\n".format(companies.street))
+                vars.EPSON.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                               invert=False, smooth=False, flip=False)
 
-                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                vars.EPSON.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("{}\n".format(vars.CUSTOMER_ID))
                 # Print barcode
-                Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+                vars.EPSON.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
 
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('------------------------------------------\n')
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('------------------------------------------\n')
 
-                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{} PCS\n'.format(
+                vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{} PCS\n'.format(
                     self.quick_box.ids.quick_count.text if self.quick_box.ids.quick_count.text else '0'))
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('------------------------------------------\n')
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('------------------------------------------\n')
                 if self.quick_box.ids.quick_invoice_memo.text:
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
 
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
                 # Cut paper
-                Epson.cut(mode=u"PART")
+                vars.EPSON.cut(mode=u"PART")
 
                 # SECOND Copy
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("QUICK DROP - STORE COPY\n")
-                Epson.text("{}\n".format(companies.name))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("{}\n".format(companies.street))
-                Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                          invert=False, smooth=False, flip=False)
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("QUICK DROP - STORE COPY\n")
+                vars.EPSON.text("{}\n".format(companies.name))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("{}\n".format(companies.street))
+                vars.EPSON.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                               invert=False, smooth=False, flip=False)
 
-                Epson.text("{}\n".format(Job.make_us_phone(companies.phone)))
-                Epson.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                vars.EPSON.text("{}\n".format(Job.make_us_phone(companies.phone)))
+                vars.EPSON.text("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text("{}\n".format(vars.CUSTOMER_ID))
                 # Print barcode
-                Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+                vars.EPSON.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
 
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('{}\n'.format(Job.make_us_phone(customers.phone)))
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('------------------------------------------\n')
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('{}\n'.format(Job.make_us_phone(customers.phone)))
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('------------------------------------------\n')
 
-                Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                          invert=False, smooth=False, flip=False)
-                Epson.text(
+                vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text(
                     '{} PCS\n'.format(
                         self.quick_box.ids.quick_count.text if self.quick_box.ids.quick_count.text else '0'))
-                Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
-                Epson.text('------------------------------------------\n')
+                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
+                vars.EPSON.text('------------------------------------------\n')
                 if self.quick_box.ids.quick_invoice_memo.text:
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
 
-                Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
-                          invert=False, smooth=False, flip=False)
+                vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
+                               invert=False, smooth=False, flip=False)
                 # Cut paper
-                Epson.cut(mode=u"PART")
+                vars.EPSON.cut(mode=u"PART")
 
-            except USBNotFoundError:
+            else:
                 popup = Popup()
                 popup.title = 'Printer Error'
                 content = KV.popup_alert('Could not find usb.')
@@ -10876,8 +10952,8 @@ class SearchScreen(Screen):
     def reprint_invoice(self, type, *args, **kwargs):
         if vars.INVOICE_ID:
             # print invoices
-            try:
-                Epson = printer.Usb(printer_list[1]['vendor_id'], printer_list[1]['product_id'], 0, 0x81, 0x02)
+            if vars.EPSON:
+
                 companies = Company()
                 comps = companies.where({'company_id': auth_user.company_id}, set=True)
 
@@ -11000,38 +11076,38 @@ class SearchScreen(Screen):
                             }
                 now = datetime.datetime.now()
                 if type == 2:
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("{}\n".format(companies.name))
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("{}\n".format(companies.street))
-                    Epson.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                              invert=False, smooth=False, flip=False)
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("{}\n".format(companies.name))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("{}\n".format(companies.street))
+                    vars.EPSON.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                   invert=False, smooth=False, flip=False)
 
-                    Epson.text("{}\n".format(companies.phone))
-                    Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                    vars.EPSON.text("{}\n".format(companies.phone))
+                    vars.EPSON.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                    Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text("{}\n".format(vars.CUSTOMER_ID))
+                    vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text("{}\n".format(vars.CUSTOMER_ID))
                     # Print barcode
-                    Epson.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+                    vars.EPSON.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
 
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{}\n'.format(customers.phone))
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('------------------------------------------\n')
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{}\n'.format(customers.phone))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('------------------------------------------\n')
 
                     if print_sync_invoice[vars.INVOICE_ID]:
                         for item_id, invoice_item in print_sync_invoice[vars.INVOICE_ID].items():
@@ -11045,39 +11121,39 @@ class SearchScreen(Screen):
                                 for color_name, color_qty in invoice_item['colors'].items():
                                     if color_name:
                                         item_color_string.append('{}-{}'.format(color_qty, color_name))
-                            Epson.text('{} {}   {}\n'.format(item_type, item_qty, item_name))
+                            vars.EPSON.text('{} {}   {}\n'.format(item_type, item_qty, item_name))
 
                             if len(item_memo) > 0:
-                                Epson.control('HT')
-                                Epson.control('HT')
-                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                          height=1,
-                                          density=5, invert=False, smooth=False, flip=False)
-                                Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                vars.EPSON.control('HT')
+                                vars.EPSON.control('HT')
+                                vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                               height=1,
+                                               density=5, invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('  {}\n'.format('/ '.join(item_memo)))
                             if len(item_color_string) > 0:
-                                Epson.control('HT')
-                                Epson.control('HT')
-                                Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                          height=1,
-                                          density=5, invert=False, smooth=False, flip=False)
-                                Epson.text('  {}\n'.format(', '.join(item_color_string)))
+                                vars.EPSON.control('HT')
+                                vars.EPSON.control('HT')
+                                vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                               height=1,
+                                               density=5, invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('  {}\n'.format(', '.join(item_color_string)))
 
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('------------------------------------------\n')
-                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('{} PCS\n'.format(invoice_quantity))
-                    Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
-                              invert=False, smooth=False, flip=False)
-                    Epson.text('------------------------------------------\n')
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('------------------------------------------\n')
+                    vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('{} PCS\n'.format(invoice_quantity))
+                    vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                                   invert=False, smooth=False, flip=False)
+                    vars.EPSON.text('------------------------------------------\n')
 
                     if customers.invoice_memo:
-                        Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                  invert=False, smooth=False, flip=False)
-                        Epson.text('{}\n'.format(customers.invoice_memo))
+                        vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                       invert=False, smooth=False, flip=False)
+                        vars.EPSON.text('{}\n'.format(customers.invoice_memo))
                     # Cut paper
-                    Epson.cut(mode=u"PART")
+                    vars.EPSON.cut(mode=u"PART")
 
                 if type == 1:
                     # Print store copies
@@ -11085,45 +11161,45 @@ class SearchScreen(Screen):
                         for invoice_id, item_id in print_sync_invoice.items():
 
                             # start invoice
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text("::COPY::\n")
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text("{}\n".format(companies.name))
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text("{}\n".format(companies.phone))
-                            Epson.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
-                                      density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text(
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text("::COPY::\n")
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text("{}\n".format(companies.name))
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text("{}\n".format(companies.phone))
+                            vars.EPSON.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
+                                           density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text(
                                 "READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                            Epson.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text("{}\n".format('{0:06d}'.format(invoice_id)))
+                            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text("{}\n".format('{0:06d}'.format(invoice_id)))
                             # Print barcode
-                            Epson.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
-                                          'B', 'B')
+                            vars.EPSON.barcode('{}'.format('{0:06d}'.format(invoice_id)), 'CODE39', 64, 2, 'OFF',
+                                               'B', 'B')
 
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
-                                      density=6,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text(
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                                           density=6,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text(
                                 '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
 
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=2,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('{}\n'.format(customers.phone))
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=1,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('------------------------------------------\n')
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=2,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('{}\n'.format(customers.phone))
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=1,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('------------------------------------------\n')
 
                             if print_sync_invoice[invoice_id]:
                                 for item_id, invoice_item in print_sync_invoice[invoice_id].items():
@@ -11140,67 +11216,67 @@ class SearchScreen(Screen):
                                     string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
                                         vars.us_dollar(item_price)) + 4
                                     string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                    Epson.text('{} {}   {}{}{}\n'.format(item_type,
-                                                                         item_qty,
-                                                                         item_name,
-                                                                         ' ' * string_offset,
-                                                                         vars.us_dollar(item_price)))
+                                    vars.EPSON.text('{} {}   {}{}{}\n'.format(item_type,
+                                                                              item_qty,
+                                                                              item_name,
+                                                                              ' ' * string_offset,
+                                                                              vars.us_dollar(item_price)))
 
                                     if len(item_memo) > 0:
-                                        Epson.control('HT')
-                                        Epson.control('HT')
-                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                  height=1,
-                                                  density=5, invert=False, smooth=False, flip=False)
-                                        Epson.text('  {}\n'.format('/ '.join(item_memo)))
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                       height=1,
+                                                       density=5, invert=False, smooth=False, flip=False)
+                                        vars.EPSON.text('  {}\n'.format('/ '.join(item_memo)))
                                     if len(item_color_string) > 0:
-                                        Epson.control('HT')
-                                        Epson.control('HT')
-                                        Epson.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                  height=1,
-                                                  density=5, invert=False, smooth=False, flip=False)
-                                        Epson.text('  {}\n'.format(', '.join(item_color_string)))
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.control('HT')
+                                        vars.EPSON.set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                       height=1,
+                                                       density=5, invert=False, smooth=False, flip=False)
+                                        vars.EPSON.text('  {}\n'.format(', '.join(item_color_string)))
 
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=1,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('------------------------------------------\n')
-                            Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('{} PCS\n'.format(invoice_quantity))
-                            Epson.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
-                                      density=1,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('------------------------------------------\n')
-                            Epson.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
-                                      invert=False, smooth=False, flip=False)
-                            Epson.text('    SUBTOTAL:')
-                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=1,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('------------------------------------------\n')
+                            vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('{} PCS\n'.format(invoice_quantity))
+                            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                                           density=1,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('------------------------------------------\n')
+                            vars.EPSON.set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
+                                           invert=False, smooth=False, flip=False)
+                            vars.EPSON.text('    SUBTOTAL:')
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                             string_length = len(vars.us_dollar(invoice_subtotal))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
-                            Epson.set(align=u"RIGHT", text_type=u'B')
-                            Epson.text('         TAX:')
+                            vars.EPSON.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                            vars.EPSON.text('         TAX:')
                             string_length = len(vars.us_dollar(invoice_tax))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
-                            Epson.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_tax)))
-                            Epson.set(align=u"RIGHT", text_type=u'B')
-                            Epson.text('       TOTAL:')
-                            Epson.set(align=u"RIGHT", text_type=u'NORMAL')
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
+                            vars.EPSON.text('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_tax)))
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                            vars.EPSON.text('       TOTAL:')
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'NORMAL')
                             string_length = len(vars.us_dollar(invoice_total))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            Epson.text('{}{}\n'.format(' ' * string_offset,
-                                                       vars.us_dollar(invoice_total)))
-                            Epson.set(align=u"RIGHT", text_type=u'B')
-                            Epson.text('     BALANCE:')
+                            vars.EPSON.text('{}{}\n'.format(' ' * string_offset,
+                                                            vars.us_dollar(invoice_total)))
+                            vars.EPSON.set(align=u"RIGHT", text_type=u'B')
+                            vars.EPSON.text('     BALANCE:')
                             string_length = len(vars.us_dollar(invoice_total))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            Epson.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(invoice_total)))
+                            vars.EPSON.text('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(invoice_total)))
                             if customers.invoice_memo:
-                                Epson.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
-                                          invert=False, smooth=False, flip=False)
-                                Epson.text('{}\n'.format(customers.invoice_memo))
+                                vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                                               invert=False, smooth=False, flip=False)
+                                vars.EPSON.text('{}\n'.format(customers.invoice_memo))
                             if item_type == 'L':
                                 # get customer mark
                                 marks = Custid()
@@ -11209,13 +11285,13 @@ class SearchScreen(Screen):
                                     m_list = []
                                     for mark in marks_list:
                                         m_list.append(mark['mark'])
-                                    Epson.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
-                                              density=8, invert=False, smooth=False, flip=False)
-                                    Epson.text('{}\n\n'.format(', '.join(m_list)))
+                                    vars.EPSON.set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
+                                                   density=8, invert=False, smooth=False, flip=False)
+                                    vars.EPSON.text('{}\n\n'.format(', '.join(m_list)))
 
                             # Cut paper
-                            Epson.cut(mode=u"PART")
-            except USBNotFoundError:
+                            vars.EPSON.cut(mode=u"PART")
+            else:
                 popup = Popup()
                 popup.title = 'Printer Error'
                 content = KV.popup_alert('No printer found. Please try again.')
@@ -11225,6 +11301,105 @@ class SearchScreen(Screen):
             popup = Popup()
             popup.title = 'Reprint Error'
             content = KV.popup_alert('Please select an invoice.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+
+    def print_card(self):
+
+        if vars.EPSON:
+
+            companies = Company()
+            comps = companies.where({'company_id': auth_user.company_id}, set=True)
+
+            if comps:
+                for company in comps:
+                    companies.id = company['id']
+                    companies.company_id = company['company_id']
+                    companies.name = company['name']
+                    companies.street = company['street']
+                    companies.suite = company['suite']
+                    companies.city = company['city']
+                    companies.state = company['state']
+                    companies.zip = company['zip']
+                    companies.email = company['email']
+                    companies.phone = Job.make_us_phone(company['phone'])
+            customers = User()
+            custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+            if custs:
+                for user in custs:
+                    customers.id = user['id']
+                    customers.user_id = user['user_id']
+                    customers.company_id = user['company_id']
+                    customers.username = user['username']
+                    customers.first_name = user['first_name']
+                    customers.last_name = user['last_name']
+                    customers.street = user['street']
+                    customers.suite = user['suite']
+                    customers.city = user['city']
+                    customers.state = user['state']
+                    customers.zipcode = user['zipcode']
+                    customers.email = user['email']
+                    customers.phone = Job.make_us_phone(user['phone'])
+                    customers.intercom = user['intercom']
+                    customers.concierge_name = user['concierge_name']
+                    customers.concierge_number = user['concierge_number']
+                    customers.special_instructions = user['special_instructions']
+                    customers.shirt_old = user['shirt_old']
+                    customers.shirt = user['shirt']
+                    customers.delivery = user['delivery']
+                    customers.profile_id = user['profile_id']
+                    customers.payment_status = user['payment_status']
+                    customers.payment_id = user['payment_id']
+                    customers.token = user['token']
+                    customers.api_token = user['api_token']
+                    customers.reward_status = user['reward_status']
+                    customers.reward_points = user['reward_points']
+                    customers.account = user['account']
+                    customers.starch = user['starch']
+                    customers.important_memo = user['important_memo']
+                    customers.invoice_memo = user['invoice_memo']
+                    customers.password = user['password']
+                    customers.role_id = user['role_id']
+                    customers.remember_token = user['remember_token']
+
+            now = datetime.datetime.now()
+
+            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                           invert=False, smooth=False, flip=False)
+            vars.EPSON.text("{}\n".format(companies.name))
+            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                           invert=False, smooth=False, flip=False)
+            vars.EPSON.text("{}\n".format(companies.street))
+            vars.EPSON.text("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                           invert=False, smooth=False, flip=False)
+
+            vars.EPSON.text("{}\n".format(companies.phone))
+            vars.EPSON.text("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+
+            vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                           invert=False, smooth=False, flip=False)
+            vars.EPSON.text("{}\n".format(vars.CUSTOMER_ID))
+            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+                           invert=False, smooth=False, flip=False)
+            vars.EPSON.text('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+
+            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+                           invert=False, smooth=False, flip=False)
+            vars.EPSON.text('{}\n'.format(customers.phone))
+            vars.EPSON.set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+                           invert=False, smooth=False, flip=False)
+            # Print barcode
+            vars.EPSON.barcode('{}'.format(vars.CUSTOMER_ID), 'CODE39', 64, 2, 'OFF', 'B', 'B')
+
+            vars.EPSON.text('------------------------------------------\n')
+            # Cut paper
+            vars.EPSON.cut(mode=u"PART")
+
+        else:
+            popup = Popup()
+            popup.title = 'Printer Error'
+            content = KV.popup_alert('No printer found. Please try again.')
             popup.content = Builder.load_string(content)
             popup.open()
 
