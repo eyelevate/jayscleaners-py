@@ -1,0 +1,110 @@
+<HistoryScreen>:
+    id: screen_history
+    name:"history"
+    invoices_table: invoices_table
+    items_table: items_table
+    invs_results_label: invs_results_label
+    on_enter: root.get_history()
+
+    BoxLayout:
+        orientation: 'horizontal'
+        pos_hint: {'top':1}
+        size_hint: 1,0.8
+        ScrollView:
+            size_hint_x: 0.4
+            pos_hint:{'top':1}
+            GridLayout:
+                id: invoices_table
+                size_hint_y:None
+                height: self.minimum_height
+                cols:6
+                row_force_default: True
+                row_default_height:'50sp'
+        BoxLayout:
+            orientation: 'vertical'
+            pos_hint:{'top':1}
+            size_hint_x: 0.1
+            Button:
+                id: up_btn
+                font_size:'20sp'
+                on_release: root.invoice_prev()
+                text: "Prev"
+                disabled: False
+            Button:
+                id: down_btn
+                font_size:'20sp'
+                on_release: root.invoice_next()
+                text: "Next"
+                disabled: False
+            Button:
+                id: delete_invoice_btn
+                font_size:'20sp'
+                on_release: root.delete_invoice_confirm()
+                text: "Delete"
+                disabled: False
+            Button:
+                id: undo_btn
+                font_size:'20sp'
+                on_release: root.undo_invoice_confirm()
+                text: "Undo"
+                disabled: False
+            Button:
+                id: reprint_btn
+                font_size:'20sp'
+                on_release: root.reprint_popup()
+                text: "Reprint"
+                disabled: False
+            Button:
+                id: invoice_details_btn
+                font_size:'20sp'
+                on_release: app.root.current = "invoice_details"
+                text: "Details"
+                disabled: False
+        ScrollView:
+            size_hint_x: 0.5
+            pos_hint:{'top':1}
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            GridLayout:
+                id: items_table
+                size_hint_y:None
+                height: self.minimum_height
+                cols:3
+                row_force_default: True
+                row_default_height:'50sp'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+    BoxLayout:
+        id:invs_results_label
+        size_hint: 1,0.1
+        pos_hint:{'top':0.2}
+        orientation: 'horizontal'
+        Label:
+            id:invs_results_label
+            markup: True
+            text: "[color=000000]Showing rows [b]1[/b] - [b]10[/b] out of [b]10[/b][/color]"
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+    BoxLayout:
+        size_hint: 1,0.1
+        Button:
+            id: cancel
+            on_press: root.set_result_status()
+            on_release: app.root.current = "search"
+            font_size:'20sp'
+            text: "Cancel"
+            disabled: False

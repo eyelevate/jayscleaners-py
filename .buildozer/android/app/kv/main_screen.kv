@@ -1,0 +1,93 @@
+<MainScreen>:
+    id:screen_main
+    name:"main"
+    update_label:update_data_label
+    settings_button: settings_button
+    reports_button: reports_button
+    delivery_button: delivery_button
+    dropoff_button: dropoff_button
+    update_button: update_button
+    login_button: login_button
+
+    ActionBar:
+        id: _action_main
+        size_hint: 1,0.1
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            title: 'Jays Cleaners POS'
+            ActionPrevious:
+                title: 'Jays Cleaners POS'
+                with_previous: False
+                previous_image: ''
+                on_release: root.manager.current = "main"
+            ActionGroup:
+                text: '          File          '
+                mode: 'spinner'
+                width: 500
+                ActionButton:
+                    text: 'Quit'
+                    on_release: app.get_running_app().stop()
+
+    GridLayout:
+        cols: 2
+        size_hint: 1,0.8
+        pos_hint: {'top':0.9}
+        GridLayout:
+            cols: 2
+            size_hint_y: 3
+            Button:
+                id: settings_button
+                on_release: app.root.current = "settings"
+                text: "Settings"
+                disabled: True
+                font_size:'20sp'
+
+            Button:
+                id: reports_button
+                on_release: root.reports_page()
+                text: "[color=#AED6F1]Reports[/color]"
+                markup:True
+                underline:True
+                disabled: True
+                font_size:'20sp'
+
+            Button:
+                id: delivery_button
+                on_release: root.delivery_page()
+                text: "[color=#AED6F1]Delivery[/color]"
+                markup:True
+                underline:True
+                disabled: True
+                font_size:'20sp'
+
+            Button:
+                id: login_button
+                text: "Login"
+                font_size:'20sp'
+                on_release: root.login_show()
+
+        Button:
+            id: dropoff_button
+            disabled: True
+            font_size:'20sp'
+            on_press: app.root.current = "search"
+            on_release: root.db_sync()
+            text: "Drop / Pickup"
+
+    Button:
+        id: update_button
+        text:"Update"
+        disabled:False
+        on_release: root.print_setup_tag('0x067b', '0x2303')
+        size_hint: 0.1,0.1
+        pos_hint: {'x':0, 'y':0}
+        font_size:'20sp'
+    Label:
+        id: update_data_label
+        text:root.update_info()
+        size_hint_y: None
+        text_size: self.width, None
+        height: self.texture_size[1]
+        pos_hint: {'x':0.1, 'y':0}
+        font_size:'20sp'

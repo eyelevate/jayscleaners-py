@@ -1,0 +1,80 @@
+<RackScreen>:
+    id: screen_rack
+    invoice_number: invoice_number
+    rack_number: rack_number
+    rack_table: rack_table
+    parent_scroll: parent_scroll
+    name:"rack"
+
+    on_enter: root.reset()
+
+    BoxLayout:
+        orientation: 'horizontal'
+        pos_hint: {'top':1}
+        size_hint: 1,0.9
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.3,1
+            GridLayout:
+                id: rack_form
+                size_hint:1,0.5
+                cols: 1
+                rows: 4
+                row_force_default: True
+                row_default_height:'50sp'
+                Label:
+                    markup: True
+                    text: 'Invoice #'
+                CenterVerticalTextInput:
+                    id: invoice_number
+                    multiline: False
+                    on_text_validate: root.set_invoice_number()
+                Label:
+                    markup: True
+                    text: 'Rack'
+                CenterVerticalTextInput:
+                    id: rack_number
+                    multiline: False
+                    on_text_validate: root.set_rack_number()
+        ScrollView:
+            id: parent_scroll
+            size_hint_x: 0.7
+            pos_hint:{'top':1}
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            GridLayout:
+                id: rack_table
+                size_hint_y:None
+                height: self.minimum_height
+                cols:4
+                row_force_default: True
+                row_default_height:'50sp'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1,0.1
+        Button:
+            id: cancel
+            on_press: root.set_result_status()
+            on_release: app.root.current = "search"
+            font_size:'20sp'
+            text: "Cancel"
+            disabled: False
+        Button:
+            id: cancel
+            on_press: root.save_racks()
+            on_release: app.root.current = "search"
+            font_size:'20sp'
+            markup: True
+            text: "[color=0AAC00][b]Save[/b][/color]"
+            disabled: False

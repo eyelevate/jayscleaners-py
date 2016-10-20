@@ -1,0 +1,228 @@
+#: import FadeTransition kivy.uix.screenmanager.FadeTransition
+
+
+
+ScreenManagement:
+    transition: FadeTransition()
+    MainScreen:
+    DeliveryScreen:
+    DropoffScreen:
+    ReportsScreen:
+    SettingsScreen:
+
+
+<MainScreen>:
+    labe
+    name:"main"
+
+    ActionBar:
+        id: _action_main
+        size_hint: 1,0.1
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                title: 'Jays Cleaners POS'
+                with_previous: False
+                on_release: root.manager.current = "main"
+            ActionGroup:
+                text: 'File'
+                mode: 'spinner'
+                size_hint_x: None
+                width: 250
+                ActionButton:
+                    text: 'New'
+                ActionButton:
+                    text: 'Open'
+                ActionButton:
+                    text: 'Save'
+                ActionButton:
+                    text: 'Save As'
+                ActionButton:
+                    text: 'Quit'
+
+
+    Label:
+        id: update_data_label
+        text:root.update_info()
+        size_hint_y: None
+        text_size: self.width, None
+        height: self.texture_size[1]
+
+
+
+
+    Button:
+        on_release: app.root.current = "settings"
+        text: "Settings"
+        font_size: 25
+        size_hint: 0.15,0.15
+        pos_hint: {'x':0.28,'y':0.72}
+    Button:
+        on_release: app.root.current = "reports"
+        text: "Reports"
+        font_size: 25
+        size_hint: 0.15,0.15
+        pos_hint: {'x':0.78,'y':0.72}
+    Button:
+        on_release: app.root.current = "dropoff"
+        text: "Drop / Pickup"
+        font_size: 25
+        size_hint: 0.15,0.15
+        pos_hint: {'x':0.53,'y':0.47}
+    Button:
+        on_release: app.root.current = "delivery"
+        text: "Delivery"
+        font_size: 25
+        size_hint: 0.15,0.15
+        pos_hint: {'x':0.28,'y':0.22}
+    Button:
+        text: "Login/Logout"
+        on_release: root.update_database()
+        font_size: 25
+        size_hint: 0.15,0.15
+        pos_hint: {'x':0.78,'y':0.22}
+
+
+<DropoffScreen>:
+    name:"dropoff"
+    ActionBar:
+        id: _action_dropoff
+        size_hint: 1,0.1
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                title: 'Previous Slide'
+                with_previous: False
+                on_release: root.manager.current = "main"
+                pos_hint: {'left':0}
+            ActionGroup:
+                text: 'File'
+                mode: 'spinner'
+                size_hint_x: None
+                width: 90
+                ActionButton:
+                    text: 'New'
+                ActionButton:
+                    text: 'Open'
+                ActionButton:
+                    text: 'Save'
+                ActionButton:
+                    text: 'Save As'
+                ActionButton:
+                    text: 'Quit'
+    Button:
+        on_release: app.root.current = "main"
+        text: "Back Home"
+        font_size: 20
+        size_hint: 0.1,0.1
+        pos_hint: {'x':0,'y':0}
+
+
+<DeliveryScreen>:
+    name:"delivery"
+    ActionBar:
+        id: _action_delivery
+        size_hint: 1,0.1
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                title: 'Previous Slide'
+                with_previous: False
+                on_release: root.manager.current = "main"
+                pos_hint: {'left':0}
+            ActionGroup:
+                text: 'File'
+                mode: 'spinner'
+                size_hint_x: None
+                width: 90
+                ActionButton:
+                    text: 'New'
+                ActionButton:
+                    text: 'Open'
+                ActionButton:
+                    text: 'Save'
+                ActionButton:
+                    text: 'Save As'
+                ActionButton:
+                    text: 'Quit'
+    Button:
+        on_release: app.root.current = "main"
+        text: "Back Home"
+        font_size: 20
+        size_hint: 0.1,0.1
+        pos_hint: {'x':0,'y':0}
+
+
+<ReportsScreen>:
+    name:"reports"
+    ActionBar:
+        id: _action_reports
+        size_hint: 1,0.1
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                title: 'Previous Slide'
+                with_previous: False
+                on_release: root.manager.current = "main"
+                pos_hint: {'left':0}
+            ActionGroup:
+                text: 'File'
+                mode: 'spinner'
+                size_hint_x: None
+                width: 90
+                ActionButton:
+                    text: 'New'
+                ActionButton:
+                    text: 'Open'
+                ActionButton:
+                    text: 'Save'
+                ActionButton:
+                    text: 'Save As'
+                ActionButton:
+                    text: 'Quit'
+    Button:
+        on_release: app.root.current = "main"
+        text: "Back Home"
+        font_size: 20
+        size_hint: 0.1,0.1
+        pos_hint: {'x':0,'y':0}
+
+
+<SettingsScreen>:
+    name:"settings"
+    ActionBar:
+        id: _action_settings
+        size_hint: 1,0.1
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                title: 'Previous Slide'
+                with_previous: False
+                on_release: root.manager.current = "main"
+                pos_hint: {'left':0}
+            ActionGroup:
+                text: 'File'
+                mode: 'spinner'
+                size_hint_x: None
+                width: 90
+                ActionButton:
+                    text: 'New'
+                ActionButton:
+                    text: 'Open'
+                ActionButton:
+                    text: 'Save'
+                ActionButton:
+                    text: 'Save As'
+                ActionButton:
+                    text: 'Quit'
+    Button:
+        on_release: app.root.current = "main"
+        text: "Back Home"
+        font_size: 20
+        size_hint: 0.1,0.1
+        pos_hint: {'x':0,'y':0}

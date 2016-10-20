@@ -1,0 +1,505 @@
+<InvoiceDetailsScreen>:
+    id: screen_invoice_details
+    name:"invoice_details"
+    invoice_number_label: invoice_number_label
+    full_name_label: full_name_label
+    phone_label: phone_label
+    customer_type_label: customer_type_label
+    dropoff_label: dropoff_label
+    pickup_label: pickup_label
+    rack_label: rack_label
+    rack_date_label: rack_date_label
+    payment_type_label: payment_type_label
+    last4_label: last4_label
+    profile_id_label: profile_id_label
+    payment_id_label: payment_id_label
+    items_table: items_table
+    quantity_label: quantity_label
+    subtotal_label: subtotal_label
+    tax_label: tax_label
+    total_label: total_label
+    discount_label: discount_label
+    credit_label: credit_label
+    tendered_label: tendered_label
+    due_label: due_label
+
+    on_enter: root.get_details()
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        ScrollView:
+            size_hint: 1,0.8
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            GridLayout:
+                orientation:'vertical'
+                size_hint_y:None
+                size_hint_x:1
+                height: self.minimum_height
+                cols:1
+                GridLayout:
+                    cols:4
+                    rows: 5
+                    size_hint_y:None
+                    height: self.minimum_height
+                    row_force_default: True
+                    row_default_height: '40sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Invoice:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: invoice_number_label
+                        markup: True
+                        text: '[color=000000]#059001[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Phone:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: phone_label
+                        markup: True
+                        text: '[color=000000]2069315327[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Full Name:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: full_name_label
+                        markup: True
+                        text: '[color=000000]Choung, Wondo[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Type:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: customer_type_label
+                        markup: True
+                        text: '[color=000000]Account[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Dropoff:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: dropoff_label
+                        markup: True
+                        text: '[color=000000]WED 6-7-2016 12:00am[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Pickup:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: pickup_label
+                        markup: True
+                        text: '[color=000000]WED 6-9-2016 12:00am[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Rack:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: rack_label
+                        markup: True
+                        text: '[color=000000]44[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Rack Date:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: rack_date_label
+                        markup: True
+                        text: '[color=000000]WED 6-9-2016[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                GridLayout:
+                    cols:4
+                    size_hint_y:None
+                    height: self.minimum_height
+                    row_force_default: True
+                    row_default_height: '40sp'
+                    canvas.before:
+                        Color:
+                            rgba: .7, .7, .7, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Payment Type:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: payment_type_label
+                        markup: True
+                        text: '[color=000000]CC[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Last 4:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: last4_label
+                        markup: True
+                        text: '[color=000000]0561[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Profile ID:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: profile_id_label
+                        markup: True
+                        text: '[color=000000]123456[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Payment ID:[/b][/color]"
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                    Label:
+                        id: payment_id_label
+                        markup: True
+                        text: '[color=000000]12345[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                GridLayout:
+                    id: items_table
+                    cols:3
+                    size_hint_y:None
+                    height: self.minimum_height
+                    row_force_default: True
+                    row_default_height: '40sp'
+                    canvas.before:
+                        Color:
+                            rgba: .2, .2, .2, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    size_hint_x: .5
+                    pos_hint:{'right':1}
+                    height: self.minimum_height
+                    row_force_default: True
+                    row_default_height: '40sp'
+                    canvas.before:
+                        Color:
+                            rgba: 1, 1, 1, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    Label:
+                        markup: True
+                        size_hint_x: 0.8
+                        text: '[color=ffffff][b]Qty[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: quantity_label
+                        markup: True
+                        size_hint_x: 0.2
+                        text: '[color=000000]0[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        size_hint_x: 0.8
+                        text: '[color=ffffff][b]Subtotal[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: subtotal_label
+                        markup: True
+                        size_hint_x: 0.2
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        size_hint_x: 0.8
+                        text: '[color=ffffff][b]Tax[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: tax_label
+                        markup: True
+                        size_hint_x: 0.2
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        size_hint_x: 0.8
+                        text: '[color=ffffff][b]Total[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: total_label
+                        markup: True
+                        size_hint_x: 0.2
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        size_hint_x: 0.8
+                        text: '[color=ffffff][b]Credit[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: credit_label
+                        markup: True
+                        size_hint_x: 0.2
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        size_hint_x: 0.8
+                        text: '[color=ffffff][b]Discount[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: discount_label
+                        markup: True
+                        size_hint_x: 0.2
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        size_hint_x: 0.8
+                        text: '[color=ffffff][b]Tendered[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: tendered_label
+                        markup: True
+                        size_hint_x: 0.2
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                    Label:
+                        markup: True
+                        text: '[color=ffffff][b]Due[/b][/color]'
+                        text_size: self.size
+                        size_hint_x: 0.8
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: due_label
+                        markup: True
+                        size_hint_x: 0.2
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1, 0.1
+            Button:
+                id: cancel
+                on_release: app.root.current = "history"
+                font_size:'20sp'
+                text: "Cancel"
+                disabled: False
