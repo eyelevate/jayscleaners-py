@@ -7,14 +7,17 @@ import os
 import re
 from collections import OrderedDict
 
+os.environ['TZ'] = 'US/Pacific'
 if platform.system() == 'Darwin':  # Mac
     sys.path.append('~/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages')
+    time.tzset()
+    time.tzset()
 elif platform.system() == 'Linux':  # Linux
     sys.path.append('/')  # TODO
+    time.tzset()
 elif platform.system() == 'Windows':  # Windows
     sys.path.append('/')  # TODO
-os.environ['TZ'] = 'US/Pacific'
-time.tzset()
+
 
 # Models
 from addresses import Address
@@ -445,69 +448,149 @@ class MainScreen(Screen):
         interface_number = 0
         in_ep = 0x81
         out_ep = 0x02
-        try:
-            dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
-            print(dev)
-            # was it found?
-            if dev is None:
-                print('Device not found')
 
-            # set the active configuration. With no arguments, the first
-            # configuration will be the active one
-            dev.set_configuration()
+        # # decimal vendor and product values
+        # dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
+        # # or, uncomment the next line to search instead by the hexidecimal equivalent
+        # # dev = usb.core.find(idVendor=0x45e, idProduct=0x77d)
+        # # first endpoint
+        # interface = 0
+        # endpoint = dev[0][(0, 0)][0]
+        # print(endpoint)
+        # # if the OS kernel already claimed the device, which is most likely true
+        # # thanks to http://stackoverflow.com/questions/8218683/pyusb-cannot-set-configuration
+        # # claim the device
+        # usb.util.claim_interface(dev, interface)
+        # dev.
+        # if dev.is_kernel_driver_active(interface) is True:
+        #     # tell the kernel to detach
+        #     dev.detach_kernel_driver(interface)
+        #     # claim the device
+        #     usb.util.claim_interface(dev, interface)
+        # collected = 0
+        # attempts = 50
+        # while collected < attempts:
+        #     try:
+        #
+        #         # data = dev.read(endpoint.bEndpointAddress, endpoint.wMaxPacketSize)
+        #         collected += 1
+        #         print(data)
+        #     except usb.core.USBError as e:
+        #         data = None
+        #         if e.args == ('Operation timed out',):
+        #             continue
+        # # release the device
+        # usb.util.release_interface(dev, interface)
+        # # reattach the device to the OS kernel
+        # dev.attach_kernel_driver(interface)
+        #
+        #
+        #
+        # print(usb.util)
 
-            # get an endpoint instance
-            cfg = dev.get_active_configuration()
-            for cfg in dev:
-                sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
-                for intf in cfg:
-                    interface_number = intf.bInterfaceNumber
-                    idx = 0
-                    for ep in intf:
-                        print(hex(ep.bEndpointAddress))
-                        idx += 1
-                        if idx is 1:
-                            in_ep = ep.bEndpointAddress
-                        elif idx is 2:
-                            out_ep = ep.bEndpointAddress
 
-            print('{} {} {}'.format(hex(interface_number),hex(in_ep),hex(out_ep)))
-        except AttributeError:
-            print('Error Attribute')
-        except TypeError:
-            print('Type Error')
+        # try:
+        #     dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
+        #     # was it found?
+        #     if dev is None:
+        #         print('Device not found')
+        #
+        #     # set the active configuration. With no arguments, the first
+        #     # configuration will be the active one
+        #     dev.set_configuration()
+        #
+        #     # get an endpoint instance
+        #     cfg = dev.get_active_configuration()
+        #
+        #     for cfg in dev:
+        #         sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
+        #         for intf in cfg:
+        #             interface_number = intf.bInterfaceNumber
+        #             idx = 0
+        #             for ep in intf:
+        #                 print(hex(ep.bEndpointAddress))
+        #                 idx += 1
+        #                 if idx is 1:
+        #                     in_ep = ep.bEndpointAddress
+        #                 elif idx is 2:
+        #                     out_ep = ep.bEndpointAddress
+        #
+        #     print('{} {} {}'.format(hex(interface_number), hex(in_ep), hex(out_ep)))
+        # except AttributeError:
+        #     print('Error Attribute')
+        # except TypeError:
+        #     print('Type Error')
+        #
+        # if dev.is_kernel_driver_active(interface_number) is True:
+        #     print('this is true')
+        #     # tell the kernel to detach
+        #     dev.detach_kernel_driver(interface_number)
+        #     # claim the device
+        #     usb.util.claim_interface(dev, interface_number)
+        #
+        # # release the device
+        # usb.util.release_interface(dev, interface_number)
+        # # reattach the device to the OS kernel
+        # dev.attach_kernel_driver(interface_number)
 
-        try:
-            # vars.BIXOLON = printer.Usb(idVendor=vendor_int,
-            #                            idProduct=product_int,
-            #                            interface=interface_number,
-            #                            in_ep = in_ep,
-            #                            out_ep = out_ep)  # Create the printer object with the connection params
-            # # vars.BIXOLON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
-            # vars.BIXOLON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-            #                density=5,
-            #                invert=False, smooth=False, flip=False)
-            # vars.BIXOLON.text("::Payment Copy::\n")
 
-            # Print a barcode
-            p = Usb(0x067b, 0x2303, 0, 0x83, 0x2)
-            p.text("Hello World\n")
-            p.cut()
+        # find our device
+        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
 
-            # print('{} {} {}'.format(interface_number, in_ep, out_ep))
-            print('printer set')
-        except USBNotFoundError:
-            vars.BIXOLON = False
-            popup = Popup()
-            popup.title = 'Tag Printer Error'
-            content = KV.popup_alert('Unable to locate tag usb printer.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
-        except TextError:
-            print('Text error')
+        # was it found?
+        if dev is None:
+            raise ValueError('Device not found')
+
+        # set the active configuration. With no arguments, the first
+        # configuration will be the active one
+        dev.set_configuration()
+
+        # get an endpoint instance
+        cfg = dev.get_active_configuration()
+        intf = cfg[(0, 0)]
+
+        ep = usb.util.find_descriptor(
+            intf,
+            # match the first OUT endpoint
+            custom_match= \
+                lambda e: \
+                    usb.util.endpoint_direction(e.bEndpointAddress) == \
+                    usb.util.ENDPOINT_OUT)
+
+        assert ep is not None
+
+        ep.write('\1bA'.encode('utf-8'))
+
+        # try:
+        #     # vars.BIXOLON = printer.Usb(idVendor=vendor_int,
+        #     #                            idProduct=product_int,
+        #     #                            interface=interface_number,
+        #     #                            in_ep = in_ep,
+        #     #                            out_ep = out_ep)  # Create the printer object with the connection params
+        #     # # vars.BIXOLON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
+        #     # vars.BIXOLON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+        #     #                density=5,
+        #     #                invert=False, smooth=False, flip=False)
+        #     # vars.BIXOLON.text("::Payment Copy::\n")
+        #
+        #     # Print a barcode
+        #     # help(usb.core)
+        #
+        #
+        #     # print('{} {} {}'.format(interface_number, in_ep, out_ep))
+        #     print('printer set')
+        # except USBNotFoundError as e:
+        #     vars.BIXOLON = False
+        #     popup = Popup()
+        #     popup.title = 'Tag Printer Error'
+        #     content = KV.popup_alert('Error: {}'.format(str(e)))
+        #     popup.content = Builder.load_string(content)
+        #     popup.open()
+        #     # Beep Sound
+        #     sys.stdout.write('\a')
+        #     sys.stdout.flush()
+        # except TextError as e:
+        #     print('Text error: {}'.format(str(e)))
 
     def print_setup(self, vendor_id, product_id):
 
@@ -9947,12 +10030,18 @@ class SearchScreen(Screen):
     calendar_layout = ObjectProperty(None)
     create_calendar_table = ObjectProperty(None)
     quick_box = None
+    display_input = ObjectProperty(None)
+    calculator_control_table = ObjectProperty(None)
+    calc_history = []
+    calc_amount = []
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
         vars.ROW_CAP = 0
         vars.SEARCH_TEXT = None
         self.quick_box = None
+        self.calc_history = []
+        self.calc_amount = []
 
         if vars.SEARCH_RESULTS_STATUS:
 
@@ -11405,6 +11494,152 @@ class SearchScreen(Screen):
 
     def reprint_tags(self, *args, **kwargs):
         print('here')
+
+    def calculator_popup(self):
+        popup = Popup()
+        popup.title = 'Calculator'
+        layout = BoxLayout(orientation="vertical",
+                           size_hint=(1, 1))
+
+        inner_layout_1 = BoxLayout(orientation="vertical",
+                                   size_hint=(1, 0.9))
+        displays = GridLayout(rows=1,
+                              cols=1,
+                              size_hint=(1, 0.1))
+        self.display_input = Factory.ReadOnlyLabel(text="0",
+                                                   markup=True)
+
+        displays.add_widget(self.display_input)
+        controls = BoxLayout(orientation="horizontal",
+                             size_hint=(1, 0.9))
+        control_buttons = GridLayout(rows=4,
+                                     cols=4,
+                                     size_hint=(0.7, 1))
+        btn_9 = Button(text="9",
+                       on_release=partial(self.calc_button, '9'))
+        btn_8 = Button(text="8",
+                       on_release=partial(self.calc_button, '8'))
+        btn_7 = Button(text="7",
+                       on_release=partial(self.calc_button, '7'))
+        btn_6 = Button(text="6",
+                       on_release=partial(self.calc_button, '6'))
+        btn_5 = Button(text="5",
+                       on_release=partial(self.calc_button, '5'))
+        btn_4 = Button(text="4",
+                       on_release=partial(self.calc_button, '4'))
+        btn_3 = Button(text="3",
+                       on_release=partial(self.calc_button, '3'))
+        btn_2 = Button(text="2",
+                       on_release=partial(self.calc_button, '2'))
+        btn_1 = Button(text="1",
+                       on_release=partial(self.calc_button, '1'))
+        btn_0 = Button(text="0",
+                       on_release=partial(self.calc_button, '0'))
+        btn_00 = Button(text="00",
+                        on_release=partial(self.calc_button, '00'))
+        btn_dot = Button(text=".",
+                         on_release=partial(self.calc_button, '.'))
+        btn_add = Button(text="+",
+                         on_release=partial(self.calc_button, '+'))
+        btn_subtract = Button(text="-",
+                              on_release=partial(self.calc_button, '-'))
+        btn_multiply = Button(text="*",
+                              on_release=partial(self.calc_button, '*'))
+        btn_divide = Button(text="/",
+                            on_release=partial(self.calc_button, '/'))
+        control_buttons.add_widget(btn_7)
+        control_buttons.add_widget(btn_8)
+        control_buttons.add_widget(btn_9)
+        control_buttons.add_widget(btn_add)
+        control_buttons.add_widget(btn_4)
+        control_buttons.add_widget(btn_5)
+        control_buttons.add_widget(btn_6)
+        control_buttons.add_widget(btn_subtract)
+        control_buttons.add_widget(btn_1)
+        control_buttons.add_widget(btn_2)
+        control_buttons.add_widget(btn_3)
+        control_buttons.add_widget(btn_multiply)
+        control_buttons.add_widget(btn_0)
+        control_buttons.add_widget(btn_00)
+        control_buttons.add_widget(btn_dot)
+        control_buttons.add_widget(btn_divide)
+
+        controls.add_widget(control_buttons)
+
+        self.calculator_control_table = Factory.CalculatorGrid()
+        controls.add_widget(self.calculator_control_table)
+
+        inner_layout_1.add_widget(displays)
+        inner_layout_1.add_widget(controls)
+
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(text="Cancel",
+                               on_release=popup.dismiss)
+        clear_button = Button(markup=True,
+                              text="[color=#FF0000]C[/color]",
+                              on_release=self.calc_clear)
+        equals_button = Button(markup=True,
+                              text="[color=#e5e5e5][b]=[/b][/color]",
+                              on_release=self.calc_update)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(clear_button)
+        inner_layout_2.add_widget(equals_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+
+        popup.content = layout
+        popup.open()
+
+    def calc_button(self, data, *args, **kwargs):
+        if data is '+' or data is '-' or data is '*' or data is '/':
+            self.calc_history.append(''.join(self.calc_amount))
+            self.calc_history.append(data)
+            self.calc_amount = []
+            self.calc_update()
+
+        else:
+            self.calc_amount.append(data)
+            total_base = ''.join(self.calc_amount)
+            self.display_input.text = total_base
+
+        pass
+
+    def calc_equals(self, *args, **kwargs):
+        self.calc_update()
+        pass
+
+    def calc_update(self, *args, **kwargs):
+        operand = '+'
+        value = 0
+        if self.calc_history:
+            for data in self.calc_history:
+                total = 0
+                if data is '+':
+                    operand = '+'
+                elif data is '-':
+                    operand = '-'
+                elif data is '*':
+                    operand = '*'
+                elif data is '/':
+                    operand = '/'
+                else:
+                    value = float(data)
+                if operand is '+':
+                    total += value
+                elif operand is '-':
+                    total -= value
+                elif operand is '*':
+                    total *= value
+                else:
+                    total /= value
+        self.display_input.text = str(total)
+        pass
+    def calc_clear(self, *args, **kwargs):
+        self.calc_amount = []
+        self.calc_history = []
+        self.display_input.text = '0'
+        pass
 
 
 class SearchResultsScreen(Screen):

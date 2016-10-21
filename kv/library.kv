@@ -430,3 +430,14 @@
             font_size: '20sp'
             multiline: True
 
+<CalculatorGrid@RelativeLayout>
+    size_hint: 0.3,1
+    ScrollView:
+        size_hint:(1,1)
+        GridLayout:
+            id: summary_table
+            size_hint_y:None
+            height: self.minimum_height
+            cols:2
+            row_force_default: True
+            row_default_height:sp(44)

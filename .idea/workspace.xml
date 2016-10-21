@@ -2,8 +2,463 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="44fffa09-638c-484a-90f8-bbe28d93b5f2" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db/jayscleaners.db" afterPath="$PROJECT_DIR$/db/jayscleaners.db" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/JaysPOS" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/Darwin-64bit/run" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/Darwin-64bit/run_d" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/Darwin-64bit/runw" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/Darwin-64bit/runw_d" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/Linux-32bit/run" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/Linux-32bit/run_d" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/Linux-64bit/run" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/Linux-64bit/run_d" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/images/github_logo.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/images/icon-console.icns" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/images/icon-console.ico" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/images/icon-console.svg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/images/icon-windowed.icns" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/images/icon-windowed.ico" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/bootloader/images/icon-windowed.svg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/lib/README.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/loader/rthooks.dat" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/PyInstaller/utils/hooks/subproc/README" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/Python" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/README.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isoamsa.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isoamsb.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isoamsc.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isoamsn.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isoamso.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isoamsr.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isobox.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isocyr1.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isocyr2.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isodia.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isogrk1.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isogrk2.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isogrk3.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isogrk4-wide.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isogrk4.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isolat1.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isolat2.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isomfrk-wide.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isomfrk.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isomopf-wide.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isomopf.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isomscr-wide.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isomscr.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isonum.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isopub.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/isotech.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/mmlalias.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/mmlextra-wide.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/mmlextra.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/s5defs.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/xhtml1-lat1.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/xhtml1-special.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/parsers/rst/include/xhtml1-symbol.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/html4css1/html4css1.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/html4css1/math.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/html4css1/template.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/latex2e/default.tex" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/latex2e/titlepage.tex" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/latex2e/xelatex.tex" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/odf_odt/styles.odt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/pep_html/pep.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/pep_html/template.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/README.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/big-black/__base__" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/big-black/framing.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/big-black/pretty.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/big-white/framing.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/big-white/pretty.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/blank.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/framing.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/iepngfix.htc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/opera.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/outline.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/pretty.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/print.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/s5-core.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/slides.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/default/slides.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/medium-black/__base__" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/medium-black/pretty.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/medium-white/framing.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/medium-white/pretty.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/small-black/__base__" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/small-black/pretty.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/small-white/framing.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/docutils/writers/s5_html/themes/small-white/pretty.css" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/include/python3.5m/pyconfig.h" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/fonts/DejaVuSans.ttf" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/fonts/Roboto-Bold.ttf" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/fonts/Roboto-BoldItalic.ttf" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/fonts/Roboto-Italic.ttf" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/fonts/Roboto-Regular.ttf" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/fonts/RobotoMono-Regular.ttf" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/glsl/default.fs" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/glsl/default.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/glsl/default.vs" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/glsl/header.fs" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/glsl/header.vs" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/images/background.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/images/defaulttheme-0.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/images/defaulttheme.atlas" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/images/image-loading.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/images/testpattern.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/keyboards/azerty.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/keyboards/de_CH.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/keyboards/en_US.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/keyboards/fr_CH.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/keyboards/qwerty.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/keyboards/qwertz.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/logo/kivy-icon-128.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/logo/kivy-icon-16.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/logo/kivy-icon-24.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/logo/kivy-icon-256.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/logo/kivy-icon-32.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/logo/kivy-icon-48.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/logo/kivy-icon-512.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/logo/kivy-icon-64.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/settings_kivy.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/data/style.kv" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/_webdebugger.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/console.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/inspector.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/keybinding.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/monitor.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/recorder.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/screen.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/touchring.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/kivy_install/modules/webdebugger.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/lib/python3.5/config-3.5m/Makefile" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/lib2to3/Grammar.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/lib2to3/Grammar3.5.1.final.0.pickle" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/lib2to3/PatternGrammar.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/lib2to3/PatternGrammar3.5.1.final.0.pickle" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/lib2to3/tests/data/README" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libSDL-1.2.0.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libSDL_image-1.2.0.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libSDL_mixer-1.2.0.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libSDL_ttf-2.0.0.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libfreetype.6.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libjpeg.8.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libjpeg.9.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libncursesw.5.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libpng16.16.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libtiff.5.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libwebp.6.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libwebpdemux.2.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libwebpmux.2.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/libz.1.2.8.dylib" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/main.kv" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/auto.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/clock.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/ascii.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/big5.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp1250.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp1251.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp1252.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp1253.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp1254.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp1255.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp1256.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp1257.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp1258.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp437.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp737.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp775.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp850.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp852.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp855.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp857.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp860.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp861.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp862.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp863.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp864.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp865.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp866.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp869.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp874.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp932.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp936.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp949.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/cp950.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/dingbats.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/ebcdic.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/euc-cn.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/euc-jp.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/euc-kr.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/gb12345.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/gb1988.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/gb2312-raw.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/gb2312.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso2022-jp.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso2022-kr.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso2022.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-1.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-10.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-13.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-14.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-15.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-16.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-2.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-3.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-4.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-5.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-6.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-7.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-8.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/iso8859-9.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/jis0201.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/jis0208.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/jis0212.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/koi8-r.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/koi8-u.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/ksc5601.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macCentEuro.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macCroatian.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macCyrillic.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macDingbats.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macGreek.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macIceland.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macJapan.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macRoman.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macRomania.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macThai.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macTurkish.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/macUkraine.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/shiftjis.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/symbol.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/encoding/tis-620.enc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/history.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/http1.0/http.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/http1.0/pkgIndex.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/init.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/af.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/af_za.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ar.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ar_in.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ar_jo.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ar_lb.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ar_sy.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/be.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/bg.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/bn.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/bn_in.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ca.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/cs.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/da.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/de.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/de_at.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/de_be.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/el.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_au.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_be.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_bw.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_ca.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_gb.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_hk.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_ie.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_in.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_nz.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_ph.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_sg.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_za.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/en_zw.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/eo.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_ar.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_bo.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_cl.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_co.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_cr.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_do.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_ec.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_gt.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_hn.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_mx.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_ni.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_pa.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_pe.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_pr.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_py.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_sv.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_uy.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/es_ve.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/et.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/eu.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/eu_es.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fa.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fa_in.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fa_ir.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fi.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fo.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fo_fo.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fr.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fr_be.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fr_ca.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/fr_ch.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ga.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ga_ie.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/gl.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/gl_es.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/gv.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/gv_gb.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/he.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/hi.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/hi_in.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/hr.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/hu.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/id.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/id_id.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/is.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/it.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/it_ch.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ja.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/kl.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/kl_gl.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ko.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ko_kr.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/kok.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/kok_in.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/kw.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/kw_gb.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/lt.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/lv.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/mk.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/mr.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/mr_in.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ms.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ms_my.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/mt.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/nb.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/nl.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/nl_be.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/nn.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/pl.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/pt.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/pt_br.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ro.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ru.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ru_ua.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/sh.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/sk.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/sl.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/sq.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/sr.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/sv.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/sw.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ta.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/ta_in.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/te.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/te_in.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/th.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/tr.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/uk.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/vi.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/zh.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/zh_cn.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/zh_hk.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/zh_sg.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/msgs/zh_tw.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/opt0.4/optparse.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/opt0.4/pkgIndex.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/package.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/parray.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/safe.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/tclAppInit.c" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/tclDTrace.d" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/tclIndex" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/tm.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tcl/word.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/bgerror.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/button.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/choosedir.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/clrpick.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/comdlg.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/console.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/dialog.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/entry.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/focus.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/README" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/logo.eps" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/logo100.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/logo64.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/logoLarge.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/logoMed.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/pwrdLogo.eps" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/pwrdLogo100.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/pwrdLogo150.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/pwrdLogo175.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/pwrdLogo200.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/pwrdLogo75.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/images/tai-ku.gif" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/listbox.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/menu.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/mkpsenc.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgbox.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/cs.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/da.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/de.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/el.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/en.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/en_gb.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/eo.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/es.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/fr.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/hu.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/it.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/nl.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/pl.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/pt.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/ru.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/msgs/sv.msg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/obsolete.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/optMenu.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/palette.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/panedwindow.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/pkgIndex.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/safetk.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/scale.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/scrlbar.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/spinbox.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/tclIndex" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/tearoff.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/text.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/tk.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/tkAppInit.c" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/tkfbox.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/altTheme.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/aquaTheme.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/button.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/clamTheme.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/classicTheme.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/combobox.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/cursors.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/defaults.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/entry.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/fonts.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/menubutton.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/notebook.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/panedwindow.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/progress.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/scale.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/scrollbar.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/sizegrip.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/spinbox.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/treeview.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/ttk.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/utils.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/vistaTheme.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/winTheme.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/ttk/xpTheme.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/unsupported.tcl" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/dist/main/tk/xmfbox.tcl" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kv/library.kv" afterPath="$PROJECT_DIR$/kv/library.kv" />
     </list>
     <ignored path="jayscleaners.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -23,43 +478,81 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="107">
-              <caret line="484" column="113" selection-start-line="484" selection-start-column="113" selection-end-line="484" selection-end-column="113" />
+            <state relative-caret-position="75">
+              <caret line="12" column="16" selection-start-line="12" selection-start-column="16" selection-end-line="12" selection-end-column="16" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="buildozer.spec" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/buildozer.spec">
+      <file leaf-file-name="printer.py" pinned="false" current-in-tab="false">
+        <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/escpos/printer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2955">
-              <caret line="197" column="1" selection-start-line="197" selection-start-column="1" selection-end-line="197" selection-end-column="1" />
+            <state relative-caret-position="1155">
+              <caret line="201" column="68" selection-start-line="201" selection-start-column="68" selection-end-line="201" selection-end-column="68" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="printers.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/printers.py">
+      <file leaf-file-name="escpos.py" pinned="false" current-in-tab="false">
+        <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/escpos/escpos.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="60">
-              <caret line="4" column="44" selection-start-line="4" selection-start-column="44" selection-end-line="4" selection-end-column="44" />
-              <folding>
-                <element signature="e#0#15#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="-8280">
+              <caret line="48" column="12" selection-start-line="48" selection-start-column="8" selection-end-line="48" selection-end-column="12" />
+              <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="static.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/static.py">
+      <file leaf-file-name="constants.py" pinned="false" current-in-tab="false">
+        <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/escpos/constants.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="330">
-              <caret line="22" column="18" selection-start-line="22" selection-start-column="18" selection-end-line="22" selection-end-column="18" />
+            <state relative-caret-position="123">
+              <caret line="28" column="12" selection-start-line="28" selection-start-column="8" selection-end-line="28" selection-end-column="12" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="edit_invoice_screen.kv" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/kv/edit_invoice_screen.kv">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="195">
+              <caret line="74" column="0" selection-start-line="74" selection-start-column="0" selection-end-line="87" selection-end-column="49" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="library.kv" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/kv/library.kv">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="225">
+              <caret line="60" column="21" selection-start-line="60" selection-start-column="21" selection-end-line="60" selection-end-column="21" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="main.kv" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/kv/main.kv">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="495">
+              <caret line="57" column="18" selection-start-line="57" selection-start-column="18" selection-end-line="57" selection-end-column="18" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="cards.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/cards.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="6705">
+              <caret line="452" column="106" selection-start-line="452" selection-start-column="106" selection-end-line="452" selection-end-column="106" />
               <folding />
             </state>
           </provider>
@@ -68,7 +561,7 @@
       <file leaf-file-name="main_screen.kv" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1215">
+            <state relative-caret-position="450">
               <caret line="81" column="52" selection-start-line="81" selection-start-column="52" selection-end-line="81" selection-end-column="58" />
               <folding />
             </state>
@@ -78,7 +571,7 @@
       <file leaf-file-name="search_screen.kv" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/kv/search_screen.kv">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="645">
+            <state relative-caret-position="255">
               <caret line="43" column="47" selection-start-line="43" selection-start-column="47" selection-end-line="43" selection-end-column="47" />
               <folding />
             </state>
@@ -100,7 +593,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/discounts.py" />
         <option value="$PROJECT_DIR$/reward_transactions.py" />
         <option value="$PROJECT_DIR$/rewards.py" />
         <option value="$PROJECT_DIR$/taxes.py" />
@@ -142,15 +634,16 @@
         <option value="$PROJECT_DIR$/server.py" />
         <option value="$PROJECT_DIR$/cards.py" />
         <option value="$PROJECT_DIR$/kv/dropoff_screen.kv" />
-        <option value="$PROJECT_DIR$/kv/library.kv" />
         <option value="$PROJECT_DIR$/kv_generator.py" />
         <option value="$PROJECT_DIR$/main.kv" />
         <option value="$PROJECT_DIR$/kv/main_screen.kv" />
         <option value="$PROJECT_DIR$/static.py" />
         <option value="$PROJECT_DIR$/printers.py" />
-        <option value="$PROJECT_DIR$/main.py" />
         <option value="$PROJECT_DIR$/kv/search_screen.kv" />
+        <option value="$PROJECT_DIR$/jayscleaners.spec" />
         <option value="$PROJECT_DIR$/buildozer.spec" />
+        <option value="$PROJECT_DIR$/kv/library.kv" />
+        <option value="$PROJECT_DIR$/main.py" />
       </list>
     </option>
   </component>
@@ -220,6 +713,42 @@
               <option name="myItemId" value="&lt; Python 3.5.1 (/Library/Frameworks/Python.framework/Versions/3.5/bin/python3.5) &gt;" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode" />
             </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="site-packages" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="jayscleaners-py" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="External Libraries" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="&lt; Python 3.5.1 (/Library/Frameworks/Python.framework/Versions/3.5/bin/python3.5) &gt;" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="jayscleaners-py" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="External Libraries" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="&lt; Python 3.5.1 (/Library/Frameworks/Python.framework/Versions/3.5/bin/python3.5) &gt;" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="PyInstaller-3.2-py3.5.egg" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
           </PATH>
           <PATH>
             <PATH_ELEMENT>
@@ -236,6 +765,28 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="site-packages" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="jayscleaners-py" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="External Libraries" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="&lt; Python 3.5.1 (/Library/Frameworks/Python.framework/Versions/3.5/bin/python3.5) &gt;" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="site-packages" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pyusb-1.0.0-py3.5.egg-info" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -275,15 +826,29 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="python3.5" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="jayscleaners-py" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="External Libraries" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="&lt; Python 3.5.1 (/Library/Frameworks/Python.framework/Versions/3.5/bin/python3.5) &gt;" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="python3.5" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="site-packages" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="escpos" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="commandset" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -318,7 +883,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="vcs.Git" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
   </component>
   <component name="RunManager" selected="Python.main">
@@ -524,6 +1089,7 @@
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25528812" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31149733" sideWeight="0.50857145" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328877" sideWeight="0.49142858" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -535,7 +1101,6 @@
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.35160428" sideWeight="0.45142856" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32909605" sideWeight="0.49142858" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
@@ -558,20 +1123,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/jobs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="282">
-          <caret line="43" column="72" selection-start-line="43" selection-start-column="72" selection-end-line="43" selection-end-column="72" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/rack_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="64" column="21" selection-start-line="0" selection-start-column="0" selection-end-line="80" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/kv/new_customer_screen.kv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="690">
@@ -782,20 +1333,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="5745">
           <caret line="383" column="32" selection-start-line="383" selection-start-column="32" selection-end-line="383" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cards.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6705">
-          <caret line="452" column="106" selection-start-line="452" selection-start-column="106" selection-end-line="452" selection-end-column="106" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/library.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6390">
-          <caret line="426" column="33" selection-start-line="426" selection-start-column="15" selection-end-line="426" selection-end-column="33" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -803,27 +1341,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="210">
           <caret line="165" column="36" selection-start-line="165" selection-start-column="36" selection-end-line="165" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/main.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="444">
-          <caret line="57" column="18" selection-start-line="57" selection-start-column="18" selection-end-line="57" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/escpos/escpos.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-420">
-          <caret line="48" column="12" selection-start-line="48" selection-start-column="8" selection-end-line="48" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/escpos/constants.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="189">
-          <caret line="28" column="13" selection-start-line="28" selection-start-column="13" selection-end-line="28" selection-end-column="13" />
         </state>
       </provider>
     </entry>
@@ -848,27 +1365,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/escpos/printer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="36" column="53" selection-start-line="36" selection-start-column="44" selection-end-line="36" selection-end-column="53" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="107">
-          <caret line="484" column="113" selection-start-line="484" selection-start-column="113" selection-end-line="484" selection-end-column="113" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/printers.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
           <caret line="4" column="44" selection-start-line="4" selection-start-column="44" selection-end-line="4" selection-end-column="44" />
           <folding>
-            <element signature="e#0#15#0" expanded="true" />
+            <element signature="e#0#15#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -881,26 +1383,98 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
+    <entry file="file://$PROJECT_DIR$/jayscleaners.spec">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1215">
-          <caret line="81" column="52" selection-start-line="81" selection-start-column="52" selection-end-line="81" selection-end-column="58" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/kv/search_screen.kv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="645">
-          <caret line="43" column="47" selection-start-line="43" selection-start-column="47" selection-end-line="43" selection-end-column="47" />
+        <state relative-caret-position="510">
+          <caret line="34" column="15" selection-start-line="34" selection-start-column="15" selection-end-line="34" selection-end-column="15" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/buildozer.spec">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2955">
-          <caret line="197" column="1" selection-start-line="197" selection-start-column="1" selection-end-line="197" selection-end-column="1" />
+        <state relative-caret-position="75">
+          <caret line="6" column="20" selection-start-line="6" selection-start-column="20" selection-end-line="6" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cards.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6705">
+          <caret line="452" column="106" selection-start-line="452" selection-start-column="106" selection-end-line="452" selection-end-column="106" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/search_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="43" column="47" selection-start-line="43" selection-start-column="47" selection-end-line="43" selection-end-column="47" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/edit_invoice_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="74" column="0" selection-start-line="74" selection-start-column="0" selection-end-line="87" selection-end-column="49" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/library.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="60" column="21" selection-start-line="60" selection-start-column="21" selection-end-line="60" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/main.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="495">
+          <caret line="57" column="18" selection-start-line="57" selection-start-column="18" selection-end-line="57" selection-end-column="18" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/kv/main_screen.kv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="450">
+          <caret line="81" column="52" selection-start-line="81" selection-start-column="52" selection-end-line="81" selection-end-column="58" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/escpos/escpos.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-8280">
+          <caret line="48" column="12" selection-start-line="48" selection-start-column="8" selection-end-line="48" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/escpos/constants.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="123">
+          <caret line="28" column="12" selection-start-line="28" selection-start-column="8" selection-end-line="28" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/escpos/printer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1155">
+          <caret line="201" column="68" selection-start-line="201" selection-start-column="68" selection-end-line="201" selection-end-column="68" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="12" column="16" selection-start-line="12" selection-start-column="16" selection-end-line="12" selection-end-column="16" />
           <folding />
         </state>
       </provider>
