@@ -1,6 +1,4 @@
 import json
-import queue
-import threading
 import time
 import datetime
 
@@ -32,12 +30,8 @@ from zipcodes import Zipcode
 import urllib
 from urllib import error
 from urllib import request
-from urllib import parse
-from urllib.parse import urlencode
-from urllib.request import urlopen
 from threading import Thread
-from static import Static
-from kivy.properties import ObjectProperty, partial
+from kivy.properties import partial
 
 ERROR_COLOR = 0.94, 0.33, 0.33, 1
 DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
