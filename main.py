@@ -59,7 +59,6 @@ from escpos import *
 from escpos.printer import Usb
 from escpos.exceptions import USBNotFoundError
 from escpos.exceptions import TextError
-from escpos.connections import getUSBPrinter
 import phonenumbers
 from threading import Thread
 import usb.core
