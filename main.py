@@ -61,7 +61,7 @@ from escpos.exceptions import USBNotFoundError
 from escpos.exceptions import TextError
 import phonenumbers
 from threading import Thread
-import usb.core
+import usb.coreuyuyyu
 import usb.util
 import webbrowser
 

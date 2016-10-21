@@ -2,7 +2,6 @@ import datetime
 import time
 import sqlite3
 from model import *
-from escpos.connections import getUSBPrinter
 
 unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
