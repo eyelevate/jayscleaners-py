@@ -63,6 +63,7 @@ import phonenumbers
 from threading import Thread
 import usb.core
 import usb.util
+import usb.backend.libusb1
 import webbrowser
 
 from kivy.app import App
