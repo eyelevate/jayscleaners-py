@@ -61,7 +61,7 @@ from escpos.exceptions import USBNotFoundError
 from escpos.exceptions import TextError
 import phonenumbers
 from threading import Thread
-import usb.coreuyuyyu
+import usb.core
 import usb.util
 import webbrowser
 
@@ -448,45 +448,46 @@ class MainScreen(Screen):
         in_ep = 0x81
         out_ep = 0x02
 
-        # # decimal vendor and product values
-        # dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
-        # # or, uncomment the next line to search instead by the hexidecimal equivalent
-        # # dev = usb.core.find(idVendor=0x45e, idProduct=0x77d)
-        # # first endpoint
-        # interface = 0
-        # endpoint = dev[0][(0, 0)][0]
-        # print(endpoint)
-        # # if the OS kernel already claimed the device, which is most likely true
-        # # thanks to http://stackoverflow.com/questions/8218683/pyusb-cannot-set-configuration
-        # # claim the device
-        # usb.util.claim_interface(dev, interface)
-        # dev.
-        # if dev.is_kernel_driver_active(interface) is True:
-        #     # tell the kernel to detach
-        #     dev.detach_kernel_driver(interface)
-        #     # claim the device
-        #     usb.util.claim_interface(dev, interface)
-        # collected = 0
-        # attempts = 50
-        # while collected < attempts:
-        #     try:
-        #
-        #         # data = dev.read(endpoint.bEndpointAddress, endpoint.wMaxPacketSize)
-        #         collected += 1
-        #         print(data)
-        #     except usb.core.USBError as e:
-        #         data = None
-        #         if e.args == ('Operation timed out',):
-        #             continue
-        # # release the device
-        # usb.util.release_interface(dev, interface)
-        # # reattach the device to the OS kernel
-        # dev.attach_kernel_driver(interface)
-        #
-        #
-        #
-        # print(usb.util)
+        # find our device
+        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
 
+        # was it found?
+        if dev is None:
+            raise ValueError('Device not found')
+
+        # set the active configuration. With no arguments, the first
+        # configuration will be the active one
+        dev.set_configuration()
+
+        # get an endpoint instance
+        cfg = dev.get_active_configuration()
+        intf = cfg[(0, 0)]
+        for cfg in dev:
+            sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
+            for intf in cfg:
+                interface_number = intf.bInterfaceNumber
+                idx = 0
+                for ep in intf:
+                    print(hex(ep.bEndpointAddress))
+                    idx += 1
+                    if idx is 1:
+                        in_ep = ep.bEndpointAddress
+                    elif idx is 2:
+                        out_ep = ep.bEndpointAddress
+
+        ep = usb.util.find_descriptor(
+            intf,
+            # match the first OUT endpoint
+            custom_match= \
+                lambda e: \
+                    usb.util.endpoint_direction(e.bEndpointAddress) == \
+                    usb.util.ENDPOINT_OUT)
+
+        assert ep is not None
+        print('{} {} {}'.format(interface_number, in_ep, out_ep))
+        print(dev.is_kernel_driver_active(interface_number))
+        # ep.write('\x16FFFFFFFFFF'.encode('utf-8'))
+        # ep.read(1)
 
         # try:
         #     dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
@@ -527,50 +528,16 @@ class MainScreen(Screen):
         #     # claim the device
         #     usb.util.claim_interface(dev, interface_number)
         #
-        # # release the device
-        # usb.util.release_interface(dev, interface_number)
-        # # reattach the device to the OS kernel
-        # dev.attach_kernel_driver(interface_number)
-
-
-        # find our device
-        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
-
-        # was it found?
-        if dev is None:
-            raise ValueError('Device not found')
-
-        # set the active configuration. With no arguments, the first
-        # configuration will be the active one
-        dev.set_configuration()
-
-        # get an endpoint instance
-        cfg = dev.get_active_configuration()
-        intf = cfg[(0, 0)]
-
-        ep = usb.util.find_descriptor(
-            intf,
-            # match the first OUT endpoint
-            custom_match= \
-                lambda e: \
-                    usb.util.endpoint_direction(e.bEndpointAddress) == \
-                    usb.util.ENDPOINT_OUT)
-
-        assert ep is not None
-
-        ep.write('\1bA'.encode('utf-8'))
-
+        #
         # try:
         #     # vars.BIXOLON = printer.Usb(idVendor=vendor_int,
         #     #                            idProduct=product_int,
         #     #                            interface=interface_number,
         #     #                            in_ep = in_ep,
         #     #                            out_ep = out_ep)  # Create the printer object with the connection params
-        #     # # vars.BIXOLON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
-        #     # vars.BIXOLON.set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
-        #     #                density=5,
-        #     #                invert=False, smooth=False, flip=False)
-        #     # vars.BIXOLON.text("::Payment Copy::\n")
+        #     vars.BIXOLON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
+        #     vars.BIXOLON.text('\x1b\x40')
+        #     vars.BIXOLON.text('\x1b\x6d')
         #
         #     # Print a barcode
         #     # help(usb.core)
@@ -8729,10 +8696,10 @@ class PickupScreen(Screen):
                     root_payment_id = card['root_payment_id']
             get_root_payment = cards.where({'root_payment_id': root_payment_id})
             if get_root_payment:
-                loop = asyncio.new_event_loop()
+
                 for grp in get_root_payment:
-                    loop.run_until_complete(self.run_edit_task(grp))
-                loop.close()
+                    self.run_edit_task(grp)
+
 
             # save to server
             run_sync = threading.Thread(target=SYNC.run_sync)
@@ -8757,7 +8724,7 @@ class PickupScreen(Screen):
 
         pass
 
-    async def run_edit_task(self, grp):
+    def run_edit_task(self, grp):
         save_data = {
             'customer_type': 'individual',
             'card_number': str(self.edit_card_number.text.rstrip()),
