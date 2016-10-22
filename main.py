@@ -63,7 +63,6 @@ import phonenumbers
 from threading import Thread
 import usb.core
 import usb.util
-import usb.backend.libusb1
 import webbrowser
 
 from kivy.app import App
@@ -569,34 +568,7 @@ class MainScreen(Screen):
         interface_number = 0
         in_ep = 0x81
         out_ep = 0x02
-        try:
-            dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
-            # was it found?
-            if dev is None:
-                print('Device not found')
 
-            # set the active configuration. With no arguments, the first
-            # configuration will be the active one
-            dev.set_configuration()
-
-            # get an endpoint instance
-            cfg = dev.get_active_configuration()
-            for cfg in dev:
-                sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
-                for intf in cfg:
-                    interface_number = intf.bInterfaceNumber
-                    idx = 0
-                    for ep in intf:
-                        idx += 1
-                        if idx is 1:
-                            in_ep = ep.bEndpointAddress
-                        else:
-                            out_ep = ep.bEndpointAddress
-
-        except AttributeError:
-            print('Error Attribute')
-        except TypeError:
-            print('Type Error')
 
         try:
             vars.EPSON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
