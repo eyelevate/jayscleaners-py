@@ -2,6 +2,7 @@ import datetime
 import time
 import sqlite3
 from model import *
+from inventories import Inventory
 
 unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -292,3 +293,36 @@ WHERE id = ?'''.format(t=table), (self.item_id,
             img_src = '{}/{}'.format(src,'question.png')
 
         return img_src
+
+    def tagsToPrint(self, item_id):
+        iitems = self.where({'item_id':item_id})
+        tags = 1
+        if iitems:
+            for item in iitems:
+                tags = item['tags']
+
+        return int(tags)
+
+    def getItemName(self, item_id):
+        iitems = self.where({'item_id':item_id})
+        item_name = ''
+        if iitems:
+            for item in iitems:
+                item_name = item['name']
+
+        return item_name
+
+    def getLaundry(self, item_id):
+        iitems = self.where({'item_id':item_id})
+        inventory_id = False
+        if iitems:
+            for item in iitems:
+                inventory_id = item['inventory_id']
+
+        if inventory_id:
+            inventories = Inventory().where({'inventory_id':inventory_id})
+            if inventories:
+                for inventory in inventories:
+                    return inventory['laundry']
+        else:
+            return False

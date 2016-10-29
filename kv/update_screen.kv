@@ -1,0 +1,130 @@
+<UpdateScreen>:
+    id: screen_update
+    search_input:search_input
+    company_select:company_select
+    location_select:location_select
+    item_name:item_name
+    item_color:item_color
+    item_memo:item_memo
+    item_pretax:item_pretax
+    item_tax:item_tax
+    item_total:item_total
+    name:"update"
+    on_enter: root.reset()
+
+    BoxLayout:
+        orientation: 'vertical'
+        ActionBar:
+            id: _action_settings
+            size_hint: 1,0.1
+            pos_hint: {'top':1}
+            ActionView:
+                use_separator: True
+                ActionPrevious:
+                    title: 'Manage Invoice Item'
+                    with_previous: False
+                    previous_image: ''
+                    on_release: root.manager.current = "main"
+                    pos_hint: {'left':0}
+                ActionGroup:
+                    text: '          File          '
+                    mode: 'spinner'
+                    width: 500
+                    ActionButton:
+                        text: 'Quit'
+                        on_release: app.get_running_app().stop()
+        BoxLayout:
+            size_hint: 1,0.8
+            orientation: 'horizontal'
+            GridLayout:
+                rows:3
+                cols:1
+                row_force_default: True
+                row_default_height: sp(44)
+                size_hint: (0.3,1)
+                BottomLeftFormLabel:
+                    text:'Invoice Item ID #'
+                CenterVerticalTextInput:
+                    id:search_input
+                    on_text_validate: root.search()
+                    padding:sp(5)
+                Button:
+                    text:"Search"
+                    on_release:root.search()
+
+            RelativeLayout:
+                size_hint: (0.7,1)
+                ScrollView:
+                    size_hint:(1,1)
+                    GridLayout:
+                        id:items_table
+                        cols:1
+                        size_hint_y:None
+                        height: self.minimum_height
+                        row_force_default: True
+                        row_default_height:sp(44)
+                        BottomLeftFormLabel:
+                            text:'Store Location'
+                        Spinner:
+                            id:company_select
+                            text: "Store Name"
+                            values: ["Montlake", "Roosevelt"]
+                            size_hint: None, None
+                        BottomLeftFormLabel:
+                            text:'Last Scanned'
+                        Spinner:
+                            id:location_select
+                            text: "Select Last Scanned"
+                            values: []
+                            size_hint: None, None
+                        BottomLeftFormLabel:
+                            text:'Item'
+                        CenterVerticalTextInput:
+                            id:item_name
+                            padding:sp(5)
+                            readonly:True
+                        BottomLeftFormLabel:
+                            text:'Color'
+                        CenterVerticalTextInput:
+                            id:item_color
+                            padding:sp(5)
+                            readonly:True
+                        BottomLeftFormLabel:
+                            text:'Memo'
+                        CenterVerticalTextInput:
+                            id:item_memo
+                            padding:sp(5)
+                        BottomLeftFormLabel:
+                            text:'Subtotal'
+                        CenterVerticalTextInput:
+                            id:item_pretax
+                            padding:sp(5)
+                            on_text: root.update_total()
+                            on_double_tap: root.clear_pretax()
+                            on_text_validate: root.update_total()
+                        BottomLeftFormLabel:
+                            text:'Tax'
+                        CenterVerticalTextInput:
+                            id:item_tax
+                            padding:sp(5)
+                            readonly:True
+                        BottomLeftFormLabel:
+                            text:'Total'
+                        CenterVerticalTextInput:
+                            id:item_total
+                            padding:sp(5)
+                            readonly:True
+
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1,0.1
+            Button:
+                markup: True
+                text: 'Cancel'
+                on_press: root.reset()
+                on_release: app.root.current = "main"
+            Button:
+                markup: True
+                text: 'Update'
+                on_release: root.update_inventory_item()

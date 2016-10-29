@@ -17,7 +17,8 @@ elif platform.system() == 'Linux':  # Linux
     time.tzset()
 elif platform.system() == 'Windows':  # Windows
     sys.path.append('/')  # TODO
-
+    import usb.backend.libusb0
+    import usb.backend.libusb1
 
 # Models
 from addresses import Address
@@ -64,6 +65,7 @@ from threading import Thread
 import usb.core
 import usb.util
 import webbrowser
+import math
 
 from kivy.app import App
 from kivy.factory import Factory
@@ -193,6 +195,7 @@ class MainScreen(Screen):
     password = ObjectProperty(None)
     login_popup = ObjectProperty(None)
     login_button = ObjectProperty(None)
+    item_search_button = ObjectProperty(None)
 
     def update_info(self):
         info = "Last updated {}".format("today")
@@ -278,8 +281,7 @@ class MainScreen(Screen):
                 self.reports_button.disabled = False
                 self.dropoff_button.disabled = False
                 self.delivery_button.disabled = False
-                self.settings_button.disabled = False
-                self.settings_button.disabled = False
+                self.item_search_button.disabled = False
                 for user1 in u1:
                     auth_user.id = user1['id']
                     auth_user.user_id = user1['user_id']
@@ -291,6 +293,10 @@ class MainScreen(Screen):
                     for pr in print_data:
                         self.print_setup(hex(int(pr['vendor_id'], 16)), hex(int(pr['product_id'], 16)))
 
+                print_data_tag = Printer().where({'company_id': auth_user.company_id, 'type': 2})
+                if print_data_tag:
+                    for prt in print_data_tag:
+                        self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
                 popup.title = 'Authentication Success!'
                 popup.content = Builder.load_string(
                     KV.popup_alert('You are now logged in as {}!'.format(user.username)))
@@ -307,19 +313,18 @@ class MainScreen(Screen):
                     self.reports_button.disabled = False
                     self.dropoff_button.disabled = False
                     self.delivery_button.disabled = False
-                    self.settings_button.disabled = False
-                    self.settings_button.disabled = False
+                    self.item_search_button.disabled = False
 
                     auth_user.username = user.username
                     auth_user.company_id = data['company_id']
                     print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
                     if print_data:
-                        for printer in print_data:
-                            printer_list[printer['type']] = {
-                                'vendor_id': hex(int(printer['vendor_id'], 16)),
-                                'product_id': hex(int(printer['product_id'], 16)),
-                            }
-                            print(printer_list[1]['vendor_id'])
+                        for pr in print_data:
+                            self.print_setup(hex(int(pr['vendor_id'], 16)), hex(int(pr['product_id'], 16)))
+                    print_data_tag = Printer().where({'company_id': auth_user.company_id, 'type': 2})
+                    if print_data_tag:
+                        for prt in print_data_tag:
+                            self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
 
                     SYNC.company_id = data['company_id']
                     popup.title = 'Authentication Success!'
@@ -347,8 +352,7 @@ class MainScreen(Screen):
         self.reports_button.disabled = True
         self.dropoff_button.disabled = True
         self.delivery_button.disabled = True
-        self.settings_button.disabled = True
-        self.settings_button.disabled = True
+        self.item_search_button.disabled = True
 
     def db_sync(self, *args, **kwargs):
 
@@ -442,121 +446,83 @@ class MainScreen(Screen):
         vendor_id_hex = hex(vendor_int)
         product_int = int(product_id, 16)
         product_id_hex = hex(product_int)
-        pc = Printer()
-        print(pc.convert_to_hex("INIT"))
         interface_number = 0
         in_ep = 0x81
         out_ep = 0x02
 
         # find our device
         dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
-
+        print(vars.BIXOLON)
         # was it found?
-        if dev is None:
-            raise ValueError('Device not found')
+        if dev:
 
-        # set the active configuration. With no arguments, the first
-        # configuration will be the active one
-        dev.set_configuration()
+            # set the active configuration. With no arguments, the first
+            # configuration will be the active one
+            dev.set_configuration()
 
-        # get an endpoint instance
-        cfg = dev.get_active_configuration()
-        intf = cfg[(0, 0)]
-        for cfg in dev:
-            sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
-            for intf in cfg:
-                interface_number = intf.bInterfaceNumber
-                idx = 0
-                for ep in intf:
-                    print(hex(ep.bEndpointAddress))
-                    idx += 1
-                    if idx is 1:
-                        in_ep = ep.bEndpointAddress
-                    elif idx is 2:
-                        out_ep = ep.bEndpointAddress
+            # get an endpoint instance
+            cfg = dev.get_active_configuration()
+            intf = cfg[(0, 0)]
+            for cfg in dev:
+                sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
+                for intf in cfg:
+                    interface_number = intf.bInterfaceNumber
+                    idx = 0
+                    for ep in intf:
+                        print(hex(ep.bEndpointAddress))
+                        idx += 1
+                        if idx is 1:
+                            in_ep = ep.bEndpointAddress
+                        elif idx is 2:
+                            out_ep = ep.bEndpointAddress
 
-        ep = usb.util.find_descriptor(
-            intf,
-            # match the first OUT endpoint
-            custom_match= \
-                lambda e: \
-                    usb.util.endpoint_direction(e.bEndpointAddress) == \
-                    usb.util.ENDPOINT_OUT)
+            vars.BIXOLON = Usb(vendor_int, product_int, interface=interface_number, in_ep=130, out_ep=1)
+            # text_left = "3570 WED"
+            # text_right = "WED 3570"
+            # text_name = "CHOUNG, W"
+            # phone_number = "(206) 931-5327"
+            # total_length = 32
+            # text_offset = total_length - len(text_name) - len(phone_number)
+            # name_number_string = '{}{}{}'.format(text_name,' ' * text_offset, phone_number)
+            # print(len(text_name))
+            # print(len(phone_number))
+            # print(text_offset)
+            # vars.BIXOLON.hw('RESET')
+            # vars.BIXOLON.text('\x1b\x40')
+            # vars.BIXOLON.text('\x1b\x6d')
+            # memo_string = False
+            # for _ in range(1):
+            #
+            #     vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+            #     vars.BIXOLON.text('{}{}\n'.format(text_left, text_right))
+            #     vars.BIXOLON.hw('RESET')
+            #     vars.BIXOLON.text('\x1b!\x00')
+            #     vars.BIXOLON.text(name_number_string)
+            #     vars.BIXOLON.text('\n')
+            #     vars.BIXOLON.text('123456')
+            #     if memo_string:
+            #         vars.BIXOLON.text('\n\n\n\x1b\x6d{}'.format(memo_string))
+            #         memo_len = '\n\n' if len(memo_string) <= 32 else '\n\n' + '\n' * int(
+            #             (len(memo_string)) / 32)
+            #         vars.BIXOLON.text(memo_len)
+            #     else:
+            #
+            #         vars.BIXOLON.text('\n\n\n')
+            #         vars.BIXOLON.text('\x1b\x6d')
+            #
+            # # FINAL CUT
+            # vars.BIXOLON.hw('RESET')
+            # vars.BIXOLON.cut()
 
-        assert ep is not None
-        print('{} {} {}'.format(interface_number, in_ep, out_ep))
-        print(dev.is_kernel_driver_active(interface_number))
-        # ep.write('\x16FFFFFFFFFF'.encode('utf-8'))
-        # ep.read(1)
-
-        # try:
-        #     dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
-        #     # was it found?
-        #     if dev is None:
-        #         print('Device not found')
-        #
-        #     # set the active configuration. With no arguments, the first
-        #     # configuration will be the active one
-        #     dev.set_configuration()
-        #
-        #     # get an endpoint instance
-        #     cfg = dev.get_active_configuration()
-        #
-        #     for cfg in dev:
-        #         sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
-        #         for intf in cfg:
-        #             interface_number = intf.bInterfaceNumber
-        #             idx = 0
-        #             for ep in intf:
-        #                 print(hex(ep.bEndpointAddress))
-        #                 idx += 1
-        #                 if idx is 1:
-        #                     in_ep = ep.bEndpointAddress
-        #                 elif idx is 2:
-        #                     out_ep = ep.bEndpointAddress
-        #
-        #     print('{} {} {}'.format(hex(interface_number), hex(in_ep), hex(out_ep)))
-        # except AttributeError:
-        #     print('Error Attribute')
-        # except TypeError:
-        #     print('Type Error')
-        #
-        # if dev.is_kernel_driver_active(interface_number) is True:
-        #     print('this is true')
-        #     # tell the kernel to detach
-        #     dev.detach_kernel_driver(interface_number)
-        #     # claim the device
-        #     usb.util.claim_interface(dev, interface_number)
-        #
-        #
-        # try:
-        #     # vars.BIXOLON = printer.Usb(idVendor=vendor_int,
-        #     #                            idProduct=product_int,
-        #     #                            interface=interface_number,
-        #     #                            in_ep = in_ep,
-        #     #                            out_ep = out_ep)  # Create the printer object with the connection params
-        #     vars.BIXOLON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
-        #     vars.BIXOLON.text('\x1b\x40')
-        #     vars.BIXOLON.text('\x1b\x6d')
-        #
-        #     # Print a barcode
-        #     # help(usb.core)
-        #
-        #
-        #     # print('{} {} {}'.format(interface_number, in_ep, out_ep))
-        #     print('printer set')
-        # except USBNotFoundError as e:
-        #     vars.BIXOLON = False
-        #     popup = Popup()
-        #     popup.title = 'Tag Printer Error'
-        #     content = KV.popup_alert('Error: {}'.format(str(e)))
-        #     popup.content = Builder.load_string(content)
-        #     popup.open()
-        #     # Beep Sound
-        #     sys.stdout.write('\a')
-        #     sys.stdout.flush()
-        # except TextError as e:
-        #     print('Text error: {}'.format(str(e)))
+        else:
+            popup = Popup()
+            popup.title = 'Printer Error'
+            content = KV.popup_alert('Tag printer not found.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
 
     def print_setup(self, vendor_id, product_id):
 
@@ -568,7 +534,34 @@ class MainScreen(Screen):
         interface_number = 0
         in_ep = 0x81
         out_ep = 0x02
+        try:
+            dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
+            # was it found?
+            if dev is None:
+                print('Device not found')
 
+            # set the active configuration. With no arguments, the first
+            # configuration will be the active one
+            dev.set_configuration()
+
+            # get an endpoint instance
+            cfg = dev.get_active_configuration()
+            for cfg in dev:
+                sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
+                for intf in cfg:
+                    interface_number = intf.bInterfaceNumber
+                    idx = 0
+                    for ep in intf:
+                        idx += 1
+                        if idx is 1:
+                            in_ep = ep.bEndpointAddress
+                        else:
+                            out_ep = ep.bEndpointAddress
+
+        except AttributeError:
+            print('Error Attribute')
+        except TypeError:
+            print('Type Error')
 
         try:
             vars.EPSON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
@@ -2587,63 +2580,61 @@ GridLayout:
             finally:
                 run_sync2.join()
                 print('sync invoice items now finished')
+                companies = Company()
+                comps = companies.where({'company_id': auth_user.company_id}, set=True)
 
+                if comps:
+                    for company in comps:
+                        companies.id = company['id']
+                        companies.company_id = company['company_id']
+                        companies.name = company['name']
+                        companies.street = company['street']
+                        companies.suite = company['suite']
+                        companies.city = company['city']
+                        companies.state = company['state']
+                        companies.zip = company['zip']
+                        companies.email = company['email']
+                        companies.phone = company['phone']
+                customers = User()
+                custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+                if custs:
+                    for user in custs:
+                        customers.id = user['id']
+                        customers.user_id = user['user_id']
+                        customers.company_id = user['company_id']
+                        customers.username = user['username']
+                        customers.first_name = user['first_name']
+                        customers.last_name = user['last_name']
+                        customers.street = user['street']
+                        customers.suite = user['suite']
+                        customers.city = user['city']
+                        customers.state = user['state']
+                        customers.zipcode = user['zipcode']
+                        customers.email = user['email']
+                        customers.phone = user['phone']
+                        customers.intercom = user['intercom']
+                        customers.concierge_name = user['concierge_name']
+                        customers.concierge_number = user['concierge_number']
+                        customers.special_instructions = user['special_instructions']
+                        customers.shirt_old = user['shirt_old']
+                        customers.shirt = user['shirt']
+                        customers.delivery = user['delivery']
+                        customers.profile_id = user['profile_id']
+                        customers.payment_status = user['payment_status']
+                        customers.payment_id = user['payment_id']
+                        customers.token = user['token']
+                        customers.api_token = user['api_token']
+                        customers.reward_status = user['reward_status']
+                        customers.reward_points = user['reward_points']
+                        customers.account = user['account']
+                        customers.starch = user['starch']
+                        customers.important_memo = user['important_memo']
+                        customers.invoice_memo = user['invoice_memo']
+                        customers.password = user['password']
+                        customers.role_id = user['role_id']
+                        customers.remember_token = user['remember_token']
                 # print invoices
                 if vars.EPSON:
-
-                    companies = Company()
-                    comps = companies.where({'company_id': auth_user.company_id}, set=True)
-
-                    if comps:
-                        for company in comps:
-                            companies.id = company['id']
-                            companies.company_id = company['company_id']
-                            companies.name = company['name']
-                            companies.street = company['street']
-                            companies.suite = company['suite']
-                            companies.city = company['city']
-                            companies.state = company['state']
-                            companies.zip = company['zip']
-                            companies.email = company['email']
-                            companies.phone = company['phone']
-                    customers = User()
-                    custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
-                    if custs:
-                        for user in custs:
-                            customers.id = user['id']
-                            customers.user_id = user['user_id']
-                            customers.company_id = user['company_id']
-                            customers.username = user['username']
-                            customers.first_name = user['first_name']
-                            customers.last_name = user['last_name']
-                            customers.street = user['street']
-                            customers.suite = user['suite']
-                            customers.city = user['city']
-                            customers.state = user['state']
-                            customers.zipcode = user['zipcode']
-                            customers.email = user['email']
-                            customers.phone = user['phone']
-                            customers.intercom = user['intercom']
-                            customers.concierge_name = user['concierge_name']
-                            customers.concierge_number = user['concierge_number']
-                            customers.special_instructions = user['special_instructions']
-                            customers.shirt_old = user['shirt_old']
-                            customers.shirt = user['shirt']
-                            customers.delivery = user['delivery']
-                            customers.profile_id = user['profile_id']
-                            customers.payment_status = user['payment_status']
-                            customers.payment_id = user['payment_id']
-                            customers.token = user['token']
-                            customers.api_token = user['api_token']
-                            customers.reward_status = user['reward_status']
-                            customers.reward_points = user['reward_points']
-                            customers.account = user['account']
-                            customers.starch = user['starch']
-                            customers.important_memo = user['important_memo']
-                            customers.invoice_memo = user['invoice_memo']
-                            customers.password = user['password']
-                            customers.role_id = user['role_id']
-                            customers.remember_token = user['remember_token']
                     if type == 2:
                         vars.EPSON.set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                        invert=False, smooth=False, flip=False)
@@ -3016,6 +3007,107 @@ GridLayout:
                     # Beep Sound
                     sys.stdout.write('\a')
                     sys.stdout.flush()
+
+                    # PRINT TAG
+
+                if vars.BIXOLON:
+                    print('Starting tag printing')
+                    for invoice_id, item_id in print_invoice.items():
+                        invoice_id_str = str(invoice_id)
+
+                        invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
+                        text_left = "{} {}".format(invoice_last_four,
+                                                   self.due_date.strftime('%a').upper())
+                        text_right = "{} {}".format(self.due_date.strftime('%a').upper(),
+                                                    invoice_last_four)
+                        text_name = "{}, {}".format(customers.last_name.upper(),
+                                                    customers.first_name.upper()[:1])
+                        phone_number = Job.make_us_phone(customers.phone)
+                        total_length = 32
+                        text_offset = total_length - len(text_name) - len(phone_number)
+                        name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
+                                                             phone_number)
+
+                        vars.BIXOLON.hw('RESET')
+                        vars.BIXOLON.text('\x1b\x40')
+                        vars.BIXOLON.text('\x1b\x6d')
+                        print('next step')
+                        invoice_items = InvoiceItem().where({'invoice_id': invoice_id})
+                        laundry_to_print = []
+                        if invoice_items:
+                            for ii in invoice_items:
+                                iitem_id = ii['item_id']
+                                tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                                item_name = InventoryItem().getItemName(iitem_id)
+                                item_color = ii['color']
+                                invoice_item_id = ii['invoice_items_id']
+                                laundry_tag = InventoryItem().getLaundry(iitem_id)
+                                memo_string = ii['memo']
+                                if laundry_tag and tags_to_print > 0:
+                                    laundry_to_print.append(invoice_item_id)
+                                else:
+                                    for _ in range(tags_to_print):
+
+                                        vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                                        vars.BIXOLON.text('{}{}\n'.format(text_left, text_right))
+                                        vars.BIXOLON.hw('RESET')
+                                        vars.BIXOLON.text('\x1b!\x00')
+                                        vars.BIXOLON.text(name_number_string)
+                                        vars.BIXOLON.text('\n')
+                                        vars.BIXOLON.text('{0:06d}'.format(int(invoice_item_id)))
+                                        vars.BIXOLON.text(' {} {}'.format(item_name, item_color))
+                                        if memo_string:
+                                            vars.BIXOLON.text('\n{}'.format(memo_string))
+                                            memo_len = '\n\n\n' if len(
+                                                memo_string) <= 32 else '\n\n\n' + '\n' * int(
+                                                (len(memo_string)) / 32)
+                                            vars.BIXOLON.text(memo_len)
+                                            vars.BIXOLON.text('\x1b\x6d')
+
+                                        else:
+
+                                            vars.BIXOLON.text('\n\n\n')
+                                            vars.BIXOLON.text('\x1b\x6d')
+                    if len(laundry_to_print) is 0:
+                        # FINAL CUT
+                        vars.BIXOLON.hw('RESET')
+                        vars.BIXOLON.cut()
+                    else:
+                        laundry_count = len(laundry_to_print)
+                        shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                        name_text_offset = total_length - len(text_name) - len(text_name)
+                        shirt_mark_length = len(shirt_mark)
+                        mark_text_offset = 16 - (shirt_mark_length * 2)
+                        for i in range(0, laundry_count, 2):
+                            start = i
+                            end = i + 1
+                            invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
+                            id_offset = total_length - 12
+                            try:
+                                invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
+                                name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
+                                mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
+                                id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset,
+                                                               invoice_item_id_end)
+
+                            except IndexError:
+                                name_name_string = '{}'.format(text_name)
+                                mark_mark_string = '{}'.format(shirt_mark)
+                                id_id_string = '{}'.format(invoice_item_id_start)
+
+                            vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                            vars.BIXOLON.text(mark_mark_string)
+                            vars.BIXOLON.text('\n')
+                            vars.BIXOLON.hw('RESET')
+                            vars.BIXOLON.text('\x1b!\x00')
+                            vars.BIXOLON.text(name_name_string)
+                            vars.BIXOLON.text('\n')
+                            vars.BIXOLON.text(id_id_string)
+
+                            vars.BIXOLON.text('\n\n\n\x1b\x6d')
+                        # FINAL CUT
+                        vars.BIXOLON.hw('RESET')
+                        vars.BIXOLON.cut()
 
         self.set_result_status()
         self.print_popup.dismiss()
@@ -5708,6 +5800,8 @@ class HistoryScreen(Screen):
     history_popup = ObjectProperty(None)
     status_spinner = ObjectProperty(None)
     starch = None
+    selected_tags_list = []
+    tags_grid = ObjectProperty(None)
 
     def get_history(self):
         # check if an invoice was previously selected
@@ -6572,7 +6666,424 @@ class HistoryScreen(Screen):
             sys.stdout.flush()
 
     def reprint_tags(self, *args, **kwargs):
-        print('here')
+        popup = Popup()
+        popup.title = 'Tag Reprint'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='vertical',
+                                   size_hint=(1, 0.9))
+        self.tags_grid = Factory.TagsGrid()
+        invitems = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
+        if invitems:
+            for ii in invitems:
+                invoice_items_id = ii['invoice_items_id']
+                iitem_id = ii['item_id']
+                tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                item_name = InventoryItem().getItemName(iitem_id)
+                item_color = ii['color']
+                item_memo = ii['memo']
+                trtd1 = Button(text=str(invoice_items_id),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                trtd2 = Button(text=str(item_name),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                trtd3 = Button(text=str(item_color),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                trtd4 = Button(text=str(item_memo),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                trtd5 = Button(text=str(tags_to_print),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                self.tags_grid.ids.tags_table.add_widget(trtd1)
+                self.tags_grid.ids.tags_table.add_widget(trtd2)
+                self.tags_grid.ids.tags_table.add_widget(trtd3)
+                self.tags_grid.ids.tags_table.add_widget(trtd4)
+                self.tags_grid.ids.tags_table.add_widget(trtd5)
+        inner_layout_1.add_widget(self.tags_grid)
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(text="Cancel",
+                               on_release=popup.dismiss)
+        print_all_button = Button(text="Print All",
+                                  on_press=popup.dismiss,
+                                  on_release=self.print_all_tags)
+        print_selected_button = Button(text="Print Selected",
+                                       on_press=popup.dismiss,
+                                       on_release=self.print_selected_tags)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(print_all_button)
+        inner_layout_2.add_widget(print_selected_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def select_tag(self, item_id, *args, **kwargs):
+
+        if item_id in self.selected_tags_list:
+            # remove the tag
+            self.selected_tags_list.remove(item_id)
+        else:
+            # add the tag
+            self.selected_tags_list.append(item_id)
+
+        self.tags_grid.ids.tags_table.clear_widgets()
+        th1 = Factory.TagsGridHeaders(text="[color=#000000]ID[/color]")
+        th2 = Factory.TagsGridHeaders(text="[color=#000000]Item[/color]")
+        th3 = Factory.TagsGridHeaders(text="[color=#000000]Color[/color]")
+        th4 = Factory.TagsGridHeaders(text="[color=#000000]Memo[/color]")
+        th5 = Factory.TagsGridHeaders(text="[color=#000000]Tags[/color]")
+        self.tags_grid.ids.tags_table.add_widget(th1)
+        self.tags_grid.ids.tags_table.add_widget(th2)
+        self.tags_grid.ids.tags_table.add_widget(th3)
+        self.tags_grid.ids.tags_table.add_widget(th4)
+        self.tags_grid.ids.tags_table.add_widget(th5)
+        invitems = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
+        if invitems:
+            for ii in invitems:
+                invoice_items_id = ii['invoice_items_id']
+                iitem_id = ii['item_id']
+                tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                item_name = InventoryItem().getItemName(iitem_id)
+                item_color = ii['color']
+                item_memo = ii['memo']
+                if invoice_items_id in self.selected_tags_list:
+                    trtd1 = Factory.TagsSelectedButton(text=str(invoice_items_id),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                    trtd2 = Factory.TagsSelectedButton(text=str(item_name),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                    trtd3 = Factory.TagsSelectedButton(text=str(item_color),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                    trtd4 = Factory.TagsSelectedButton(text=str(item_memo),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                    trtd5 = Factory.TagsSelectedButton(text=str(tags_to_print),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                else:
+                    trtd1 = Button(text=str(invoice_items_id),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                    trtd2 = Button(text=str(item_name),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                    trtd3 = Button(text=str(item_color),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                    trtd4 = Button(text=str(item_memo),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                    trtd5 = Button(text=str(tags_to_print),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                self.tags_grid.ids.tags_table.add_widget(trtd1)
+                self.tags_grid.ids.tags_table.add_widget(trtd2)
+                self.tags_grid.ids.tags_table.add_widget(trtd3)
+                self.tags_grid.ids.tags_table.add_widget(trtd4)
+                self.tags_grid.ids.tags_table.add_widget(trtd5)
+
+        pass
+
+    def print_all_tags(self, *args, **kwargs):
+        if vars.INVOICE_ID:
+            customers = User()
+            custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+            if custs:
+                for user in custs:
+                    customers.id = user['id']
+                    customers.user_id = user['user_id']
+                    customers.company_id = user['company_id']
+                    customers.username = user['username']
+                    customers.first_name = user['first_name']
+                    customers.last_name = user['last_name']
+                    customers.street = user['street']
+                    customers.suite = user['suite']
+                    customers.city = user['city']
+                    customers.state = user['state']
+                    customers.zipcode = user['zipcode']
+                    customers.email = user['email']
+                    customers.phone = user['phone']
+                    customers.intercom = user['intercom']
+                    customers.concierge_name = user['concierge_name']
+                    customers.concierge_number = user['concierge_number']
+                    customers.special_instructions = user['special_instructions']
+                    customers.shirt_old = user['shirt_old']
+                    customers.shirt = user['shirt']
+                    customers.delivery = user['delivery']
+                    customers.profile_id = user['profile_id']
+                    customers.payment_status = user['payment_status']
+                    customers.payment_id = user['payment_id']
+                    customers.token = user['token']
+                    customers.api_token = user['api_token']
+                    customers.reward_status = user['reward_status']
+                    customers.reward_points = user['reward_points']
+                    customers.account = user['account']
+                    customers.starch = user['starch']
+                    customers.important_memo = user['important_memo']
+                    customers.invoice_memo = user['invoice_memo']
+                    customers.password = user['password']
+                    customers.role_id = user['role_id']
+                    customers.remember_token = user['remember_token']
+            invoice_id_str = str(vars.INVOICE_ID)
+            invs = Invoice().where({'invoice_id': vars.INVOICE_ID})
+            due_date = 'SUN'
+            if invs:
+                for inv in invs:
+                    dt = datetime.datetime.strptime(inv['due_date'], "%Y-%m-%d %H:%M:%S")
+                    due_date = dt.strftime('%a').upper()
+            invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
+            text_left = "{} {}".format(invoice_last_four,
+                                       due_date)
+            text_right = "{} {}".format(due_date,
+                                        invoice_last_four)
+            text_name = "{}, {}".format(customers.last_name.upper(),
+                                        customers.first_name.upper()[:1])
+            phone_number = Job.make_us_phone(customers.phone)
+            total_length = 32
+            text_offset = total_length - len(text_name) - len(phone_number)
+            name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
+                                                 phone_number)
+
+            print('next step')
+            invoice_items = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
+            vars.BIXOLON.hw('RESET')
+            vars.BIXOLON.text('\x1b\x40')
+            vars.BIXOLON.text('\x1b\x6d')
+            laundry_to_print = []
+            if invoice_items:
+
+                for ii in invoice_items:
+
+                    iitem_id = ii['item_id']
+                    tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                    item_name = InventoryItem().getItemName(iitem_id)
+                    item_color = ii['color']
+                    invoice_item_id = ii['invoice_items_id']
+                    laundry_tag = InventoryItem().getLaundry(iitem_id)
+                    memo_string = ii['memo']
+                    if laundry_tag:
+                        laundry_to_print.append(invoice_item_id)
+                    else:
+                        for _ in range(tags_to_print):
+
+                            vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                            vars.BIXOLON.text('{}{}\n'.format(text_left, text_right))
+                            vars.BIXOLON.hw('RESET')
+                            vars.BIXOLON.text('\x1b!\x00')
+                            vars.BIXOLON.text(name_number_string)
+                            vars.BIXOLON.text('\n')
+                            vars.BIXOLON.text('{0:06d}'.format(int(invoice_item_id)))
+                            vars.BIXOLON.text(' {} {}'.format(item_name, item_color))
+                            if memo_string:
+                                vars.BIXOLON.text('\n{}'.format(memo_string))
+                                memo_len = '\n\n\n' if len(
+                                    memo_string) <= 32 else '\n\n\n' + '\n' * int(
+                                    (len(memo_string)) / 32)
+                                vars.BIXOLON.text(memo_len)
+                                vars.BIXOLON.text('\x1b\x6d')
+                            else:
+                                vars.BIXOLON.text('\n\n\n')
+                                vars.BIXOLON.text('\x1b\x6d')
+                        # FINAL CUT
+                        vars.BIXOLON.hw('RESET')
+                        vars.BIXOLON.cut()
+            if len(laundry_to_print) > 0:
+                laundry_count = len(laundry_to_print)
+                shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                name_text_offset = total_length - len(text_name) - len(text_name)
+                shirt_mark_length = len(shirt_mark)
+                mark_text_offset = 16 - (shirt_mark_length * 2)
+                for i in range(0, laundry_count, 2):
+                    start = i
+                    end = i + 1
+
+                    invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
+
+                    id_offset = total_length - 12
+
+                    try:
+                        invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
+                        name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
+                        mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
+                        id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset, invoice_item_id_end)
+
+                    except IndexError:
+                        name_name_string = '{}'.format(text_name)
+                        mark_mark_string = '{}'.format(shirt_mark)
+                        id_id_string = '{}'.format(invoice_item_id_start)
+
+                    vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                    vars.BIXOLON.text(mark_mark_string)
+                    vars.BIXOLON.text('\n')
+                    vars.BIXOLON.hw('RESET')
+                    vars.BIXOLON.text('\x1b!\x00')
+                    vars.BIXOLON.text(name_name_string)
+                    vars.BIXOLON.text('\n')
+                    vars.BIXOLON.text(id_id_string)
+
+                    vars.BIXOLON.text('\n\n\n\x1b\x6d')
+
+                # FINAL CUT
+                vars.BIXOLON.hw('RESET')
+                vars.BIXOLON.cut()
+
+        else:
+            popup = Popup()
+            popup.title = 'Reprint Error'
+            content = KV.popup_alert('Please select an invoice.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        pass
+
+    def print_selected_tags(self, *args, **kwargs):
+        print(self.selected_tags_list)
+        if self.selected_tags_list:
+            customers = User()
+            custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+            if custs:
+                for user in custs:
+                    customers.id = user['id']
+                    customers.user_id = user['user_id']
+                    customers.company_id = user['company_id']
+                    customers.username = user['username']
+                    customers.first_name = user['first_name']
+                    customers.last_name = user['last_name']
+                    customers.street = user['street']
+                    customers.suite = user['suite']
+                    customers.city = user['city']
+                    customers.state = user['state']
+                    customers.zipcode = user['zipcode']
+                    customers.email = user['email']
+                    customers.phone = user['phone']
+                    customers.intercom = user['intercom']
+                    customers.concierge_name = user['concierge_name']
+                    customers.concierge_number = user['concierge_number']
+                    customers.special_instructions = user['special_instructions']
+                    customers.shirt_old = user['shirt_old']
+                    customers.shirt = user['shirt']
+                    customers.delivery = user['delivery']
+                    customers.profile_id = user['profile_id']
+                    customers.payment_status = user['payment_status']
+                    customers.payment_id = user['payment_id']
+                    customers.token = user['token']
+                    customers.api_token = user['api_token']
+                    customers.reward_status = user['reward_status']
+                    customers.reward_points = user['reward_points']
+                    customers.account = user['account']
+                    customers.starch = user['starch']
+                    customers.important_memo = user['important_memo']
+                    customers.invoice_memo = user['invoice_memo']
+                    customers.password = user['password']
+                    customers.role_id = user['role_id']
+                    customers.remember_token = user['remember_token']
+            invoice_id_str = str(vars.INVOICE_ID)
+            invs = Invoice().where({'invoice_id': vars.INVOICE_ID})
+            due_date = 'SUN'
+            if invs:
+                for inv in invs:
+                    dt = datetime.datetime.strptime(inv['due_date'], "%Y-%m-%d %H:%M:%S")
+                    due_date = dt.strftime('%a').upper()
+            invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
+            text_left = "{} {}".format(invoice_last_four,
+                                       due_date)
+            text_right = "{} {}".format(due_date,
+                                        invoice_last_four)
+            text_name = "{}, {}".format(customers.last_name.upper(),
+                                        customers.first_name.upper()[:1])
+            phone_number = Job.make_us_phone(customers.phone)
+            total_length = 32
+            text_offset = total_length - len(text_name) - len(phone_number)
+            name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
+                                                 phone_number)
+            if vars.BIXOLON:
+                vars.BIXOLON.hw('RESET')
+                vars.BIXOLON.text('\x1b\x40')
+                vars.BIXOLON.text('\x1b\x6d')
+                print('next step')
+                laundry_to_print = []
+                for item_id in self.selected_tags_list:
+
+                    inv_items = InvoiceItem().where({'invoice_items_id': item_id})
+                    if inv_items:
+                        for ii in inv_items:
+                            iitem_id = ii['item_id']
+                            tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                            item_name = InventoryItem().getItemName(iitem_id)
+                            item_color = ii['color']
+                            invoice_item_id = ii['invoice_items_id']
+                            laundry_tag = InventoryItem().getLaundry(iitem_id)
+                            memo_string = ii['memo']
+                            if laundry_tag:
+                                laundry_to_print.append(invoice_item_id)
+                            else:
+
+                                for _ in range(tags_to_print):
+
+                                    vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                                    vars.BIXOLON.text('{}{}\n'.format(text_left, text_right))
+                                    vars.BIXOLON.hw('RESET')
+                                    vars.BIXOLON.text('\x1b!\x00')
+                                    vars.BIXOLON.text(name_number_string)
+                                    vars.BIXOLON.text('\n')
+                                    vars.BIXOLON.text('{0:06d}'.format(int(invoice_item_id)))
+                                    vars.BIXOLON.text(' {} {}'.format(item_name, item_color))
+                                    if memo_string:
+                                        vars.BIXOLON.text('\n{}'.format(memo_string))
+                                        memo_len = '\n\n\n' if len(
+                                            memo_string) <= 32 else '\n\n\n' + '\n' * int(
+                                            (len(memo_string)) / 32)
+                                        vars.BIXOLON.text(memo_len)
+                                        vars.BIXOLON.text('\x1b\x6d')
+
+                                    else:
+
+                                        vars.BIXOLON.text('\n\n\n')
+                                        vars.BIXOLON.text('\x1b\x6d')
+            if len(laundry_to_print) is 0:
+                # FINAL CUT
+                vars.BIXOLON.hw('RESET')
+                vars.BIXOLON.cut()
+            else:
+                laundry_count = len(laundry_to_print)
+                shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                name_text_offset = total_length - len(text_name) - len(text_name)
+                shirt_mark_length = len(shirt_mark)
+                mark_text_offset = 16 - (shirt_mark_length * 2)
+                for i in range(0, laundry_count, 2):
+                    start = i
+                    end = i + 1
+
+                    invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
+
+                    id_offset = total_length - 12
+
+                    try:
+                        invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
+                        name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
+                        mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
+                        id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset, invoice_item_id_end)
+
+                    except IndexError:
+                        name_name_string = '{}'.format(text_name)
+                        mark_mark_string = '{}'.format(shirt_mark)
+                        id_id_string = '{}'.format(invoice_item_id_start)
+
+                    vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                    vars.BIXOLON.text(mark_mark_string)
+                    vars.BIXOLON.text('\n')
+                    vars.BIXOLON.hw('RESET')
+                    vars.BIXOLON.text('\x1b!\x00')
+                    vars.BIXOLON.text(name_name_string)
+                    vars.BIXOLON.text('\n')
+                    vars.BIXOLON.text(id_id_string)
+
+                    vars.BIXOLON.text('\n\n\n\x1b\x6d')
+
+                # FINAL CUT
+                vars.BIXOLON.hw('RESET')
+                vars.BIXOLON.cut()
+        else:
+            popup = Popup()
+            popup.title = 'Reprint Error'
+            content = KV.popup_alert('Please select an invoice item to print tag.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
 
 
 class InventoriesScreen(Screen):
@@ -8673,7 +9184,6 @@ class PickupScreen(Screen):
                 for grp in get_root_payment:
                     self.run_edit_task(grp)
 
-
             # save to server
             run_sync = threading.Thread(target=SYNC.run_sync)
             try:
@@ -9115,7 +9625,7 @@ class PickupScreen(Screen):
             cash_layout.add_widget(cash_inner_layout_2)
             inner_layout_1.add_widget(cash_layout)
             pass
-        elif self.payment_tyoe == 'ch':
+        elif self.payment_type == 'ch':
             inner_layout_1.add_widget(button_1)
             inner_layout_1.add_widget(button_2)
         else:
@@ -9973,6 +10483,8 @@ class SearchScreen(Screen):
     calculator_control_table = ObjectProperty(None)
     calc_history = []
     calc_amount = []
+    tags_grid = ObjectProperty(None)
+    selected_tags_list = []
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
@@ -9981,6 +10493,7 @@ class SearchScreen(Screen):
         self.quick_box = None
         self.calc_history = []
         self.calc_amount = []
+        self.selected_tags_list = []
 
         if vars.SEARCH_RESULTS_STATUS:
 
@@ -11432,7 +11945,426 @@ class SearchScreen(Screen):
             popup.open()
 
     def reprint_tags(self, *args, **kwargs):
-        print('here')
+        popup = Popup()
+        popup.title = 'Tag Reprint'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = BoxLayout(orientation='vertical',
+                                   size_hint=(1, 0.9))
+        self.tags_grid = Factory.TagsGrid()
+        invitems = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
+        if invitems:
+            for ii in invitems:
+                invoice_items_id = ii['invoice_items_id']
+                iitem_id = ii['item_id']
+                tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                item_name = InventoryItem().getItemName(iitem_id)
+                item_color = ii['color']
+                item_memo = ii['memo']
+                trtd1 = Button(text=str(invoice_items_id),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                trtd2 = Button(text=str(item_name),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                trtd3 = Button(text=str(item_color),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                trtd4 = Button(text=str(item_memo),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                trtd5 = Button(text=str(tags_to_print),
+                               on_release=partial(self.select_tag, invoice_items_id))
+                self.tags_grid.ids.tags_table.add_widget(trtd1)
+                self.tags_grid.ids.tags_table.add_widget(trtd2)
+                self.tags_grid.ids.tags_table.add_widget(trtd3)
+                self.tags_grid.ids.tags_table.add_widget(trtd4)
+                self.tags_grid.ids.tags_table.add_widget(trtd5)
+        inner_layout_1.add_widget(self.tags_grid)
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(text="Cancel",
+                               on_release=popup.dismiss)
+        print_all_button = Button(text="Print All",
+                                  on_press=popup.dismiss,
+                                  on_release=self.print_all_tags)
+        print_selected_button = Button(text="Print Selected",
+                                       on_press=popup.dismiss,
+                                       on_release=self.print_selected_tags)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(print_all_button)
+        inner_layout_2.add_widget(print_selected_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def select_tag(self, item_id, *args, **kwargs):
+
+        if item_id in self.selected_tags_list:
+            # remove the tag
+            self.selected_tags_list.remove(item_id)
+        else:
+            # add the tag
+            self.selected_tags_list.append(item_id)
+
+        self.tags_grid.ids.tags_table.clear_widgets()
+        th1 = Factory.TagsGridHeaders(text="[color=#000000]ID[/color]")
+        th2 = Factory.TagsGridHeaders(text="[color=#000000]Item[/color]")
+        th3 = Factory.TagsGridHeaders(text="[color=#000000]Color[/color]")
+        th4 = Factory.TagsGridHeaders(text="[color=#000000]Memo[/color]")
+        th5 = Factory.TagsGridHeaders(text="[color=#000000]Tags[/color]")
+        self.tags_grid.ids.tags_table.add_widget(th1)
+        self.tags_grid.ids.tags_table.add_widget(th2)
+        self.tags_grid.ids.tags_table.add_widget(th3)
+        self.tags_grid.ids.tags_table.add_widget(th4)
+        self.tags_grid.ids.tags_table.add_widget(th5)
+        invitems = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
+        if invitems:
+            for ii in invitems:
+                invoice_items_id = ii['invoice_items_id']
+                iitem_id = ii['item_id']
+                tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                item_name = InventoryItem().getItemName(iitem_id)
+                item_color = ii['color']
+                item_memo = ii['memo']
+                if invoice_items_id in self.selected_tags_list:
+                    trtd1 = Factory.TagsSelectedButton(text=str(invoice_items_id),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                    trtd2 = Factory.TagsSelectedButton(text=str(item_name),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                    trtd3 = Factory.TagsSelectedButton(text=str(item_color),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                    trtd4 = Factory.TagsSelectedButton(text=str(item_memo),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                    trtd5 = Factory.TagsSelectedButton(text=str(tags_to_print),
+                                                       on_release=partial(self.select_tag, invoice_items_id))
+                else:
+                    trtd1 = Button(text=str(invoice_items_id),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                    trtd2 = Button(text=str(item_name),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                    trtd3 = Button(text=str(item_color),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                    trtd4 = Button(text=str(item_memo),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                    trtd5 = Button(text=str(tags_to_print),
+                                   on_release=partial(self.select_tag, invoice_items_id))
+                self.tags_grid.ids.tags_table.add_widget(trtd1)
+                self.tags_grid.ids.tags_table.add_widget(trtd2)
+                self.tags_grid.ids.tags_table.add_widget(trtd3)
+                self.tags_grid.ids.tags_table.add_widget(trtd4)
+                self.tags_grid.ids.tags_table.add_widget(trtd5)
+
+        pass
+
+    def print_all_tags(self, *args, **kwargs):
+        if vars.INVOICE_ID:
+            customers = User()
+            custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+            if custs:
+                for user in custs:
+                    customers.id = user['id']
+                    customers.user_id = user['user_id']
+                    customers.company_id = user['company_id']
+                    customers.username = user['username']
+                    customers.first_name = user['first_name']
+                    customers.last_name = user['last_name']
+                    customers.street = user['street']
+                    customers.suite = user['suite']
+                    customers.city = user['city']
+                    customers.state = user['state']
+                    customers.zipcode = user['zipcode']
+                    customers.email = user['email']
+                    customers.phone = user['phone']
+                    customers.intercom = user['intercom']
+                    customers.concierge_name = user['concierge_name']
+                    customers.concierge_number = user['concierge_number']
+                    customers.special_instructions = user['special_instructions']
+                    customers.shirt_old = user['shirt_old']
+                    customers.shirt = user['shirt']
+                    customers.delivery = user['delivery']
+                    customers.profile_id = user['profile_id']
+                    customers.payment_status = user['payment_status']
+                    customers.payment_id = user['payment_id']
+                    customers.token = user['token']
+                    customers.api_token = user['api_token']
+                    customers.reward_status = user['reward_status']
+                    customers.reward_points = user['reward_points']
+                    customers.account = user['account']
+                    customers.starch = user['starch']
+                    customers.important_memo = user['important_memo']
+                    customers.invoice_memo = user['invoice_memo']
+                    customers.password = user['password']
+                    customers.role_id = user['role_id']
+                    customers.remember_token = user['remember_token']
+            invoice_id_str = str(vars.INVOICE_ID)
+            invs = Invoice().where({'invoice_id': vars.INVOICE_ID})
+            due_date = 'SUN'
+            if invs:
+                for inv in invs:
+                    dt = datetime.datetime.strptime(inv['due_date'], "%Y-%m-%d %H:%M:%S")
+                    due_date = dt.strftime('%a').upper()
+            invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
+            text_left = "{} {}".format(invoice_last_four,
+                                       due_date)
+            text_right = "{} {}".format(due_date,
+                                        invoice_last_four)
+            text_name = "{}, {}".format(customers.last_name.upper(),
+                                        customers.first_name.upper()[:1])
+            phone_number = Job.make_us_phone(customers.phone)
+            total_length = 32
+            text_offset = total_length - len(text_name) - len(phone_number)
+            name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
+                                                 phone_number)
+
+            print('next step')
+            invoice_items = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
+            vars.BIXOLON.hw('RESET')
+            vars.BIXOLON.text('\x1b\x40')
+            vars.BIXOLON.text('\x1b\x6d')
+            laundry_to_print = []
+            if invoice_items:
+
+                for ii in invoice_items:
+
+                    iitem_id = ii['item_id']
+                    tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                    item_name = InventoryItem().getItemName(iitem_id)
+                    item_color = ii['color']
+                    invoice_item_id = ii['invoice_items_id']
+                    laundry_tag = InventoryItem().getLaundry(iitem_id)
+                    memo_string = ii['memo']
+                    if laundry_tag:
+                        laundry_to_print.append(invoice_item_id)
+                    else:
+                        for _ in range(tags_to_print):
+
+                            vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                            vars.BIXOLON.text('{}{}\n'.format(text_left, text_right))
+                            vars.BIXOLON.hw('RESET')
+                            vars.BIXOLON.text('\x1b!\x00')
+                            vars.BIXOLON.text(name_number_string)
+                            vars.BIXOLON.text('\n')
+                            vars.BIXOLON.text('{0:06d}'.format(int(invoice_item_id)))
+                            vars.BIXOLON.text(' {} {}'.format(item_name, item_color))
+                            if memo_string:
+                                vars.BIXOLON.text('\n{}'.format(memo_string))
+                                memo_len = '\n\n\n' if len(
+                                    memo_string) <= 32 else '\n\n\n' + '\n' * int(
+                                    (len(memo_string)) / 32)
+                                vars.BIXOLON.text(memo_len)
+                                vars.BIXOLON.text('\x1b\x6d')
+
+                            else:
+
+                                vars.BIXOLON.text('\n\n\n')
+                                vars.BIXOLON.text('\x1b\x6d')
+                        # FINAL CUT
+                        vars.BIXOLON.hw('RESET')
+                        vars.BIXOLON.cut()
+            if len(laundry_to_print) > 0:
+                laundry_count = len(laundry_to_print)
+                shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                name_text_offset = total_length - len(text_name) - len(text_name)
+                shirt_mark_length = len(shirt_mark)
+                mark_text_offset = 16 - (shirt_mark_length * 2)
+                for i in range(0, laundry_count, 2):
+                    start = i
+                    end = i + 1
+
+                    invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
+
+                    id_offset = total_length - 12
+
+                    try:
+                        invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
+                        name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
+                        mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
+                        id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset, invoice_item_id_end)
+
+                    except IndexError:
+                        name_name_string = '{}'.format(text_name)
+                        mark_mark_string = '{}'.format(shirt_mark)
+                        id_id_string = '{}'.format(invoice_item_id_start)
+
+                    vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                    vars.BIXOLON.text(mark_mark_string)
+                    vars.BIXOLON.text('\n')
+                    vars.BIXOLON.hw('RESET')
+                    vars.BIXOLON.text('\x1b!\x00')
+                    vars.BIXOLON.text(name_name_string)
+                    vars.BIXOLON.text('\n')
+                    vars.BIXOLON.text(id_id_string)
+
+                    vars.BIXOLON.text('\n\n\n\x1b\x6d')
+
+                # FINAL CUT
+                vars.BIXOLON.hw('RESET')
+                vars.BIXOLON.cut()
+
+        else:
+            popup = Popup()
+            popup.title = 'Reprint Error'
+            content = KV.popup_alert('Please select an invoice.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        pass
+
+    def print_selected_tags(self, *args, **kwargs):
+        print(self.selected_tags_list)
+        if self.selected_tags_list:
+            customers = User()
+            custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+            if custs:
+                for user in custs:
+                    customers.id = user['id']
+                    customers.user_id = user['user_id']
+                    customers.company_id = user['company_id']
+                    customers.username = user['username']
+                    customers.first_name = user['first_name']
+                    customers.last_name = user['last_name']
+                    customers.street = user['street']
+                    customers.suite = user['suite']
+                    customers.city = user['city']
+                    customers.state = user['state']
+                    customers.zipcode = user['zipcode']
+                    customers.email = user['email']
+                    customers.phone = user['phone']
+                    customers.intercom = user['intercom']
+                    customers.concierge_name = user['concierge_name']
+                    customers.concierge_number = user['concierge_number']
+                    customers.special_instructions = user['special_instructions']
+                    customers.shirt_old = user['shirt_old']
+                    customers.shirt = user['shirt']
+                    customers.delivery = user['delivery']
+                    customers.profile_id = user['profile_id']
+                    customers.payment_status = user['payment_status']
+                    customers.payment_id = user['payment_id']
+                    customers.token = user['token']
+                    customers.api_token = user['api_token']
+                    customers.reward_status = user['reward_status']
+                    customers.reward_points = user['reward_points']
+                    customers.account = user['account']
+                    customers.starch = user['starch']
+                    customers.important_memo = user['important_memo']
+                    customers.invoice_memo = user['invoice_memo']
+                    customers.password = user['password']
+                    customers.role_id = user['role_id']
+                    customers.remember_token = user['remember_token']
+            invoice_id_str = str(vars.INVOICE_ID)
+            invs = Invoice().where({'invoice_id': vars.INVOICE_ID})
+            due_date = 'SUN'
+            if invs:
+                for inv in invs:
+                    dt = datetime.datetime.strptime(inv['due_date'], "%Y-%m-%d %H:%M:%S")
+                    due_date = dt.strftime('%a').upper()
+            invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
+            text_left = "{} {}".format(invoice_last_four,
+                                       due_date)
+            text_right = "{} {}".format(due_date,
+                                        invoice_last_four)
+            text_name = "{}, {}".format(customers.last_name.upper(),
+                                        customers.first_name.upper()[:1])
+            phone_number = Job.make_us_phone(customers.phone)
+            total_length = 32
+            text_offset = total_length - len(text_name) - len(phone_number)
+            name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
+                                                 phone_number)
+            if vars.BIXOLON:
+                vars.BIXOLON.hw('RESET')
+                vars.BIXOLON.text('\x1b\x40')
+                vars.BIXOLON.text('\x1b\x6d')
+                print('next step')
+                laundry_to_print = []
+                for item_id in self.selected_tags_list:
+
+                    inv_items = InvoiceItem().where({'invoice_items_id': item_id})
+                    if inv_items:
+                        for ii in inv_items:
+                            iitem_id = ii['item_id']
+                            tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                            item_name = InventoryItem().getItemName(iitem_id)
+                            item_color = ii['color']
+                            invoice_item_id = ii['invoice_items_id']
+                            laundry_tag = InventoryItem().getLaundry(iitem_id)
+                            memo_string = ii['memo']
+                            if laundry_tag:
+                                laundry_to_print.append(invoice_item_id)
+                            else:
+
+                                for _ in range(tags_to_print):
+
+                                    vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                                    vars.BIXOLON.text('{}{}\n'.format(text_left, text_right))
+                                    vars.BIXOLON.hw('RESET')
+                                    vars.BIXOLON.text('\x1b!\x00')
+                                    vars.BIXOLON.text(name_number_string)
+                                    vars.BIXOLON.text('\n')
+                                    vars.BIXOLON.text('{0:06d}'.format(int(invoice_item_id)))
+                                    vars.BIXOLON.text(' {} {}'.format(item_name, item_color))
+                                    if memo_string:
+                                        vars.BIXOLON.text('\n{}'.format(memo_string))
+                                        memo_len = '\n\n\n' if len(
+                                            memo_string) <= 32 else '\n\n\n' + '\n' * int(
+                                            (len(memo_string)) / 32)
+                                        vars.BIXOLON.text(memo_len)
+                                        vars.BIXOLON.text('\x1b\x6d')
+
+                                    else:
+
+                                        vars.BIXOLON.text('\n\n\n')
+                                        vars.BIXOLON.text('\x1b\x6d')
+            if len(laundry_to_print) is 0:
+                # FINAL CUT
+                vars.BIXOLON.hw('RESET')
+                vars.BIXOLON.cut()
+            else:
+                laundry_count = len(laundry_to_print)
+                shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                name_text_offset = total_length - len(text_name) - len(text_name)
+                shirt_mark_length = len(shirt_mark)
+                mark_text_offset = 16 - (shirt_mark_length * 2)
+                for i in range(0, laundry_count, 2):
+                    start = i
+                    end = i + 1
+
+                    invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
+
+                    id_offset = total_length - 12
+
+                    try:
+                        invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
+                        name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
+                        mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
+                        id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset, invoice_item_id_end)
+
+                    except IndexError:
+                        name_name_string = '{}'.format(text_name)
+                        mark_mark_string = '{}'.format(shirt_mark)
+                        id_id_string = '{}'.format(invoice_item_id_start)
+
+                    vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                    vars.BIXOLON.text(mark_mark_string)
+                    vars.BIXOLON.text('\n')
+                    vars.BIXOLON.hw('RESET')
+                    vars.BIXOLON.text('\x1b!\x00')
+                    vars.BIXOLON.text(name_name_string)
+                    vars.BIXOLON.text('\n')
+                    vars.BIXOLON.text(id_id_string)
+
+                    vars.BIXOLON.text('\n\n\n\x1b\x6d')
+
+                # FINAL CUT
+                vars.BIXOLON.hw('RESET')
+                vars.BIXOLON.cut()
+        else:
+            popup = Popup()
+            popup.title = 'Reprint Error'
+            content = KV.popup_alert('Please select an invoice item to print tag.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
 
     def calculator_popup(self):
         popup = Popup()
@@ -11519,8 +12451,8 @@ class SearchScreen(Screen):
                               text="[color=#FF0000]C[/color]",
                               on_release=self.calc_clear)
         equals_button = Button(markup=True,
-                              text="[color=#e5e5e5][b]=[/b][/color]",
-                              on_release=self.calc_update)
+                               text="[color=#e5e5e5][b]=[/b][/color]",
+                               on_release=self.calc_update)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(clear_button)
         inner_layout_2.add_widget(equals_button)
@@ -11574,6 +12506,7 @@ class SearchScreen(Screen):
                     total /= value
         self.display_input.text = str(total)
         pass
+
     def calc_clear(self, *args, **kwargs):
         self.calc_amount = []
         self.calc_history = []
@@ -11759,11 +12692,173 @@ class TaxesScreen(Screen):
             self.tax_rate_input.hint_text_color = ERROR_COLOR
 
 
+class UpdateScreen(Screen):
+    item_name = ObjectProperty(None)
+    item_color = ObjectProperty(None)
+    item_memo = ObjectProperty(None)
+    item_pretax = ObjectProperty(None)
+    item_tax = ObjectProperty(None)
+    item_total = ObjectProperty(None)
+    search_input = ObjectProperty(None)
+    company_select = ObjectProperty(None)
+    location_select = ObjectProperty(None)
+    company_id = None
+    new_pretax = []
+    new_total = []
+    invoice_id = None
+
+    def reset(self):
+        self.search_input.text = ''
+        self.company_select.text = "Store Name"
+        self.company_select.values = Company().prepareCompanyList()
+        self.location_select.text = "Select Last Scanned"
+        self.location_select.values = InvoiceItem().prepareLocationList()
+        self.item_name.text = ''
+        self.item_color.text = ''
+        self.item_memo.text = ''
+        self.item_pretax.text = ''
+        self.item_tax.text = ''
+        self.item_total.text = ''
+        self.invoice_id = ''
+        self.new_pretax = []
+        self.new_total = []
+        self.company_id = None
+        pass
+
+    def search(self):
+        invitems = InvoiceItem().where({'invoice_items_id': self.search_input.text})
+        if invitems:
+            for invitem in invitems:
+                item_id = invitem['item_id']
+                company_id = invitem['company_id']
+                self.invoice_id = invitem['invoice_id']
+                self.company_id = company_id
+                companies = Company().where({'company_id': company_id})
+                if companies:
+                    for company in companies:
+                        company_name = company['name']
+                else:
+                    company_name = 'Store Name'
+                location = int(invitem['status']) - 1
+                locations = InvoiceItem().prepareLocationList()
+                location_name = locations[location]
+                item_name = InventoryItem().getItemName(item_id)
+                self.company_select.text = company_name
+                self.company_select.values = Company().prepareCompanyList()
+                self.location_select.text = location_name
+                self.location_select.values = locations
+                self.item_name.text = item_name
+                self.item_color.text = invitem['color'] if invitem['color'] else ''
+                self.item_memo.text = invitem['memo'] if invitem['memo'] else ''
+                self.item_pretax.text = str('{:,.2f}'.format(invitem['pretax']))
+                self.new_pretax = list(str(int(invitem['pretax'] * 100)))
+                self.item_tax.text = str('{:,.2f}'.format(invitem['tax']))
+                self.item_total.text = str('{:,.2f}'.format(invitem['total']))
+                self.new_total = list(str(int(invitem['total'] * 100)))
+        else:
+            popup = Popup()
+            popup.title = 'No Such Invoice Item'
+            content = KV.popup_alert('Could not find any invoice item with that id. Please try again')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+            self.reset()
+        pass
+
+    def update_total(self):
+        try:
+            p = float(re.sub('[^0-9]', '', self.item_pretax.text))
+        except ValueError:
+            p = 0
+        pretax = p / 100 if p > 0 else 0
+        tax_rate = Tax().getTaxRate(self.company_id)
+        tax = '{:.2f}'.format(round(pretax * tax_rate, 2))
+        total = '{:.2f}'.format(round(pretax * (1 + tax_rate), 2))
+        self.item_tax.text = str(tax)
+        self.item_total.text = str(total)
+
+        pass
+
+    def update_pretax(self):
+
+        try:
+            t = float(re.sub('[^0-9]', '', self.item_total.text))
+        except ValueError:
+            t = 0
+        total = t / 100 if t > 0 else 0
+        tax_rate = Tax().getTaxRate(self.company_id)
+        pretax = '{:.2f}'.format(round(total / (1 + tax_rate), 2))
+        tax = '{:.2f}'.format(round(total - float(pretax), 2))
+        self.item_tax.text = str(tax)
+        self.item_pretax.text = str(pretax)
+
+        pass
+
+    def clear_pretax(self):
+        self.item_pretax.text = ''
+        self.new_pretax = []
+
+    def clear_total(self):
+        self.item_total.text = ''
+        self.new_total = []
+
+    def update_inventory_item(self):
+        invoice_items = InvoiceItem()
+        tax_rate = Tax().getTaxRate(self.company_id)
+        # get the location status
+        location_selected = invoice_items.prepareLocationStatus(self.location_select.text)
+        print(location_selected)
+        data = {
+            'company_id': self.company_id,
+            'status': location_selected,
+            'pretax': self.item_pretax.text,
+            'tax': self.item_tax.text,
+            'total': self.item_total.text,
+            'memo': self.item_memo.text,
+            'color': self.item_color.text
+        }
+        where = {
+            'invoice_items_id': str(self.search_input.text)
+        }
+        if invoice_items.put(where=where, data=data):
+            invoices = Invoice()
+            # get the invoice totals from the invoice items
+            pretax = invoice_items.sum(column='pretax',
+                                       where={'invoice_items_id': self.search_input.text})
+            if pretax:
+                # calculate the tax
+                tax = '{:.2f}'.format(round(pretax * tax_rate, 2))
+                # calculate the total
+                total = '{:.2f}'.format(round(pretax * (1 + tax_rate), 2))
+                data = {'pretax':pretax,
+                        'tax':tax,
+                        'total':total}
+                where = {'invoice_id':self.invoice_id}
+                if invoices.put(where=where,data=data):
+                    #reset the data form
+                    self.reset()
+                    # synch the database
+                    vars.WORKLIST.append("Sync")
+                    threads_start()
+                    #alert the user
+                    popup = Popup()
+                    popup.title = 'Update Invoice Item Success'
+                    content = KV.popup_alert('Successfully updated the invoice item.')
+                    popup.content = Builder.load_string(content)
+                    popup.open()
+                    # Beep Sound
+                    sys.stdout.write('\a')
+                    sys.stdout.flush()
+
+        pass
+
+
 class ScreenManagement(ScreenManager):
     pass
 
 
-# load kv files
 presentation = Builder.load_file("./kv/main.kv")
 
 

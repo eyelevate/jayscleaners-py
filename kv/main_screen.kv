@@ -8,6 +8,7 @@
     dropoff_button: dropoff_button
     update_button: update_button
     login_button: login_button
+    item_search_button: item_search_button
 
     ActionBar:
         id: _action_main
@@ -30,11 +31,13 @@
                     on_release: app.get_running_app().stop()
 
     GridLayout:
-        cols: 2
+        cols: 1
+        rows: 2
         size_hint: 1,0.8
         pos_hint: {'top':0.9}
         GridLayout:
-            cols: 2
+            cols: 3
+            rows: 2
             size_hint_y: 3
             Button:
                 id: settings_button
@@ -51,7 +54,13 @@
                 underline:True
                 disabled: True
                 font_size:'20sp'
-
+            Button:
+                id: dropoff_button
+                disabled: True
+                font_size:'20sp'
+                on_press: app.root.current = "search"
+                on_release: root.db_sync()
+                text: "Drop / Pickup"
             Button:
                 id: delivery_button
                 on_release: root.delivery_page()
@@ -67,14 +76,13 @@
                 font_size:'20sp'
                 on_release: root.login_show()
 
-        Button:
-            id: dropoff_button
-            disabled: True
-            font_size:'20sp'
-            on_press: app.root.current = "search"
-            on_release: root.db_sync()
-            text: "Drop / Pickup"
-
+            Button:
+                id: item_search_button
+                disabled: True
+                text: "Invoice Item Update"
+                font_size: '20sp'
+                on_press: app.root.current = "update"
+                on_release: root.db_sync()
     Button:
         id: update_button
         text:"Update"

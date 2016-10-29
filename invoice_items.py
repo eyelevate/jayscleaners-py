@@ -257,6 +257,24 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
         else:
             return False
 
+    def sum(self, column, where, deleted_at = False):
+        sql = '''SELECT SUM({}) FROM {} WHERE '''.format(column, table)
+        if where:
+            for key, value in where.items():
+                sql += '{} = {}'.format(key, value)
+        sql += ' AND deleted_at is null' if deleted_at else ''
+
+        self.c.execute(sql)
+        self.conn.commit()
+
+        totals = self.c.fetchall()
+        if totals:
+            for total in totals:
+                return total['SUM(pretax)']
+        else:
+            return False
+
+
     def delete(self):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -297,6 +315,42 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
                 return id
         else:
             return False
+
+    def prepareLocationList(self):
+        list = [
+            'Accepted',
+            'In Dry Clean',
+            'In Wash',
+            'In Press - Shirts',
+            'In Press - Pants',
+            'In Press - Blouse',
+            'In Press - Touch Up',
+            'In Spotting',
+            'In Assembly',
+            'In Bagging',
+            'Racked',
+            'In Delivery',
+            'Complete'
+        ]
+        return list
+
+    def prepareLocationStatus(self, location):
+        list = {
+            'Accepted':1,
+            'In Dry Clean':2,
+            'In Wash':3,
+            'In Press - Shirts':4,
+            'In Press - Pants':5,
+            'In Press - Blouse':6,
+            'In Press - Touch Up':7,
+            'In Spotting':8,
+            'In Assembly':9,
+            'In Bagging':10,
+            'Racked':11,
+            'In Delivery':12,
+            'Complete':13
+        }
+        return list[location]
 
     def close_connection(self):
         self.c.close()
