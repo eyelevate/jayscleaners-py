@@ -12809,7 +12809,6 @@ class UpdateScreen(Screen):
         tax_rate = Tax().getTaxRate(self.company_id)
         # get the location status
         location_selected = invoice_items.prepareLocationStatus(self.location_select.text)
-        print(location_selected)
         data = {
             'company_id': self.company_id,
             'status': location_selected,
@@ -12839,7 +12838,7 @@ class UpdateScreen(Screen):
                 if invoices.put(where=where,data=data):
                     #reset the data form
                     self.reset()
-                    # synch the database
+                    # sync the database
                     vars.WORKLIST.append("Sync")
                     threads_start()
                     #alert the user
