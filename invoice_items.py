@@ -14,6 +14,7 @@ class InvoiceItem:
     invoice_items_id = None
     invoice_id = None
     item_id = None
+    inventory_id = None
     company_id = None
     customer_id = None
     quantity = None
@@ -42,6 +43,7 @@ class InvoiceItem:
                                   IntegerField(column='invoice_items_id').data_type(),
                                   IntegerField(column='invoice_id').data_type(),
                                   IntegerField(column='item_id').data_type(),
+                                  IntegerField(column='inventory_id').data_type(),
                                   IntegerField(column='company_id').data_type(),
                                   IntegerField(column='customer_id').data_type(),
                                   IntegerField(column='quantity').data_type(),
@@ -64,28 +66,29 @@ class InvoiceItem:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.created_at = now
-        self.c.execute('''INSERT INTO {t}(invoice_items_id,invoice_id,item_id,company_id,customer_id,quantity,color,memo,
-pretax,tax,total,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table),
-                       (self.invoice_items_id,
-                        self.invoice_id,
-                        self.item_id,
-                        self.company_id,
-                        self.customer_id,
-                        self.quantity,
-                        self.color,
-                        self.memo,
-                        self.pretax,
-                        self.tax,
-                        self.total,
-                        self.status,
-                        self.created_at,
-                        self.updated_at)
+        self.c.execute('''INSERT INTO {t}(invoice_items_id,invoice_id,item_id,inventory_id,company_id,customer_id,
+quantity,color,memo, pretax,tax,total,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_items_id,
+                                                           self.invoice_id,
+                                                           self.item_id,
+                                                           self.inventory_id,
+                                                           self.company_id,
+                                                           self.customer_id,
+                                                           self.quantity,
+                                                           self.color,
+                                                           self.memo,
+                                                           self.pretax,
+                                                           self.tax,
+                                                           self.total,
+                                                           self.status,
+                                                           self.created_at,
+                                                           self.updated_at)
                        )
 
         self.conn.commit()
         return True
 
-    def put(self, where = False, data = False):
+    def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
@@ -116,22 +119,23 @@ pretax,tax,total,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
-        self.c.execute('''UPDATE {t} SET invoice_items_id = ?, invoice_id = ?, item_id = ?, company_id = ?, customer_id = ?,
-quantity = ?, color = ?, memo = ?, pretax = ?, tax = ?, total = ?, status = ?, updated_at = ?
-WHERE id = ?'''.format(t=table), (self.invoice_items_id,
-                                  self.invoice_id,
-                                  self.item_id,
-                                  self.company_id,
-                                  self.customer_id,
-                                  self.quantity,
-                                  self.color,
-                                  self.memo,
-                                  self.pretax,
-                                  self.tax,
-                                  self.total,
-                                  self.status,
-                                  self.updated_at,
-                                  self.id)
+        self.c.execute('''UPDATE {t} SET invoice_items_id = ?, invoice_id = ?, item_id = ?, inventory_id = ?,
+company_id = ?, customer_id = ?, quantity = ?, color = ?, memo = ?, pretax = ?, tax = ?, total = ?, status = ?,
+updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_items_id,
+                                                 self.invoice_id,
+                                                 self.item_id,
+                                                 self.inventory_id,
+                                                 self.company_id,
+                                                 self.customer_id,
+                                                 self.quantity,
+                                                 self.color,
+                                                 self.memo,
+                                                 self.pretax,
+                                                 self.tax,
+                                                 self.total,
+                                                 self.status,
+                                                 self.updated_at,
+                                                 self.id)
                        )
 
         self.conn.commit()
@@ -257,7 +261,7 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
         else:
             return False
 
-    def sum(self, column, where, deleted_at = False):
+    def sum(self, column, where, deleted_at=False):
         sql = '''SELECT SUM({}) FROM {} WHERE '''.format(column, table)
         if where:
             for key, value in where.items():
@@ -273,7 +277,6 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
                 return total['SUM(pretax)']
         else:
             return False
-
 
     def delete(self):
         unix = time.time()
@@ -296,19 +299,19 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
 
     def total_tags(self, invoice_id):
         total = 0
-        invoice_items = self.where({'invoice_id':invoice_id})
+        invoice_items = self.where({'invoice_id': invoice_id})
         if invoice_items:
             for invoice_item in invoice_items:
                 item_id = invoice_item['item_id']
-                inventory_items = InventoryItem().where({'item_id':item_id})
+                inventory_items = InventoryItem().where({'item_id': item_id})
                 if inventory_items:
                     for inventory_item in inventory_items:
                         tags = int(inventory_item['tags']) if inventory_item['tags'] else 1
                         total += tags
         return total
 
-    def get_id(self,invoice_items_id):
-        invoice_items = self.where({'invoice_items_id':invoice_items_id})
+    def get_id(self, invoice_items_id):
+        invoice_items = self.where({'invoice_items_id': invoice_items_id})
         if invoice_items:
             for invoice_item in invoice_items:
                 id = invoice_item['id']
@@ -336,19 +339,19 @@ WHERE id = ?'''.format(t=table), (self.invoice_items_id,
 
     def prepareLocationStatus(self, location):
         list = {
-            'Accepted':1,
-            'In Dry Clean':2,
-            'In Wash':3,
-            'In Press - Shirts':4,
-            'In Press - Pants':5,
-            'In Press - Blouse':6,
-            'In Press - Touch Up':7,
-            'In Spotting':8,
-            'In Assembly':9,
-            'In Bagging':10,
-            'Racked':11,
-            'In Delivery':12,
-            'Complete':13
+            'Accepted': 1,
+            'In Dry Clean': 2,
+            'In Wash': 3,
+            'In Press - Shirts': 4,
+            'In Press - Pants': 5,
+            'In Press - Blouse': 6,
+            'In Press - Touch Up': 7,
+            'In Spotting': 8,
+            'In Assembly': 9,
+            'In Bagging': 10,
+            'Racked': 11,
+            'In Delivery': 12,
+            'Complete': 13
         }
         return list[location]
 

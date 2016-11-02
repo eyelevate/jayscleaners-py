@@ -301,6 +301,7 @@ def sync_from_server(data):
                 invoice_item.invoice_items_id = invoice_items['id']
                 invoice_item.invoice_id = invoice_items['invoice_id']
                 invoice_item.item_id = invoice_items['item_id']
+                invoice_item.inventory_id = invoice_items['inventory_id']
                 invoice_item.company_id = invoice_items['company_id']
                 invoice_item.customer_id = invoice_items['customer_id']
                 invoice_item.quantity = invoice_items['quantity']

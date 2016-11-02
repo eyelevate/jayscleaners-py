@@ -80,7 +80,7 @@ price,image,status,created_at,updated_at)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)'''.fo
         self.conn.commit()
         return True
 
-    def put(self, where = False, data = False):
+    def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
@@ -283,19 +283,19 @@ WHERE id = ?'''.format(t=table), (self.item_id,
 
     def get_image_src(self, item_id):
         src = 'src/imgs'
-        inventory_items = self.where({'item_id':item_id})
+        inventory_items = self.where({'item_id': item_id})
         if inventory_items:
             for inventory_item in inventory_items:
-                img = inventory_item['image'].replace('/',' ').split() if inventory_item['image'] else ['question.png']
-                img_src = '{}/{}'.format(src,img[-1])
+                img = inventory_item['image'].replace('/', ' ').split() if inventory_item['image'] else ['question.png']
+                img_src = '{}/{}'.format(src, img[-1])
 
         else:
-            img_src = '{}/{}'.format(src,'question.png')
+            img_src = '{}/{}'.format(src, 'question.png')
 
         return img_src
 
     def tagsToPrint(self, item_id):
-        iitems = self.where({'item_id':item_id})
+        iitems = self.where({'item_id': item_id})
         tags = 1
         if iitems:
             for item in iitems:
@@ -303,8 +303,17 @@ WHERE id = ?'''.format(t=table), (self.item_id,
 
         return int(tags)
 
+    def getInventoryId(self, item_id):
+        iitems = self.where({'item_id': item_id})
+        inventory_id = ''
+        if iitems:
+            for item in iitems:
+                inventory_id = item['inventory_id']
+
+        return inventory_id
+
     def getItemName(self, item_id):
-        iitems = self.where({'item_id':item_id})
+        iitems = self.where({'item_id': item_id})
         item_name = ''
         if iitems:
             for item in iitems:
@@ -313,14 +322,14 @@ WHERE id = ?'''.format(t=table), (self.item_id,
         return item_name
 
     def getLaundry(self, item_id):
-        iitems = self.where({'item_id':item_id})
+        iitems = self.where({'item_id': item_id})
         inventory_id = False
         if iitems:
             for item in iitems:
                 inventory_id = item['inventory_id']
 
         if inventory_id:
-            inventories = Inventory().where({'inventory_id':inventory_id})
+            inventories = Inventory().where({'inventory_id': inventory_id})
             if inventories:
                 for inventory in inventories:
                     return inventory['laundry']

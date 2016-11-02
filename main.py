@@ -2470,6 +2470,7 @@ GridLayout:
                             idx += 1
                             save_invoice_items[last_insert_id][idx]['status'] = 3
                             save_invoice_items[last_insert_id][idx]['invoice_id'] = last_insert_id
+                            save_invoice_items[last_insert_id][idx]['inventory_id'] = inventory_id
                             item_id = save_invoice_items[last_insert_id][idx]['item_id']
                             item_name = save_invoice_items[last_insert_id][idx]['item_name']
                             item_price = save_invoice_items[last_insert_id][idx]['item_price']
@@ -2563,6 +2564,7 @@ GridLayout:
                         new_invoice_item.customer_id = vars.CUSTOMER_ID
                         new_invoice_item.invoice_id = item['invoice_id']
                         new_invoice_item.item_id = item['item_id']
+                        new_invoice_item.inventory_id = item['inventory_id']
                         new_invoice_item.quantity = item['qty']
                         new_invoice_item.color = item['color']
                         new_invoice_item.memo = item['memo']
@@ -4482,6 +4484,7 @@ GridLayout:
                     tax = float('%.2f' % (pretax * vars.TAX_RATE))
                     total = float('%.2f' % (pretax * (1 + vars.TAX_RATE)))
                     item_id = iivalue['item_id']
+                    inventory_id = InventoryItem().getInventoryId(item_id)
                     item_name = iivalue['item_name']
                     item_price = iivalue['item_price']
                     item_type = iivalue['type']
@@ -4523,6 +4526,7 @@ GridLayout:
                         new_invoice_item.customer_id = vars.CUSTOMER_ID
                         new_invoice_item.invoice_id = vars.INVOICE_ID
                         new_invoice_item.item_id = iivalue['item_id']
+                        new_invoice_item.inventory_id = inventory_id if inventory_id else None
                         new_invoice_item.quantity = iivalue['qty']
                         new_invoice_item.color = iivalue['color'] if iivalue['color'] else None
                         new_invoice_item.memo = iivalue['memo'] if iivalue['memo'] else None
