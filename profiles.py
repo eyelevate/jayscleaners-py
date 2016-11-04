@@ -11,7 +11,6 @@ table = 'profiles'
 class Profile:
     id = None
     p_id = None
-    profile_id = None
     user_id = None
     company_id = None
     profile_id = None
@@ -32,7 +31,6 @@ class Profile:
     def create_table(self):
         table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
                                   IntegerField(column='p_id').data_type(),
-                                  IntegerField(column='profile_id').data_type(),
                                   IntegerField(column='user_id').data_type(),
                                   IntegerField(column='company_id').data_type(),
                                   IntegerField(column='profile_id').data_type(),
@@ -50,8 +48,8 @@ class Profile:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.created_at = now
-        self.c.execute('''INSERT INTO {t}(profile_id,user_id,company_id,profile_id,status,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.profile_id,
+        self.c.execute('''INSERT INTO {t}(p_id,user_id,company_id,profile_id,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.p_id,
                                            self.user_id,
                                            self.company_id,
                                            self.profile_id,

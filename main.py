@@ -368,38 +368,15 @@ class MainScreen(Screen):
 
         # self.update_label.text = 'Server updated at {}'.format()
 
-    def printer_test(self):
-        print('starting')
-        # find our device
-        dev = usb.core.find(idVendor=printer_list[1]['vendor_id'], idProduct=printer_list[1]['product_id'])
+    def sync_db(self):
+        sync = Sync()
 
-        # was it found?
-        if dev is None:
-            raise ValueError('Device not found')
-        # set the active configuration. With no arguments, the first
-        # configuration will be the active one
-        dev.set_configuration()
+        # sync.migrate()
 
-        # get an endpoint instance
-        cfg = dev.get_active_configuration()
-        intf = cfg[(0, 0)]
+        sync.get_chunk(table='inventory_items', start=0, end=1000)
 
-        ep = usb.util.find_descriptor(
-            intf,
-            # match the first OUT endpoint
-            custom_match= \
-                lambda e: \
-                    usb.util.endpoint_direction(e.bEndpointAddress) == \
-                    usb.util.ENDPOINT_OUT)
-
-        assert ep is not None
-        print(ep)
-        # write the data
-        ep.write('test')
-
-        printers = usb.core.find(find_all=True)
-        sys.stdout.write('There are ' + len(printers) + ' in the system\n.')
-
+        # vars.WORKLIST.append("Sync")
+        # threads_start()
     def test_sys(self):
         Sync().migrate()
 
@@ -477,42 +454,7 @@ class MainScreen(Screen):
                             out_ep = ep.bEndpointAddress
 
             vars.BIXOLON = Usb(vendor_int, product_int, interface=interface_number, in_ep=130, out_ep=1)
-            # text_left = "3570 WED"
-            # text_right = "WED 3570"
-            # text_name = "CHOUNG, W"
-            # phone_number = "(206) 931-5327"
-            # total_length = 32
-            # text_offset = total_length - len(text_name) - len(phone_number)
-            # name_number_string = '{}{}{}'.format(text_name,' ' * text_offset, phone_number)
-            # print(len(text_name))
-            # print(len(phone_number))
-            # print(text_offset)
-            # vars.BIXOLON.hw('RESET')
-            # vars.BIXOLON.text('\x1b\x40')
-            # vars.BIXOLON.text('\x1b\x6d')
-            # memo_string = False
-            # for _ in range(1):
-            #
-            #     vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
-            #     vars.BIXOLON.text('{}{}\n'.format(text_left, text_right))
-            #     vars.BIXOLON.hw('RESET')
-            #     vars.BIXOLON.text('\x1b!\x00')
-            #     vars.BIXOLON.text(name_number_string)
-            #     vars.BIXOLON.text('\n')
-            #     vars.BIXOLON.text('123456')
-            #     if memo_string:
-            #         vars.BIXOLON.text('\n\n\n\x1b\x6d{}'.format(memo_string))
-            #         memo_len = '\n\n' if len(memo_string) <= 32 else '\n\n' + '\n' * int(
-            #             (len(memo_string)) / 32)
-            #         vars.BIXOLON.text(memo_len)
-            #     else:
-            #
-            #         vars.BIXOLON.text('\n\n\n')
-            #         vars.BIXOLON.text('\x1b\x6d')
-            #
-            # # FINAL CUT
-            # vars.BIXOLON.hw('RESET')
-            # vars.BIXOLON.cut()
+
 
         else:
             popup = Popup()
@@ -1581,7 +1523,7 @@ GridLayout:
                 color_btn.valign = 'bottom'
                 color_btn.halign = 'center'
                 color_btn.background_normal = ''
-                color_btn.background_color = vars.color_rgba(color['color'])
+                color_btn.background_color = vars.color_rgba(color['name'])
                 color_grid.add_widget(color_btn)
         color_layout.add_widget(color_grid)
         # memo section
@@ -3014,62 +2956,63 @@ GridLayout:
 
                 if vars.BIXOLON:
                     print('Starting tag printing')
-                    for invoice_id, item_id in print_invoice.items():
-                        invoice_id_str = str(invoice_id)
-
-                        invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
-                        text_left = "{} {}".format(invoice_last_four,
-                                                   self.due_date.strftime('%a').upper())
-                        text_right = "{} {}".format(self.due_date.strftime('%a').upper(),
-                                                    invoice_last_four)
-                        text_name = "{}, {}".format(customers.last_name.upper(),
-                                                    customers.first_name.upper()[:1])
-                        phone_number = Job.make_us_phone(customers.phone)
-                        total_length = 32
-                        text_offset = total_length - len(text_name) - len(phone_number)
-                        name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
-                                                             phone_number)
-
-                        vars.BIXOLON.hw('RESET')
-                        vars.BIXOLON.text('\x1b\x40')
-                        vars.BIXOLON.text('\x1b\x6d')
-                        print('next step')
-                        invoice_items = InvoiceItem().where({'invoice_id': invoice_id})
-                        laundry_to_print = []
-                        if invoice_items:
-                            for ii in invoice_items:
-                                iitem_id = ii['item_id']
-                                tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                                item_name = InventoryItem().getItemName(iitem_id)
-                                item_color = ii['color']
-                                invoice_item_id = ii['invoice_items_id']
-                                laundry_tag = InventoryItem().getLaundry(iitem_id)
-                                memo_string = ii['memo']
-                                if laundry_tag and tags_to_print > 0:
-                                    laundry_to_print.append(invoice_item_id)
-                                else:
-                                    for _ in range(tags_to_print):
-
-                                        vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
-                                        vars.BIXOLON.text('{}{}\n'.format(text_left, text_right))
-                                        vars.BIXOLON.hw('RESET')
-                                        vars.BIXOLON.text('\x1b!\x00')
-                                        vars.BIXOLON.text(name_number_string)
-                                        vars.BIXOLON.text('\n')
-                                        vars.BIXOLON.text('{0:06d}'.format(int(invoice_item_id)))
-                                        vars.BIXOLON.text(' {} {}'.format(item_name, item_color))
-                                        if memo_string:
-                                            vars.BIXOLON.text('\n{}'.format(memo_string))
-                                            memo_len = '\n\n\n' if len(
-                                                memo_string) <= 32 else '\n\n\n' + '\n' * int(
-                                                (len(memo_string)) / 32)
-                                            vars.BIXOLON.text(memo_len)
-                                            vars.BIXOLON.text('\x1b\x6d')
-
+                    if len(save_invoice_items) > 0:
+                        for iitems_id in save_invoice_items:
+                            for item in save_invoice_items[iitems_id]:
+                                invoice_id = item['invoice_id']
+                                invoice_id_str = str(invoice_id)
+                                invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
+                                text_left = "{} {}".format(invoice_last_four,
+                                                           self.due_date.strftime('%a').upper())
+                                text_right = "{} {}".format(self.due_date.strftime('%a').upper(),
+                                                            invoice_last_four)
+                                text_name = "{}, {}".format(customers.last_name.upper(),
+                                                            customers.first_name.upper()[:1])
+                                phone_number = Job.make_us_phone(customers.phone)
+                                total_length = 32
+                                text_offset = total_length - len(text_name) - len(phone_number)
+                                name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
+                                                                     phone_number)
+                                vars.BIXOLON.hw('RESET')
+                                vars.BIXOLON.text('\x1b\x40')
+                                vars.BIXOLON.text('\x1b\x6d')
+                                print('next step')
+                                invoice_items = InvoiceItem().where({'invoice_id': invoice_id})
+                                laundry_to_print = []
+                                if invoice_items:
+                                    for ii in invoice_items:
+                                        iitem_id = ii['item_id']
+                                        tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                                        item_name = InventoryItem().getItemName(iitem_id)
+                                        item_color = ii['color']
+                                        invoice_item_id = ii['invoice_items_id']
+                                        laundry_tag = InventoryItem().getLaundry(iitem_id)
+                                        memo_string = ii['memo']
+                                        if laundry_tag and tags_to_print > 0:
+                                            laundry_to_print.append(invoice_item_id)
                                         else:
+                                            for _ in range(tags_to_print):
 
-                                            vars.BIXOLON.text('\n\n\n')
-                                            vars.BIXOLON.text('\x1b\x6d')
+                                                vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
+                                                vars.BIXOLON.text('{}{}\n'.format(text_left, text_right))
+                                                vars.BIXOLON.hw('RESET')
+                                                vars.BIXOLON.text('\x1b!\x00')
+                                                vars.BIXOLON.text(name_number_string)
+                                                vars.BIXOLON.text('\n')
+                                                vars.BIXOLON.text('{0:06d}'.format(int(invoice_item_id)))
+                                                vars.BIXOLON.text(' {} {}'.format(item_name, item_color))
+                                                if memo_string:
+                                                    vars.BIXOLON.text('\n{}'.format(memo_string))
+                                                    memo_len = '\n\n\n' if len(
+                                                        memo_string) <= 32 else '\n\n\n' + '\n' * int(
+                                                        (len(memo_string)) / 32)
+                                                    vars.BIXOLON.text(memo_len)
+                                                    vars.BIXOLON.text('\x1b\x6d')
+
+                                                else:
+
+                                                    vars.BIXOLON.text('\n\n\n')
+                                                    vars.BIXOLON.text('\x1b\x6d')
                     if len(laundry_to_print) is 0:
                         # FINAL CUT
                         vars.BIXOLON.hw('RESET')
@@ -6840,7 +6783,7 @@ class HistoryScreen(Screen):
 
             print('next step')
             invoice_items = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
-            vars.BIXOLON.hw('RESET')
+            # vars.BIXOLON.hw('RESET')
             vars.BIXOLON.text('\x1b\x40')
             vars.BIXOLON.text('\x1b\x6d')
             laundry_to_print = []
@@ -6879,7 +6822,7 @@ class HistoryScreen(Screen):
                                 vars.BIXOLON.text('\n\n\n')
                                 vars.BIXOLON.text('\x1b\x6d')
                         # FINAL CUT
-                        vars.BIXOLON.hw('RESET')
+                        # vars.BIXOLON.hw('RESET')
                         vars.BIXOLON.cut()
             if len(laundry_to_print) > 0:
                 laundry_count = len(laundry_to_print)
