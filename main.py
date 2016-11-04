@@ -50,6 +50,7 @@ from zipcodes import Zipcode
 import asyncio
 import calendar
 from calendar import Calendar
+from decimal import *
 from kv_generator import KvString
 from jobs import Job
 from static import Static
@@ -12399,7 +12400,7 @@ class SearchScreen(Screen):
                               on_release=self.calc_clear)
         equals_button = Button(markup=True,
                                text="[color=#e5e5e5][b]=[/b][/color]",
-                               on_release=self.calc_update)
+                               on_release=self.calc_equals)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(clear_button)
         inner_layout_2.add_widget(equals_button)
@@ -12410,9 +12411,22 @@ class SearchScreen(Screen):
         popup.open()
 
     def calc_button(self, data, *args, **kwargs):
+
+
+        # process as normal
         if data is '+' or data is '-' or data is '*' or data is '/':
+
             self.calc_history.append(''.join(self.calc_amount))
             self.calc_history.append(data)
+            if self.calc_history[-2] is '' or self.calc_history[-2] is '0':
+                del self.calc_history[-1]
+                del self.calc_history[-1]
+                try:
+                    del self.calc_history[-1]
+                    self.calc_history.append(data)
+                except IndexError:
+                    pass
+
             self.calc_amount = []
             self.calc_update()
 
@@ -12421,20 +12435,30 @@ class SearchScreen(Screen):
             total_base = ''.join(self.calc_amount)
             self.display_input.text = total_base
 
+        total_calculation = ' '.join(self.calc_history)
+        print(total_calculation)
         pass
 
     def calc_equals(self, *args, **kwargs):
+        self.calc_history.append(str(self.display_input.text))
+        self.calc_amount = []
         self.calc_update()
+        self.calc_history = []
         pass
 
     def calc_update(self, *args, **kwargs):
+        # last element in list
         operand = '+'
-        value = 0
+        # value = 0
+        total = 0
+
         if self.calc_history:
+            self.calculator_control_table.ids.summary_table.clear_widgets()
             for data in self.calc_history:
-                total = 0
+                value = 0
                 if data is '+':
                     operand = '+'
+
                 elif data is '-':
                     operand = '-'
                 elif data is '*':
@@ -12442,7 +12466,7 @@ class SearchScreen(Screen):
                 elif data is '/':
                     operand = '/'
                 else:
-                    value = float(data)
+                    value = Decimal(data)
                 if operand is '+':
                     total += value
                 elif operand is '-':
@@ -12450,14 +12474,19 @@ class SearchScreen(Screen):
                 elif operand is '*':
                     total *= value
                 else:
-                    total /= value
-        self.display_input.text = str(total)
+                    total /= value if value > 0 else 1
+
+                self.calculator_control_table.ids.summary_table.add_widget(Label(text=str(data)))
+
+                self.display_input.text = str(total)
+
         pass
 
     def calc_clear(self, *args, **kwargs):
         self.calc_amount = []
         self.calc_history = []
         self.display_input.text = '0'
+        self.calculator_control_table.ids.summary_table.clear_widgets()
         pass
 
 
