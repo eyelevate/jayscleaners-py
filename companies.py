@@ -342,6 +342,14 @@ updated_at = ?, server_at = ? WHERE id = ?'''.format(
 
         return store_hours
 
+    def prepareCompanyList(self):
+        companies = self.where({'id':{'>':0}})
+        list = []
+        if companies:
+            for company in companies:
+                list.append(company['name'])
+        return list
+
     def close_connection(self):
         self.c.close()
         self.conn.close()

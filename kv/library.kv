@@ -40,6 +40,15 @@
     size_hint_x: None
     width: '175sp'
     padding_x: '20sp'
+<BottomLeftFormLabel@Label>
+    markup:True
+    text_size:self.size
+    halign:'left'
+    valign:'bottom'
+    font_size:sp(20)
+    padding_x: sp(5)
+    padding_y: sp(2)
+
 <CenteredHighlightedLabel@Label>:
     markup:True
     text_size:self.size
@@ -441,3 +450,80 @@
             cols:2
             row_force_default: True
             row_default_height:sp(44)
+
+<TagsGrid@RelativeLayout>
+    ScrollView:
+        size_hint:(1,1)
+        GridLayout:
+            id: tags_table
+            size_hint_y:None
+            height: self.minimum_height
+            cols:5
+            row_force_default: True
+            row_default_height:sp(44)
+            Label:
+                markup:True,
+                text:'[color=#000000]ID[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                markup:True,
+                text:'[color=#000000]Item[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                markup:True,
+                text:'[color=#000000]Color[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                markup:True,
+                text:'[color=#000000]Memo[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                markup:True,
+                text:'[color=#000000]Tags[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+<TagsGridHeaders@Label>
+    markup:True,
+    text:'[color=#000000]ID[/color]'
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<TagsSelectedButton@Button>
+    markup:True
+    text: ''
+    disabled: False
+    background_color: 0,0.64,0.149,0.1
+    canvas.before:
+        Color:
+            rgba: 0,0.64,0.149,1
+        Rectangle:
+            pos: self.pos
+            size: self.size

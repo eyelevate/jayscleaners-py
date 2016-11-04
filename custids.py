@@ -4,6 +4,7 @@ import sqlite3
 from random import choice
 from string import digits
 from model import *
+from users import User
 
 unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -273,3 +274,24 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
                 return mark_random
             else:
                 return mark
+
+    def getCustomerMark(self, customer_id):
+        marks = self.where({'customer_id':customer_id})
+        if marks:
+            for m in marks:
+                mark = m['mark']
+                break
+        else:
+            users = User().where({'user_id':customer_id})
+            if users:
+                for user in users:
+                    last_name = user['last_name'][:1].capitalize()
+                    starch = user['starch'][:1].capitalize()
+                    mark = '{}{}{}'.format(last_name,str(customer_id),starch)
+            else:
+                return False
+        print(mark)
+        return mark
+
+
+

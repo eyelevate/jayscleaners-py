@@ -301,6 +301,7 @@ def sync_from_server(data):
                 invoice_item.invoice_items_id = invoice_items['id']
                 invoice_item.invoice_id = invoice_items['invoice_id']
                 invoice_item.item_id = invoice_items['item_id']
+                invoice_item.inventory_id = invoice_items['inventory_id']
                 invoice_item.company_id = invoice_items['company_id']
                 invoice_item.customer_id = invoice_items['customer_id']
                 invoice_item.quantity = invoice_items['quantity']
@@ -485,7 +486,7 @@ def sync_from_server(data):
         if 'transactions' in updates:
             for transactions in updates['transactions']:
                 transaction = Transaction()
-                transaction.transaction_id = transactions['id']
+                transaction.trans_id = transactions['id']
                 transaction.company_id = transactions['company_id']
                 transaction.customer_id = transactions['customer_id']
                 transaction.schedule_id = transactions['schedule_id']
@@ -494,15 +495,16 @@ def sync_from_server(data):
                 transaction.aftertax = transactions['aftertax']
                 transaction.discount = transactions['discount']
                 transaction.total = transactions['total']
-                transaction.invoices = transactions['invoices']
+                # transaction.invoices = transactions['invoices']
                 transaction.type = transactions['type']
                 transaction.last_four = transactions['last_four']
                 transaction.tendered = transactions['tendered']
+                transaction.transaction_id = transactions['transaction_id']
                 transaction.status = transactions['status']
                 transaction.deleted_at = transactions['deleted_at']
                 transaction.created_at = transactions['created_at']
                 transaction.updated_at = transactions['updated_at']
-                count_transaction = transaction.where({'transaction_id': transaction.transaction_id})
+                count_transaction = transaction.where({'trans_id': transaction.trans_id})
                 if len(count_transaction) > 0:
                     for data in count_transaction:
                         transaction.id = data['id']
@@ -713,7 +715,7 @@ def update_database(data):
                 for transactions in saved['transactions']:
                     transaction = Transaction()
                     where = {'id': transactions['id']}
-                    data = {'transaction_id': transactions['transaction_id']}
+                    data = {'trans_id': transactions['trans_id']}
                     transaction.put(where=where, data=data)
 
             if 'users' in saved:

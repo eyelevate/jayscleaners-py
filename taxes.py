@@ -236,6 +236,17 @@ created_at = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.tax_id,
         else:
             return False
 
+
+    def getTaxRate(self, company_id):
+        taxes = Tax().where({'company_id':self.company_id,'ORDER_BY':'id desc','LIMIT':1})
+        if taxes:
+            for tax in taxes:
+                tax_rate = float(tax['rate'])
+
+        else:
+            tax_rate = 0.096
+        return tax_rate
+
     def close_connection(self):
         self.c.close()
         self.conn.close()

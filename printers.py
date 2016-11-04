@@ -273,17 +273,31 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         self.conn.close()
 
 
-    def convert_to_hex(self, key):
+    def pcmd(self, key):
+        ESC = b'\x1b'
+        GS = b'\x1d'
+        BC_HGT =  GS + b'h'
+        BC_WDT = GS + b'w'
+        # BARCODE HEIGHT 1 - 255
+        BARCODE_HEIGHT = BC_HGT + bytes([40])
+        BARCODE_WIDTH = BC_WDT + bytes([2])
+
         data = {
-            'HT':'/x09', # Horizontal Tab
-            'LF':'/x0a', # Print and Line Feed
-            'CR':'/x0d', # Print and Carriage Return
-            'PFP' : '/x1B/x4A/xn', # print and feed paper
-            'PFL': '/x1b/x60/xn', # print and feed line
-            'INIT': '/x1b/x40', # Initialize Printer
-            'PARTIAL_CUT':'/x1b/x6d', # Partial Cut
-            'INCH1' : '/x1B/x31', # 1/9 inch paper feed
-            'INCH2': '/x1B/x32',  # 2/9 inch paper feed
+            'HT':b'\x09', # Horizontal Tab
+            'LF':b'\n', # Print and Line Feed
+            'CR': b'\r', # Print and Carriage Return
+            'PFL': ESC + b'\x60\n', # print and feed line
+            'INIT': ESC + b'\x40', # Initialize Printer
+            'PARTIAL_CUT':b'\x1b\x6d', # Partial Cut
+            'INCH1' : ESC + b'\x31', # 1/9 inch paper feed
+            'INCH2': ESC +  b'\x32',  # 2/9 inch paper feed
+            'TXTTALL':ESC + b'!\x10', # TALL text
+            'TXTNORM':ESC + b'!\x00', # Normal text
+            'ALGNLEFT': ESC + b'\x61\x00',  # Left justification
+            'ALGNCENTER': ESC + b'\x61\x01',  # Centering
+            'ALGNRIGHT':  ESC + b'\x61\x02',  # Right justification
+            'BC_HEIGHT': BARCODE_HEIGHT,
+            'BC_WIDTH': BARCODE_WIDTH
         }
 
         return data[key]

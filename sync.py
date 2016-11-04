@@ -181,7 +181,7 @@ class Sync:
             to_upload['taxes'] = taxes_1
             to_upload_rows += len(to_upload['taxes'])
 
-        transactions_1 = Transaction().where({'transaction_id': None})
+        transactions_1 = Transaction().where({'trans_id': None})
         if transactions_1:
             to_upload['transactions'] = transactions_1
             to_upload_rows += len(to_upload['transactions'])
@@ -317,7 +317,7 @@ class Sync:
             to_update['taxes'] = taxes_2
             to_update_rows += len(to_update['taxes'])
 
-        transactions_2 = Transaction().where({'transaction_id': {'!=': '""'},
+        transactions_2 = Transaction().where({'trans_id': {'!=': '""'},
                                               'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if transactions_2:
             to_update['transactions'] = transactions_2
@@ -342,8 +342,8 @@ class Sync:
             upload=json.dumps(to_upload).replace(" ", "__"),
             update=json.dumps(to_update).replace(" ", "__")
         )
-
         print(url)
+
         # attempt to connect to server
 
         try:
@@ -549,6 +549,7 @@ class Sync:
         invoice_item = InvoiceItem()
         memo = Memo()
         printer = Printer()
+        profile = Profile()
         reward_transaction = RewardTransaction()
         reward = Reward()
         schedule = Schedule()
@@ -569,6 +570,7 @@ class Sync:
         invoice_item.create_table()
         memo.create_table()
         printer.create_table()
+        profile.create_table()
         reward_transaction.create_table()
         reward.create_table()
         schedule.create_table()
@@ -589,6 +591,7 @@ class Sync:
         invoice_item.close_connection()
         memo.close_connection()
         printer.close_connection()
+        profile.close_connection()
         reward.close_connection()
         reward_transaction.close_connection()
         schedule.close_connection()
