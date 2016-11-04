@@ -12063,7 +12063,7 @@ class SearchScreen(Screen):
 
             print('next step')
             invoice_items = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
-            vars.BIXOLON.hw('RESET')
+            # vars.BIXOLON.hw('RESET')
             vars.BIXOLON.text('\x1b\x40')
             vars.BIXOLON.text('\x1b\x6d')
             laundry_to_print = []
@@ -12104,7 +12104,7 @@ class SearchScreen(Screen):
                                 vars.BIXOLON.text('\n\n\n')
                                 vars.BIXOLON.text('\x1b\x6d')
                         # FINAL CUT
-                        vars.BIXOLON.hw('RESET')
+                        # vars.BIXOLON.hw('RESET')
                         vars.BIXOLON.cut()
             if len(laundry_to_print) > 0:
                 laundry_count = len(laundry_to_print)
