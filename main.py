@@ -422,9 +422,9 @@ class MainScreen(Screen):
     def print_setup_test(self):
         vendor_id = 0x0419
         product_id = 0x3c01
-        vendor_int = int(vendor_id, 16)
+        vendor_int = int(str(vendor_id), 16)
         vendor_id_hex = hex(vendor_int)
-        product_int = int(product_id, 16)
+        product_int = int(str(product_id), 16)
         product_id_hex = hex(product_int)
         interface_number = 0
         in_ep = 0x81
