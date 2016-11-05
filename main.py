@@ -455,9 +455,12 @@ class MainScreen(Screen):
                             in_ep = ep.bEndpointAddress
                         elif idx is 2:
                             out_ep = ep.bEndpointAddress
+            try:
+                vars.BIXOLON = Usb(0x0419, 0x3c01, 0, 0x82, 0x01)
+            except AttributeError as e:
+                print(e)
 
-            vars.BIXOLON = Usb(0x0419, 0x3c01, 0, 0x82, 0x01)
-
+            
         else:
             popup = Popup()
             popup.title = 'Printer Error'
