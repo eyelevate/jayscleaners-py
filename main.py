@@ -456,7 +456,7 @@ class MainScreen(Screen):
                         elif idx is 2:
                             out_ep = ep.bEndpointAddress
 
-            vars.BIXOLON = Usb(0x0419, 0x3c01, interface=interface_number, in_ep=130, out_ep=1)
+            vars.BIXOLON = Usb(0x0419, 0x3c01, interface=0, in_ep=0x82, out_ep=0x01)
 
         else:
             popup = Popup()
