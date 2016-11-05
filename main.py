@@ -457,6 +457,7 @@ class MainScreen(Screen):
                             out_ep = ep.bEndpointAddress
             try:
                 vars.BIXOLON = Usb(0x0419, 0x3c01, 0, 0x82, 0x01)
+                print(vars.BIXOLON)
             except AttributeError as e:
                 print(e)
 
