@@ -419,6 +419,103 @@ class MainScreen(Screen):
         print(server_at)
         pass
 
+    def print_setup_test(self):
+        vendor_id = 0x0419
+        product_id = 0x3c01
+        vendor_int = int(vendor_id, 16)
+        vendor_id_hex = hex(vendor_int)
+        product_int = int(product_id, 16)
+        product_id_hex = hex(product_int)
+        interface_number = 0
+        in_ep = 0x81
+        out_ep = 0x02
+
+        # find our device
+        dev = usb.core.find(idVendor=0x0419, idProduct=0x3c01)
+        print(dev)
+        # was it found?
+        if dev:
+            print('printer was found')
+            # set the active configuration. With no arguments, the first
+            # configuration will be the active one
+            dev.set_configuration()
+
+            # get an endpoint instance
+            cfg = dev.get_active_configuration()
+            intf = cfg[(0, 0)]
+            for cfg in dev:
+                sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
+                for intf in cfg:
+                    interface_number = intf.bInterfaceNumber
+                    idx = 0
+                    for ep in intf:
+                        print(hex(ep.bEndpointAddress))
+                        idx += 1
+                        if idx is 1:
+                            in_ep = ep.bEndpointAddress
+                        elif idx is 2:
+                            out_ep = ep.bEndpointAddress
+
+            vars.BIXOLON = Usb(vendor_int, product_int, interface=interface_number, in_ep=130, out_ep=1)
+
+        else:
+            popup = Popup()
+            popup.title = 'Printer Error'
+            content = KV.popup_alert('Tag printer not found.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+    def print_setup_tag(self, vendor_id, product_id):
+        vendor_int = int(vendor_id, 16)
+        vendor_id_hex = hex(vendor_int)
+        product_int = int(product_id, 16)
+        product_id_hex = hex(product_int)
+        interface_number = 0
+        in_ep = 0x81
+        out_ep = 0x02
+
+        # find our device
+        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
+        print(vars.BIXOLON)
+        # was it found?
+        if dev:
+
+            # set the active configuration. With no arguments, the first
+            # configuration will be the active one
+            dev.set_configuration()
+
+            # get an endpoint instance
+            cfg = dev.get_active_configuration()
+            intf = cfg[(0, 0)]
+            for cfg in dev:
+                sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
+                for intf in cfg:
+                    interface_number = intf.bInterfaceNumber
+                    idx = 0
+                    for ep in intf:
+                        print(hex(ep.bEndpointAddress))
+                        idx += 1
+                        if idx is 1:
+                            in_ep = ep.bEndpointAddress
+                        elif idx is 2:
+                            out_ep = ep.bEndpointAddress
+
+            vars.BIXOLON = Usb(vendor_int, product_int, interface=interface_number, in_ep=130, out_ep=1)
+
+
+        else:
+            popup = Popup()
+            popup.title = 'Printer Error'
+            content = KV.popup_alert('Tag printer not found.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
+
     def print_setup_tag(self, vendor_id, product_id):
         vendor_int = int(vendor_id, 16)
         vendor_id_hex = hex(vendor_int)
@@ -12217,12 +12314,13 @@ class SearchScreen(Screen):
             text_offset = total_length - len(text_name) - len(phone_number)
             name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
                                                  phone_number)
+            laundry_to_print = []
             if vars.BIXOLON:
-                vars.BIXOLON.hw('RESET')
+                # vars.BIXOLON.hw('RESET')
                 vars.BIXOLON.text('\x1b\x40')
                 vars.BIXOLON.text('\x1b\x6d')
                 print('next step')
-                laundry_to_print = []
+
                 for item_id in self.selected_tags_list:
 
                     inv_items = InvoiceItem().where({'invoice_items_id': item_id})
@@ -12261,10 +12359,10 @@ class SearchScreen(Screen):
 
                                         vars.BIXOLON.text('\n\n\n')
                                         vars.BIXOLON.text('\x1b\x6d')
-            if len(laundry_to_print) is 0:
-                # FINAL CUT
-                vars.BIXOLON.hw('RESET')
-                vars.BIXOLON.cut()
+                if len(laundry_to_print) is 0:
+                    # FINAL CUT
+                    # vars.BIXOLON.hw('RESET')
+                    vars.BIXOLON.cut()
             else:
                 laundry_count = len(laundry_to_print)
                 shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
@@ -12293,7 +12391,7 @@ class SearchScreen(Screen):
                     vars.BIXOLON.text('\x1b!\x30')  # QUAD SIZE
                     vars.BIXOLON.text(mark_mark_string)
                     vars.BIXOLON.text('\n')
-                    vars.BIXOLON.hw('RESET')
+                    # vars.BIXOLON.hw('RESET')
                     vars.BIXOLON.text('\x1b!\x00')
                     vars.BIXOLON.text(name_name_string)
                     vars.BIXOLON.text('\n')
@@ -12302,7 +12400,7 @@ class SearchScreen(Screen):
                     vars.BIXOLON.text('\n\n\n\x1b\x6d')
 
                 # FINAL CUT
-                vars.BIXOLON.hw('RESET')
+                # vars.BIXOLON.hw('RESET')
                 vars.BIXOLON.cut()
         else:
             popup = Popup()
