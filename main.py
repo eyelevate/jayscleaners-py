@@ -422,55 +422,35 @@ class MainScreen(Screen):
     def print_setup_test(self):
         vendor_id = 0x0419
         product_id = 0x3c01
-        vendor_int = int(str(vendor_id), 16)
-        vendor_id_hex = hex(vendor_int)
-        product_int = int(str(product_id), 16)
-        product_id_hex = hex(product_int)
-        interface_number = 0
-        in_ep = 0x81
-        out_ep = 0x02
 
         # find our device
-        dev = usb.core.find(idVendor=0x0419, idProduct=0x3c01)
-        print(dev)
+        dev = usb.core.find(idVendor=vendor_id, idProduct=product_id)
+
         # was it found?
-        if dev:
-            print('printer was found')
-            # set the active configuration. With no arguments, the first
-            # configuration will be the active one
-            dev.set_configuration()
+        if dev is None:
+            print('No device Found')
 
-            # get an endpoint instance
-            cfg = dev.get_active_configuration()
-            intf = cfg[(0, 0)]
-            for cfg in dev:
-                sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
-                for intf in cfg:
-                    interface_number = intf.bInterfaceNumber
-                    idx = 0
-                    for ep in intf:
-                        print(hex(ep.bEndpointAddress))
-                        idx += 1
-                        if idx is 1:
-                            in_ep = ep.bEndpointAddress
-                        elif idx is 2:
-                            out_ep = ep.bEndpointAddress
-            try:
-                vars.BIXOLON = Usb(0x0419, 0x3c01, 0, 0x82, 0x01)
-                print(vars.BIXOLON)
-            except AttributeError as e:
-                print(e)
+        # set the active configuration. With no arguments, the first
+        # configuration will be the active one
+        dev.set_configuration()
 
+        # get an endpoint instance
+        cfg = dev.get_active_configuration()
+        intf = cfg[(0, 0)]
 
-        else:
-            popup = Popup()
-            popup.title = 'Printer Error'
-            content = KV.popup_alert('Tag printer not found.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+        ep = usb.util.find_descriptor(
+            intf,
+            # match the first OUT endpoint
+            custom_match= \
+                lambda e: \
+                    usb.util.endpoint_direction(e.bEndpointAddress) == \
+                    usb.util.ENDPOINT_OUT)
+
+        assert ep is not None
+        print(ep)
+        print('printer found')
+        # write the data
+        ep.write('\x1b40 test \n')
 
     def print_setup_tag(self, vendor_id, product_id):
         vendor_int = int(vendor_id, 16)
