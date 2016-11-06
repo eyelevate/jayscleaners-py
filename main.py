@@ -4713,7 +4713,7 @@ GridLayout:
                                              invert=False, smooth=False, flip=False))
                 vars.EPSON.write("{}\n".format(vars.CUSTOMER_ID))
                 # Print barcode
-                vars.EPSON.write(pr.pcmd_barcode(vars.CUSTOMER_ID))
+                vars.EPSON.write(pr.pcmd_barcode(str(vars.CUSTOMER_ID)))
 
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
@@ -6578,7 +6578,7 @@ class HistoryScreen(Screen):
                                     invert=False, smooth=False, flip=False))
                     vars.EPSON.write("{}\n".format(vars.CUSTOMER_ID))
                     # Print barcode
-                    vars.EPSON.write(pr.pcmd_barcode(vars.CUSTOMER_ID))
+                    vars.EPSON.write(pr.pcmd_barcode(str(vars.CUSTOMER_ID)))
 
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
@@ -7020,9 +7020,9 @@ class HistoryScreen(Screen):
                             else:
                                 vars.BIXOLON.write('\n\n\n')
                                 vars.BIXOLON.write('\x1b\x6d')
-                        # FINAL CUT
-                        vars.BIXOLON.write('\n\n\n\n\n\n')
-                        vars.BIXOLON.write('\x1b\x6d')
+                # FINAL CUT
+                vars.BIXOLON.write('\n\n\n\n\n\n')
+                vars.BIXOLON.write('\x1b\x6d')
 
             if len(laundry_to_print) > 0:
                 laundry_count = len(laundry_to_print)
@@ -11382,7 +11382,7 @@ class SearchScreen(Screen):
                                              invert=False, smooth=False, flip=False))
                 vars.EPSON.write("{}\n".format(vars.CUSTOMER_ID))
                 # Print barcode
-                vars.EPSON.write(pr.pcmd_barcode(vars.CUSTOMER_ID))
+                vars.EPSON.write(pr.pcmd_barcode(str(vars.CUSTOMER_ID)))
 
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
@@ -11549,7 +11549,7 @@ class SearchScreen(Screen):
                                              invert=False, smooth=False, flip=False))
                 vars.EPSON.write("{}\n".format(vars.CUSTOMER_ID))
                 # Print barcode
-                vars.EPSON.write(pr.pcmd_barcode(vars.CUSTOMER_ID))
+                vars.EPSON.write(pr.pcmd_barcode(str(vars.CUSTOMER_ID)))
 
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
@@ -11609,7 +11609,7 @@ class SearchScreen(Screen):
                                              invert=False, smooth=False, flip=False))
                 vars.EPSON.write("{}\n".format(vars.CUSTOMER_ID))
                 # Print barcode
-                vars.EPSON.write(pr.pcmd_barcode(vars.CUSTOMER_ID))
+                vars.EPSON.write(pr.pcmd_barcode(str(vars.CUSTOMER_ID)))
 
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
@@ -12135,7 +12135,7 @@ class SearchScreen(Screen):
             vars.EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                          invert=False, smooth=False, flip=False))
             # Print barcode
-            vars.EPSON.write(pr.pcmd_barcode(vars.CUSTOMER_ID))
+            vars.EPSON.write(pr.pcmd_barcode(str(vars.CUSTOMER_ID)))
 
             vars.EPSON.write('-----------------------------------------\n')
             # Cut paper
