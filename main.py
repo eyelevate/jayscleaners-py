@@ -2780,7 +2780,8 @@ GridLayout:
                                         invert=False, smooth=False, flip=False))
                         vars.EPSON.write('-----------------------------------------\n')
                         # Cut paper
-                        vars.EPSON.cut(mode=u"PART")
+                        vars.EPSON.write('\n\n\n\n\n\n')
+                        vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
 
                         # Print store copies
                         if print_sync_invoice:  # if invoices synced
@@ -2927,7 +2928,8 @@ GridLayout:
                                         vars.EPSON.write('{}\n\n'.format(', '.join(m_list)))
 
                                 # Cut paper
-                                vars.EPSON.cut(mode=u"PART")
+                                vars.EPSON.write('\n\n\n\n\n\n')
+                                vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
                         else:
                             for invoice_id, item_id in print_invoice.items():
 
@@ -4787,7 +4789,8 @@ GridLayout:
                                 invert=False, smooth=False, flip=False))
                 vars.EPSON.write('-----------------------------------------\n')
                 # Cut paper
-                vars.EPSON.cut(mode=u"PART")
+                vars.EPSON.write('\n\n\n\n\n\n')
+                vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
 
                 # Print store copies
                 if print_invoice:  # if invoices synced
@@ -6637,7 +6640,8 @@ class HistoryScreen(Screen):
                                         invert=False, smooth=False, flip=False))
                         vars.EPSON.write('{}\n'.format(customers.invoice_memo))
                     # Cut paper
-                    vars.EPSON.cut(mode=u"PART")
+                    vars.EPSON.write('\n\n\n\n\n\n')
+                    vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
 
                 if type == 1:
                     # Print store copies
@@ -11577,7 +11581,8 @@ class SearchScreen(Screen):
                 vars.EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
                                              invert=False, smooth=False, flip=False))
                 # Cut paper
-                vars.EPSON.cut(mode=u"PART")
+                vars.EPSON.write('\n\n\n\n\n\n')
+                vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
 
                 # SECOND Copy
                 vars.EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
