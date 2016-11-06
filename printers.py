@@ -276,11 +276,13 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
     def pcmd(self, key):
         ESC = b'\x1b'
         GS = b'\x1d'
-        BC_HGT =  GS + b'h'
-        BC_WDT = GS + b'w'
+        BARCODE_HEIGHT = GS + b'h'  # Barcode Height [1-255]
+        BARCODE_WIDTH = GS + b'w'  # Barcode Width  [2-6]
         # BARCODE HEIGHT 1 - 255
-        BARCODE_HEIGHT = BC_HGT + bytes([40])
-        BARCODE_WIDTH = BC_WDT + bytes([2])
+        _SET_BARCODE_TXT_POS = lambda n: GS + b'H' + n
+        _SET_HRI_FONT = lambda n: GS + b'f' + n
+
+
 
         data = {
             'HT':b'\x09', # Horizontal Tab
@@ -296,8 +298,253 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
             'ALGNLEFT': ESC + b'\x61\x00',  # Left justification
             'ALGNCENTER': ESC + b'\x61\x01',  # Centering
             'ALGNRIGHT':  ESC + b'\x61\x02',  # Right justification
-            'BC_HEIGHT': BARCODE_HEIGHT,
-            'BC_WIDTH': BARCODE_WIDTH
+
+            'TXT_NORMAL': ESC + b'!\x00',  # Normal text
+            'TXT_2HEIGHT' : ESC + b'!\x10',  # Double height text
+            'TXT_2WIDTH' : ESC + b'!\x20',  # Double width text
+            'TXT_4SQUARE' : ESC + b'!\x30',  # Quad area text
+            'TXT_UNDERL_OFF' : ESC + b'\x2d\x00',  # Underline font OFF
+            'TXT_UNDERL_ON' : ESC + b'\x2d\x01',  # Underline font 1-dot ON
+            'TXT_UNDERL2_ON' : ESC + b'\x2d\x02',  # Underline font 2-dot ON
+            'TXT_BOLD_OFF' : ESC + b'\x45\x00',  # Bold font OFF
+            'TXT_BOLD_ON' : ESC + b'\x45\x01',  # Bold font ON
+            'TXT_FONT_A' : ESC + b'\x4d\x00',  # Font type A
+            'TXT_FONT_B' : ESC + b'\x4d\x01',  # Font type B
+            'TXT_ALIGN_LT' : ESC + b'\x61\x00',  # Left justification
+            'TXT_ALIGN_CT' : ESC + b'\x61\x01',  # Centering
+            'TXT_ALIGN_RT' : ESC + b'\x61\x02',  # Right justification
+            'TXT_INVERT_ON' : GS + b'\x42\x01',  # Inverse Printing ON
+            'TXT_INVERT_OFF' : GS + b'\x42\x00',  # Inverse Printing OFF
+            'BARCODE_TXT_OFF' : _SET_BARCODE_TXT_POS(b'\x00'),  # HRI barcode chars OFF
+            'BARCODE_TXT_ABV' : _SET_BARCODE_TXT_POS(b'\x01'),  # HRI barcode chars above
+            'BARCODE_TXT_BLW' : _SET_BARCODE_TXT_POS(b'\x02'),  # HRI barcode chars below
+            'BARCODE_TXT_BTH' : _SET_BARCODE_TXT_POS(b'\x03'),  # HRI both above and below
+            'BARCODE_FONT_A' : _SET_HRI_FONT(b'\x00'),  # Font type A for HRI barcode chars
+            'BARCODE_FONT_B' : _SET_HRI_FONT(b'\x01'),  # Font type B for HRI barcode chars'
+            'TXT_FLIP_ON' : ESC + b'\x7b\x01',
+            'TXT_FLIP_OFF' : ESC + b'\x7b\x00',
+            'TXT_SMOOTH_ON' : GS + b'\x62\x01',
+            'TXT_SMOOTH_OFF' : GS + b'\x62\x00',
+            'TXT_SIZE' : GS + b'!',
+            'TXT_WIDTH' : {1: 0x00,
+                         2: 0x10,
+                         3: 0x20,
+                         4: 0x30,
+                         5: 0x40,
+                         6: 0x50,
+                         7: 0x60,
+                         8: 0x70},
+            'TXT_HEIGHT' : {1: 0x00,
+                          2: 0x01,
+                          3: 0x02,
+                          4: 0x03,
+                          5: 0x04,
+                          6: 0x05,
+                          7: 0x06,
+                          8: 0x07},
+            'PD_N50' : GS + b'\x7c\x00',  # Printing Density -50%
+            'PD_N37' : GS + b'\x7c\x01',  # Printing Density -37.5%
+            'PD_N25' : GS + b'\x7c\x02',  # Printing Density -25%
+            'PD_N12' : GS + b'\x7c\x03',  # Printing Density -12.5%
+            'PD_0' : GS + b'\x7c\x04',  # Printing Density  0%
+            'PD_P50' : GS + b'\x7c\x08',  # Printing Density +50%
+            'PD_P37' : GS + b'\x7c\x07',  # Printing Density +37.5%
+            'PD_P25' : GS + b'\x7c\x06',  # Printing Density +25%
+            'PD_P12' : GS + b'\x7c\x05'  # Printing Density +12.5%
+
         }
 
         return data[key]
+
+    def pcmd_set(self, align='left', font='a', text_type='normal', width=1, height=1, density=9, invert=False,
+                 smooth=False, flip=False):
+        cmd = ''
+        
+        # Width
+        if height == 2 and width == 2:
+            cmd += '{} {} '.format(self.pcmd('TXT_NORMAL').decode(),self.pcmd('TXT_4SQUARE').decode())
+        elif height == 2 and width == 1:
+            cmd += '{} {} '.format(self.pcmd('TXT_NORMAL').decode(), self.pcmd('TXT_2HEIGHT').decode())
+        elif width == 2 and height == 1:
+            cmd += '{} {} '.format(self.pcmd('TXT_NORMAL').decode(), self.pcmd('TXT_2WIDTH').decode())
+        elif width == 1 and height == 1:
+            cmd += '{} '.format(self.pcmd('TXT_NORMAL').decode())
+        elif 1 <= width <= 8 and 1 <= height <= 8 and isinstance(width, int) and isinstance(height, int):
+            size = self.pcmd('TXT_SIZE') + bytes([self.pcmd('TXT_WIDTH')[width] + self.pcmd('TXT_HEIGHT')[height]])
+            cmd += '{}'.format(size.decode())
+
+        # Upside down
+        if flip:
+            cmd += '{}'.format(self.pcmd('TXT_FLIP_ON').decode())
+            
+        else:
+            cmd += '{}'.format(self.pcmd('TXT_FLIP_OFF').decode())
+        # Smoothing
+        if smooth:
+            cmd += '{}'.format(self.pcmd('TXT_SMOOTH_ON').decode())
+        else:
+            cmd += '{}'.format(self.pcmd('TXT_SMOOTH_OFF').decode())
+        # Type
+        if text_type.upper() == "B":
+            cmd += '{}'.format(self.pcmd('TXT_BOLD_ON').decode())
+            cmd += '{}'.format(self.pcmd('TXT_UNDERL_OFF').decode())
+            
+        elif text_type.upper() == "U":
+            cmd += '{}'.format(self.pcmd('TXT_BOLD_OFF').decode())
+            cmd += '{}'.format(self.pcmd('TXT_UNDERL_ON').decode())
+
+        elif text_type.upper() == "U2":
+            cmd += '{}'.format(self.pcmd('TXT_BOLD_OFF').decode())
+            cmd += '{}'.format(self.pcmd('TXT_UNDERL2_ON').decode())
+
+        elif text_type.upper() == "BU":
+            cmd += '{}'.format(self.pcmd('TXT_BOLD_ON').decode())
+            cmd += '{}'.format(self.pcmd('TXT_UNDERL_ON').decode())
+
+        elif text_type.upper() == "BU2":
+            cmd += '{}'.format(self.pcmd('TXT_BOLD_ON').decode())
+            cmd += '{}'.format(self.pcmd('TXT_UNDERL2_ON').decode())
+
+        elif text_type.upper() == "NORMAL":
+            cmd += '{}'.format(self.pcmd('TXT_BOLD_OFF').decode())
+            cmd += '{}'.format(self.pcmd('TXT_UNDERL_OFF').decode())
+
+        # Font
+        if font.upper() == "B":
+            cmd += '{}'.format(self.pcmd('TXT_FONT_B').decode())
+        else:  # DEFAULT FONT: A
+            cmd += '{}'.format(self.pcmd('TXT_FONT_A').decode())
+        # Align
+        if align.upper() == "CENTER":
+            cmd += '{}'.format(self.pcmd('TXT_ALIGN_CT').decode())
+            
+        elif align.upper() == "RIGHT":
+            cmd += '{}'.format(self.pcmd('TXT_ALIGN_RT').decode())
+            
+        elif align.upper() == "LEFT":
+            cmd += '{}'.format(self.pcmd('TXT_ALIGN_LT').decode())
+        # Density
+        if density == 0:
+            cmd += '{}'.format(self.pcmd('PD_N50').decode())
+
+        elif density == 1:
+            cmd += '{}'.format(self.pcmd('PD_N37').decode())
+
+        elif density == 2:
+            cmd += '{}'.format(self.pcmd('PD_N25').decode())
+
+        elif density == 3:
+            cmd += '{}'.format(self.pcmd('PD_N12').decode())
+
+        elif density == 4:
+            cmd += '{}'.format(self.pcmd('PD_0').decode())
+
+        elif density == 5:
+            cmd += '{}'.format(self.pcmd('PD_P12').decode())
+
+        elif density == 6:
+            cmd += '{}'.format(self.pcmd('PD_P25').decode())
+
+        elif density == 7:
+            cmd += '{}'.format(self.pcmd('PD_P37').decode())
+
+        elif density == 8:
+            cmd += '{}'.format(self.pcmd('PD_P50').decode())
+
+        else:  # DEFAULT: DOES NOTHING
+            pass
+        # Invert Printing
+        if invert:
+            cmd += '{}'.format(self.pcmd('TXT_INVERT_ON').decode())
+
+        else:
+            cmd += '{}'.format(self.pcmd('TXT_INVERT_OFF').decode())
+
+        return cmd
+    
+    def pcmd_barcode(self, text, type="CODE39", height = 64, width = 2, alignment = 'CENTER', font="B", pos="OFF"):
+        _SET_HRI_FONT = lambda n: b'\x1d' + b'f' + n
+        BARCODE_FONT_A = _SET_HRI_FONT(b'\x00')  # Font type A for HRI barcode chars
+        BARCODE_FONT_B = _SET_HRI_FONT(b'\x01')  # Font type B for HRI barcode chars
+        # Barcode format
+        _SET_BARCODE_TXT_POS = lambda n: b'\x1d' + b'H' + n
+        BARCODE_TXT_OFF = _SET_BARCODE_TXT_POS(b'\x00')  # HRI barcode chars OFF
+        BARCODE_TXT_ABV = _SET_BARCODE_TXT_POS(b'\x01')  # HRI barcode chars above
+        BARCODE_TXT_BLW = _SET_BARCODE_TXT_POS(b'\x02')  # HRI barcode chars below
+        BARCODE_TXT_BTH = _SET_BARCODE_TXT_POS(b'\x03')  # HRI both above and below
+        # barcode types
+        _SET_BARCODE_TYPE = lambda m: b'\x1d' + b'k' + bytes([m])
+        BARCODE_TYPE = {
+            'UPC-A': _SET_BARCODE_TYPE(65),
+            'UPC-E': _SET_BARCODE_TYPE(66),
+            'EAN13': _SET_BARCODE_TYPE(67),
+            'EAN8': _SET_BARCODE_TYPE(68),
+            'CODE39': _SET_BARCODE_TYPE(69),
+            'ITF': _SET_BARCODE_TYPE(70),
+            'NW7': _SET_BARCODE_TYPE(71),
+            'CODABAR': _SET_BARCODE_TYPE(71),  # Same as NW7
+            'CODE93': _SET_BARCODE_TYPE(72),
+            # These are all the same barcode, but using different charcter sets
+            'CODE128A': _SET_BARCODE_TYPE(73) + b'{A',  # CODE128 character set A
+            'CODE128B': _SET_BARCODE_TYPE(73) + b'{B',  # CODE128 character set B
+            'CODE128C': _SET_BARCODE_TYPE(73) + b'{C',  # CODE128 character set C
+            'GS1-128': _SET_BARCODE_TYPE(74),
+            'GS1 DATABAR OMNIDIRECTIONAL': _SET_BARCODE_TYPE(75),
+            'GS1 DATABAR TRUNCATED': _SET_BARCODE_TYPE(76),
+            'GS1 DATABAR LIMITED': _SET_BARCODE_TYPE(77),
+            'GS1 DATABAR EXPANDED': _SET_BARCODE_TYPE(78),
+        }
+
+
+        cmd = ''
+        # Align Bar Code()
+        if alignment is 'CENTER':
+            cmd += '{}'.format(self.pcmd('TXT_ALIGN_CT').decode('utf-8'))
+
+        # Height
+        if 1 <= height <= 255:
+            BARCODE_HEIGHT = b'\x1d' + b'h' + bytes([height])
+            cmd += '{}'.format(BARCODE_HEIGHT.decode('utf-8'))
+
+        # Width
+        if 2 <= width <= 6:
+            BARCODE_WIDTH = b'\x1d' + b'w' + bytes([width])
+            cmd += '{}'.format(BARCODE_WIDTH.decode('utf-8'))
+
+        # Font
+        if font.upper() == "B":
+            cmd += '{}'.format(BARCODE_FONT_B.decode('utf-8'))
+
+        else:  # DEFAULT FONT: A
+            cmd += '{}'.format(BARCODE_FONT_A.decode('utf-8'))
+
+        # Position
+        if pos.upper() == "OFF":
+            cmd += '{}'.format(BARCODE_TXT_OFF.decode('utf-8'))
+
+        elif pos.upper() == "BOTH":
+            cmd += '{}'.format(BARCODE_TXT_BTH.decode('utf-8'))
+
+
+        elif pos.upper() == "ABOVE":
+            cmd += '{}'.format(BARCODE_TXT_ABV.decode('utf-8'))
+
+
+        else:  # DEFAULT POSITION: BELOW
+            cmd += '{}'.format(BARCODE_TXT_BLW.decode('utf-8'))
+
+
+        # BARCODE TYPE SET
+        bc_types = BARCODE_TYPE[type.upper()]
+        cmd += '{}'.format(bc_types.decode('utf-8'))
+
+        # print barcode B type
+        cmd += '{}'.format(bytes([len(text)]).decode('utf-8'))
+
+        # Print Code
+        if text:
+            cmd += '{}'.format(text)
+
+        return cmd
+
+
