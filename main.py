@@ -2701,7 +2701,7 @@ GridLayout:
                                         invert=False, smooth=False, flip=False))
                         vars.EPSON.write("{}\n".format(vars.CUSTOMER_ID))
                         # Print barcode
-                        vars.EPSON.write(pr.pcmd_barcode(vars.CUSTOMER_ID))
+                        vars.EPSON.write(pr.pcmd_barcode(str(vars.CUSTOMER_ID)))
 
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
