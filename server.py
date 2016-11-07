@@ -28,6 +28,7 @@ now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
 
 def sync_from_server(data):
+    print('sync from server')
     # start upload text
     print(data)
     if int(data['rows_to_create']) > 0:
@@ -265,7 +266,9 @@ def sync_from_server(data):
             inventory_item.close_connection()
 
         if 'invoices' in updates:
+
             for invoices in updates['invoices']:
+                print(invoices)
                 invoice = Invoice()
                 invoice.invoice_id = invoices['id']
                 invoice.company_id = invoices['company_id']
@@ -297,6 +300,7 @@ def sync_from_server(data):
 
         if 'invoice_items' in updates:
             for invoice_items in updates['invoice_items']:
+                print(invoice_items)
                 invoice_item = InvoiceItem()
                 invoice_item.invoice_items_id = invoice_items['id']
                 invoice_item.invoice_id = invoice_items['invoice_id']
@@ -582,6 +586,7 @@ def sync_from_server(data):
             zipcode.close_connection()
 
 def update_database(data):
+    print('updating db')
     # start upload text
     if int(data['rows_saved']) > 0:
         if 'saved' in data:
@@ -651,6 +656,7 @@ def update_database(data):
 
             if 'invoices' in saved:
                 for invoices in saved['invoices']:
+                    print(invoices)
                     invoice = Invoice()
                     where = {'id': invoices['id']}
                     data = {'invoice_id': invoices['invoice_id']}
@@ -658,6 +664,7 @@ def update_database(data):
 
             if 'invoice_items' in saved:
                 for invoice_items in saved['invoice_items']:
+                    print(invoice_items)
                     invoice_item = InvoiceItem()
                     where = {'id': invoice_items['id']}
                     data = {'invoice_items_id': invoice_items['invoice_items_id']}

@@ -375,8 +375,8 @@ class MainScreen(Screen):
         sync = Sync()
 
         # sync.migrate()
-
-        sync.get_chunk(table='inventory_items', start=0, end=1000)
+        sync.run_sync()
+        # sync.get_chunk(table='inventory_items', start=0, end=1000)
 
         # vars.WORKLIST.append("Sync")
         # threads_start()
