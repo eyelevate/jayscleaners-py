@@ -451,6 +451,18 @@
             row_force_default: True
             row_default_height:sp(44)
 
+<DeliveryGrid@RelativeLayout>
+    size_hint: 1,0.9
+    ScrollView:
+        size_hint:(1,1)
+        GridLayout:
+            id: delivery_table
+            size_hint_y:None
+            height: self.minimum_height
+            cols:1
+            row_force_default: True
+            row_default_height:sp(44)
+
 <TagsGrid@RelativeLayout>
     ScrollView:
         size_hint:(1,1)

@@ -375,8 +375,8 @@ class MainScreen(Screen):
         sync = Sync()
 
         # sync.migrate()
-        sync.run_sync()
-        # sync.get_chunk(table='inventory_items', start=0, end=1000)
+        # sync.run_sync()
+        sync.get_chunk(table='zipcodes', start=0, end=1000)
 
         # vars.WORKLIST.append("Sync")
         # threads_start()
@@ -10640,6 +10640,23 @@ class SearchScreen(Screen):
     calc_amount = []
     tags_grid = ObjectProperty(None)
     selected_tags_list = []
+    cards = None
+    card_id = None
+    card_id_spinner = None
+    card_string = None
+    address_string = None
+    addresses = None
+    address_id = None
+    address_id_spinner = None
+    pickup_switch = None
+    dropoff_switch = None
+    dropoff_date = False
+    dropoff_date_btn = None
+    pickup_date = False
+    pickup_date_btn = None
+    pickup_time_spinner = None
+    dropoff_time_spinner = None
+
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
@@ -10649,6 +10666,22 @@ class SearchScreen(Screen):
         self.calc_history = []
         self.calc_amount = []
         self.selected_tags_list = []
+        self.cards = False
+        self.card_id = None
+        self.card_id_spinner = None
+        self.card_string = None
+        self.address_string = None
+        self.addresses = None
+        self.address_id = None
+        self.address_id_spinner = None
+        self.pickup_switch = None
+        self.dropoff_switch = None
+        self.pickup_date = False
+        self.pickup_date_btn = None
+        self.dropoff_date = False
+        self.dropoff_date_btn = None
+        self.pickup_time_spinner = None
+        self.dropoff_time_spinner = None
 
         if vars.SEARCH_RESULTS_STATUS:
 
@@ -10675,7 +10708,7 @@ class SearchScreen(Screen):
             self.history_btn.disabled = True
             self.edit_invoice_btn.disabled = True
             self.edit_customer_btn.disabled = True
-            self.print_card_btn.disabled = True
+            self.delivery_btn.disabled = True
             self.reprint_btn.disabled = True
             self.quick_btn.disabled = True
             self.pickup_btn.disabled = True
@@ -10949,7 +10982,7 @@ class SearchScreen(Screen):
             # show the proper buttons
             self.history_btn.disabled = False
             self.edit_customer_btn.disabled = False
-            self.print_card_btn.disabled = False
+            self.delivery_btn.disabled = False
             self.reprint_btn.disabled = False
             self.quick_btn.disabled = False
             self.pickup_btn.disabled = False
@@ -10994,6 +11027,9 @@ class SearchScreen(Screen):
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.9))
+        inner_layout_1.add_widget(Button(markup=True,
+                                         text="Print Card",
+                                         on_release=self.print_card))
         inner_layout_1.add_widget(Button(markup=True,
                                          text='Store Copy',
                                          on_release=partial(self.reprint_invoice, 1)))
@@ -12049,7 +12085,7 @@ class SearchScreen(Screen):
             popup.content = Builder.load_string(content)
             popup.open()
 
-    def print_card(self):
+    def print_card(self, *args, **kwargs):
 
         if vars.EPSON:
             pr = Printer()
@@ -12743,6 +12779,650 @@ class SearchScreen(Screen):
         self.display_input.text = '0'
         self.calculator_control_table.ids.summary_table.clear_widgets()
         pass
+
+    def delivery_setup(self, *args, **kwargs):
+        popup = Popup()
+        popup.title = 'Delivery Setup'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = Factory.DeliveryGrid()
+        cards_label = Factory.BottomLeftFormLabel(text="[b](1)[/b] Select Card On File",
+                                                  markup=True)
+        # create cards spinner
+        vars.PROFILE_ID = None
+        vars.PAYMENT_ID = None
+        pro = Profile()
+        profiles = pro.where({'user_id': vars.CUSTOMER_ID,
+                              'company_id': auth_user.company_id})
+        if profiles:
+            for profile in profiles:
+                vars.PROFILE_ID = profile['profile_id']
+
+            cards_db = Card()
+            self.cards = cards_db.collect(auth_user.company_id, vars.PROFILE_ID)
+        else:
+            self.cards = False
+        self.card_string = []
+        if self.cards:
+            for card in self.cards:
+                self.card_string.append("{} {} {}/{}".format(card['card_type'],
+                                                             card['last_four'],
+                                                             card['exp_month'],
+                                                             card['exp_year']))
+        self.card_id_spinner = Spinner(
+            # default value shown
+            text='Select Card',
+            # available values
+            values=self.card_string,
+            # just for positioning in our example
+            size_hint_x=1,
+            size_hint_y=0.5,
+            pos_hint={'center_x': .5, 'center_y': .5})
+        self.card_id_spinner.bind(text=self.select_online_card)
+
+        # reset cards on file ids
+        self.addresses = Address().where({'user_id': vars.CUSTOMER_ID})
+        self.address_string = []
+        if self.addresses:
+            for address in self.addresses:
+                self.address_string.append("{} - {} {}, {} {}".format(address['name'],
+                                                                      address['street'],
+                                                                      address['city'],
+                                                                      address['state'],
+                                                                      address['zipcode']))
+
+        self.address_id_spinner = Spinner(
+            # default value shown
+            text='Select Address',
+            # available values
+            values=self.address_string,
+            # just for positioning in our example
+            size_hint_x=1,
+            size_hint_y=0.5,
+            pos_hint={'center_x': .5, 'center_y': .5})
+        self.address_id_spinner.bind(text=self.select_address)
+
+        inner_layout_1.ids.delivery_table.add_widget(cards_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.card_id_spinner)
+        address_label = Factory.BottomLeftFormLabel(text="[b](2)[/b] Select Delivery Address",
+                                                    markup=True)
+        inner_layout_1.ids.delivery_table.add_widget(address_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.address_id_spinner)
+        pickup_label = Factory.BottomLeftFormLabel(text="[b](3)[/b] Pickup?",
+                                                   markup=True)
+        self.pickup_switch = Switch(active=False)
+        self.pickup_switch.bind(active=self.pickup_status)
+        inner_layout_1.ids.delivery_table.add_widget(pickup_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.pickup_switch)
+        pickup_date_label = Factory.BottomLeftFormLabel(text="[b](3a)[/b] Pickup Delivery Date",
+                                                        markup=True)
+        self.pickup_date_btn = Button(text="Set Pickup Date",
+                                      on_release=self.get_pickup_dates,
+                                      disabled=True)
+        inner_layout_1.ids.delivery_table.add_widget(pickup_date_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.pickup_date_btn)
+
+        pickup_time_label = Factory.BottomLeftFormLabel(text="[b](3b[/b] Pickup Delivery Time",
+                                                        markup=True)
+        self.pickup_time_spinner = Spinner(
+            # default value shown
+            text='Select Time',
+            # available values
+            values=[],
+            # just for positioning in our example
+            size_hint_x=1,
+            size_hint_y=0.5,
+            disabled=True,
+            pos_hint={'center_x': .5, 'center_y': .5})
+        self.pickup_time_spinner.bind(text=self.select_pickup_time)
+        inner_layout_1.ids.delivery_table.add_widget(pickup_time_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.pickup_time_spinner)
+
+        dropoff_label = Factory.BottomLeftFormLabel(text="[b](4)[/b] Dropoff?",
+                                                    markup=True)
+        self.dropoff_switch = Switch(active=False)
+        self.dropoff_switch.bind(active=self.dropoff_status)
+        inner_layout_1.ids.delivery_table.add_widget(dropoff_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.dropoff_switch)
+        dropoff_date_label = Factory.BottomLeftFormLabel(text="[b](4a)[/b] Dropoff Delivery Date",
+                                                         markup=True)
+        self.dropoff_date_btn = Button(text="Set Dropoff Date",
+                                       on_release=self.get_dropoff_dates,
+                                       disabled=True)
+        inner_layout_1.ids.delivery_table.add_widget(dropoff_date_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.dropoff_date_btn)
+
+        dropoff_time_label = Factory.BottomLeftFormLabel(text="[b](4b[/b] Dropoff Delivery Time",
+                                                        markup=True)
+        self.dropoff_time_spinner = Spinner(
+            # default value shown
+            text='Select Time',
+            # available values
+            values=[],
+            # just for positioning in our example
+            size_hint_x=1,
+            size_hint_y=0.5,
+            disabled=True,
+            pos_hint={'center_x': .5, 'center_y': .5})
+        self.dropoff_time_spinner.bind(text=self.select_dropoff_time)
+        inner_layout_1.ids.delivery_table.add_widget(dropoff_time_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.dropoff_time_spinner)
+
+        special_instructions_label = Factory.BottomLeftFormLabel(text="[b](5)[/b] Special Instructions",
+                                                                 markup=True)
+        special_instructions = Factory.CenterVerticalTextInput(multiline=True)
+        inner_layout_1.ids.delivery_table.add_widget(special_instructions_label)
+        inner_layout_1.ids.delivery_table.add_widget(special_instructions)
+        inner_layout_1.ids.delivery_table.add_widget(Label(text=' '))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(markup=True,
+                               text="Cancel",
+                               on_release=popup.dismiss)
+        add_card_button = Button(markup=True,
+                                 text="Add Card",
+                                 on_release=self.add_card_setup)
+        add_address_button = Button(markup=True,
+                                    text="Add Address",
+                                    on_release=self.add_address_setup)
+        setup_button = Button(markup=True,
+                              text="Set Delivery",
+                              on_release=self.set_delivery)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(add_card_button)
+        inner_layout_2.add_widget(add_address_button)
+        inner_layout_2.add_widget(setup_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def select_online_card(self, *args, **kwargs):
+        card_string = self.card_id_spinner.text
+        if self.cards:
+            for card in self.cards:
+                check_string = "{} {} {}/{}".format(card['card_type'],
+                                                    card['last_four'],
+                                                    card['exp_month'],
+                                                    card['exp_year'])
+                if check_string == card_string:
+                    self.card_id = card['card_id']
+                    print(self.card_id)
+        pass
+
+    def select_address(self, *args, **kwargs):
+        address_string = self.address_id_spinner.text
+        if self.addresses:
+            for address in self.addresses:
+                check_string = "{} - {} {}, {} {}".format(address['name'],
+                                                          address['street'],
+                                                          address['city'],
+                                                          address['state'],
+                                                          address['zipcode'])
+                if check_string == address_string:
+                    self.address_id = address['address_id']
+                    print(self.address_id)
+        pass
+
+    def select_dropoff_time(self, *args, **kwargs):
+        pass
+
+    def select_pickup_time(self, *args, **kwargs):
+        pass
+
+    def pickup_status(self, instance, value, *args, **kwargs):
+        self.pickup_date_btn.disabled = True if value is False else False
+        self.pickup_time_spinner.disabled = True if value is False else False
+        pass
+
+    def dropoff_status(self, instance, value, *args, **kwargs):
+        self.dropoff_date_btn.disabled = True if value is False else False
+        self.dropoff_time_spinner.disabled = True if value is False else False
+        pass
+
+    def get_dropoff_dates(self, *args, **kwargs):
+        if self.address_id:
+            store_hours = Company().get_store_hours(auth_user.company_id)
+            today = datetime.datetime.today()
+            dow = int(datetime.datetime.today().strftime("%w"))
+            turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+            turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+            turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+            turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+            new_date = today + datetime.timedelta(days=turn_around_day)
+            date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                               turn_around_hour if turn_around_ampm == 'am' else int(
+                                                   turn_around_hour) + 12,
+                                               turn_around_minutes)
+
+            self.month = int(today.strftime('%m'))
+
+            self.main_popup = Popup()
+            self.main_popup.title = 'Calendar'
+            layout = BoxLayout(orientation='vertical')
+            inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                       orientation='vertical')
+            calendar_selection = GridLayout(cols=4,
+                                            rows=1,
+                                            size_hint=(1, 0.1))
+            prev_month = Button(markup=True,
+                                text="<",
+                                font_size="30sp",
+                                on_release=self.prev_dropoff_month)
+            next_month = Button(markup=True,
+                                text=">",
+                                font_size="30sp",
+                                on_release=self.next_dropoff_month)
+            select_month = Factory.SelectMonth()
+            self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
+                                       on_release=select_month.open)
+            for index in range(12):
+                month_options = Button(text='{}'.format(vars.month_by_number(index)),
+                                       size_hint_y=None,
+                                       height=40,
+                                       on_release=partial(self.select_dropoff_calendar_month, index))
+                select_month.add_widget(month_options)
+
+            select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+            select_year = Factory.SelectMonth()
+
+            self.year_button = Button(text="{}".format(self.year),
+                                      on_release=select_year.open)
+            for index in range(10):
+                year_options = Button(text='{}'.format(int(self.year) + index),
+                                      size_hint_y=None,
+                                      height=40,
+                                      on_release=partial(self.select_dropoff_calendar_year, index))
+                select_year.add_widget(year_options)
+
+            select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+            calendar_selection.add_widget(prev_month)
+            calendar_selection.add_widget(self.month_button)
+            calendar_selection.add_widget(self.year_button)
+            calendar_selection.add_widget(next_month)
+            self.calendar_layout = GridLayout(cols=7,
+                                              rows=8,
+                                              size_hint=(1, 0.9))
+            today_date = datetime.datetime.today()
+            today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+
+            self.create_dropoff_calendar_table()
+
+            inner_layout_1.add_widget(calendar_selection)
+            inner_layout_1.add_widget(self.calendar_layout)
+            inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                       orientation='horizontal')
+            inner_layout_2.add_widget(Button(markup=True,
+                                             text="Okay",
+                                             on_release=self.main_popup.dismiss))
+
+            layout.add_widget(inner_layout_1)
+            layout.add_widget(inner_layout_2)
+            self.main_popup.content = layout
+            self.main_popup.open()
+        else:
+            popup = Popup()
+            popup.title = 'Delivery Error'
+            content = KV.popup_alert('You must first select an address before selecting a dropoff date.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        pass
+
+    def get_pickup_dates(self, *args, **kwargs):
+        if self.address_id:
+            store_hours = Company().get_store_hours(auth_user.company_id)
+            today = datetime.datetime.today()
+            dow = int(datetime.datetime.today().strftime("%w"))
+            turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+            turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+            turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+            turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+            new_date = today + datetime.timedelta(days=turn_around_day)
+            date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                               turn_around_hour if turn_around_ampm == 'am' else int(
+                                                   turn_around_hour) + 12,
+                                               turn_around_minutes)
+
+            self.month = int(today.strftime('%m'))
+
+            self.main_popup = Popup()
+            self.main_popup.title = 'Calendar'
+            layout = BoxLayout(orientation='vertical')
+            inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                       orientation='vertical')
+            calendar_selection = GridLayout(cols=4,
+                                            rows=1,
+                                            size_hint=(1, 0.1))
+            prev_month = Button(markup=True,
+                                text="<",
+                                font_size="30sp",
+                                on_release=self.prev_pickup_month)
+            next_month = Button(markup=True,
+                                text=">",
+                                font_size="30sp",
+                                on_release=self.next_pickup_month)
+            select_month = Factory.SelectMonth()
+            self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
+                                       on_release=select_month.open)
+            for index in range(12):
+                month_options = Button(text='{}'.format(vars.month_by_number(index)),
+                                       size_hint_y=None,
+                                       height=40,
+                                       on_release=partial(self.select_pickup_calendar_month, index))
+                select_month.add_widget(month_options)
+
+            select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+            select_year = Factory.SelectMonth()
+
+            self.year_button = Button(text="{}".format(self.year),
+                                      on_release=select_year.open)
+            for index in range(10):
+                year_options = Button(text='{}'.format(int(self.year) + index),
+                                      size_hint_y=None,
+                                      height=40,
+                                      on_release=partial(self.select_pickup_calendar_year, index))
+                select_year.add_widget(year_options)
+
+            select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+            calendar_selection.add_widget(prev_month)
+            calendar_selection.add_widget(self.month_button)
+            calendar_selection.add_widget(self.year_button)
+            calendar_selection.add_widget(next_month)
+            self.calendar_layout = GridLayout(cols=7,
+                                              rows=8,
+                                              size_hint=(1, 0.9))
+            today_date = datetime.datetime.today()
+            today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+
+            self.create_pickup_calendar_table()
+
+            inner_layout_1.add_widget(calendar_selection)
+            inner_layout_1.add_widget(self.calendar_layout)
+            inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                       orientation='horizontal')
+            inner_layout_2.add_widget(Button(markup=True,
+                                             text="Okay",
+                                             on_release=self.main_popup.dismiss))
+
+            layout.add_widget(inner_layout_1)
+            layout.add_widget(inner_layout_2)
+            self.main_popup.content = layout
+            self.main_popup.open()
+        else:
+            popup = Popup()
+            popup.title = 'Delivery Error'
+            content = KV.popup_alert('You must first select an address before selecting a dropoff date.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        pass
+
+    def set_delivery(self, *args, **kwargs):
+        pass
+
+    def add_card_setup(self, *args, **kwargs):
+        pass
+
+    def add_address_setup(self, *args, **kwargs):
+        pass
+
+    def create_dropoff_calendar_table(self):
+        # set the variables
+
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        # schedule dates
+        addresses = Address().where({'address_id': self.address_id})
+        zipcode = False
+        if addresses:
+            for address in addresses:
+                zipcode = address['zipcode']
+        delivery_ids = []
+        if zipcode:
+            zips = Zipcode().where({'zipcode': zipcode})
+            if zips:
+                for zip in zips:
+                    delivery_ids.append(zip['delivery_id'])
+
+        # day of the week
+        dow = []
+        # blackout dates
+        blackout_dates = []
+        if delivery_ids:
+            for delivery_id in delivery_ids:
+                deliveries = Delivery().where({'delivery_id': delivery_id})
+                if deliveries:
+                    for delivery in deliveries:
+                        dow.append(delivery['day'])
+                        blackouts = json.loads(delivery['blackout'])
+                        if blackouts:
+                            for blackout in blackouts:
+                                blackout_dates.append(blackout)
+        pickup_date = datetime.datetime.strptime(str(self.pickup_date),"%Y-%m-%d %H:%M:%S")
+        today_date = pickup_date if self.pickup_date else datetime.datetime.today()
+        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+
+        self.calendar_layout.clear_widgets()
+        calendars = Calendar()
+        calendars.setfirstweekday(calendar.SUNDAY)
+        selected_month = self.month - 1
+        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+        th1 = KV.invoice_tr(0, 'Su')
+        th2 = KV.invoice_tr(0, 'Mo')
+        th3 = KV.invoice_tr(0, 'Tu')
+        th4 = KV.invoice_tr(0, 'We')
+        th5 = KV.invoice_tr(0, 'Th')
+        th6 = KV.invoice_tr(0, 'Fr')
+        th7 = KV.invoice_tr(0, 'Sa')
+        self.calendar_layout.add_widget(Builder.load_string(th1))
+        self.calendar_layout.add_widget(Builder.load_string(th2))
+        self.calendar_layout.add_widget(Builder.load_string(th3))
+        self.calendar_layout.add_widget(Builder.load_string(th4))
+        self.calendar_layout.add_widget(Builder.load_string(th5))
+        self.calendar_layout.add_widget(Builder.load_string(th6))
+        self.calendar_layout.add_widget(Builder.load_string(th7))
+        if year_dates[selected_month]:
+            for month in year_dates[selected_month]:
+                for week in month:
+                    for day in week:
+                        if day[0] > 0:
+                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                           Job.date_leading_zeroes(self.month),
+                                                                           Job.date_leading_zeroes(day[0]))
+
+                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                            check_date = today_base.timestamp()
+                            dow_check = today_base.strftime("%w")
+                            today_day = today_base.strftime("%A")
+                            # rule #1 remove all past dates so users cannot set a due date previous to today
+                            if check_date < check_today:
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                if check_date == check_today:
+                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                  background_normal='')
+                                elif today_day in dow and check_date_string not in blackout_dates:
+                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                  on_release=partial(self.select_dropoff_date,
+                                                                                     today_base))
+                                else:
+                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                  disabled=True)
+                            else:  # store is closed
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                        else:
+                            item = Factory.CalendarButton(disabled=True)
+                        self.calendar_layout.add_widget(item)
+
+    def create_pickup_calendar_table(self):
+        # set the variables
+
+        store_hours = Company().get_store_hours(auth_user.company_id)
+        # schedule dates
+        addresses = Address().where({'address_id': self.address_id})
+        zipcode = False
+        if addresses:
+            for address in addresses:
+                zipcode = address['zipcode']
+        delivery_ids = []
+        if zipcode:
+            zips = Zipcode().where({'zipcode': zipcode})
+            if zips:
+                for zip in zips:
+                    delivery_ids.append(zip['delivery_id'])
+        # day of the week
+        dow = []
+        # blackout dates
+        blackout_dates = []
+        if delivery_ids:
+            for delivery_id in delivery_ids:
+                deliveries = Delivery().where({'delivery_id': delivery_id})
+                if deliveries:
+                    for delivery in deliveries:
+                        dow.append(delivery['day'])
+                        blackouts = json.loads(delivery['blackout'])
+                        if blackouts:
+                            for blackout in blackouts:
+                                blackout_dates.append(blackout)
+
+        today_date = datetime.datetime.today()
+        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+
+        self.calendar_layout.clear_widgets()
+        calendars = Calendar()
+        calendars.setfirstweekday(calendar.SUNDAY)
+        selected_month = self.month - 1
+        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+        th1 = KV.invoice_tr(0, 'Su')
+        th2 = KV.invoice_tr(0, 'Mo')
+        th3 = KV.invoice_tr(0, 'Tu')
+        th4 = KV.invoice_tr(0, 'We')
+        th5 = KV.invoice_tr(0, 'Th')
+        th6 = KV.invoice_tr(0, 'Fr')
+        th7 = KV.invoice_tr(0, 'Sa')
+        self.calendar_layout.add_widget(Builder.load_string(th1))
+        self.calendar_layout.add_widget(Builder.load_string(th2))
+        self.calendar_layout.add_widget(Builder.load_string(th3))
+        self.calendar_layout.add_widget(Builder.load_string(th4))
+        self.calendar_layout.add_widget(Builder.load_string(th5))
+        self.calendar_layout.add_widget(Builder.load_string(th6))
+        self.calendar_layout.add_widget(Builder.load_string(th7))
+        if year_dates[selected_month]:
+            for month in year_dates[selected_month]:
+                for week in month:
+                    for day in week:
+                        if day[0] > 0:
+                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                           Job.date_leading_zeroes(self.month),
+                                                                           Job.date_leading_zeroes(day[0]))
+
+                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                            check_date = today_base.timestamp()
+                            dow_check = today_base.strftime("%w")
+                            today_day = today_base.strftime("%A")
+                            # rule #1 remove all past dates so users cannot set a due date previous to today
+                            if check_date < check_today:
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                if check_date == check_today:
+                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                  background_normal='')
+                                elif today_day in dow and check_date_string not in blackout_dates:
+                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                  on_release=partial(self.select_pickup_date,
+                                                                                     today_base))
+                                else:
+                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                  disabled=True)
+                            else:  # store is closed
+                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                              disabled=True)
+                        else:
+                            item = Factory.CalendarButton(disabled=True)
+                        self.calendar_layout.add_widget(item)
+
+    def select_pickup_date(self, pickup_date, *args, **kwargs):
+        self.pickup_date = pickup_date
+        dd = datetime.datetime.strptime(str(pickup_date),"%Y-%m-%d %H:%M:%S")
+        dd_string = dd.strftime('%a %m/%d/%Y')
+        self.pickup_date_btn.text = str(dd_string)
+        print(self.pickup_date)
+        self.main_popup.dismiss()
+
+    def select_dropoff_date(self, dropoff_date, *args, **kwargs):
+        self.dropoff_date = dropoff_date
+        pu = datetime.datetime.strptime(str(dropoff_date),"%Y-%m-%d %H:%M:%S")
+        pu_string = pu.strftime('%a %m/%d/%Y')
+        self.dropoff_date_btn.text = str(pu_string)
+        print(self.dropoff_date)
+        self.main_popup.dismiss()
+
+
+    def prev_dropoff_month(self, *args, **kwargs):
+        if self.month == 1:
+            self.month = 12
+            self.year -= 1
+        else:
+            self.month -= 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_dropoff_calendar_table()
+
+    def next_dropoff_month(self, *args, **kwargs):
+        if self.month == 12:
+            self.month = 1
+            self.year += 1
+        else:
+            self.month += 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_dropoff_calendar_table()
+
+    def select_dropoff_calendar_month(self, month, *args, **kwargs):
+        self.month = month
+        self.create_dropoff_calendar_table()
+
+    def select_dropoff_calendar_year(self, year, *args, **kwargs):
+        self.year = year
+        self.create_dropoff_calendar_table()
+    
+    def prev_pickup_month(self, *args, **kwargs):
+        if self.month == 1:
+            self.month = 12
+            self.year -= 1
+        else:
+            self.month -= 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_pickup_calendar_table()
+
+    def next_pickup_month(self, *args, **kwargs):
+        if self.month == 12:
+            self.month = 1
+            self.year += 1
+        else:
+            self.month += 1
+        self.month_button.text = '{}'.format(vars.month_by_number(self.month))
+        self.year_button.text = '{}'.format(self.year)
+        self.create_pickup_calendar_table()
+
+    def select_pickup_calendar_month(self, month, *args, **kwargs):
+        self.month = month
+        self.create_pickup_calendar_table()
+
+    def select_pickup_calendar_year(self, year, *args, **kwargs):
+        self.year = year
+        self.create_pickup_calendar_table()
 
 
 class SearchResultsScreen(Screen):

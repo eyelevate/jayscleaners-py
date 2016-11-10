@@ -12,6 +12,7 @@ class Zipcode:
     id = None
     zipcode_id = None
     company_id = None
+    delivery_id = None
     zipcode = None
     status = None
     deleted_at = None
@@ -31,6 +32,7 @@ class Zipcode:
         table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
                                   IntegerField(column='zipcode_id').data_type(),
                                   IntegerField(column='company_id').data_type(),
+                                  IntegerField(column='delivery_id').data_type(),
                                   TextField(column='zipcode').data_type(),
                                   IntegerField(column='status').data_type(),
                                   TextField(column='deleted_at').data_type(),
@@ -46,13 +48,14 @@ class Zipcode:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.created_at = now
-        self.c.execute('''INSERT INTO {t}(zipcode_id,company_id,zipcode,status,created_at,updated_at)
-VALUES(?,?,?,?,?,?)'''.format(t=table), (self.zipcode_id,
-                                         self.company_id,
-                                         self.zipcode,
-                                         self.status,
-                                         self.created_at,
-                                         self.updated_at)
+        self.c.execute('''INSERT INTO {t}(zipcode_id,company_id,delivery_id,zipcode,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.zipcode_id,
+                                           self.company_id,
+                                           self.delivery_id,
+                                           self.zipcode,
+                                           self.status,
+                                           self.created_at,
+                                           self.updated_at)
                        )
 
         self.conn.commit()
@@ -86,13 +89,14 @@ VALUES(?,?,?,?,?,?)'''.format(t=table), (self.zipcode_id,
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
-        self.c.execute('''UPDATE {t} SET zipcode_id = ?, company_id = ?, zipcode = ?, status = ?, updated_at = ?
-WHERE id = ?'''.format(t=table), (self.zipcode_id,
-                                  self.company_id,
-                                  self.zipcode,
-                                  self.status,
-                                  self.updated_at,
-                                  self.id)
+        self.c.execute('''UPDATE {t} SET zipcode_id = ?, company_id = ?, delivery_id = ?, zipcode = ?, status = ?,
+updated_at = ? WHERE id = ?'''.format(t=table), (self.zipcode_id,
+                                                 self.company_id,
+                                                 self.delivery_id,
+                                                 self.zipcode,
+                                                 self.status,
+                                                 self.updated_at,
+                                                 self.id)
                        )
 
         self.conn.commit()

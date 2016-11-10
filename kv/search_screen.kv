@@ -15,7 +15,8 @@
     history_btn: history_btn
     edit_invoice_btn: edit_invoice_btn
     edit_customer_btn: edit_customer_btn
-    print_card_btn: print_card_btn
+
+    delivery_btn: delivery_btn
     reprint_btn: reprint_btn
     quick_btn: quick_btn
     pickup_btn: pickup_btn
@@ -308,11 +309,12 @@
                     text: "Reprint"
                     disabled: True
                 Button:
-                    id: print_card_btn
-                    on_release: root.print_card()
-                    font_size:'15sp'
-                    text: "Print Card"
+                    id: delivery_btn
+                    on_release: root.delivery_setup()
+                    font_size: sp(15)
+                    text: "Delivery"
                     disabled: True
+
                 Button:
                     id: edit_invoice_btn
                     font_size:'20sp'

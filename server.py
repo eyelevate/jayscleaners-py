@@ -569,6 +569,7 @@ def sync_from_server(data):
                 zipcode = Zipcode()
                 zipcode.zipcode_id = zipcodes['id']
                 zipcode.company_id = zipcodes['company_id']
+                zipcode.delivery_id = zipcodes['delivery_id']
                 zipcode.zipcode = zipcodes['zipcode']
                 zipcode.status = zipcodes['status']
                 zipcode.deleted_at = zipcodes['deleted_at']
