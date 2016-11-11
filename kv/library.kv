@@ -48,7 +48,22 @@
     font_size:sp(20)
     padding_x: sp(5)
     padding_y: sp(2)
-
+<TopLeftFormLabel@Label>
+    markup:True
+    text_size:self.size
+    halign:'left'
+    valign:'top'
+    font_size:sp(15)
+    padding_x: sp(5)
+    padding_y: sp(2)
+<TopLeftFormButton@Button>
+    markup:True
+    text_size:self.size
+    halign:'left'
+    valign:'top'
+    font_size:sp(15)
+    padding_x: sp(5)
+    padding_y: sp(2)
 <CenteredHighlightedLabel@Label>:
     markup:True
     text_size:self.size
@@ -448,6 +463,17 @@
             size_hint_y:None
             height: self.minimum_height
             cols:2
+            row_force_default: True
+            row_default_height:sp(44)
+
+<ScrollGrid@RelativeLayout>
+    size_hint: 1,0.9
+    ScrollView:
+        size_hint:(1,1)
+        GridLayout:
+            id: main_table
+            size_hint_y:None
+            height: self.minimum_height
             row_force_default: True
             row_default_height:sp(44)
 

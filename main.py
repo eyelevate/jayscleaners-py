@@ -376,7 +376,7 @@ class MainScreen(Screen):
 
         # sync.migrate()
         # sync.run_sync()
-        sync.get_chunk(table='zipcodes', start=0, end=1000)
+        sync.get_chunk(table='schedules', start=0, end=2000)
 
         # vars.WORKLIST.append("Sync")
         # threads_start()
@@ -10619,6 +10619,7 @@ class SearchScreen(Screen):
     search_popup = ObjectProperty(None)
     search_results_table = ObjectProperty(None)
     search_results_footer = ObjectProperty(None)
+    view_deliveries_btn = ObjectProperty(None)
     main_popup = Popup()
     date_picker = ObjectProperty(None)
     due_date = None
@@ -10656,7 +10657,19 @@ class SearchScreen(Screen):
     pickup_date_btn = None
     pickup_time_spinner = None
     dropoff_time_spinner = None
-
+    pickup_delivery_id = None
+    dropoff_delivery_id = None
+    pickup_time_group = None
+    special_instructions = None
+    delivery_popup = Popup()
+    name_input = None
+    street_input = None
+    suite_input = None
+    city_input = None
+    state_input = None
+    zipcode_input = None
+    concierge_name_input = None
+    concierge_number_input = None
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
@@ -10682,6 +10695,19 @@ class SearchScreen(Screen):
         self.dropoff_date_btn = None
         self.pickup_time_spinner = None
         self.dropoff_time_spinner = None
+        self.pickup_delivery_id = None
+        self.dropoff_delivery_id = None
+        self.dropoff_time_group = None
+        self.special_instructions = None
+        self.name_input = None
+        self.street_input = None
+        self.suite_input = None
+        self.city_input = None
+        self.state_input = None
+        self.zipcode_input = None
+        self.concierge_name_input = None
+        self.concierge_number_input = None
+        self.view_deliveries_btn.text = 'No Delivery Scheduled'
 
         if vars.SEARCH_RESULTS_STATUS:
 
@@ -12781,8 +12807,8 @@ class SearchScreen(Screen):
         pass
 
     def delivery_setup(self, *args, **kwargs):
-        popup = Popup()
-        popup.title = 'Delivery Setup'
+        self.delivery_popup = Popup()
+        self.delivery_popup.title = 'Delivery Setup'
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = Factory.DeliveryGrid()
         cards_label = Factory.BottomLeftFormLabel(text="[b](1)[/b] Select Card On File",
@@ -12861,7 +12887,7 @@ class SearchScreen(Screen):
         inner_layout_1.ids.delivery_table.add_widget(pickup_date_label)
         inner_layout_1.ids.delivery_table.add_widget(self.pickup_date_btn)
 
-        pickup_time_label = Factory.BottomLeftFormLabel(text="[b](3b[/b] Pickup Delivery Time",
+        pickup_time_label = Factory.BottomLeftFormLabel(text="[b](3b)[/b] Pickup Delivery Time",
                                                         markup=True)
         self.pickup_time_spinner = Spinner(
             # default value shown
@@ -12892,7 +12918,7 @@ class SearchScreen(Screen):
         inner_layout_1.ids.delivery_table.add_widget(self.dropoff_date_btn)
 
         dropoff_time_label = Factory.BottomLeftFormLabel(text="[b](4b[/b] Dropoff Delivery Time",
-                                                        markup=True)
+                                                         markup=True)
         self.dropoff_time_spinner = Spinner(
             # default value shown
             text='Select Time',
@@ -12909,15 +12935,15 @@ class SearchScreen(Screen):
 
         special_instructions_label = Factory.BottomLeftFormLabel(text="[b](5)[/b] Special Instructions",
                                                                  markup=True)
-        special_instructions = Factory.CenterVerticalTextInput(multiline=True)
+        self.special_instructions = Factory.CenterVerticalTextInput(multiline=True)
         inner_layout_1.ids.delivery_table.add_widget(special_instructions_label)
-        inner_layout_1.ids.delivery_table.add_widget(special_instructions)
+        inner_layout_1.ids.delivery_table.add_widget(self.special_instructions)
         inner_layout_1.ids.delivery_table.add_widget(Label(text=' '))
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         cancel_button = Button(markup=True,
                                text="Cancel",
-                               on_release=popup.dismiss)
+                               on_release=self.delivery_popup.dismiss)
         add_card_button = Button(markup=True,
                                  text="Add Card",
                                  on_release=self.add_card_setup)
@@ -12933,8 +12959,8 @@ class SearchScreen(Screen):
         inner_layout_2.add_widget(setup_button)
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
-        popup.content = layout
-        popup.open()
+        self.delivery_popup.content = layout
+        self.delivery_popup.open()
 
     def select_online_card(self, *args, **kwargs):
         card_string = self.card_id_spinner.text
@@ -12963,10 +12989,18 @@ class SearchScreen(Screen):
                     print(self.address_id)
         pass
 
-    def select_dropoff_time(self, *args, **kwargs):
+    def select_dropoff_time(self, instance, value, *args, **kwargs):
+        if value in self.dropoff_time_group:
+            self.dropoff_delivery_id = self.dropoff_time_group[value]
+
+        print(self.dropoff_delivery_id)
         pass
 
-    def select_pickup_time(self, *args, **kwargs):
+    def select_pickup_time(self, instance, value, *args, **kwargs):
+        if value in self.pickup_time_group:
+            self.pickup_delivery_id = self.pickup_time_group[value]
+
+        print(self.pickup_delivery_id)
         pass
 
     def pickup_status(self, instance, value, *args, **kwargs):
@@ -13162,12 +13196,259 @@ class SearchScreen(Screen):
         pass
 
     def set_delivery(self, *args, **kwargs):
+        # validate
+        if self.card_id is None:
+
+            popup = Popup()
+            popup.title = 'Schedule Error'
+            content = KV.popup_alert('You have not selected a credit card on file')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        elif self.address_id is None:
+
+            popup = Popup()
+            popup.title = 'Schedule Error'
+            content = KV.popup_alert('You must first select an address.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        elif self.pickup_status is True and self.pickup_delivery_id is None:
+
+            popup = Popup()
+            popup.title = 'Schedule Error'
+            content = KV.popup_alert('Please select a proper pickup date and time')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        elif self.dropoff_status is True and self.dropoff_delivery_id is None:
+
+            popup = Popup()
+            popup.title = 'Schedule Error'
+            content = KV.popup_alert('Please select a proper dropoff date and time.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        elif self.dropoff_status is False and self.pickup_status is False:
+            popup = Popup()
+            popup.title = 'Schedule Error'
+            content = KV.popup_alert('You must choose at least a dropoff or a pickup.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+        else:
+            # create a new schedule instance
+            schedules = Schedule()
+            schedules.company_id = auth_user.company_id
+            schedules.customer_id = vars.CUSTOMER_ID
+            schedules.card_id = self.card_id
+            schedules.pickup_delivery_id = self.pickup_delivery_id
+            schedules.pickup_date = self.pickup_date
+            schedules.pickup_address = self.address_id
+            schedules.dropoff_delivery_id = self.dropoff_delivery_id
+            schedules.dropoff_date = self.dropoff_date
+            schedules.dropoff_address = self.address_id
+            schedules.special_instructions = self.special_instructions.text
+            schedules.type = 2
+            status = 1
+            if self.pickup_delivery_id:
+                status = 1
+            elif not self.pickup_delivery_id and self.dropoff_delivery_id:
+                status = 4
+
+            schedules.status = status
+
+            if schedules.add():
+                self.delivery_popup.dismiss()
+                # sync db
+                run_sync = threading.Thread(target=SYNC.run_sync)
+                try:
+                    run_sync.start()
+                finally:
+                    run_sync.join()
+                    # show alert
+                    popup = Popup()
+                    popup.title = 'Schedule Successfully Made'
+                    content = KV.popup_alert('Delivery has been succesfully scheduled.')
+                    popup.content = Builder.load_string(content)
+                    popup.open()
+                    # Beep Sound
+                    sys.stdout.write('\a')
+                    sys.stdout.flush()
+
         pass
 
     def add_card_setup(self, *args, **kwargs):
+        self.main_popup.title = 'Add Card Setup'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = Factory.DeliveryGrid()
+        card_number_label = Factory.BottomLeftFormLabel(text="Card Number")
+        self.card_number_input = Factory.CenterVerticalTextInput()
+        exp_month_label = Factory.BottomLeftFormLabel(text="Expiration Month")
+        self.exp_month_input = Factory.CenterVerticalTextInput()
+        exp_year_label = Factory.BottomLeftFormLabel(text="Expiration Year")
+        self.exp_year_input = Factory.CenterVerticalTextInput()
+        first_name_label = Factory.BottomLeftFormLabel(text="First Name")
+        self.first_name_input = Factory.CenterVerticalTextInput()
+        last_name_label = Factory.BottomLeftFormLabel(text="Last Name")
+        self.last_name_input = Factory.CenterVerticalTextInput()
+        street_label = Factory.BottomLeftFormLabel(text="Street")
+        self.street_input = Factory.CenterVerticalTextInput()
+        suite_label = Factory.BottomLeftFormLabel(text="Suite")
+        self.suite_input = Factory.CenterVerticalTextInput()
+        city_label = Factory.BottomLeftFormLabel(text="City")
+        self.city_input = Factory.CenterVerticalTextInput()
+        state_label = Factory.BottomLeftFormLabel(text="State")
+        self.state_input = Factory.CenterVerticalTextInput(text="WA")
+        zipcode_label = Factory.BottomLeftFormLabel(text="Zipcode")
+        self.zipcode_input = Factory.CenterVerticalTextInput()
+        inner_layout_1.ids.delivery_table.add_widget(card_number_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.card_number_input)
+        inner_layout_1.ids.delivery_table.add_widget(exp_month_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.exp_month_input)
+        inner_layout_1.ids.delivery_table.add_widget(exp_year_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.exp_year_input)
+        inner_layout_1.ids.delivery_table.add_widget(first_name_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.first_name_input)
+        inner_layout_1.ids.delivery_table.add_widget(last_name_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.last_name_input)
+        inner_layout_1.ids.delivery_table.add_widget(street_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.street_input)
+        inner_layout_1.ids.delivery_table.add_widget(suite_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.suite_input)
+        inner_layout_1.ids.delivery_table.add_widget(city_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.city_input)
+        inner_layout_1.ids.delivery_table.add_widget(state_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.state_input)
+        inner_layout_1.ids.delivery_table.add_widget(zipcode_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.zipcode_input)
+        inner_layout_1.ids.delivery_table.add_widget(Label(text=' '))
+        inner_layout_1.ids.delivery_table.add_widget(Label(text=' '))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(markup=True,
+                               text="Cancel",
+                               on_release=self.main_popup.dismiss)
+        add_button = Button(markup=True,
+                               text="Add",
+                               on_release=self.add_new_card)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(add_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.main_popup.content = layout
+        self.main_popup.open()
+        pass
+
+    def add_new_card(self, *args, **kwargs):
         pass
 
     def add_address_setup(self, *args, **kwargs):
+        self.main_popup.title = 'Add Address Setup'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = Factory.DeliveryGrid()
+        name_label = Factory.BottomLeftFormLabel(text="Address Nick Name")
+        self.name_input = Factory.CenterVerticalTextInput()
+        street_label = Factory.BottomLeftFormLabel(text="Street")
+        self.street_input = Factory.CenterVerticalTextInput()
+        suite_label = Factory.BottomLeftFormLabel(text="Suite")
+        self.suite_input = Factory.CenterVerticalTextInput()
+        city_label = Factory.BottomLeftFormLabel(text="City")
+        self.city_input = Factory.CenterVerticalTextInput()
+        state_label = Factory.BottomLeftFormLabel(text="State")
+        self.state_input = Factory.CenterVerticalTextInput(text="WA")
+        zipcode_label = Factory.BottomLeftFormLabel(text="Zipcode")
+        self.zipcode_input = Factory.CenterVerticalTextInput()
+        concierge_name_label = Factory.BottomLeftFormLabel(text="Contact Name")
+        self.concierge_name_input = Factory.CenterVerticalTextInput()
+        concierge_number_label = Factory.BottomLeftFormLabel(text="Contact Number")
+        self.concierge_number_input = Factory.CenterVerticalTextInput()
+        inner_layout_1.ids.delivery_table.add_widget(name_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.name_input)
+        inner_layout_1.ids.delivery_table.add_widget(street_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.street_input)
+        inner_layout_1.ids.delivery_table.add_widget(suite_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.suite_input)
+        inner_layout_1.ids.delivery_table.add_widget(city_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.city_input)
+        inner_layout_1.ids.delivery_table.add_widget(state_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.state_input)
+        inner_layout_1.ids.delivery_table.add_widget(zipcode_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.zipcode_input)
+        inner_layout_1.ids.delivery_table.add_widget(concierge_name_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.concierge_name_input)
+        inner_layout_1.ids.delivery_table.add_widget(concierge_number_label)
+        inner_layout_1.ids.delivery_table.add_widget(self.concierge_number_input)
+        inner_layout_1.ids.delivery_table.add_widget(Label(text=' '))
+        inner_layout_1.ids.delivery_table.add_widget(Label(text=' '))
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(markup=True,
+                               text="Cancel",
+                               on_release=self.main_popup.dismiss)
+        add_button = Button(markup=True,
+                               text="Add",
+                               on_release=self.add_new_address)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(add_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.main_popup.content = layout
+        self.main_popup.open()
+        pass
+
+    def add_new_address(self, *args, **kwargs):
+        addresses = Address()
+        addresses.company_id = auth_user.company_id
+        addresses.user_id = vars.CUSTOMER_ID
+        addresses.name = self.name_input.text
+        addresses.street = self.street_input.text
+        addresses.suite = self.suite_input.text
+        addresses.city = self.city_input.text
+        addresses.state = self.state_input.text
+        addresses.zipcode = self.zipcode_input.text
+        addresses.primary_address = 0
+        addresses.concierge_name = self.concierge_name_input.text
+        addresses.concierge_number = self.concierge_number_input.text
+        addresses.status = 1
+        if addresses.add():
+            run_sync = threading.Thread(target=SYNC.run_sync)
+            try:
+                run_sync.start()
+            finally:
+                run_sync.join()
+                # update the form with a new address list
+                self.addresses = Address().where({'user_id': vars.CUSTOMER_ID})
+                self.address_string = []
+                if self.addresses:
+                    for address in self.addresses:
+                        self.address_string.append("{} - {} {}, {} {}".format(address['name'],
+                                                                              address['street'],
+                                                                              address['city'],
+                                                                              address['state'],
+                                                                              address['zipcode']))
+                self.address_id_spinner.values = self.address_string
+                self.main_popup.dismiss()
+                popup = Popup()
+                popup.title = 'Address Added'
+                content = KV.popup_alert('Successfully added a new address to delivery setup')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+
+
         pass
 
     def create_dropoff_calendar_table(self):
@@ -13188,7 +13469,7 @@ class SearchScreen(Screen):
                     delivery_ids.append(zip['delivery_id'])
 
         # day of the week
-        dow = []
+        dow = {}
         # blackout dates
         blackout_dates = []
         if delivery_ids:
@@ -13196,12 +13477,12 @@ class SearchScreen(Screen):
                 deliveries = Delivery().where({'delivery_id': delivery_id})
                 if deliveries:
                     for delivery in deliveries:
-                        dow.append(delivery['day'])
+                        dow[delivery['day']] = delivery_id
                         blackouts = json.loads(delivery['blackout'])
                         if blackouts:
                             for blackout in blackouts:
                                 blackout_dates.append(blackout)
-        pickup_date = datetime.datetime.strptime(str(self.pickup_date),"%Y-%m-%d %H:%M:%S")
+        pickup_date = datetime.datetime.strptime(str(self.pickup_date), "%Y-%m-%d %H:%M:%S")
         today_date = pickup_date if self.pickup_date else datetime.datetime.today()
         today_string = today_date.strftime('%Y-%m-%d 00:00:00')
         check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
@@ -13250,7 +13531,7 @@ class SearchScreen(Screen):
                                 elif today_day in dow and check_date_string not in blackout_dates:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                   on_release=partial(self.select_dropoff_date,
-                                                                                     today_base))
+                                                                                     today_base, dow[today_day]))
                                 else:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                   disabled=True)
@@ -13278,7 +13559,7 @@ class SearchScreen(Screen):
                 for zip in zips:
                     delivery_ids.append(zip['delivery_id'])
         # day of the week
-        dow = []
+        dow = {}
         # blackout dates
         blackout_dates = []
         if delivery_ids:
@@ -13286,7 +13567,7 @@ class SearchScreen(Screen):
                 deliveries = Delivery().where({'delivery_id': delivery_id})
                 if deliveries:
                     for delivery in deliveries:
-                        dow.append(delivery['day'])
+                        dow[delivery['day']] = delivery_id
                         blackouts = json.loads(delivery['blackout'])
                         if blackouts:
                             for blackout in blackouts:
@@ -13340,7 +13621,7 @@ class SearchScreen(Screen):
                                 elif today_day in dow and check_date_string not in blackout_dates:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                   on_release=partial(self.select_pickup_date,
-                                                                                     today_base))
+                                                                                     today_base, dow[today_day]))
                                 else:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                   disabled=True)
@@ -13351,22 +13632,50 @@ class SearchScreen(Screen):
                             item = Factory.CalendarButton(disabled=True)
                         self.calendar_layout.add_widget(item)
 
-    def select_pickup_date(self, pickup_date, *args, **kwargs):
+    def select_pickup_date(self, pickup_date, delivery_id, *args, **kwargs):
         self.pickup_date = pickup_date
-        dd = datetime.datetime.strptime(str(pickup_date),"%Y-%m-%d %H:%M:%S")
+        dd = datetime.datetime.strptime(str(pickup_date), "%Y-%m-%d %H:%M:%S")
         dd_string = dd.strftime('%a %m/%d/%Y')
         self.pickup_date_btn.text = str(dd_string)
         print(self.pickup_date)
+        # get delivery times
+        deliveries = Delivery().where({'delivery_id': delivery_id})
+
+        time_display = []
+        self.pickup_time_group = {}
+        if deliveries:
+            for delivery in deliveries:
+                start_time = delivery['start_time']
+                end_time = delivery['end_time']
+                time_string = '{} - {}'.format(start_time, end_time)
+                time_display.append(time_string)
+                self.pickup_time_group[time_string] = delivery_id
+        self.pickup_delivery_id = delivery_id
+        self.pickup_time_spinner.values = time_display
         self.main_popup.dismiss()
 
-    def select_dropoff_date(self, dropoff_date, *args, **kwargs):
+    def select_dropoff_date(self, dropoff_date, delivery_id, *args, **kwargs):
         self.dropoff_date = dropoff_date
-        pu = datetime.datetime.strptime(str(dropoff_date),"%Y-%m-%d %H:%M:%S")
+        pu = datetime.datetime.strptime(str(dropoff_date), "%Y-%m-%d %H:%M:%S")
         pu_string = pu.strftime('%a %m/%d/%Y')
         self.dropoff_date_btn.text = str(pu_string)
         print(self.dropoff_date)
-        self.main_popup.dismiss()
 
+        # get delivery times
+        deliveries = Delivery().where({'delivery_id': delivery_id})
+
+        time_display = []
+        self.dropoff_time_group = {}
+        if deliveries:
+            for delivery in deliveries:
+                start_time = delivery['start_time']
+                end_time = delivery['end_time']
+                time_string = '{} - {}'.format(start_time, end_time)
+                time_display.append(time_string)
+                self.dropoff_time_group[time_string] = delivery_id
+        self.dropoff_time_spinner.values = time_display
+        self.dropoff_delivery_id = delivery_id
+        self.main_popup.dismiss()
 
     def prev_dropoff_month(self, *args, **kwargs):
         if self.month == 1:
@@ -13395,7 +13704,7 @@ class SearchScreen(Screen):
     def select_dropoff_calendar_year(self, year, *args, **kwargs):
         self.year = year
         self.create_dropoff_calendar_table()
-    
+
     def prev_pickup_month(self, *args, **kwargs):
         if self.month == 1:
             self.month = 12
@@ -13423,6 +13732,129 @@ class SearchScreen(Screen):
     def select_pickup_calendar_year(self, year, *args, **kwargs):
         self.year = year
         self.create_pickup_calendar_table()
+
+    def view_deliveries(self):
+        self.main_popup.title = 'View Deliveries'
+        layout = BoxLayout(orientation="vertical")
+        inner_layout_1 = Factory.ScrollGrid(size_hint=(1,0.9))
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1,0.1))
+        inner_layout_1.ids.main_table.cols=10
+        inner_layout_1.ids.main_table.row_default_height = '55sp'
+        schedules = Schedule().where({'customer_id':vars.CUSTOMER_ID,
+                                      'status':{'<':12}})
+        th1 = KV.invoice_tr(0, 'ID')
+        th2 = KV.invoice_tr(0, 'P. Date')
+        th3 = KV.invoice_tr(0, 'P. Time')
+        th4 = KV.invoice_tr(0, 'D. Date')
+        th5 = KV.invoice_tr(0, 'D. Time')
+        th6 = KV.invoice_tr(0, 'Address')
+        th7 = KV.invoice_tr(0, 'C. Name')
+        th8 = KV.invoice_tr(0, 'C. Phone')
+        th9 = KV.invoice_tr(0, 'Spec Ins')
+        th10 = KV.invoice_tr(0, 'Status')
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th1))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th2))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th3))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th4))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th7))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th8))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th9))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th10))
+        if schedules:
+            for schedule in schedules:
+                try:
+                    pickup_date = datetime.datetime.strptime(str(schedule['pickup_date']), "%Y-%m-%d %H:%M:%S")
+                except ValueError as e:
+                    pickup_date = False
+                try:
+                    dropoff_date = datetime.datetime.strptime(str(schedule['dropoff_date']), "%Y-%m-%d %H:%M:%S")
+                except ValueError as e:
+                    dropoff_date = False
+                pickup_address_id = schedule['pickup_address']
+                dropoff_address_id = schedule['dropoff_address']
+                pickup_delivery_id = schedule['pickup_delivery_id']
+                dropoff_delivery_id = schedule['dropoff_delivery_id']
+                status = schedule['status']
+                special_instructions = schedule['special_instructrions'] if schedule['special_instructions'] else ''
+                pickup_date_formatted = pickup_date.strftime('%a %m/%d/%Y') if pickup_date else 'No Date'
+                dropoff_date_formatted = dropoff_date.strftime('%a %m/%d/%Y') if dropoff_date else 'No Date'
+                pickup_time_string = ''
+                if dropoff_delivery_id:
+                    deliveries = Delivery().where({'delivery_id':dropoff_delivery_id})
+
+                    if deliveries:
+                        for delivery in deliveries:
+                            pickup_time_string = '{} - {}'.format(delivery['start_time'],delivery['end_time'])
+                dropoff_time_string = ''
+                if pickup_delivery_id:
+                    deliveries = Delivery().where({'delivery_id':pickup_delivery_id})
+
+                    if deliveries:
+                        for delivery in deliveries:
+                            dropoff_time_string = '{} - {}'.format(delivery['start_time'],delivery['end_time'])
+                address_string = ''
+                concierge_name = ''
+                concierge_number = ''
+                if pickup_address_id:
+                    addresses = Address().where({'address_id':pickup_address_id})
+                    if addresses:
+                        for address in addresses:
+                            address_name = address['name']
+                            street = address['street']
+                            address_string = '{}: {}'.format(address_name,street)
+                            concierge_name = address['concierge_name']
+                            concierge_number = Job.make_us_phone(address['concierge_number'])
+                else:
+                    addresses = Address().where({'address_id':dropoff_address_id})
+                    if addresses:
+                        for address in addresses:
+                            address_name = address['name']
+                            street = address['street']
+                            address_string = '{}: {}'.format(address_name, street)
+
+                            concierge_name = address['concierge_name']
+                            concierge_number = Job.make_us_phone(address['concierge_number'])
+
+                status_formatted = Schedule().getStatus(status)
+
+                pickup_date_label = Factory.TopLeftFormButton(text=pickup_date_formatted)
+                dropoff_date_label = Factory.TopLeftFormButton(text=dropoff_date_formatted)
+                pickup_time_label = Factory.TopLeftFormButton(text=pickup_time_string)
+                dropoff_time_label = Factory.TopLeftFormButton(text=dropoff_time_string)
+                address_label = Factory.TopLeftFormButton(text=address_string)
+                special_instructions_label = Factory.TopLeftFormButton(text=special_instructions)
+                concierge_name_label = Factory.TopLeftFormButton(text=concierge_name)
+                concierge_number_label = Factory.TopLeftFormButton(text=concierge_number)
+                status_label = Factory.TopLeftFormButton(text=status_formatted)
+                inner_layout_1.ids.main_table.add_widget(Button(text=str(schedule['schedule_id'])))
+                inner_layout_1.ids.main_table.add_widget(pickup_date_label)
+                inner_layout_1.ids.main_table.add_widget(pickup_time_label)
+                inner_layout_1.ids.main_table.add_widget(dropoff_date_label)
+                inner_layout_1.ids.main_table.add_widget(dropoff_time_label)
+                inner_layout_1.ids.main_table.add_widget(address_label)
+                inner_layout_1.ids.main_table.add_widget(concierge_name_label)
+                inner_layout_1.ids.main_table.add_widget(concierge_number_label)
+                inner_layout_1.ids.main_table.add_widget(special_instructions_label)
+                inner_layout_1.ids.main_table.add_widget(status_label)
+
+        cancel_button = Button(text='cancel',
+                               on_release=self.main_popup.dismiss)
+        inner_layout_2.add_widget(cancel_button)
+
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+
+        self.main_popup.content = layout
+        self.main_popup.open()
+
+
+
+
+
+
 
 
 class SearchResultsScreen(Screen):

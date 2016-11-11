@@ -24,6 +24,7 @@
     search_popup: search_popup
     search_results_table: search_results_table
     search_results_footer: search_results_footer
+    view_deliveries_btn: view_deliveries_btn
     name:"search"
     on_enter: root.reset()
     BoxLayout:
@@ -78,148 +79,123 @@
         orientation: 'horizontal'
         size_hint: 1,0.80
         pos_hint: {'top':0.90}
-        GridLayout:
-            size_hint: 0.6, 1
-            cols: 2
-            rows: 11
-            row_default_height: '32sp'
-            Label:
-                text: "Customer Info"
-                font_size: '20sp'
+        RelativeLayout:
+            size_hint: 0.6,1
+            ScrollView:
+                size_hint:(1,1)
+                GridLayout:
+                    size_hint_y:None
+                    height: self.minimum_height
+                    row_force_default: True
+                    row_default_height:sp(32)
+                    cols: 1
+                    BottomLeftFormLabel:
+                        text: "Customer Info"
+                        font_size: '20sp'
 
-            Label:
-                id: customer_mark_l
-                text: ""
-                font_size: '20sp'
-            Label:
-                text: "Last Name"
-                text_size: self.size
-                padding_x:10
-                font_size:'20sp'
-                halign: 'right'
-                valign: 'middle'
+                    Label:
+                        id: customer_mark_l
+                        text: ""
+                        font_size: '20sp'
+                    BottomLeftFormLabel:
+                        text: "Last Name"
 
-            TextInput:
-                id: customer_last_name_ti
-                hint_text: "Last Name"
-                font_size:'20sp'
-                multiline: False
-                readonly: True
-                padding: [5,5,5,5]
-                text: ''
-            Label:
-                text: "First Name"
-                padding_x:10
-                font_size:'20sp'
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.size
+                    CenterVerticalTextInput:
+                        id: customer_last_name_ti
+                        hint_text: "Last Name"
+                        font_size:'20sp'
+                        multiline: False
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    BottomLeftFormLabel:
+                        text: "First Name"
 
-            TextInput:
-                id: customer_first_name_ti
-                font_size:'20sp'
-                hint_text: "First Name"
-                multiline: False
-                readonly: True
-                padding: [5,5,5,5]
-                text: ''
-            Label:
-                text: "Phone"
-                padding_x:10
-                font_size:'20sp'
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.size
+                    CenterVerticalTextInput:
+                        id: customer_first_name_ti
+                        font_size:'20sp'
+                        hint_text: "First Name"
+                        multiline: False
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    BottomLeftFormLabel:
+                        text: "Phone"
 
-            TextInput:
-                id: customer_phone_ti
-                font_size:'20sp'
-                hint_text: "(xxx) xxx-xxxx"
-                multiline: False
-                readonly: True
-                padding: [5,5,5,5]
-                text: ''
-            Label:
-                text: "Last Drop"
-                padding_x:10
-                font_size:'20sp'
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.size
+                    CenterVerticalTextInput:
+                        id: customer_phone_ti
+                        font_size:'20sp'
+                        hint_text: "(xxx) xxx-xxxx"
+                        multiline: False
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    BottomLeftFormLabel:
+                        text: "Last Drop"
 
-            TextInput:
-                id: customer_last_drop_ti
-                font_size:'20sp'
-                hint_text: "Last Drop"
-                multiline: False
-                readonly: True
-                padding: [5,5,5,5]
-                text: ''
-            Label:
-                text: "Starch"
-                padding_x:10
-                font_size:'20sp'
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.size
-            TextInput:
-                id: customer_starch_ti
-                font_size:'20sp'
-                hint_text: "Starch"
-                multiline: False
-                readonly: True
-                padding: [5,5,5,5]
-                text: ''
-            Label:
-                text: "Credit"
-                padding_x:10
-                font_size:'20sp'
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.size
+                    CenterVerticalTextInput:
+                        id: customer_last_drop_ti
+                        font_size:'20sp'
+                        hint_text: "Last Drop"
+                        multiline: False
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    BottomLeftFormLabel:
+                        text: "Starch"
 
-            TextInput:
-                id: customer_credit_ti
-                font_size:'20sp'
-                hint_text: "Credit"
-                multiline: False
-                readonly: True
-                padding: [5,5,5,5]
-                text: ''
-            Label:
-                text: "Invoice Memo"
-                padding_x:10
-                font_size:'20sp'
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.size
-            TextInput:
-                id: customer_invoice_memo_ti
-                hint_text: "Invoice Memo"
-                font_size:'17sp'
-                size_hint_y: None
-                height: '72sp'
-                multiline: True
-                readonly: True
-                padding: [5,5,5,5]
-                text: ''
-            Label:
-                text: "Important Memo"
-                padding_x:10
-                font_size:'20sp'
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.size
-            TextInput:
-                id: customer_important_memo_ti
-                hint_text: "Important Memo"
-                font_size:'17sp'
-                size_hint_y: None
-                height: '72sp'
-                multiline: True
-                readonly: True
-                padding: [5,5,5,5]
-                text: ''
+                    CenterVerticalTextInput:
+                        id: customer_starch_ti
+                        font_size:'20sp'
+                        hint_text: "Starch"
+                        multiline: False
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    BottomLeftFormLabel:
+                        text: "Credit"
+
+                    CenterVerticalTextInput:
+                        id: customer_credit_ti
+                        font_size:'20sp'
+                        hint_text: "Credit"
+                        multiline: False
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    BottomLeftFormLabel:
+                        text: "Invoice Memo"
+
+                    CenterVerticalTextInput:
+                        id: customer_invoice_memo_ti
+                        hint_text: "Invoice Memo"
+                        font_size:'17sp'
+                        size_hint_y: None
+                        height: '72sp'
+                        multiline: True
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    BottomLeftFormLabel:
+                        text: "Important Memo"
+
+                    CenterVerticalTextInput:
+                        id: customer_important_memo_ti
+                        hint_text: "Important Memo"
+                        font_size:'17sp'
+                        size_hint_y: None
+                        height: '72sp'
+                        multiline: True
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    BottomLeftFormLabel:
+                        text: "Delivery Scheduled"
+
+                    Button:
+                        id: view_deliveries_btn
+                        text:'No Delivery Scheduled'
+                        on_release: root.view_deliveries()
         GridLayout:
             cols: 2
             ScrollView:

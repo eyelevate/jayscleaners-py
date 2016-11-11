@@ -16,8 +16,10 @@ class Schedule:
     card_id = None
     pickup_delivery_id = None
     pickup_date = None
+    pickup_address = None
     dropoff_delivery_id = None
     dropoff_date = None
+    dropoff_address = None
     special_instructions = None
     type = None
     token = None
@@ -42,8 +44,10 @@ class Schedule:
                                   IntegerField(column='customer_id').data_type(),
                                   IntegerField(column='card_id').data_type(),
                                   IntegerField(column='pickup_delivery_id').data_type(),
+                                  IntegerField(column='pickup_address').data_type(),
                                   TextField(column='pickup_date').data_type(),
                                   IntegerField(column='dropoff_delivery_id').data_type(),
+                                  IntegerField(column='dropoff_address').data_type(),
                                   TextField(column='dropoff_date').data_type(),
                                   TextField(column='special_instructions').data_type(),
                                   CharField(column='type', max_length=20).data_type(),
@@ -63,21 +67,23 @@ class Schedule:
         self.updated_at = now
         self.created_at = now
         self.c.execute('''INSERT INTO {t}(schedule_id,company_id,customer_id, card_id,pickup_delivery_id,
-pickup_date,dropoff_delivery_id, dropoff_date,special_instructions,type,token,status,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
-                                                         self.company_id,
-                                                         self.customer_id,
-                                                         self.card_id,
-                                                         self.pickup_delivery_id,
-                                                         self.pickup_date,
-                                                         self.dropoff_delivery_id,
-                                                         self.dropoff_date,
-                                                         self.special_instructions,
-                                                         self.type,
-                                                         self.token,
-                                                         self.status,
-                                                         self.created_at,
-                                                         self.updated_at)
+pickup_address,pickup_date,dropoff_delivery_id, dropoff_address, dropoff_date,special_instructions,type,token,status,
+created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
+                                                                                    self.company_id,
+                                                                                    self.customer_id,
+                                                                                    self.card_id,
+                                                                                    self.pickup_delivery_id,
+                                                                                    self.pickup_address,
+                                                                                    self.pickup_date,
+                                                                                    self.dropoff_delivery_id,
+                                                                                    self.dropoff_address,
+                                                                                    self.dropoff_date,
+                                                                                    self.special_instructions,
+                                                                                    self.type,
+                                                                                    self.token,
+                                                                                    self.status,
+                                                                                    self.created_at,
+                                                                                    self.updated_at)
                        )
 
         self.conn.commit()
@@ -112,21 +118,24 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.c.execute('''UPDATE {t} SET schedule_id = ?, company_id = ?, customer_id = ?, card_id = ?,
-pickup_delivery_id = ?, pickup_date = ?, dropoff_delivery_id = ?, dropoff_date = ?, special_instructions = ?,
-type = ?, token = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.schedule_id,
-                                                                                  self.company_id,
-                                                                                  self.customer_id,
-                                                                                  self.card_id,
-                                                                                  self.pickup_delivery_id,
-                                                                                  self.pickup_date,
-                                                                                  self.dropoff_delivery_id,
-                                                                                  self.dropoff_date,
-                                                                                  self.special_instructions,
-                                                                                  self.type,
-                                                                                  self.token,
-                                                                                  self.status,
-                                                                                  self.updated_at,
-                                                                                  self.id)
+pickup_delivery_id = ?, pickup_address = ?, pickup_date = ?, dropoff_delivery_id = ?, dropoff_address= ?,
+dropoff_date = ?, special_instructions = ?, type = ?, token = ?, status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.schedule_id,
+                                  self.company_id,
+                                  self.customer_id,
+                                  self.card_id,
+                                  self.pickup_delivery_id,
+                                  self.pickup_address,
+                                  self.pickup_date,
+                                  self.dropoff_delivery_id,
+                                  self.dropoff_address,
+                                  self.dropoff_date,
+                                  self.special_instructions,
+                                  self.type,
+                                  self.token,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
                        )
 
         self.conn.commit()
@@ -268,3 +277,34 @@ type = ?, token = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table),
     def close_connection(self):
         self.c.close()
         self.conn.close()
+
+
+    def getStatus(self, data):
+        status = ''
+        if data:
+            if data is 1:
+                status = 'Delivery Scheduled'
+            elif data is 2:
+                status = 'En-route Pickup'
+            elif data is 3:
+                status = 'Picked Up'
+            elif data is 4:
+                status = 'Processing'
+            elif data is 5:
+                status = 'Invoice Paid'
+            elif data is 6:
+                status = 'Cancelled by customer'
+            elif data is 7:
+                status = 'Delayed - Processing not complete'
+            elif data is 8:
+                status = 'Delayed - Customer unavailable for pickup'
+            elif data is 9:
+                status = 'Delayed - Customer unavailable for dropoff'
+            elif data is 10:
+                status = 'Delayed - Card on file processing error'
+            elif data is 11:
+                status = 'En-route Dropoff - invoice paid'
+            else:
+                status = 'Dropped Off. Thank You!'
+
+        return status
