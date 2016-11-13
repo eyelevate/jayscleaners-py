@@ -101,6 +101,8 @@ from kivy.uix.tabbedpanel import TabbedPanelContent
 from kivy.graphics.instructions import Canvas
 from kivy.graphics import Rectangle, Color
 from kivy.uix.widget import WidgetException
+from kivy import Config
+Config.set('graphics','multisamples','0')
 
 auth_user = User()
 Job = Job()
