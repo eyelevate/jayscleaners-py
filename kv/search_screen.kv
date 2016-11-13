@@ -2,6 +2,7 @@
     id: screen_search
     search: search
     customer_mark_l: customer_mark_l
+    customer_id_ti: customer_id_ti
     cust_last_name: customer_last_name_ti
     cust_first_name: customer_first_name_ti
     cust_phone: customer_phone_ti
@@ -97,6 +98,17 @@
                         id: customer_mark_l
                         text: ""
                         font_size: '20sp'
+                    BottomLeftFormLabel:
+                        text: "ID"
+
+                    CenterVerticalTextInput:
+                        id: customer_id_ti
+                        hint_text: "Customer ID #"
+                        font_size:'20sp'
+                        multiline: False
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
                     BottomLeftFormLabel:
                         text: "Last Name"
 
@@ -194,8 +206,11 @@
 
                     Button:
                         id: view_deliveries_btn
-                        text:'No Delivery Scheduled'
+                        text:'View Delivery Schedule'
                         on_release: root.view_deliveries()
+                    Label:
+                        text: ""
+                        font_size: '20sp'
         GridLayout:
             cols: 2
             ScrollView:

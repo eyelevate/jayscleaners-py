@@ -5092,12 +5092,8 @@ class EditCustomerScreen(Screen):
     invoice_memo = ObjectProperty(None)
     shirt_finish = 1
     shirt_preference = 1
-    shirts_finish_hanger = ObjectProperty(None)
-    shirts_finish_box = ObjectProperty(None)
-    shirts_preference_none = ObjectProperty(None)
-    shirts_preference_light = ObjectProperty(None)
-    shirts_preference_medium = ObjectProperty(None)
-    shirts_preference_heavy = ObjectProperty(None)
+    shirt_finish_spinner = ObjectProperty(None)
+    shirt_preference_spinner = ObjectProperty(None)
     is_delivery = ObjectProperty(None)
     mark_text = ObjectProperty(None)
     marks_table = ObjectProperty(None)
@@ -5108,6 +5104,7 @@ class EditCustomerScreen(Screen):
     concierge_name = ObjectProperty(None)
     concierge_number = ObjectProperty(None)
     special_instructions = ObjectProperty(None)
+    address_id = None
 
     def reset(self):
         self.last_name.text = ''
@@ -5128,12 +5125,7 @@ class EditCustomerScreen(Screen):
         self.invoice_memo.text = ''
         self.invoice_memo.hint_text = 'Invoiced Memo'
         self.invoice_memo.hint_text_color = DEFAULT_COLOR
-        self.shirts_finish_hanger.active = True
-        self.shirts_finish_box.active = False
-        self.shirts_preference_none.active = True
-        self.shirts_preference_light.active = False
-        self.shirts_preference_medium.active = False
-        self.shirts_preference_heavy.active = False
+        self.address_id = None
         self.street.text = ''
         self.street.hint_text = 'Street Address'
         self.street.hint_text_color = DEFAULT_COLOR
@@ -5164,12 +5156,16 @@ class EditCustomerScreen(Screen):
         self.special_instructions.disabled = True
         self.mark_text.text = ''
         self.is_delivery.active = False
+        self.shirt_finish_spinner.bind(text=self.select_shirts_finish)
+        self.shirt_preference_spinner.bind(text=self.select_shirts_preference)
         self.marks_table.clear_widgets()
 
     def load(self):
         if vars.CUSTOMER_ID:
             customers = User()
             customers.user_id = vars.CUSTOMER_ID
+            addresses = Address().where({'user_id': vars.CUSTOMER_ID,
+                                         'primary_address': 1})
             data = {'user_id': vars.CUSTOMER_ID}
             customer = customers.where(data)
             if customer:
@@ -5192,20 +5188,59 @@ class EditCustomerScreen(Screen):
                     self.invoice_memo.text = cust['invoice_memo'] if cust['invoice_memo'] else ''
                     self.invoice_memo.hint_text = 'Invoiced Memo'
                     self.invoice_memo.hint_text_color = DEFAULT_COLOR
-                    if cust['shirt'] == 1:
-                        self.shirts_finish_hanger.active = True
-                    if cust['shirt'] == 2:
-                        self.shirts_finish_box.active = True
+                    self.shirt_finish_spinner.text = 'Hanger' if cust['shirt'] is 1 else 'Box'
+                    self.shirt_finish = cust['shirt']
+
                     if cust['starch'] == 1:
-                        self.shirts_preference_none.active = True
+                        self.shirt_preference_spinner.text = 'None'
+                        self.shirt_preference = 1
                     if cust['starch'] == 2:
-                        self.shirts_preference_light.active = True
+                        self.shirt_preference_spinner.text = 'Light'
+                        self.shirt_preference = 2
                     if cust['starch'] == 3:
-                        self.shirts_preference_medium.active = True
+                        self.shirt_preference_spinner.text = 'Medium'
+                        self.shirt_preference = 3
                     if cust['starch'] == 4:
-                        self.shirts_preference_heavy.active = True
-                    if cust['street']:
-                        self.is_delivery.active = False
+                        self.shirt_preference_spinner.text = 'Heavy'
+                        self.shirt_preference = 4
+
+                    if addresses:
+                        for address in addresses:
+                            self.address_id = address['id']
+                            self.is_delivery.active = True
+                            self.street.text = address['street'] if address['street'] else ''
+                            self.street.hint_text = 'Street Address'
+                            self.street.hint_text_color = DEFAULT_COLOR
+                            self.street.disabled = False
+                            self.suite.text = address['suite'] if address['suite'] else ''
+                            self.suite.hint_text = 'Suite'
+                            self.suite.hint_text_color = DEFAULT_COLOR
+                            self.suite.disabled = False
+                            self.city.text = address['city'] if address['city'] else ''
+                            self.city.hint_text = 'City'
+                            self.city.hint_text_color = DEFAULT_COLOR
+                            self.city.disabled = False
+                            self.zipcode.text = address['zipcode'] if address['zipcode'] else ''
+                            self.zipcode.hint_text = 'Zipcode'
+                            self.zipcode.hint_text_color = DEFAULT_COLOR
+                            self.zipcode.disabled = False
+                            self.concierge_name.text = address['concierge_name'] if address['concierge_name'] else ''
+                            self.concierge_name.hint_text = 'Concierge Name'
+                            self.concierge_name.hint_text_color = DEFAULT_COLOR
+                            self.concierge_name.disabled = False
+                            self.concierge_number.text = address['concierge_number'] if address[
+                                'concierge_number'] else ''
+                            self.concierge_number.hint_text = 'Concierge Number'
+                            self.concierge_number.hint_text_color = DEFAULT_COLOR
+                            self.concierge_number.disabled = False
+                            self.special_instructions.text = address['special_instructions'] if address[
+                                'special_instructions'] else ''
+                            self.special_instructions.hint_text = 'Special Instructions'
+                            self.special_instructions.hint_text_color = DEFAULT_COLOR
+                            self.special_instructions.disabled = False
+
+                    elif not addresses and cust['street']:
+                        self.is_delivery.active = True
                         self.street.text = cust['street'] if cust['street'] else ''
                         self.street.hint_text = 'Street Address'
                         self.street.hint_text_color = DEFAULT_COLOR
@@ -5270,6 +5305,24 @@ class EditCustomerScreen(Screen):
                         self.mark_text.text = ''
                         self.marks_table.clear_widgets()
 
+    def select_shirts_finish(self, *args, **kwargs):
+        self.shirt_finish = self.shirt_finish_spinner.text
+        if self.shirt_finish_spinner.text is 'Hanger':
+            self.shirt_finish = 1
+        elif self.shirt_finish_spinner.text is 'Box':
+            self.shirt_finish = 2
+
+    def select_shirts_preference(self, *args, **kwargs):
+        self.shirt_preference = 0
+        if self.shirt_preference_spinner.text is 'None':
+            self.shirt_preference = 1
+        elif self.shirt_preference_spinner.text is 'Light':
+            self.shirt_preference = 2
+        elif self.shirt_preference_spinner.text is 'Medium':
+            self.shirt_preference = 3
+        elif self.shirt_preference_spinner.text is 'Heavy':
+            self.shirt_preference = 4
+
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
 
@@ -5310,31 +5363,31 @@ class EditCustomerScreen(Screen):
         self.shirt_preference = str(value)
 
     def set_delivery(self):
-        self.street.text = ''
+
         self.street.hint_text = 'Street Address'
         self.street.hint_text_color = DEFAULT_COLOR
         self.street.disabled = False if self.is_delivery.active else True
-        self.suite.text = ''
+
         self.suite.hint_text = 'Suite'
         self.suite.hint_text_color = DEFAULT_COLOR
         self.suite.disabled = False if self.is_delivery.active else True
-        self.city.text = ''
+
         self.city.hint_text = 'City'
         self.city.hint_text_color = DEFAULT_COLOR
         self.city.disabled = False if self.is_delivery.active else True
-        self.zipcode.text = ''
+
         self.zipcode.hint_text = 'Zipcode'
         self.zipcode.hint_text_color = DEFAULT_COLOR
         self.zipcode.disabled = False if self.is_delivery.active else True
-        self.concierge_name.text = ''
+
         self.concierge_name.hint_text = 'Concierge Name'
         self.concierge_name.hint_text_color = DEFAULT_COLOR
         self.concierge_name.disabled = False if self.is_delivery.active else True
-        self.concierge_number.text = ''
+
         self.concierge_number.hint_text = 'Concierge Number'
         self.concierge_number.hint_text_color = DEFAULT_COLOR
         self.concierge_number.disabled = False if self.is_delivery.active else True
-        self.special_instructions.text = ''
+
         self.special_instructions.hint_text = 'Special Instructions'
         self.special_instructions.hint_text_color = DEFAULT_COLOR
         self.special_instructions.disabled = False if self.is_delivery.active else True
@@ -5423,7 +5476,8 @@ class EditCustomerScreen(Screen):
             check_duplicate = customers.where(data)
             if len(check_duplicate) > 0:
                 for cd in check_duplicate:
-                    if cd['user_id'] != vars.CUSTOMER_ID:
+                    check_phone = cd['phone']
+                    if cd['user_id'] != vars.CUSTOMER_ID and check_phone is phone:
                         errors += 1
                         self.phone.hint_text = "duplicate number"
                         self.phone.hint_text_color = ERROR_COLOR
@@ -5502,17 +5556,31 @@ class EditCustomerScreen(Screen):
             data['email'] = self.email.text if Job.check_valid_email(email=self.email.text) else None
             data['important_memo'] = self.important_memo.text if self.important_memo.text else None
             data['invoice_memo'] = self.invoice_memo.text if self.invoice_memo.text else None
-            data['shirt'] = self.shirt_finish
-            data['starch'] = self.shirt_preference
+            data['shirt'] = str(self.shirt_finish)
+            data['starch'] = str(self.shirt_preference)
             if self.is_delivery.active:
-                data['customers'].street = self.street.text
-                data['customers.suite'] = Job.make_no_whitespace(data=self.suite.text)
-                data['customers.city'] = Job.make_no_whitespace(data=self.city.text)
-                data['customers.zipcode'] = Job.make_no_whitespace(data=self.zipcode.text)
-                data['customers.concierge_name'] = self.concierge_name.text
-                data['customers.concierge_number'] = Job.make_numeric(data=self.concierge_number.text)
+
+                # check address or else save
+                if self.address_id:
+                    addresses = Address().put(where={'id': self.address_id},
+                                              data={'name': 'Home',
+                                                    'street': self.street.text,
+                                                    'suite': Job.make_no_whitespace(data=self.suite.text),
+                                                    'city': Job.make_no_whitespace(data=self.city.text),
+                                                    'zipcode': Job.make_no_whitespace(data=self.zipcode.text),
+                                                    'concierge_name': self.concierge_name.text,
+                                                    'special_instructions': self.special_instructions.text if self.special_instructions.text else None
+                                                    })
+                    if addresses:
+                        pass
+                data['street'] = self.street.text
+                data['suite'] = Job.make_no_whitespace(data=self.suite.text)
+                data['city'] = Job.make_no_whitespace(data=self.city.text)
+                data['zipcode'] = Job.make_no_whitespace(data=self.zipcode.text)
+                data['concierge_name'] = self.concierge_name.text
+                data['concierge_number'] = Job.make_numeric(data=self.concierge_number.text)
                 data[
-                    'customers.special_instructions'] = self.special_instructions.text if self.special_instructions.text else None
+                    'special_instructions'] = self.special_instructions.text if self.special_instructions.text else None
 
             if customers.put(where=where, data=data):
                 # create the customer mark
@@ -8570,9 +8638,9 @@ class NewCustomerScreen(Screen):
     email = ObjectProperty(None)
     important_memo = ObjectProperty(None)
     invoice_memo = ObjectProperty(None)
-    shirt_finish = '1'
-    shirt_preference = '1'
-    default_shirts_finish = ObjectProperty(None)
+    shirts_finish = ObjectProperty(None)
+    shirts_preference = ObjectProperty(None)
+    # default_shirts_finish = ObjectProperty(None)
     is_delivery = ObjectProperty(None)
     street = ObjectProperty(None)
     suite = ObjectProperty(None)
@@ -8582,27 +8650,10 @@ class NewCustomerScreen(Screen):
     concierge_number = ObjectProperty(None)
     special_instructions = ObjectProperty(None)
 
+    main_grid = ObjectProperty(None)
+
     def reset(self):
-        self.last_name.text = ''
-        self.last_name.hint_text = 'Last Name'
-        self.last_name.hint_text_color = DEFAULT_COLOR
-        self.first_name.text = ''
-        self.first_name.hint_text = 'First Name'
-        self.first_name.hint_text_color = DEFAULT_COLOR
-        self.phone.text = ''
-        self.phone.hint_text = '(XXX) XXX-XXXX'
-        self.phone.hint_text_color = DEFAULT_COLOR
-        self.email.text = ''
-        self.email.hint_text = 'example@example.com'
-        self.email.hint_text_color = DEFAULT_COLOR
-        self.important_memo.text = ''
-        self.important_memo.hint_text = 'Important Memo'
-        self.important_memo.hint_text_color = DEFAULT_COLOR
-        self.invoice_memo.text = ''
-        self.invoice_memo.hint_text = 'Invoiced Memo'
-        self.invoice_memo.hint_text_color = DEFAULT_COLOR
-        self.default_shirts_finish.active = True
-        self.default_shirts_preference.active = True
+
         self.street.text = ''
         self.street.hint_text = 'Street Address'
         self.street.hint_text_color = DEFAULT_COLOR
@@ -8633,11 +8684,58 @@ class NewCustomerScreen(Screen):
         self.special_instructions.disabled = True
         self.is_delivery.active = False
 
-    def set_shirt_finish(self, value):
-        self.shirt_finish = str(value)
+        self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="Phone"))
+        self.phone = Factory.CenterVerticalTextInput()
+        self.main_grid.add_widget(self.phone)
+        self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="Last Name"))
+        self.last_name = Factory.CenterVerticalTextInput()
+        self.main_grid.add_widget(self.last_name)
+        self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="First Name"))
+        self.first_name = Factory.CenterVerticalTextInput()
+        self.main_grid.add_widget(self.first_name)
+        self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="Email"))
+        self.email = Factory.CenterVerticalTextInput()
+        self.main_grid.add_widget(self.email)
+        self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="Important Memo"))
+        self.important_memo = Factory.CenterVerticalTextInput()
+        self.main_grid.add_widget(self.important_memo)
+        self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="Invoice Memo"))
+        self.invoice_memo = Factory.CenterVerticalTextInput()
+        self.main_grid.add_widget(self.invoice_memo)
+        self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="Shirts Finish"))
+        self.shirts_finish = Spinner(
+            # default value shown
+            text='Hanger',
+            # available values
+            values=["Hanger", "Box"],
+            # just for positioning in our example
+            size_hint_x=1,
+            size_hint_y=0.5,
+            pos_hint={'center_x': .5, 'center_y': .5})
+        self.shirts_finish.bind(text=self.select_shirts_finish)
+        self.main_grid.add_widget(self.shirts_finish)
+        self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="Shirts Preference"))
+        self.shirts_preference = Spinner(
+            # default value shown
+            text='None',
+            # available values
+            values=["None", "Light", "Medium", "Heavy"],
+            # just for positioning in our example
+            size_hint_x=1,
+            size_hint_y=0.5,
+            pos_hint={'center_x': .5, 'center_y': .5})
+        self.shirts_preference.bind(text=self.select_shirts_preference)
+        self.main_grid.add_widget(self.shirts_preference)
+        self.main_grid.add_widget(Label(text=" "))
+        self.main_grid.add_widget(Label(text=" "))
 
-    def set_shirt_preference(self, value):
-        self.shirt_preference = str(value)
+    def select_shirts_finish(self, *args, **kwargs):
+        selected_value = self.shirts_finish.text
+        print(selected_value)
+
+    def select_shirts_preference(self, *args, **kwargs):
+        selected_value = self.shirts_preference.text
+        print(selected_value)
 
     def set_delivery(self):
         self.street.text = ''
@@ -8756,17 +8854,26 @@ class NewCustomerScreen(Screen):
 
         if errors == 0:  # if no errors then save
             customers.company_id = auth_user.company_id
-            customers.role_id = 3
+            customers.role_id = 5
             customers.phone = Job.make_numeric(data=self.phone.text)
             customers.last_name = Job.make_no_whitespace(data=self.last_name.text)
             customers.first_name = Job.make_no_whitespace(data=self.first_name.text)
             customers.email = self.email.text if Job.check_valid_email(email=self.email.text) else None
             customers.important_memo = self.important_memo.text if self.important_memo.text else None
             customers.invoice_memo = self.invoice_memo.text if self.invoice_memo.text else None
-            customers.shirt = self.shirt_finish
-            customers.starch = self.shirt_preference
+            customers.shirt = '1' if self.shirts_finish.text is "Hanger" else '2'
+            shirts_preference = '0'
+            if self.shirts_preference.text is 'None':
+                shirts_preference = '1'
+            elif self.shirts_preference.text is 'Light':
+                shirts_preference = '2'
+            elif self.shirts_preference.text is 'Medium':
+                shirts_preference = '3'
+            elif self.shirts_preference.text is 'Heavy':
+                shirts_preference = '4'
+
+            customers.starch = shirts_preference
             if self.is_delivery.active:
-                customers.street = self.street.text
                 customers.suite = Job.make_no_whitespace(data=self.suite.text)
                 customers.city = Job.make_no_whitespace(data=self.city.text)
                 customers.zipcode = Job.make_no_whitespace(data=self.zipcode.text)
@@ -8775,31 +8882,69 @@ class NewCustomerScreen(Screen):
                 customers.special_instructions = self.special_instructions.text if self.special_instructions.text else None
 
             if customers.add():
-
-                if vars.WORKLIST.append("Sync"):  # send the data to the server and get back the updated user id
-                    threads_start()
+                run_sync = threading.Thread(target=SYNC.run_sync)
+                run_sync_2 = threading.Thread(target=SYNC.run_sync)
+                try:
+                    run_sync.start()
+                finally:
+                    run_sync.join()
+                    print('sync now finished')
                     # send user to search
                     last_row = customers.get_last_inserted_row()
                     customers.id = last_row
                     new_customer = customers.first({'id': customers.id})
                     customers.user_id = new_customer['user_id']
-                    # create the customer mark
-                    marks = Custid()
-                    marks.customer_id = customers.user_id
-                    marks.company_id = auth_user.company_id
-                    marks.mark = marks.create_customer_mark(last_name=customers.last_name,
-                                                            customer_id=str(customers.user_id),
-                                                            starch=customers.get_starch(customers.starch))
-                    marks.status = 1
-                    if marks.add():
-                        vars.WORKLIST.append("Sync")
-                        threads_start()
-                        self.reset()
-                        self.customer_select(customers.user_id)
-                        # create popup
-                        content = KV.popup_alert("You have successfully created a new customer.")
-                        popup.content = Builder.load_string(content)
-                        popup.open()
+                    if customers.user_id:
+                        if self.is_delivery.active:
+                            addresses = Address()
+                            addresses.user_id = customers.user_id
+                            addresses.name = 'Home'
+                            addresses.street = self.street.text
+                            addresses.suite = Job.make_no_whitespace(data=self.suite.text)
+                            addresses.city = Job.make_no_whitespace(data=self.city.text)
+                            addresses.state = 'WA'
+                            addresses.zipcode = Job.make_no_whitespace(data=self.zipcode.text)
+                            addresses.primary_address = 1
+                            addresses.concierge_name = self.concierge_name.text
+                            addresses.concierge_number = Job.make_numeric(data=self.concierge_number.text)
+                            addresses.special_instructions = self.special_instructions.text if self.special_instructions.text else None
+                            addresses.status = 1
+                            addresses.add()
+                        # create the customer mark
+                        marks = Custid()
+                        marks.customer_id = customers.user_id
+                        marks.company_id = auth_user.company_id
+                        marks.mark = marks.create_customer_mark(last_name=customers.last_name,
+                                                                customer_id=str(customers.user_id),
+                                                                starch=customers.get_starch(customers.starch))
+                        marks.status = 1
+                        if marks.mark:
+                            if marks.add():
+                                try:
+                                    run_sync_2.start()
+                                finally:
+                                    run_sync_2.join()
+                                    self.reset()
+                                    self.customer_select(customers.user_id)
+                                    # create popup
+                                    popup = Popup()
+                                    popup.title = 'Saved Customer'
+                                    content = KV.popup_alert(
+                                        'Saved new customer and created a new shirt mark.')
+                                    popup.content = Builder.load_string(content)
+                                    popup.open()
+                                    # Beep Sound
+                                    sys.stdout.write('\a')
+                                    sys.stdout.flush()
+                        else:
+                            popup = Popup()
+                            popup.title = 'Saved Customer'
+                            content = KV.popup_alert('Saved new customer but could not write a new mark. Add Later.')
+                            popup.content = Builder.load_string(content)
+                            popup.open()
+                            # Beep Sound
+                            sys.stdout.write('\a')
+                            sys.stdout.flush()
         customers.close_connection()
 
     def customer_select(self, customer_id, *args, **kwargs):
@@ -10607,6 +10752,7 @@ class SearchScreen(Screen):
     cust_credit = ObjectProperty(None)
     cust_invoice_memo = ObjectProperty(None)
     cust_important_memo = ObjectProperty(None)
+    customer_id_ti = ObjectProperty(None)
     customer_mark_l = ObjectProperty(None)
     history_btn = ObjectProperty(None)
     edit_customer_btn = ObjectProperty(None)
@@ -10670,6 +10816,7 @@ class SearchScreen(Screen):
     zipcode_input = None
     concierge_name_input = None
     concierge_number_input = None
+    root_payment_id = None
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
@@ -10707,10 +10854,10 @@ class SearchScreen(Screen):
         self.zipcode_input = None
         self.concierge_name_input = None
         self.concierge_number_input = None
-        self.view_deliveries_btn.text = 'No Delivery Scheduled'
+        self.view_deliveries_btn.text = 'View Delivery Schedule'
+        self.root_payment_id = None
 
         if vars.SEARCH_RESULTS_STATUS:
-
             self.edit_invoice_btn.disabled = False if vars.INVOICE_ID is not None else True
             data = {'user_id': vars.CUSTOMER_ID}
             customers = User()
@@ -10721,7 +10868,8 @@ class SearchScreen(Screen):
             vars.CUSTOMER_ID = None
             vars.INVOICE_ID = None
             self.search.text = ''
-            self.customer_mark_l = ''
+            self.customer_mark_l.text = ''
+            self.customer_id_ti.text = ''
             self.cust_last_name.text = ''
             self.cust_first_name.text = ''
             self.cust_phone.text = ''
@@ -10755,75 +10903,134 @@ class SearchScreen(Screen):
         popup = Popup()
         search_text = self.search.text
         customers = User()
-        if len(self.search.text) > 0:
-            data = {'mark': '"%{}%"'.format(self.search.text)}
-            marks = Custid()
-            custids = marks.like(data)
-            where = []
-            for custid in custids:
-                cust_id = custid['customer_id']
-                where.append(cust_id)
+        if "ID%" in search_text.upper():
+            # search for id
+            new_search_text = search_text.upper().replace("ID%", "")
+            users = customers.where({'user_id': new_search_text})
+            if users:
+                self.customer_results(users)
 
-            if len(where) == 1:
-                data = {'user_id': where[0]}
-                cust1 = customers.where(data)
-                self.customer_results(cust1)
-            elif len(where) > 1:
-                cust1 = customers.or_search(where=where)
-                self.customer_results(cust1)
+        elif "INV%" in search_text.upper():
+            new_search_text = search_text.upper().replace("INV%", "")
+            data = {
+                'invoice_id': str(new_search_text)
+            }
+            inv = Invoice()
+            inv_1 = inv.where(data)
+            if len(inv_1) > 0:
+                for invoice in inv_1:
+                    vars.INVOICE_ID = new_search_text
+                    vars.CUSTOMER_ID = invoice['customer_id']
+                    self.invoice_selected(invoice_id=vars.INVOICE_ID)
 
-            elif Job.is_int(search_text):
-                # check to see if length is 7 or greater
-                if len(search_text) >= 7:  # This is a phone number
-                    # First check to see if the number is exact
-                    data = {'phone': '"%{}%"'.format(self.search.text)}
-                    cust1 = customers.like(data)
-                    self.customer_results(cust1)
+            else:
+                popup.title = 'No such invoice'
+                popup.size_hint = None, None
+                popup.size = 800, 600
+                content = KV.popup_alert(msg="Could not find an invoice with this invoice id. Please try again")
+                popup.content = Builder.load_string(content)
+                popup.open()
 
-                elif len(search_text) == 6:  # this is an invoice number
-                    data = {
-                        'invoice_id': '"{}"'.format(int(self.search.text))
-                    }
-                    inv = Invoice()
-                    inv_1 = inv.where(data)
-                    if len(inv_1) > 0:
-                        for invoice in inv_1:
-                            vars.INVOICE_ID = self.search.text
-                            vars.CUSTOMER_ID = invoice['customer_id']
-                            self.invoice_selected(invoice_id=vars.INVOICE_ID)
+        elif "#%" in search_text.upper():
+            new_search_text = search_text.replace("#%", "")
+            # search for phone
+            data = {'phone': '{}'.format(new_search_text)}
+            cust1 = customers.where(data)
+            self.customer_results(cust1)
+        elif "I%" in search_text.upper():
+            new_search_text = search_text.upper().replace("I%", "")
+            # search for item
+            data = {
+                'invoice_items_id': str(new_search_text)
+            }
+            inv = InvoiceItem()
+            inv_1 = inv.where(data)
+            if len(inv_1) > 0:
+                for invoice in inv_1:
+                    vars.INVOICE_ID = invoice['invoice_id']
+                    vars.CUSTOMER_ID = invoice['customer_id']
+                    self.invoice_selected(invoice_id=vars.INVOICE_ID)
 
-                    else:
-                        popup.title = 'No such invoice'
-                        popup.size_hint = None, None
-                        popup.size = 800, 600
-                        content = KV.popup_alert(msg="Could not find an invoice with this invoice id. Please try again")
-                        popup.content = Builder.load_string(content)
-                        popup.open()
+            else:
+                popup.title = 'No such invoice item'
+                popup.size_hint = None, None
+                popup.size = 800, 600
+                content = KV.popup_alert(msg="Could not find an invoice item with this id. Please try again")
+                popup.content = Builder.load_string(content)
+                popup.open()
+        else:
 
-                else:  # look for a customer id
-                    data = {'user_id': self.search.text}
+            if len(self.search.text) > 0:
+                data = {'mark': '"%{}%"'.format(self.search.text)}
+                marks = Custid()
+                custids = marks.like(data)
+                where = []
+                for custid in custids:
+                    cust_id = custid['customer_id']
+                    where.append(cust_id)
+
+                if len(where) == 1:
+                    data = {'user_id': where[0]}
                     cust1 = customers.where(data)
                     self.customer_results(cust1)
+                elif len(where) > 1:
+                    cust1 = customers.or_search(where=where)
+                    self.customer_results(cust1)
 
-            else:  # Lookup by last name || mark
+                elif Job.is_int(search_text):
+                    # check to see if length is 7 or greater
+                    if len(search_text) >= 7:  # This is a phone number
+                        # First check to see if the number is exact
+                        data = {'phone': '"%{}%"'.format(self.search.text)}
+                        cust1 = customers.like(data)
+                        self.customer_results(cust1)
 
-                data = {'last_name': '"%{}%"'.format(self.search.text)}
-                vars.ROW_CAP = len(customers.like(data))
-                vars.SEARCH_TEXT = self.search.text
+                    elif len(search_text) == 6:  # this is an invoice number
+                        data = {
+                            'invoice_id': '"{}"'.format(int(self.search.text))
+                        }
+                        inv = Invoice()
+                        inv_1 = inv.where(data)
+                        if len(inv_1) > 0:
+                            for invoice in inv_1:
+                                vars.INVOICE_ID = self.search.text
+                                vars.CUSTOMER_ID = invoice['customer_id']
+                                self.invoice_selected(invoice_id=vars.INVOICE_ID)
 
-                data = {
-                    'last_name': '"%{}%"'.format(self.search.text),
-                    'ORDER_BY': 'last_name ASC',
-                    'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
-                }
+                        else:
+                            popup.title = 'No such invoice'
+                            popup.size_hint = None, None
+                            popup.size = 800, 600
+                            content = KV.popup_alert(
+                                msg="Could not find an invoice with this invoice id. Please try again")
+                            popup.content = Builder.load_string(content)
+                            popup.open()
 
-                cust1 = customers.like(data)
-                self.customer_results(cust1)
-        else:
-            popup = Popup()
-            popup.title = 'Search Error'
-            popup.content = Builder.load_string(KV.popup_alert('Search cannot be an empty value. Please try again.'))
-            popup.open()
+                    else:  # look for a customer id
+                        data = {'user_id': self.search.text}
+                        cust1 = customers.where(data)
+                        self.customer_results(cust1)
+
+                else:  # Lookup by last name || mark
+
+                    data = {'last_name': '"%{}%"'.format(self.search.text)}
+                    vars.ROW_CAP = len(customers.like(data))
+                    vars.SEARCH_TEXT = self.search.text
+
+                    data = {
+                        'last_name': '"%{}%"'.format(self.search.text),
+                        'ORDER_BY': 'last_name ASC',
+                        'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
+                    }
+
+                    cust1 = customers.like(data)
+                    self.customer_results(cust1)
+            else:
+                popup = Popup()
+                popup.title = 'Search Error'
+                popup.content = Builder.load_string(
+                    KV.popup_alert('Search cannot be an empty value. Please try again.'))
+                popup.open()
         customers.close_connection()
 
     def create_invoice_headers(self):
@@ -10989,6 +11196,7 @@ class SearchScreen(Screen):
 
                 # display data
                 self.cust_mark_label.text = custid_string
+                self.customer_id_ti.text = str(vars.CUSTOMER_ID) if vars.CUSTOMER_ID else ''
                 self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
                 self.cust_first_name.text = result['first_name'] if result['first_name'] else ''
                 self.cust_phone.text = Job.make_us_phone(result['phone']) if result['phone'] else ''
@@ -13340,8 +13548,8 @@ class SearchScreen(Screen):
                                text="Cancel",
                                on_release=self.main_popup.dismiss)
         add_button = Button(markup=True,
-                               text="Add",
-                               on_release=self.add_new_card)
+                            text="Add",
+                            on_release=self.add_new_card)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(add_button)
         layout.add_widget(inner_layout_1)
@@ -13351,6 +13559,249 @@ class SearchScreen(Screen):
         pass
 
     def add_new_card(self, *args, **kwargs):
+        errors = 0
+        if not self.card_number_input.text:
+            errors += 1
+            self.card_number_input.text_color = ERROR_COLOR
+            self.card_number_input.hint_text = 'Must enter card number'
+        else:
+            self.card_number_input.text_color = DEFAULT_COLOR
+            self.card_number_input.hint_text = ""
+
+        if not self.exp_month_input.text:
+            errors += 1
+            self.exp_month_input.text_color = ERROR_COLOR
+            self.exp_month_input.hint_text = 'Must enter expired month'
+        else:
+            self.exp_month_input.text_color = DEFAULT_COLOR
+            self.exp_month_input.hint_text = ""
+
+        if not self.exp_year_input.text:
+            errors += 1
+            self.exp_year_input.text_color = ERROR_COLOR
+            self.exp_year_input.hint_text = 'Must enter expired year'
+        else:
+            self.exp_year_input.text_color = DEFAULT_COLOR
+            self.exp_year_input.hint_text = ""
+
+        if not self.first_name_input.text:
+            errors += 1
+            self.first_name_input.text_color = ERROR_COLOR
+            self.first_name_input.hint_text = 'Must enter first name'
+        else:
+            self.first_name_input.text_color = DEFAULT_COLOR
+            self.first_name_input.hint_text = ""
+
+        if not self.last_name_input.text:
+            errors += 1
+            self.last_name_input.text_color = ERROR_COLOR
+            self.last_name_input.hint_text = 'Must enter last name'
+        else:
+            self.last_name_input.text_color = DEFAULT_COLOR
+            self.last_name_input.hint_text = ""
+
+        if not self.street_input.text:
+            errors += 1
+            self.street_input.text_color = ERROR_COLOR
+            self.street_input.hint_text = 'Must enter street address'
+        else:
+            self.street_input.text_color = DEFAULT_COLOR
+            self.street_input.hint_text = ""
+
+        if not self.city_input.text:
+            errors += 1
+            self.city_input.text_color = ERROR_COLOR
+            self.city_input.hint_text = 'Must enter city'
+        else:
+            self.city_input.text_color = DEFAULT_COLOR
+            self.city_input.hint_text = ""
+
+        if not self.state_input.text:
+            errors += 1
+            self.state_input.text_color = ERROR_COLOR
+            self.state_input.hint_text = 'Must enter state'
+        else:
+            self.state_input.text_color = DEFAULT_COLOR
+            self.state_input.hint_text = ""
+
+        if not self.zipcode_input.text:
+            errors += 1
+            self.zipcode_input.text_color = ERROR_COLOR
+            self.zipcode_input.hint_text = 'Must enter zipcode'
+        else:
+            self.zipcode_input.text_color = DEFAULT_COLOR
+            self.zipcode_input.hint_text = ""
+
+        if errors == 0:
+            # loop through each company and save
+            companies = Company().where({'id': {'>': 0}})
+            save_success = 0
+            if companies:
+                for company in companies:
+                    company_id = company['id']
+                    cards = Card()
+                    cards.company_id = company_id
+                    cards.user_id = vars.CUSTOMER_ID
+                    # search for a profile
+                    profiles = Profile().where({'company_id': company_id, 'user_id': vars.CUSTOMER_ID})
+                    profile_id = False
+                    if profiles:
+                        for profile in profiles:
+                            profile_id = profile['profile_id']
+                        cards.profile_id = profile_id
+                        # make just payment_id
+                        new_card = {
+                            'customer_type': 'individual',
+                            'card_number': str(self.card_number_input.text.rstrip()),
+                            'expiration_month': str(self.exp_month_input.text.rstrip()),
+                            'expiration_year': str(self.exp_year_input.text.rstrip()),
+                            'billing': {
+                                'first_name': str(self.first_name_input.text),
+                                'last_name': str(self.last_name_input.text),
+                                'company': '',
+                                'address': str(self.street_input.text),
+                                'city': str(self.city_input.text),
+                                'state': str(self.state_input.text),
+                                'zip': str(self.zipcode_input.text),
+                                'country': 'USA'
+                            }
+                        }
+                        result = Card().create_card(company_id, profile_id, new_card)
+                        if result['status']:
+                            save_success += 1
+                            payment_id = result['payment_id']
+
+                            cards.payment_id = payment_id
+                            if company_id is 1:
+                                self.root_payment_id = payment_id
+                            cards.root_payment_id = self.root_payment_id
+                            cards.street = self.street_input.text
+                            cards.suite = self.suite_input.text
+                            cards.city = self.city_input.text
+                            cards.state = self.state_input.text
+                            cards.zipcode = self.zipcode_input.text
+                            cards.exp_month = self.exp_month_input.text
+                            cards.exp_year = self.exp_year_input.text
+                            cards.status = 1
+                            cards.add()
+                        else:
+                            popup = Popup()
+                            popup.title = 'Card Error'
+                            content = KV.popup_alert(result['message'])
+                            popup.content = Builder.load_string(content)
+                            popup.open()
+                            # Beep Sound
+                            sys.stdout.write('\a')
+                            sys.stdout.flush()
+                    else:
+                        # make profile_id and payment_id
+                        customers = User().where({'user_id': vars.CUSTOMER_ID})
+                        if customers:
+                            for customer in customers:
+                                first_name = customer['first_name']
+                                last_name = customer['last_name']
+                        new_data = {
+                            'merchant_id': str(vars.CUSTOMER_ID),
+                            'description': '{}, {}'.format(last_name, first_name),
+                            'customer_type': 'individual',
+                            'billing': {
+                                'first_name': str(self.first_name_input.text),
+                                'last_name': str(self.last_name_input.text),
+                                'company': '',
+                                'address': '{}'.format(self.street_input.text),
+                                'city': str(self.city_input.text),
+                                'state': str(self.state_input.text),
+                                'zip': str(self.zipcode_input.text),
+                                'country': 'USA'
+                            },
+                            'credit_card': {
+                                'card_number': str(self.card_number_input.text.rstrip()),
+                                'card_code': '',
+                                'expiration_month': str(self.exp_month_input.text.rstrip()),
+                                'expiration_year': str(self.exp_year_input.text.rstrip()),
+                            }
+                        }
+                        make_profile = Card().create_profile(company_id, new_data)
+
+                        if make_profile['status']:
+                            save_success += 1
+                            profile_id = make_profile['profile_id']
+                            payment_id = make_profile['payment_id']
+                            new_profiles = Profile()
+                            new_profiles.company_id = company_id
+                            new_profiles.user_id = vars.CUSTOMER_ID
+                            new_profiles.profile_id = profile_id
+                            new_profiles.status = 1
+                            new_profiles.add()
+
+                            cards.profile_id = profile_id
+                            cards.payment_id = payment_id
+                            cards.street = self.street_input.text
+                            cards.suite = self.suite_input.text
+                            cards.city = self.city_input.text
+                            cards.state = self.state_input.text
+                            cards.zipcode = self.zipcode_input.text
+                            cards.exp_month = self.exp_month_input.text
+                            cards.exp_year = self.exp_year_input.text
+                            if company_id is 1:
+                                self.root_payment_id = payment_id
+                            cards.root_payment_id = self.root_payment_id
+                            cards.status = 1
+                            cards.add()
+
+                        else:
+                            popup = Popup()
+                            popup.title = 'Add Card Error'
+                            content = KV.popup_alert(make_profile['message'])
+                            popup.content = Builder.load_string(content)
+                            popup.open()
+                            # Beep Sound
+                            sys.stdout.write('\a')
+                            sys.stdout.flush()
+            if save_success > 0:
+                # finish and reset
+                popup = Popup()
+                popup.title = 'Card Add Successful'
+                content = KV.popup_alert('Successfully added a card.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+                run_sync = threading.Thread(target=SYNC.run_sync)
+                try:
+                    run_sync.start()
+                finally:
+                    run_sync.join()
+                    self.main_popup.dismiss()
+                    pro = Profile()
+                    profiles = pro.where({'user_id': vars.CUSTOMER_ID,
+                                          'company_id': auth_user.company_id})
+                    if profiles:
+                        for profile in profiles:
+                            vars.PROFILE_ID = profile['profile_id']
+
+                        cards_db = Card()
+                        self.cards = cards_db.collect(auth_user.company_id, vars.PROFILE_ID)
+                    else:
+                        self.cards = False
+                    self.card_string = []
+                    if self.cards:
+                        for card in self.cards:
+                            self.card_string.append("{} {} {}/{}".format(card['card_type'],
+                                                                         card['last_four'],
+                                                                         card['exp_month'],
+                                                                         card['exp_year']))
+
+                    self.card_id_spinner.values = self.card_string
+
+            else:
+                popup = Popup()
+                popup.title = 'Card Add Unsuccessful'
+                content = KV.popup_alert('There were problems saving your card. Please try again')
+                popup.content = Builder.load_string(content)
+                popup.open()
+
         pass
 
     def add_address_setup(self, *args, **kwargs):
@@ -13397,8 +13848,8 @@ class SearchScreen(Screen):
                                text="Cancel",
                                on_release=self.main_popup.dismiss)
         add_button = Button(markup=True,
-                               text="Add",
-                               on_release=self.add_new_address)
+                            text="Add",
+                            on_release=self.add_new_address)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(add_button)
         layout.add_widget(inner_layout_1)
@@ -13447,7 +13898,6 @@ class SearchScreen(Screen):
                 # Beep Sound
                 sys.stdout.write('\a')
                 sys.stdout.flush()
-
 
         pass
 
@@ -13736,33 +14186,25 @@ class SearchScreen(Screen):
     def view_deliveries(self):
         self.main_popup.title = 'View Deliveries'
         layout = BoxLayout(orientation="vertical")
-        inner_layout_1 = Factory.ScrollGrid(size_hint=(1,0.9))
+        inner_layout_1 = Factory.ScrollGrid(size_hint=(1, 0.9))
         inner_layout_2 = BoxLayout(orientation="horizontal",
-                                   size_hint=(1,0.1))
-        inner_layout_1.ids.main_table.cols=10
-        inner_layout_1.ids.main_table.row_default_height = '55sp'
-        schedules = Schedule().where({'customer_id':vars.CUSTOMER_ID,
-                                      'status':{'<':12}})
+                                   size_hint=(1, 0.1))
+        inner_layout_1.ids.main_table.cols = 6
+        inner_layout_1.ids.main_table.row_default_height = '75sp'
+        schedules = Schedule().where({'customer_id': vars.CUSTOMER_ID,
+                                      'status': {'<': 12}})
         th1 = KV.invoice_tr(0, 'ID')
         th2 = KV.invoice_tr(0, 'P. Date')
         th3 = KV.invoice_tr(0, 'P. Time')
         th4 = KV.invoice_tr(0, 'D. Date')
         th5 = KV.invoice_tr(0, 'D. Time')
-        th6 = KV.invoice_tr(0, 'Address')
-        th7 = KV.invoice_tr(0, 'C. Name')
-        th8 = KV.invoice_tr(0, 'C. Phone')
-        th9 = KV.invoice_tr(0, 'Spec Ins')
-        th10 = KV.invoice_tr(0, 'Status')
+        th6 = KV.invoice_tr(0, 'Status')
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th1))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th2))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th3))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th4))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
-        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th7))
-        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th8))
-        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th9))
-        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th10))
         if schedules:
             for schedule in schedules:
                 try:
@@ -13778,37 +14220,37 @@ class SearchScreen(Screen):
                 pickup_delivery_id = schedule['pickup_delivery_id']
                 dropoff_delivery_id = schedule['dropoff_delivery_id']
                 status = schedule['status']
-                special_instructions = schedule['special_instructrions'] if schedule['special_instructions'] else ''
+                special_instructions = schedule['special_instructions'] if schedule['special_instructions'] else ''
                 pickup_date_formatted = pickup_date.strftime('%a %m/%d/%Y') if pickup_date else 'No Date'
                 dropoff_date_formatted = dropoff_date.strftime('%a %m/%d/%Y') if dropoff_date else 'No Date'
                 pickup_time_string = ''
                 if dropoff_delivery_id:
-                    deliveries = Delivery().where({'delivery_id':dropoff_delivery_id})
+                    deliveries = Delivery().where({'delivery_id': dropoff_delivery_id})
 
                     if deliveries:
                         for delivery in deliveries:
-                            pickup_time_string = '{} - {}'.format(delivery['start_time'],delivery['end_time'])
+                            pickup_time_string = '{} - {}'.format(delivery['start_time'], delivery['end_time'])
                 dropoff_time_string = ''
                 if pickup_delivery_id:
-                    deliveries = Delivery().where({'delivery_id':pickup_delivery_id})
+                    deliveries = Delivery().where({'delivery_id': pickup_delivery_id})
 
                     if deliveries:
                         for delivery in deliveries:
-                            dropoff_time_string = '{} - {}'.format(delivery['start_time'],delivery['end_time'])
+                            dropoff_time_string = '{} - {}'.format(delivery['start_time'], delivery['end_time'])
                 address_string = ''
                 concierge_name = ''
                 concierge_number = ''
                 if pickup_address_id:
-                    addresses = Address().where({'address_id':pickup_address_id})
+                    addresses = Address().where({'address_id': pickup_address_id})
                     if addresses:
                         for address in addresses:
                             address_name = address['name']
                             street = address['street']
-                            address_string = '{}: {}'.format(address_name,street)
+                            address_string = '{}: {}'.format(address_name, street)
                             concierge_name = address['concierge_name']
                             concierge_number = Job.make_us_phone(address['concierge_number'])
                 else:
-                    addresses = Address().where({'address_id':dropoff_address_id})
+                    addresses = Address().where({'address_id': dropoff_address_id})
                     if addresses:
                         for address in addresses:
                             address_name = address['name']
@@ -13820,24 +14262,26 @@ class SearchScreen(Screen):
 
                 status_formatted = Schedule().getStatus(status)
 
-                pickup_date_label = Factory.TopLeftFormButton(text=pickup_date_formatted)
-                dropoff_date_label = Factory.TopLeftFormButton(text=dropoff_date_formatted)
-                pickup_time_label = Factory.TopLeftFormButton(text=pickup_time_string)
-                dropoff_time_label = Factory.TopLeftFormButton(text=dropoff_time_string)
-                address_label = Factory.TopLeftFormButton(text=address_string)
-                special_instructions_label = Factory.TopLeftFormButton(text=special_instructions)
-                concierge_name_label = Factory.TopLeftFormButton(text=concierge_name)
-                concierge_number_label = Factory.TopLeftFormButton(text=concierge_number)
-                status_label = Factory.TopLeftFormButton(text=status_formatted)
-                inner_layout_1.ids.main_table.add_widget(Button(text=str(schedule['schedule_id'])))
+                pickup_date_label = Factory.TopLeftFormButton(text=pickup_date_formatted,
+                                                              on_release=partial(self.view_delivery, schedule['id']))
+                dropoff_date_label = Factory.TopLeftFormButton(text=dropoff_date_formatted,
+                                                               on_release=partial(self.view_delivery, schedule['id']))
+                pickup_time_label = Factory.TopLeftFormButton(text=pickup_time_string,
+                                                              on_release=partial(self.view_delivery, schedule['id']))
+                dropoff_time_label = Factory.TopLeftFormButton(text=dropoff_time_string,
+                                                               on_release=partial(self.view_delivery, schedule['id']))
+                # address_label = Factory.TopLeftFormButton(text=address_string)
+                # special_instructions_label = Factory.TopLeftFormButton(text=special_instructions)
+                # concierge_name_label = Factory.TopLeftFormButton(text=concierge_name)
+                # concierge_number_label = Factory.TopLeftFormButton(text=concierge_number)
+                status_label = Factory.TopLeftFormButton(text=status_formatted,
+                                                         on_release=partial(self.view_delivery, schedule['id']))
+                inner_layout_1.ids.main_table.add_widget(Button(text=str(schedule['schedule_id']),
+                                                                on_release=partial(self.view_delivery, schedule['id'])))
                 inner_layout_1.ids.main_table.add_widget(pickup_date_label)
                 inner_layout_1.ids.main_table.add_widget(pickup_time_label)
                 inner_layout_1.ids.main_table.add_widget(dropoff_date_label)
                 inner_layout_1.ids.main_table.add_widget(dropoff_time_label)
-                inner_layout_1.ids.main_table.add_widget(address_label)
-                inner_layout_1.ids.main_table.add_widget(concierge_name_label)
-                inner_layout_1.ids.main_table.add_widget(concierge_number_label)
-                inner_layout_1.ids.main_table.add_widget(special_instructions_label)
                 inner_layout_1.ids.main_table.add_widget(status_label)
 
         cancel_button = Button(text='cancel',
@@ -13850,11 +14294,144 @@ class SearchScreen(Screen):
         self.main_popup.content = layout
         self.main_popup.open()
 
+    def view_delivery(self, schedule_id, *args, **kwargs):
+        popup = Popup()
+        popup.title = 'View Delivery #{}'.format(schedule_id)
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = Factory.ScrollGrid(size_hint=(1, 0.9))
+        inner_layout_1.ids.main_table.cols = 1
+        schedules = Schedule()
+        get_schedules = schedules.where({'id': schedule_id})
+        if get_schedules:
+            for schedule in get_schedules:
+                try:
+                    pickup_date = datetime.datetime.strptime(str(schedule['pickup_date']), "%Y-%m-%d %H:%M:%S")
+                except ValueError as e:
+                    pickup_date = False
+                try:
+                    dropoff_date = datetime.datetime.strptime(str(schedule['dropoff_date']), "%Y-%m-%d %H:%M:%S")
+                except ValueError as e:
+                    dropoff_date = False
+                pickup_address_id = schedule['pickup_address']
+                dropoff_address_id = schedule['dropoff_address']
+                pickup_delivery_id = schedule['pickup_delivery_id']
+                dropoff_delivery_id = schedule['dropoff_delivery_id']
+                status = schedule['status']
+                special_instructions = schedule['special_instructions'] if schedule['special_instructions'] else ''
+                pickup_date_formatted = pickup_date.strftime('%a %m/%d/%Y') if pickup_date else 'No Date'
+                dropoff_date_formatted = dropoff_date.strftime('%a %m/%d/%Y') if dropoff_date else 'No Date'
+                pickup_time_string = ''
+                if dropoff_delivery_id:
+                    deliveries = Delivery().where({'delivery_id': dropoff_delivery_id})
 
+                    if deliveries:
+                        for delivery in deliveries:
+                            pickup_time_string = '{} - {}'.format(delivery['start_time'], delivery['end_time'])
+                dropoff_time_string = ''
+                if pickup_delivery_id:
+                    deliveries = Delivery().where({'delivery_id': pickup_delivery_id})
 
+                    if deliveries:
+                        for delivery in deliveries:
+                            dropoff_time_string = '{} - {}'.format(delivery['start_time'], delivery['end_time'])
+                address_string = ''
+                concierge_name = ''
+                concierge_number = ''
+                if pickup_address_id:
+                    addresses = Address().where({'address_id': pickup_address_id})
+                    if addresses:
+                        for address in addresses:
+                            address_name = address['name']
+                            street = address['street']
+                            address_string = '{}: {}'.format(address_name, street)
+                            concierge_name = address['concierge_name']
+                            concierge_number = Job.make_us_phone(address['concierge_number'])
 
+                elif not pickup_address_id and dropoff_address_id:
+                    addresses = Address().where({'address_id': dropoff_address_id})
+                    if addresses:
+                        for address in addresses:
+                            address_name = address['name']
+                            street = address['street']
+                            address_string = '{}: {}'.format(address_name, street)
 
+                            concierge_name = address['concierge_name']
+                            concierge_number = Job.make_us_phone(address['concierge_number'])
+                else:
+                    users = User().where({'user_id': vars.CUSTOMER_ID})
+                    if users:
+                        for user in users:
+                            suite = user['suite']
+                            street = user['street'] if not suite else '{} {}'.format(user['street'], suite)
+                            city = user['city']
+                            state = user['state']
+                            zipcode = user['zipcode']
+                            address_string = '{} {}, {} {}'.format(street, city, state, zipcode)
+                            concierge_name = '{} {}'.format(user['first_name'].capitalize(),
+                                                            user['last_name'].capitalize())
+                            concierge_number = Job.make_us_phone(user['phone'])
 
+                status_formatted = Schedule().getStatus(status)
+                id_label = Factory.BottomLeftFormLabel(text="Schedule ID")
+                id_input = Factory.CenterVerticalTextInput(text=str(schedule['schedule_id']),
+                                                           readonly=True)
+                pickup_date_label = Factory.BottomLeftFormLabel(text="Pickup Date")
+                pickup_date_input = Factory.CenterVerticalTextInput(text=pickup_date_formatted,
+                                                                    readonly=True)
+                dropoff_date_label = Factory.BottomLeftFormLabel(text="Dropoff Date")
+                dropoff_date_input = Factory.CenterVerticalTextInput(text=dropoff_date_formatted,
+                                                                     readonly=True)
+                pickup_time_label = Factory.BottomLeftFormLabel(text="Pickup Time")
+                pickup_time_input = Factory.CenterVerticalTextInput(text=pickup_time_string,
+                                                                    readonly=True)
+                dropoff_time_label = Factory.BottomLeftFormLabel(text="Dropoff Time")
+                dropoff_time_input = Factory.CenterVerticalTextInput(text=dropoff_time_string,
+                                                                     readonly=True)
+                address_label = Factory.BottomLeftFormLabel(text="Address")
+                address_input = Factory.CenterVerticalTextInput(text=address_string,
+                                                                readonly=True)
+                special_instructions_label = Factory.BottomLeftFormLabel(text="Special Instructions")
+                special_instructions_input = Factory.CenterVerticalTextInput(text=special_instructions,
+                                                                             readonly=True)
+                concierge_name_label = Factory.BottomLeftFormLabel(text="Contact Name")
+                concierge_name_input = Factory.CenterVerticalTextInput(text=concierge_name,
+                                                                       readonly=True)
+                concierge_number_label = Factory.BottomLeftFormLabel(text="Contact Number")
+                concierge_number_input = Factory.CenterVerticalTextInput(text=concierge_number,
+                                                                         readonly=True)
+                status_label = Factory.BottomLeftFormLabel(text="Status")
+                status_input = Factory.CenterVerticalTextInput(text=status_formatted,
+                                                               readonly=True)
+                inner_layout_1.ids.main_table.add_widget(id_label)
+                inner_layout_1.ids.main_table.add_widget(id_input)
+                inner_layout_1.ids.main_table.add_widget(pickup_date_label)
+                inner_layout_1.ids.main_table.add_widget(pickup_date_input)
+                inner_layout_1.ids.main_table.add_widget(pickup_time_label)
+                inner_layout_1.ids.main_table.add_widget(pickup_time_input)
+                inner_layout_1.ids.main_table.add_widget(dropoff_date_label)
+                inner_layout_1.ids.main_table.add_widget(dropoff_date_input)
+                inner_layout_1.ids.main_table.add_widget(dropoff_time_label)
+                inner_layout_1.ids.main_table.add_widget(dropoff_time_input)
+                inner_layout_1.ids.main_table.add_widget(address_label)
+                inner_layout_1.ids.main_table.add_widget(address_input)
+                inner_layout_1.ids.main_table.add_widget(special_instructions_label)
+                inner_layout_1.ids.main_table.add_widget(special_instructions_input)
+                inner_layout_1.ids.main_table.add_widget(concierge_name_label)
+                inner_layout_1.ids.main_table.add_widget(concierge_name_input)
+                inner_layout_1.ids.main_table.add_widget(concierge_number_label)
+                inner_layout_1.ids.main_table.add_widget(concierge_number_input)
+                inner_layout_1.ids.main_table.add_widget(status_label)
+                inner_layout_1.ids.main_table.add_widget(status_input)
+
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=popup.dismiss)
+        inner_layout_2.add_widget(cancel_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
 
 
 class SearchResultsScreen(Screen):

@@ -259,19 +259,21 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
         mark = ''
         if last_name and customer_id and starch:
             # get the first character of the last name and capitalize it
-            mark += last_name[:1].capitalize()
+            last_init = last_name[:1].capitalize()
             # add in the customer_id
-            mark += customer_id
+
             # get the first character of the starch preference and capitalize it
-            mark += starch[:1].capitalize()
+            starch_init = starch[:1].capitalize()
+
+            mark = '{}{}{}'.format(last_init,customer_id,starch_init)
 
             # check to see if mark exists
             data = {'mark': '"{}"'.format(mark)}
             custid = self.where(data)
             if len(custid) > 0:
-                make_random = ''.join(choice(digits) for i in range(5))
-                mark_random = self.create_customer_mark(last_name=last_name, customer_id=make_random, starch=starch)
-                return mark_random
+                # make_random = ''.join(choice(digits) for i in range(5))
+                # mark_random = self.create_customer_mark(last_name=last_name, customer_id=make_random, starch=starch)
+                return False
             else:
                 return mark
 

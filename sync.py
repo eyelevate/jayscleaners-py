@@ -205,32 +205,37 @@ class Sync:
             to_update_rows += len(to_update['addresses'])
 
         cards_2 = Card().where({'card_id': {'!=': '""'},
-                                         'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+                                'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if cards_2:
             to_update['cards'] = cards_2
             to_update_rows += len(to_update['cards'])
 
-        colors_2 = Colored().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        colors_2 = Colored().where({'color_id': {'!=': '""'},
+                                    'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if colors_2:
             to_update['colors'] = colors_2
             to_update_rows += len(to_update['colors'])
 
-        companies_2 = Company().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        companies_2 = Company().where({'company_id': {'!=': '""'},
+                                       'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if companies_2:
             to_update['companies'] = companies_2
             to_update_rows += len(to_update['companies'])
 
-        custids_2 = Custid().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        custids_2 = Custid().where({'cust_id': {'!=': '""'},
+                                    'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if custids_2:
             to_update['custids'] = custids_2
             to_update_rows += len(to_update['custids'])
 
-        deliveries_2 = Delivery().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        deliveries_2 = Delivery().where({'delivery_id': {'!=': '""'},
+                                         'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if deliveries_2:
             to_update['deliveries'] = deliveries_2
             to_update_rows += len(to_update['deliveries'])
 
-        discounts_2 = Discount().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        discounts_2 = Discount().where({'discount_id': {'!=': '""'},
+                                        'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if discounts_2:
             to_update['discounts'] = discounts_2
             to_update_rows += len(to_update['discounts'])
@@ -294,18 +299,21 @@ class Sync:
             to_update['profiles'] = profiles_2
             to_update_rows += len(to_update['profiles'])
 
-        reward_transactions_2 = RewardTransaction().where({'updated_at': {'>': '"{}"'.format(server_at)}},
+        reward_transactions_2 = RewardTransaction().where({'reward_id': {'!=': '""'},
+                                                           'updated_at': {'>': '"{}"'.format(server_at)}},
                                                           deleted_at=False)
         if reward_transactions_2:
             to_update['reward_transactions'] = reward_transactions_2
             to_update_rows += len(to_update['reward_transactions'])
 
-        rewards_2 = Reward().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        rewards_2 = Reward().where({'reward_id': {'!=': '""'},
+                                    'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if rewards_2:
             to_update['rewards'] = rewards_2
             to_update_rows += len(to_update['rewards'])
 
-        schedules_2 = Schedule().where({'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        schedules_2 = Schedule().where({'schedule_id': {'!=': '""'},
+                                        'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if schedules_2:
             to_update['schedules'] = schedules_2
             to_update_rows += len(to_update['schedules'])
@@ -334,7 +342,14 @@ class Sync:
             to_update['zipcodes'] = zipcodes_2
             to_update_rows += len(to_update['zipcodes'])
 
-
+        error_find = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+            cid=company.id,
+            api=company.api_token,
+            servat=company.server_at,
+            upload=json.dumps(to_upload).replace(" ", "__"),
+            update=json.dumps(to_update).replace(" ", "__")
+        )
+        print(error_find)
         url = 'http://74.207.240.88/admins/api/update'
 
         # attempt to connect to server

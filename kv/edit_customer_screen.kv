@@ -8,12 +8,6 @@
     email: email
     important_memo: important_memo
     invoice_memo: invoice_memo
-    shirts_finish_hanger: shirts_finish_hanger
-    shirts_finish_box: shirts_finish_box
-    shirts_preference_none: shirts_preference_none
-    shirts_preference_light: shirts_preference_light
-    shirts_preference_medium: shirts_preference_medium
-    shirts_preference_heavy: shirts_preference_heavy
     is_delivery: is_delivery
     street: street
     suite: suite
@@ -24,6 +18,9 @@
     special_instructions: special_instructions
     marks_table: marks_table
     mark_text: mark_text
+    shirt_finish_spinner: shirt_finish_spinner
+    shirt_preference_spinner: shirt_preference_spinner
+
     on_enter:root.load()
 
     TabbedPanel:
@@ -34,260 +31,100 @@
             text: 'General'
             BoxLayout:
                 orientation: 'vertical'
-                BoxLayout:
-                    orientation: 'horizontal'
+                RelativeLayout:
                     size_hint: 1,0.9
-                    GridLayout:
-                        size_hint: 0.5,1
-                        cols:2
-                        padding: [25,25,25,25]
-                        row_default_height:'50sp'
-                        Label:
-                            text: "Phone"
-                            text_size: self.size
-                            halign: 'right'
-                            valign: 'middle'
-                            font_size:'20sp'
-                            size_hint_x: None
-                            width: '175sp'
-                            padding_x: '20sp'
-                        TextInput:
-                            id: phone
-                            size_hint_y: None
-                            hint_text: "Phone"
-                            height: '30sp'
-                            multiline: False
-                            font_size:'20sp'
-                            padding: [5,5,5,5]
-                            size_hint_y: None
-                            text: ''
-                        Label:
-                            text: "Last Name"
-                            text_size: self.size
-                            padding_x: '20sp'
-                            font_size:'20sp'
-                            halign: 'right'
-                            valign: 'middle'
-                            size_hint_x: None
-                            width: '175sp'
-                        TextInput:
-                            id: last_name
-                            size_hint_y: None
-                            hint_text: "Last Name"
-                            font_size:'20sp'
-                            height: '30sp'
-                            multiline: False
-                            padding: [5,5,5,5]
-                            size_hint_y: None
-                            text: ''
-                        Label:
-                            text: "First Name"
-                            text_size: self.size
-                            padding_x: '20sp'
-                            font_size:'20sp'
-                            halign: 'right'
-                            valign: 'middle'
-                            size_hint_x: None
-                            width: '175sp'
-                        TextInput:
-                            id: first_name
-                            size_hint_y: None
-                            hint_text: "First Name"
-                            font_size:'20sp'
-                            height: '30sp'
-                            multiline: False
-                            padding: [5,5,5,5]
-                            size_hint_y: None
-                            text: ''
-                        Label:
-                            text: "Email"
-                            text_size: self.size
-                            halign: 'right'
-                            valign: 'middle'
-                            font_size:'20sp'
-                            size_hint_x: None
-                            width: '175sp'
-                            padding_x: '20sp'
-                        TextInput:
-                            id: email
-                            size_hint_y: None
-                            hint_text: "Email"
-                            height: '30sp'
-                            multiline: False
-                            font_size:'20sp'
-                            padding: [5,5,5,5]
-                            size_hint_y: None
-                            text: ''
-                        Label:
-                            text: "Important Memo"
-                            text_size: self.size
-                            padding_x: '20sp'
-                            font_size:'20sp'
-                            halign: 'right'
-                            valign: 'middle'
-                            size_hint_x: None
-                            width: '175sp'
-                        TextInput:
-                            id: important_memo
-                            size_hint_y: None
-                            hint_text: "important memo"
-                            font_size:'15sp'
-                            height: '100sp'
-                            size_hint_y: None
-                            text: ''
-                        Label:
-                            text: "Invoice Memo"
-                            text_size: self.size
-                            halign: 'right'
-                            valign: 'middle'
-                            font_size:'20sp'
-                            size_hint_x: None
-                            width: '175sp'
-                            padding_x: '20sp'
-                        TextInput:
-                            id: invoice_memo
-                            size_hint_y: None
-                            hint_text: "Invoice Memo"
-                            height: '100sp'
-                            font_size:'15sp'
-                            size_hint_y: None
-                            text: ''
-
-                    GridLayout:
-                        size_hint: 0.5,1
-                        cols:2
-                        padding: [25,25,25,25]
-                        Label:
-                            text: "Shirts Finish"
-                            text_size: self.size
-                            halign: 'right'
-                            valign: 'middle'
-                            font_size:'20sp'
-                            size_hint_x: None
-                            width: '150sp'
-                            padding_x: '20sp'
+                    ScrollView:
+                        size_hint:(1,1)
                         GridLayout:
-                            cols:2
-                            rows:4
-                            padding: [25,25,25,25]
-                            canvas.before:
-                                Color:
-                                    rgba: .75, .75, .75, .75
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                            CheckBox:
-                                id: shirts_finish_hanger
-                                size_hint_y: None
-                                size_hint_x: None
-                                width:'10sp'
-                                height: '20sp'
-                                group: 'shirts_finish'
-                                on_release: root.set_shirt_finish('1')
-                            Label:
-                                text: "Hanger"
-                                text_size: self.size
-                                halign: 'left'
-                                valign: 'middle'
+                            id: main_grid
+                            size_hint_y:None
+                            height: self.minimum_height
+                            cols: 1
+                            row_force_default: True
+                            row_default_height:sp(50)
+                            BottomLeftFormLabel:
+                                text: "Phone"
+                            CenterVerticalTextInput:
+                                id: phone
+                                hint_text: "XXXXXXXXXX"
                                 font_size:'20sp'
-                                padding_x: '20sp'
-                            CheckBox:
-                                id: shirts_finish_box
-                                size_hint_y: None
-                                size_hint_x: None
-                                width:'10sp'
-                                height: '60sp'
-                                group: 'shirts_finish'
-                                on_release: root.set_shirt_finish('2')
-                            Label:
-                                text: "Box / Folded"
-                                text_size: self.size
-                                halign: 'left'
-                                valign: 'middle'
-                                font_size:'20sp'
-                                padding_x: '20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                text: ''
 
-                        Label:
-                            text: "Shirts Preference"
-                            text_size: self.size
-                            halign: 'right'
-                            valign: 'middle'
-                            font_size:'20sp'
-                            size_hint_x: None
-                            width: '150sp'
-                            padding_x: '20sp'
-                        GridLayout:
-                            cols:2
-                            rows:4
-                            padding: [25,25,25,25]
-                            size_hint_y: None
-                            height: '160sp'
-                            canvas.before:
-                                Color:
-                                    rgba: .75, .75, .75, .75
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                            CheckBox:
-                                id: shirts_preference_none
-                                size_hint_y: None
-                                size_hint_x: None
-                                width:'10sp'
-                                height: '30sp'
-                                group: 'shirts_preference'
-                                on_release: root.set_shirt_preference('1')
-                            Label:
-                                text: "None"
-                                text_size: self.size
-                                halign: 'left'
-                                valign: 'middle'
+                            BottomLeftFormLabel:
+                                text: "Last Name"
+
+                            CenterVerticalTextInput:
+                                id: last_name
+                                hint_text: "Last Name"
                                 font_size:'20sp'
-                                padding_x: '20sp'
-                            CheckBox:
-                                id: shirts_preference_light
-                                size_hint_y: None
-                                size_hint_x: None
-                                width:'10sp'
-                                height: '30sp'
-                                group: 'shirts_preference'
-                                on_release: root.set_shirt_preference('2')
-                            Label:
-                                text: "Light"
-                                text_size: self.size
-                                halign: 'left'
-                                valign: 'middle'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "First Name"
+                            CenterVerticalTextInput:
+                                id: first_name
+                                hint_text: "First Name"
                                 font_size:'20sp'
-                                padding_x: '20sp'
-                            CheckBox:
-                                id: shirts_preference_medium
-                                size_hint_y: None
-                                size_hint_x: None
-                                width:'10sp'
-                                height: '30sp'
-                                group: 'shirts_preference'
-                                on_release: root.set_shirt_preference('3')
-                            Label:
-                                text: "Medium"
-                                text_size: self.size
-                                halign: 'left'
-                                valign: 'middle'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Email"
+                            CenterVerticalTextInput:
+                                id: email
+                                hint_text: "Email"
                                 font_size:'20sp'
-                                padding_x: '20sp'
-                            CheckBox:
-                                id: shirts_preference_heavy
-                                size_hint_y: None
-                                size_hint_x: None
-                                width:'10sp'
-                                height: '30sp'
-                                group: 'shirts_preference'
-                                on_release: root.set_shirt_preference('4')
-                            Label:
-                                text: "Heavy"
-                                text_size: self.size
-                                halign: 'left'
-                                valign: 'middle'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Important Memo"
+                            CenterVerticalTextInput:
+                                id: important_memo
+                                hint_text: "Important Memo"
                                 font_size:'20sp'
-                                padding_x: '20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Invoice Memo"
+                            CenterVerticalTextInput:
+                                id: invoice_memo
+                                hint_text: "Invoice Memo"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Shirts Finish"
+
+                            Spinner:
+                                id: shirt_finish_spinner
+                                # default value shown
+                                text:'Hanger'
+                                # available values
+                                values:["Hanger","Box"]
+                                # just for positioning in our example
+                                size_hint_x:1
+                                size_hint_y:0.5
+                                pos_hint:{'center_x': .5, 'center_y': .5}
+                            BottomLeftFormLabel:
+                                text: "Shirts Preference"
+
+                            Spinner:
+                                id: shirt_preference_spinner
+                                # default value shown
+                                text:'None'
+                                # available values
+                                values:["None","Light","Medium","Heavy"]
+                                # just for positioning in our example
+                                size_hint_x:1
+                                size_hint_y:0.5
+                                pos_hint:{'center_x': .5, 'center_y': .5}
+
                 BoxLayout:
                     size_hint: 1,0.1
                     Button:
@@ -308,162 +145,98 @@
             text: 'Delivery'
             BoxLayout:
                 orientation: 'vertical'
-                GridLayout:
+                RelativeLayout:
                     size_hint: 1,0.9
-                    cols:2
-                    padding: [25,25,25,25]
-                    row_default_height:'50sp'
-                    Label:
-                        text: "Delivery?"
-                        text_size: self.size
-                        halign: 'right'
-                        valign: 'middle'
-                        font_size:'20sp'
-                        size_hint_x: None
-                        width: '175sp'
-                        padding_x: '20sp'
-                    Switch:
-                        id: is_delivery
-                        active: False
-                        on_active: root.set_delivery()
-                    Label:
-                        text: "Street"
-                        text_size: self.size
-                        padding_x: '20sp'
-                        font_size:'20sp'
-                        halign: 'right'
-                        valign: 'middle'
-                        size_hint_x: None
-                        width: '175sp'
-                    TextInput:
-                        id: street
-                        size_hint_y: None
-                        hint_text: "Street"
-                        font_size:'20sp'
-                        height: '30sp'
-                        multiline: False
-                        padding: [5,5,5,5]
-                        size_hint_y: None
-                        disabled: True
-                        text: ''
-                    Label:
-                        text: "Suite"
-                        text_size: self.size
-                        padding_x: '20sp'
-                        font_size:'20sp'
-                        halign: 'right'
-                        valign: 'middle'
-                        size_hint_x: None
-                        width: '175sp'
-                    TextInput:
-                        id: suite
-                        size_hint_y: None
-                        hint_text: "Suite"
-                        font_size:'20sp'
-                        height: '30sp'
-                        multiline: False
-                        padding: [5,5,5,5]
-                        size_hint_y: None
-                        disabled: True
-                        text: ''
-                    Label:
-                        text: "City"
-                        text_size: self.size
-                        halign: 'right'
-                        valign: 'middle'
-                        font_size:'20sp'
-                        size_hint_x: None
-                        width: '175sp'
-                        padding_x: '20sp'
-                    TextInput:
-                        id: city
-                        size_hint_y: None
-                        hint_text: "City"
-                        height: '30sp'
-                        multiline: False
-                        font_size:'20sp'
-                        padding: [5,5,5,5]
-                        size_hint_y: None
-                        disabled: True
-                        text: ''
-                    Label:
-                        text: "Zipcode"
-                        text_size: self.size
-                        halign: 'right'
-                        valign: 'middle'
-                        font_size:'20sp'
-                        size_hint_x: None
-                        width: '175sp'
-                        padding_x: '20sp'
-                    TextInput:
-                        id: zipcode
-                        size_hint_y: None
-                        hint_text: "Zipcode"
-                        height: '30sp'
-                        multiline: False
-                        font_size:'20sp'
-                        padding: [5,5,5,5]
-                        size_hint_y: None
-                        disabled: True
-                        text: ''
-                    Label:
-                        text: "Concierge"
-                        text_size: self.size
-                        halign: 'right'
-                        valign: 'middle'
-                        font_size:'20sp'
-                        size_hint_x: None
-                        width: '175sp'
-                        padding_x: '20sp'
-                    TextInput:
-                        id: concierge_name
-                        size_hint_y: None
-                        hint_text: "Concierge Name"
-                        height: '30sp'
-                        multiline: False
-                        font_size:'20sp'
-                        padding: [5,5,5,5]
-                        size_hint_y: None
-                        disabled: True
-                        text: ''
-                    Label:
-                        text: "Concierge Number"
-                        text_size: self.size
-                        halign: 'right'
-                        valign: 'middle'
-                        font_size:'20sp'
-                        size_hint_x: None
-                        width: '175sp'
-                        padding_x: '20sp'
-                    TextInput:
-                        id: concierge_number
-                        size_hint_y: None
-                        hint_text: "Concierge Number"
-                        height: '30sp'
-                        multiline: False
-                        font_size:'20sp'
-                        padding: [5,5,5,5]
-                        size_hint_y: None
-                        disabled: True
-                        text: ''
-                    Label:
-                        text: "Special Instructions"
-                        text_size: self.size
-                        padding_x: '20sp'
-                        font_size:'20sp'
-                        halign: 'right'
-                        valign: 'middle'
-                        size_hint_x: None
-                        width: '175sp'
-                    TextInput:
-                        id: special_instructions
-                        size_hint_y: None
-                        hint_text: "important memo"
-                        font_size:'15sp'
-                        height: '80sp'
-                        size_hint_y: None
-                        disabled: True
-                        text: ''
+                    ScrollView:
+                        size_hint:(1,1)
+                        GridLayout:
+                            size_hint_y:None
+                            height: self.minimum_height
+                            cols: 1
+                            row_force_default: True
+                            row_default_height:sp(50)
+
+                            BottomLeftFormLabel:
+                                text: "Delivery?"
+                            Switch:
+                                id: is_delivery
+                                active: False
+                                on_active: root.set_delivery()
+                            BottomLeftFormLabel:
+                                text: "Street"
+                            CenterVerticalTextInput:
+                                id: street
+                                hint_text: "Street"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+
+                            BottomLeftFormLabel:
+                                text: "Suite"
+                            CenterVerticalTextInput:
+                                id: suite
+                                hint_text: "Suite"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "City"
+                            CenterVerticalTextInput:
+                                id: city
+                                hint_text: "City"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Zipcode"
+                            CenterVerticalTextInput:
+                                id: zipcode
+                                hint_text: "Zipcode"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Concierge"
+                            CenterVerticalTextInput:
+                                id: concierge_name
+                                hint_text: "Concierge Name"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Concierge Number"
+                            CenterVerticalTextInput:
+                                id: concierge_number
+                                hint_text: "Concierge Number"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Special Instructions"
+                            CenterVerticalTextInput:
+                                id: special_instructions
+                                hint_text: "Special Instructions"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: ""
+                            BottomLeftFormLabel:
+                                text: ""
                 BoxLayout:
                     size_hint: 1,0.1
                     Button:
