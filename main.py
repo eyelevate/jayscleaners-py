@@ -3189,7 +3189,6 @@ GridLayout:
                 # FINAL CUT
                 vars.BIXOLON.write('\n\n\n\n\n\n')
                 vars.BIXOLON.write('\x1b\x6d')
-
         self.set_result_status()
         self.print_popup.dismiss()
 
