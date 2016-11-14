@@ -38,3 +38,10 @@ Thumbs.db
 *.xml
 
 *.db
+db/jayscleaners.db
+
+*.db
+
+*.pyc
+
+*.pyc
