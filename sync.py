@@ -205,7 +205,7 @@ class Sync:
             to_update_rows += len(to_update['addresses'])
 
         cards_2 = Card().where({'card_id': {'!=': '""'},
-                                'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+                                         'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if cards_2:
             to_update['cards'] = cards_2
             to_update_rows += len(to_update['cards'])
@@ -376,11 +376,11 @@ class Sync:
                 update_database(data=data_1)
                 # update server_at in companies with most current timestamp
 
-                where = {'company_id': self.company_id}
+                # where = {'company_id': self.company_id}
                 dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.server_at = dt
-                data = {'server_at': dt}
-                Company().server_at_update(where, data)
+                # data = {'server_at': dt}
+                Company().server_at_update()
 
 
         except urllib.error.URLError as e:
