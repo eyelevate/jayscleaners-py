@@ -501,7 +501,7 @@ def sync_from_server(data):
                 transaction.aftertax = transactions['aftertax']
                 transaction.discount = transactions['discount']
                 transaction.total = transactions['total']
-                # transaction.invoices = transactions['invoices']
+                transaction.invoices = transactions['invoices'] if transactions['invoices'] else None
                 transaction.type = transactions['type']
                 transaction.last_four = transactions['last_four']
                 transaction.tendered = transactions['tendered']
