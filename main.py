@@ -3091,14 +3091,12 @@ GridLayout:
                     sys.stdout.write('\a')
                     sys.stdout.flush()
 
-        # PRINT TAG
+            # PRINT TAG
+            if vars.BIXOLON:
+                print('Starting tag printing')
 
-        if vars.BIXOLON:
-            print('Starting tag printing')
-            if len(save_invoice_items) > 0:
-                for iitems_id in save_invoice_items:
-                    for item in save_invoice_items[iitems_id]:
-                        invoice_id = item['invoice_id']
+                if print_sync_invoice:  # if invoices synced
+                    for invoice_id, item_id in print_sync_invoice.items():
                         invoice_id_str = str(invoice_id)
                         invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
                         text_left = "{} {}".format(invoice_last_four,
@@ -3114,7 +3112,6 @@ GridLayout:
                                                              phone_number)
                         vars.BIXOLON.write('\x1b\x40')
                         vars.BIXOLON.write('\x1b\x6d')
-                        print('next step')
                         invoice_items = InvoiceItem().where({'invoice_id': invoice_id})
                         laundry_to_print = []
                         if invoice_items:
@@ -3150,45 +3147,46 @@ GridLayout:
 
                                             vars.BIXOLON.write('\n\n\n')
                                             vars.BIXOLON.write('\x1b\x6d')
-            if len(laundry_to_print) is 0:
-                # FINAL CUT
-                vars.BIXOLON.write('\n\n\n\n\n\n')
-                vars.BIXOLON.write('\x1b\x6d')
-            else:
-                laundry_count = len(laundry_to_print)
-                shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
-                name_text_offset = total_length - len(text_name) - len(text_name)
-                shirt_mark_length = len(shirt_mark)
-                mark_text_offset = 16 - (shirt_mark_length * 2)
-                for i in range(0, laundry_count, 2):
-                    start = i
-                    end = i + 1
-                    invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
-                    id_offset = total_length - 12
-                    try:
-                        invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
-                        name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
-                        mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
-                        id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset,
-                                                       invoice_item_id_end)
 
-                    except IndexError:
-                        name_name_string = '{}'.format(text_name)
-                        mark_mark_string = '{}'.format(shirt_mark)
-                        id_id_string = '{}'.format(invoice_item_id_start)
+                if len(laundry_to_print) is 0:
+                    # FINAL CUT
+                    vars.BIXOLON.write('\n\n\n\n\n\n')
+                    vars.BIXOLON.write('\x1b\x6d')
+                else:
+                    laundry_count = len(laundry_to_print)
+                    shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                    name_text_offset = total_length - len(text_name) - len(text_name)
+                    shirt_mark_length = len(shirt_mark)
+                    mark_text_offset = 16 - (shirt_mark_length * 2)
+                    for i in range(0, laundry_count, 2):
+                        start = i
+                        end = i + 1
+                        invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
+                        id_offset = total_length - 12
+                        try:
+                            invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
+                            name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
+                            mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
+                            id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset,
+                                                           invoice_item_id_end)
 
-                    vars.BIXOLON.write('\x1b!\x30')  # QUAD SIZE
-                    vars.BIXOLON.write(mark_mark_string)
-                    vars.BIXOLON.write('\n')
-                    vars.BIXOLON.write('\x1b!\x00')
-                    vars.BIXOLON.write(name_name_string)
-                    vars.BIXOLON.write('\n')
-                    vars.BIXOLON.write(id_id_string)
+                        except IndexError:
+                            name_name_string = '{}'.format(text_name)
+                            mark_mark_string = '{}'.format(shirt_mark)
+                            id_id_string = '{}'.format(invoice_item_id_start)
 
-                    vars.BIXOLON.write('\n\n\n\x1b\x6d')
-                # FINAL CUT
-                vars.BIXOLON.write('\n\n\n\n\n\n')
-                vars.BIXOLON.write('\x1b\x6d')
+                        vars.BIXOLON.write('\x1b!\x30')  # QUAD SIZE
+                        vars.BIXOLON.write(mark_mark_string)
+                        vars.BIXOLON.write('\n')
+                        vars.BIXOLON.write('\x1b!\x00')
+                        vars.BIXOLON.write(name_name_string)
+                        vars.BIXOLON.write('\n')
+                        vars.BIXOLON.write(id_id_string)
+
+                        vars.BIXOLON.write('\n\n\n\x1b\x6d')
+                    # FINAL CUT
+                    vars.BIXOLON.write('\n\n\n\n\n\n')
+                    vars.BIXOLON.write('\x1b\x6d')
 
         self.set_result_status()
         self.print_popup.dismiss()
