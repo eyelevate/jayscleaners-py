@@ -45,3 +45,4 @@ db/jayscleaners.db
 *.pyc
 
 *.pyc
+*.db
