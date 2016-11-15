@@ -57,7 +57,11 @@ def sync_from_server(data):
                 if len(count_address) > 0 or address.deleted_at:
                     for data in count_address:
                         address.id = data['id']
-                        address.update()
+                        if address.deleted_at:
+                            address.delete()
+                        else:
+                            address.update()
+                elif address.deleted_at:
                 else:
                     address.add()
             address.close_connection()
@@ -88,7 +92,10 @@ def sync_from_server(data):
                 if len(count_card) > 0 or card.deleted_at:
                     for data in count_card:
                         card.id = data['id']
-                        card.update()
+                        if card.deleted_at:
+                            card.delete()
+                        else:
+                            card.update()
                 else:
                     card.add()
             card.close_connection()
@@ -111,7 +118,10 @@ def sync_from_server(data):
                 if len(count_color) > 0 or color.deleted_at:
                     for data in count_color:
                         color.id = data['id']
-                        color.update()
+                        if color.deleted_at:
+                            color.delete()
+                        else:
+                            color.update()
                 else:
                     color.add()
             color.close_connection()
@@ -140,7 +150,10 @@ def sync_from_server(data):
                 if len(count_company) > 0 or company.deleted_at:
                     for data in count_company:
                         company.id = data['id']
-                        company.update()
+                        if company.deleted_at:
+                            company.delete()
+                        else:
+                            company.update()
                 else:
                     company.add()
             company.close_connection()
@@ -160,7 +173,10 @@ def sync_from_server(data):
                 if len(count_custid) > 0 or custid.deleted_at:
                     for data in count_custid:
                         custid.id = data['id']
-                        custid.update()
+                        if custid.deleted_at:
+                            custid.delete()
+                        else:
+                            custid.update()
                 else:
                     custid.add()
             custid.close_connection()
@@ -185,7 +201,10 @@ def sync_from_server(data):
                 if len(count_delivery) > 0 or delivery.deleted_at:
                     for data in count_delivery:
                         delivery.id = data['id']
-                        delivery.update()
+                        if delivery.deleted_at:
+                            delivery.delete()
+                        else:
+                            delivery.update()
                 else:
                     delivery.add()
             delivery.close_connection()
@@ -212,7 +231,10 @@ def sync_from_server(data):
                 if len(count_discount) > 0 or discount.deleted_at:
                     for data in count_discount:
                         discount.id = data['id']
-                        discount.update()
+                        if discount.deleted_at:
+                            discount.delete()
+                        else:
+                            discount.update()
                 else:
                     discount.add()
             discount.close_connection()
@@ -234,7 +256,10 @@ def sync_from_server(data):
                 if len(count_inventory) > 0 or inventory.deleted_at:
                     for data in count_inventory:
                         inventory.id = data['id']
-                        inventory.update()
+                        if inventory.deleted_at:
+                            inventory.delete()
+                        else:
+                            inventory.update()
                 else:
                     inventory.add()
             inventory.close_connection()
@@ -260,7 +285,10 @@ def sync_from_server(data):
                 if len(count_inventory_item) > 0 or inventory_item.deleted_at:
                     for data in count_inventory_item:
                         inventory_item.id = data['id']
-                        inventory_item.update()
+                        if inventory_item.deleted_at:
+                            inventory_item.delete()
+                        else:
+                            inventory_item.update()
                 else:
                     inventory_item.add()
             inventory_item.close_connection()
@@ -292,7 +320,10 @@ def sync_from_server(data):
                 if len(count_invoice) > 0 or invoice.deleted_at:
                     for data in count_invoice:
                         invoice.id = data['id']
-                        invoice.update()
+                        if invoice.deleted_at:
+                            invoice.delete()
+                        else:
+                            invoice.update()
                 else:
                     invoice.add()
             invoice.close_connection()
@@ -321,7 +352,10 @@ def sync_from_server(data):
                 if len(count_invoice_item) > 0 or invoice_item.deleted_at:
                     for data in count_invoice_item:
                         invoice_item.id = data['id']
-                        invoice_item.update()
+                        if invoice_item.deleted_at:
+                            invoice_item.delete()
+                        else:
+                            invoice_item.update()
                 else:
                     invoice_item.add()
             invoice_item.close_connection()
@@ -341,7 +375,10 @@ def sync_from_server(data):
                 if len(count_memo) > 0 or memo.deleted_at:
                     for data in count_memo:
                         memo.id = data['id']
-                        memo.update()
+                        if memo.deleted_at:
+                            memo.delete()
+                        else:
+                            memo.update()
                 else:
                     memo.add()
             memo.close_connection()
@@ -365,7 +402,10 @@ def sync_from_server(data):
                 if len(count_printer) > 0 or printer.deleted_at:
                     for data in count_printer:
                         printer.id = data['id']
-                        printer.update()
+                        if printer.deleted_at:
+                            printer.delete()
+                        else:
+                            printer.update()
                 else:
                     printer.add()
             printer.close_connection()
@@ -385,7 +425,10 @@ def sync_from_server(data):
                 if len(count_profile) > 0 or profile.deleted_at:
                     for data in count_profile:
                         profile.id = data['id']
-                        profile.update()
+                        if profile.deleted_at:
+                            profile.delete()
+                        else:
+                            profile.update()
                 else:
                     profile.add()
             profile.close_connection()
@@ -414,7 +457,10 @@ def sync_from_server(data):
                 if len(count_reward_transaction) > 0 or reward_transaction.deleted_at:
                     for data in count_reward_transaction:
                         reward_transaction.id = data['id']
-                        reward_transaction.update()
+                        if reward_transaction.deleted_at:
+                            reward_transaction.delete()
+                        else:
+                            reward_transaction.update()
                 else:
                     reward_transaction.add()
             reward_transaction.close_connection()
@@ -435,7 +481,10 @@ def sync_from_server(data):
                 if len(count_reward) > 0 or reward.deleted_at:
                     for data in count_reward:
                         reward.id = data['id']
-                        reward.update()
+                        if reward.deleted_at:
+                            reward.delete()
+                        else:
+                            reward.update()
                 else:
                     reward.add()
             reward.close_connection()
@@ -464,7 +513,10 @@ def sync_from_server(data):
                 if len(count_schedule) > 0 or schedule.deleted_at:
                     for data in count_schedule:
                         schedule.id = data['id']
-                        schedule.update()
+                        if schedule.deleted_at:
+                            schedule.delete()
+                        else:
+                            schedule.update()
                 else:
                     schedule.add()
             schedule.close_connection()
@@ -483,7 +535,10 @@ def sync_from_server(data):
                 if len(count_tax) > 0 or tax.deleted_at:
                     for data in count_tax:
                         tax.id = data['id']
-                        tax.update()
+                        if tax.deleted_at:
+                            tax.delete()
+                        else:
+                            tax.update()
                 else:
                     tax.add()
             tax.close_connection()
@@ -513,7 +568,10 @@ def sync_from_server(data):
                 if len(count_transaction) > 0 or transaction.deleted_at:
                     for data in count_transaction:
                         transaction.id = data['id']
-                        transaction.update()
+                        if transaction.deleted_at:
+                            transaction.delete()
+                        else:
+                            transaction.update()
                 else:
                     transaction.add()
             transaction.close_connection()
@@ -559,7 +617,10 @@ def sync_from_server(data):
                 if len(count_user) > 0 or user.deleted_at:
                     for data in count_user:
                         user.id = data['id']
-                        user.update()
+                        if user.deleted_at:
+                            user.delete()
+                        else:
+                            user.update()
                 else:
                     user.add()
             user.close_connection()
@@ -582,7 +643,10 @@ def sync_from_server(data):
                 if len(count_zipcode) > 0 or zipcode.deleted_at:
                     for data in count_zipcode:
                         zipcode.id = data['id']
-                        zipcode.update()
+                        if zipcode.deleted_at:
+                            zipcode.delete()
+                        else:
+                            zipcode.update()
                 else:
                     zipcode.add()
             zipcode.close_connection()
