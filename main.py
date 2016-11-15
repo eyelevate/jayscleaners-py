@@ -9978,6 +9978,7 @@ class PickupScreen(Screen):
         if transaction.add():
             # update to server
             run_sync = threading.Thread(target=SYNC.run_sync)
+            run_sync_2 = threading.Thread(target=SYNC.run_sync)
             try:
                 run_sync.start()
             finally:
@@ -9999,6 +10000,11 @@ class PickupScreen(Screen):
                                      data={'status': 5, 'transaction_id': transaction_id})
                     self.set_result_status()
                     self.finish_popup.dismiss()
+                    try:
+                        run_sync_2.start()
+                    finally:
+                        run_sync_2.join()
+
         if print == 1:  # customer copy of invoice and finish
             if vars.EPSON:
                 pr = Printer()
