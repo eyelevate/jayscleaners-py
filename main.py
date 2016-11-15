@@ -4614,8 +4614,7 @@ GridLayout:
                         if new_invoice_item.add():
                             print('new item added')
                             # delete rows
-        vars.WORKLIST.append("Sync")
-        threads_start()
+
 
         Invoice().put(where={'invoice_id': vars.INVOICE_ID},
                       data={'quantity': self.tags,
@@ -4624,8 +4623,11 @@ GridLayout:
                             'total': '%.2f' % self.total,
                             'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))})
 
-        vars.WORKLIST.append("Sync")
-        threads_start()
+        run_sync = threading.Thread(target=SYNC.run_sync)
+        try:
+            run_sync.start()
+        finally:
+            run_sync.join()
 
         # print invoices
         if vars.EPSON:
@@ -9834,6 +9836,7 @@ class PickupScreen(Screen):
         button_2 = Factory.PrintButton(text='Finish + No Receipt',
                                        on_press=partial(self.finish_transaction, 2))
         if self.payment_type == 'cc':
+            self.amount_tendered = self.total_amount
             if self.card_location == 1:
                 inner_layout_1.add_widget(button_1)
                 inner_layout_1.add_widget(button_2)
@@ -9915,6 +9918,7 @@ class PickupScreen(Screen):
             inner_layout_1.add_widget(cash_layout)
             pass
         elif self.payment_type == 'ch':
+            self.amount_tendered = self.total_amount
             inner_layout_1.add_widget(button_1)
             inner_layout_1.add_widget(button_2)
         else:
@@ -9978,17 +9982,17 @@ class PickupScreen(Screen):
         if transaction.add():
             # update to server
             run_sync = threading.Thread(target=SYNC.run_sync)
-            run_sync_2 = threading.Thread(target=SYNC.run_sync)
             try:
                 run_sync.start()
             finally:
                 run_sync.join()
                 # last transaction _id
-
+                time.sleep(1)
+                run_sync_2 = threading.Thread(target=SYNC.run_sync)
                 last_transaction = transaction.where({'id': {'>': 0}, 'ORDER_BY': 'id desc', 'LIMIT': 1})
                 if last_transaction:
                     for trans in last_transaction:
-                        transaction_id = trans['transaction_id']
+                        transaction_id = trans['trans_id']
                 else:
                     transaction_id = None
 
@@ -9998,12 +10002,12 @@ class PickupScreen(Screen):
                     for invoice_id in self.selected_invoices:
                         invoices.put(where={'invoice_id': invoice_id},
                                      data={'status': 5, 'transaction_id': transaction_id})
-                    self.set_result_status()
-                    self.finish_popup.dismiss()
                     try:
                         run_sync_2.start()
                     finally:
                         run_sync_2.join()
+                        self.set_result_status()
+                        self.finish_popup.dismiss()
 
         if print == 1:  # customer copy of invoice and finish
             if vars.EPSON:
