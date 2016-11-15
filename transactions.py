@@ -20,6 +20,7 @@ class Transaction:
     aftertax = None
     discount = None
     total = None
+    invoices = None
     type = None
     last_four = None
     tendered = None
@@ -52,6 +53,7 @@ class Transaction:
                                   FloatField(column='aftertax').data_type(),
                                   FloatField(column='discount').data_type(),
                                   FloatField(column='total').data_type(),
+                                  TextField(column='invoices').data_type(),
                                   IntegerField(column='type').data_type(),
                                   IntegerField(column='last_four').data_type(),
                                   FloatField(column='tendered').data_type(),
@@ -71,8 +73,8 @@ class Transaction:
         self.updated_at = now
         self.created_at = now
         self.c.execute('''INSERT INTO {t}(trans_id,company_id,customer_id,schedule_id,pretax,tax,aftertax,
-discount,total,type,last_four,tendered,transaction_id,status,deleted_at,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id,
+discount,total,invoices,type,last_four,tendered,transaction_id,status,deleted_at,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id,
                                                                self.company_id,
                                                                self.customer_id,
                                                                self.schedule_id,
@@ -81,6 +83,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id,
                                                                self.aftertax,
                                                                self.discount,
                                                                self.total,
+                                                                 self.invoices,
                                                                self.type,
                                                                self.last_four,
                                                                self.tendered,
@@ -123,7 +126,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id,
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.c.execute('''UPDATE {t} SET trans_id = ?, company_id = ?, customer_id = ?, schedule_id = ?,
-pretax = ?, tax = ?, aftertax = ?, discount = ?, total = ?, type = ?, last_four = ?, tendered = ?,
+pretax = ?, tax = ?, aftertax = ?, discount = ?, total = ?, invoices = ?, type = ?, last_four = ?, tendered = ?,
 transaction_id = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.trans_id,
                                                                                  self.company_id,
                                                                                  self.customer_id,
@@ -133,6 +136,7 @@ transaction_id = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), 
                                                                                  self.aftertax,
                                                                                  self.discount,
                                                                                  self.total,
+                                                                                 self.invoices,
                                                                                  self.type,
                                                                                  self.last_four,
                                                                                  self.tendered,
