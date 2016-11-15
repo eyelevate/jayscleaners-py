@@ -61,7 +61,6 @@ def sync_from_server(data):
                             address.delete()
                         else:
                             address.update()
-                elif address.deleted_at:
                 else:
                     address.add()
             address.close_connection()
