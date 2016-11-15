@@ -259,11 +259,11 @@ Label:
         elif state == 6:  # Quick Drop
             background_rgba = '0.98431373,1,0,0.1' if selected else '0.9960784314,1,0.7176470588,0.1'
             background_color = '0.98431373,1,0,1' if selected else '0.9960784314,1,0.7176470588, 1'
-            text_color = '5e5e5e' if selected else '5e5e5e'
+            text_color = '000000' if selected else '000000'
         elif state == 5:  # paid and done
             background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
             background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
-            text_color = 'e5e5e5' if selected else '5e5e5e'
+            text_color = 'e5e5e5' if selected else '000000'
         elif state == 4:  # Quick Drop | prepaid | Gone np
             background_rgba = '1,0,0,0.1' if selected else '1, 0.717, 0.717, 0.1'
             background_color = '1,0,0,1' if selected else '1, 0.717, 0.717, 1'
@@ -279,7 +279,7 @@ Label:
         else:  # Not ready yet
             background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
             background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
-            text_color = 'e5e5e5' if selected else '5e5e5e'
+            text_color = 'e5e5e5' if selected else '000000'
 
         if spinner:
             default_text = '{} {}'.format(len(data) if data else 0,spinner_text)
@@ -381,11 +381,11 @@ Label:
         elif state == 6:  # Quick Drop
             background_rgba = '0.98431373,1,0,0.1' if selected else '0.9960784314,1,0.7176470588,0.1'
             background_color = '0.98431373,1,0,1' if selected else '0.9960784314,1,0.7176470588, 1'
-            text_color = '5e5e5e' if selected else '5e5e5e'
+            text_color = '000000' if selected else '000000'
         elif state == 5:  # paid and done
             background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
             background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
-            text_color = 'e5e5e5' if selected else '5e5e5e'
+            text_color = 'e5e5e5' if selected else '000000'
         elif state == 4:  # Quick Drop | prepaid | Gone np
             background_rgba = '1,0,0,0.1' if selected else '1, 0.717, 0.717, 0.1'
             background_color = '1,0,0,1' if selected else '1, 0.717, 0.717, 1'
@@ -401,7 +401,7 @@ Label:
         else:  # Not ready yet
             background_rgba = '0.369,0.369,0.369,0.1' if selected else '0.826, 0.826, 0.826, 0.1'
             background_color = '0.369,0.369,0.369,1' if selected else '0.826, 0.826, 0.826, 1'
-            text_color = 'e5e5e5' if selected else '5e5e5e'
+            text_color = 'e5e5e5' if selected else '000000'
         if spinner:
             default_text = '{} {}'.format(len(data) if data else 0, spinner_text)
             data_string = ''

@@ -1723,7 +1723,7 @@ GridLayout:
                 background_color = (0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
                     0.89803922, 0.89803922, 0.89803922, 1)
                 background_normal = ''
-                text_color = 'e5e5e5' if idx == self.item_selected_row else '5e5e5e'
+                text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
                 item_name = items['item_name']
                 item_color = items['color']
                 item_memo = items['memo']
@@ -2007,7 +2007,7 @@ GridLayout:
                             0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
                             0.89803922, 0.89803922, 0.89803922, 1)
                         background_normal = ''
-                        text_color = 'e5e5e5' if idx == self.item_selected_row else '5e5e5e'
+                        text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
 
                         tr1 = Button(size_hint_x=0.1,
                                      markup=True,
@@ -3825,7 +3825,7 @@ GridLayout:
                 background_color = (0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
                     0.89803922, 0.89803922, 0.89803922, 1)
                 background_normal = ''
-                text_color = 'e5e5e5' if idx == self.item_selected_row else '5e5e5e'
+                text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
                 item_name = items['item_name']
                 item_color = items['color']
                 item_memo = items['memo']
@@ -4118,7 +4118,7 @@ GridLayout:
                             0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
                             0.89803922, 0.89803922, 0.89803922, 1)
                         background_normal = ''
-                        text_color = 'e5e5e5' if idx == self.item_selected_row else '5e5e5e'
+                        text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
 
                         tr1 = Button(size_hint_x=0.1,
                                      markup=True,
@@ -5454,7 +5454,7 @@ class EditCustomerScreen(Screen):
                 even_odd += 1
                 rgba = '0.369,0.369,0.369,1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 1'
                 background_rgba = '0.369,0.369,0.369,0.1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 0.1'
-                text_color = 'e5e5e5' if even_odd % 2 == 0 else '5e5e5e'
+                text_color = 'e5e5e5' if even_odd % 2 == 0 else '000000'
                 tr1 = KV.widget_item(type='Label', data=even_odd, rgba=rgba,
                                      background_rgba=background_rgba, text_color=text_color)
                 tr2 = KV.widget_item(type='Label', data=vars.CUSTOMER_ID, rgba=rgba,
@@ -8364,7 +8364,7 @@ class Last10Screen(Screen):
                 even_odd += 1
                 rgba = '0.369,0.369,0.369,1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 1'
                 background_rgba = '0.369,0.369,0.369,0.1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 0.1'
-                text_color = 'e5e5e5' if even_odd % 2 == 0 else '5e5e5e'
+                text_color = 'e5e5e5' if even_odd % 2 == 0 else '000000'
                 data = {'user_id': customer_id}
                 cust1 = customers.where(data)
                 if len(cust1) > 0:
@@ -9882,23 +9882,23 @@ class PickupScreen(Screen):
                             card_exp_month = card['exp_month']
                             card_exp_year = card['exp_year']
                             if card_suite:
-                                card_billing_address = '[color=5e5e5e]{} {} {},{} {}[/color]'.format(card_street,
+                                card_billing_address = '[color=000000]{} {} {},{} {}[/color]'.format(card_street,
                                                                                                      card_suite,
                                                                                                      card_city,
                                                                                                      card_state,
                                                                                                      card_zipcode)
                             else:
-                                card_billing_address = '[color=5e5e5e]{} {},{} {}[/color]'.format(card_street,
+                                card_billing_address = '[color=000000]{} {},{} {}[/color]'.format(card_street,
                                                                                                   card_city,
                                                                                                   card_state,
                                                                                                   card_zipcode)
-                            self.card_box.ids.credit_card_number.text = '[color=5e5e5e]{}[/color]'.format(
+                            self.card_box.ids.credit_card_number.text = '[color=000000]{}[/color]'.format(
                                 card_last_four)
                             self.card_box.ids.credit_card_type.text = '[color]{}[/color]'.format(card_type)
-                            self.card_box.ids.credit_card_full_name.text = '[color="5e5e5e"]{} {}[/color]'.format(
+                            self.card_box.ids.credit_card_full_name.text = '[color="000000"]{} {}[/color]'.format(
                                 card_first_name,
                                 card_last_name)
-                            self.card_box.ids.credit_card_exp_date.text = '[color="5e5e5e"]{}/{}[/color]'.format(
+                            self.card_box.ids.credit_card_exp_date.text = '[color="000000"]{}/{}[/color]'.format(
                                 card_exp_month,
                                 card_exp_year)
                             self.card_box.ids.credit_billing_address.text = card_billing_address
@@ -14512,7 +14512,7 @@ class SearchResultsScreen(Screen):
                 phone = cust['phone']
                 rgba = '0.369,0.369,0.369,1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 1'
                 background_rgba = '0.369,0.369,0.369,0.1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 0.1'
-                text_color = 'e5e5e5' if even_odd % 2 == 0 else '5e5e5e'
+                text_color = 'e5e5e5' if even_odd % 2 == 0 else '000000'
                 marks = Custid()
                 mark = ''
                 custids = marks.where({'customer_id': cust['user_id']})
