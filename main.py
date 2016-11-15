@@ -9957,7 +9957,7 @@ class PickupScreen(Screen):
         transaction.tax = self.total_tax
         transaction.aftertax = self.total_amount
         transaction.discount = self.total_discount
-        transaction.total = self.total_due
+        transaction.total = self.total_amount
         last_four = None
         if self.payment_type == 'cc' and self.card_location == 1:
             type = 1
