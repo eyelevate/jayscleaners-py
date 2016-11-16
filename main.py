@@ -3898,7 +3898,6 @@ GridLayout:
             self.make_items_table()
             self.memo_text_input.text = ''
 
-
     def color_selected(self, color=False, *args, **kwargs):
         if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
             self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
@@ -4635,7 +4634,6 @@ GridLayout:
                             print('new item added')
                             # delete rows
 
-
         Invoice().put(where={'invoice_id': vars.INVOICE_ID},
                       data={'quantity': self.tags,
                             'pretax': '%.2f' % self.subtotal,
@@ -5176,8 +5174,7 @@ class EditCustomerScreen(Screen):
         self.special_instructions.disabled = True
         self.mark_text.text = ''
         self.is_delivery.active = False
-        self.shirt_finish_spinner.bind(text=self.select_shirts_finish)
-        self.shirt_preference_spinner.bind(text=self.select_shirts_preference)
+
         self.marks_table.clear_widgets()
 
     def load(self):
@@ -5188,6 +5185,8 @@ class EditCustomerScreen(Screen):
                                          'primary_address': 1})
             data = {'user_id': vars.CUSTOMER_ID}
             customer = customers.where(data)
+            self.shirt_finish_spinner.bind(text=self.select_shirts_finish)
+            self.shirt_preference_spinner.bind(text=self.select_shirts_preference)
             if customer:
                 for cust in customer:
                     self.last_name.text = cust['last_name'] if cust['last_name'] else ''
@@ -5332,6 +5331,8 @@ class EditCustomerScreen(Screen):
         elif self.shirt_finish_spinner.text is 'Box':
             self.shirt_finish = 2
 
+        print(self.shirt_finish)
+
     def select_shirts_preference(self, *args, **kwargs):
         self.shirt_preference = 0
         if self.shirt_preference_spinner.text is 'None':
@@ -5342,6 +5343,7 @@ class EditCustomerScreen(Screen):
             self.shirt_preference = 3
         elif self.shirt_preference_spinner.text is 'Heavy':
             self.shirt_preference = 4
+        print(self.shirt_preference)
 
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
@@ -5376,11 +5378,6 @@ class EditCustomerScreen(Screen):
                 popup.content = Builder.load_string(KV.popup_alert('Successfully added a new mark!'))
                 popup.open()
 
-    def set_shirt_finish(self, value):
-        self.shirt_finish = str(value)
-
-    def set_shirt_preference(self, value):
-        self.shirt_preference = str(value)
 
     def set_delivery(self):
 
@@ -5480,9 +5477,6 @@ class EditCustomerScreen(Screen):
         popup = Popup()
         popup.size_hint = (None, None)
         popup.size = '600sp', '300sp'
-        # sync database first
-        vars.WORKLIST.append("Sync")
-        threads_start()
         # check for errors
         errors = 0
         if self.phone.text == '':
@@ -5568,62 +5562,63 @@ class EditCustomerScreen(Screen):
 
         if errors == 0:  # if no errors then save
             where = {'user_id': vars.CUSTOMER_ID}
-            data = {}
-            data['company_id'] = auth_user.company_id
-            data['phone'] = Job.make_numeric(data=self.phone.text)
-            data['last_name'] = Job.make_no_whitespace(data=self.last_name.text)
-            data['first_name'] = Job.make_no_whitespace(data=self.first_name.text)
-            data['email'] = self.email.text if Job.check_valid_email(email=self.email.text) else None
-            data['important_memo'] = self.important_memo.text if self.important_memo.text else None
-            data['invoice_memo'] = self.invoice_memo.text if self.invoice_memo.text else None
-            data['shirt'] = str(self.shirt_finish)
-            data['starch'] = str(self.shirt_preference)
+            data = {
+                'company_id': auth_user.company_id,
+                'phone': Job.make_numeric(data=self.phone.text),
+                'last_name': Job.make_no_whitespace(data=self.last_name.text),
+                'first_name': Job.make_no_whitespace(data=self.first_name.text),
+                'email': self.email.text if Job.check_valid_email(email=self.email.text) else None,
+                'invoice_memo' : self.invoice_memo.text if self.invoice_memo.text else None,
+                'important_memo': self.important_memo.text if self.important_memo.text else None,
+                'shirt': str(self.shirt_finish),
+                'starch': str(self.shirt_preference),
+                'street': self.street.text,
+                'suite': Job.make_no_whitespace(data=self.suite.text),
+                'city': Job.make_no_whitespace(data=self.city.text),
+                'zipcode': Job.make_no_whitespace(data=self.zipcode.text),
+                'concierge_name': self.concierge_name.text,
+                'concierge_number': Job.make_numeric(data=self.concierge_number.text),
+                'special_instructions': self.special_instructions.text if self.special_instructions.text else None
+            }
+            print('data')
+            print(data)
             if self.is_delivery.active:
 
                 # check address or else save
                 if self.address_id:
-                    addresses = Address().put(where={'id': self.address_id},
-                                              data={'name': 'Home',
-                                                    'street': self.street.text,
-                                                    'suite': Job.make_no_whitespace(data=self.suite.text),
-                                                    'city': Job.make_no_whitespace(data=self.city.text),
-                                                    'zipcode': Job.make_no_whitespace(data=self.zipcode.text),
-                                                    'concierge_name': self.concierge_name.text,
-                                                    'special_instructions': self.special_instructions.text if self.special_instructions.text else None
-                                                    })
-                    if addresses:
-                        pass
-                data['street'] = self.street.text
-                data['suite'] = Job.make_no_whitespace(data=self.suite.text)
-                data['city'] = Job.make_no_whitespace(data=self.city.text)
-                data['zipcode'] = Job.make_no_whitespace(data=self.zipcode.text)
-                data['concierge_name'] = self.concierge_name.text
-                data['concierge_number'] = Job.make_numeric(data=self.concierge_number.text)
-                data[
-                    'special_instructions'] = self.special_instructions.text if self.special_instructions.text else None
-
+                    addr_where = {'id': self.address_id}
+                    addr_data = {'name': 'Home',
+                                 'street': self.street.text,
+                                 'suite': Job.make_no_whitespace(data=self.suite.text),
+                                 'city': Job.make_no_whitespace(data=self.city.text),
+                                 'zipcode': Job.make_no_whitespace(data=self.zipcode.text),
+                                 'concierge_name': self.concierge_name.text,
+                                 'special_instructions': self.special_instructions.text if self.special_instructions.text else None
+                                 }
+                    Address().put(where=addr_where,data=addr_data)
             if customers.put(where=where, data=data):
                 # create the customer mark
-                marks = Custid()
+                # marks = Custid()
+                #
+                # updated_mark = marks.create_customer_mark(last_name=self.last_name.text,
+                #                                           customer_id=str(vars.CUSTOMER_ID),
+                #                                           starch=customers.get_starch(self.shirt_preference))
+                # where = {'customer_id': vars.CUSTOMER_ID}
+                # data = {'mark': updated_mark}
+                # marks.put(where=where, data=data)
+                run_sync = threading.Thread(target=SYNC.run_sync)
+                try:
+                    run_sync.start()
+                finally:
+                    run_sync.join()
+                    self.reset()
+                    self.customer_select(vars.CUSTOMER_ID)
+                    # create popup
+                    content = KV.popup_alert("You have successfully edited this customer.")
+                    popup.content = Builder.load_string(content)
+                    popup.open()
 
-                updated_mark = marks.create_customer_mark(last_name=self.last_name.text,
-                                                          customer_id=str(vars.CUSTOMER_ID),
-                                                          starch=customers.get_starch(self.shirt_preference))
-                where = {'customer_id': vars.CUSTOMER_ID}
-                data = {'mark': updated_mark}
-                if marks.put(where=where, data=data):
-                    vars.WORKLIST.append("Sync")
-                    threads_start()
-
-                self.reset()
-                self.customer_select(vars.CUSTOMER_ID)
-                # create popup
-                content = KV.popup_alert("You have successfully edited this customer.")
-                popup.content = Builder.load_string(content)
-                popup.open()
-                marks.close_connection()
-
-        customers.close_connection()
+            customers.close_connection()
 
     def customer_select(self, customer_id, *args, **kwargs):
         print(customer_id)
