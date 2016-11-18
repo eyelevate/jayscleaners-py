@@ -5,30 +5,20 @@ from model import *
 
 unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-table = 'transactions'
+table = 'credits'
 
 
-class Transaction:
+class Credit:
     id = None
-    trans_id = None
-    transaction_id = None
-    company_id = None
+    credit_id = None
     customer_id = None
-    schedule_id = None
-    pretax = None
-    tax = None
-    aftertax = None
-    credit = None
-    discount = None
-    total = None
-    invoices = None
-    type = None
-    last_four = None
-    tendered = None
+    employee_id = None
+    reason = None
+    amount = None
     status = None
     deleted_at = None
-    created_at = None
-    updated_at = None
+    created_at = now
+    updated_at = now
 
     def __init__(self):
         """Create the database and the table if they do not exist"""
@@ -40,26 +30,12 @@ class Transaction:
         self.c = self.conn.cursor()
 
     def create_table(self):
-        unix = time.time()
-        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-        self.updated_at = now
-        self.created_at = now
         table_schema = ', '.join([PrimaryKeyField(column='id').data_type(),
-                                  IntegerField(column='trans_id').data_type(),
-                                  IntegerField(column='company_id').data_type(),
+                                  IntegerField(column='credit_id').data_type(),
                                   IntegerField(column='customer_id').data_type(),
-                                  IntegerField(column='schedule_id').data_type(),
-                                  FloatField(column='pretax').data_type(),
-                                  FloatField(column='tax').data_type(),
-                                  FloatField(column='aftertax').data_type(),
-                                  FloatField(column='credit').data_type(),
-                                  FloatField(column='discount').data_type(),
-                                  FloatField(column='total').data_type(),
-                                  TextField(column='invoices').data_type(),
-                                  IntegerField(column='type').data_type(),
-                                  IntegerField(column='last_four').data_type(),
-                                  FloatField(column='tendered').data_type(),
-                                  IntegerField(column='transaction_id').data_type(),
+                                  IntegerField(column='employee_id').data_type(),
+                                  FloatField(column='amount').data_type(),
+                                  TextField(column='reason').data_type(),
                                   IntegerField(column='status').data_type(),
                                   TextField(column='deleted_at').data_type(),
                                   TextField(column='created_at').data_type(),
@@ -74,27 +50,15 @@ class Transaction:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.created_at = now
-        self.c.execute('''INSERT INTO {t}(trans_id,company_id,customer_id,schedule_id,pretax,tax,aftertax,
-credit,discount,total,invoices,type,last_four,tendered,transaction_id,status,deleted_at,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id,
-                                                                   self.company_id,
-                                                                   self.customer_id,
-                                                                   self.schedule_id,
-                                                                   self.pretax,
-                                                                   self.tax,
-                                                                   self.aftertax,
-                                                                   self.credit,
-                                                                   self.discount,
-                                                                   self.total,
-                                                                   self.invoices,
-                                                                   self.type,
-                                                                   self.last_four,
-                                                                   self.tendered,
-                                                                   self.transaction_id,
-                                                                   self.status,
-                                                                   self.deleted_at,
-                                                                   self.created_at,
-                                                                   self.updated_at)
+        self.c.execute('''INSERT INTO {t}(credit_id,customer_id,employee_id,amount,reason,status,
+created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.credit_id,
+                                                                    self.customer_id,
+                                                                    self.employee_id,
+                                                                    self.amount,
+                                                                    self.reason,
+                                                                    self.status,
+                                                                    self.created_at,
+                                                                    self.updated_at)
                        )
 
         self.conn.commit()
@@ -128,26 +92,16 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
-        self.c.execute('''UPDATE {t} SET trans_id = ?, company_id = ?, customer_id = ?, schedule_id = ?,
-pretax = ?, tax = ?, aftertax = ?,credit = ?, discount = ?, total = ?, invoices = ?, type = ?, last_four = ?,
-tendered = ?, transaction_id = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.trans_id,
-                                                                                               self.company_id,
-                                                                                               self.customer_id,
-                                                                                               self.schedule_id,
-                                                                                               self.pretax,
-                                                                                               self.tax,
-                                                                                               self.aftertax,
-                                                                                               self.credit,
-                                                                                               self.discount,
-                                                                                               self.total,
-                                                                                               self.invoices,
-                                                                                               self.type,
-                                                                                               self.last_four,
-                                                                                               self.tendered,
-                                                                                               self.transaction_id,
-                                                                                               self.status,
-                                                                                               self.updated_at,
-                                                                                               self.id)
+        self.c.execute('''UPDATE {t} SET credit_id = ?, customer_id = ?, employee_id = ?, amount = ?, reason = ?,
+status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.credit_id,
+                                  self.customer_id,
+                                  self.employee_id,
+                                  self.amount,
+                                  self.reason,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
                        )
 
         self.conn.commit()
@@ -285,9 +239,6 @@ tendered = ?, transaction_id = ?, status = ?, updated_at = ? WHERE id = ?'''.for
             return True
         else:
             return False
-
-    def get_last_insert_id(self):
-        return self.c.lastrowid
 
     def close_connection(self):
         self.c.close()

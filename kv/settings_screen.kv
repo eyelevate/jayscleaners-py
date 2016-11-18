@@ -40,12 +40,13 @@
             text:'Colors'
             on_release: root.manager.current = 'colors'
         Button:
-            text:'Printers'
-            on_release: root.manager.current = 'printer'
-        Button:
             text:'Employees'
             on_release: root.manager.current = 'employees'
         Button:
             text:'Memo'
             on_release: root.manager.current = 'memos'
+        Button:
+            text:'Printers'
+            disabled: True
+            on_release: root.manager.current = 'printer'
 

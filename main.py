@@ -25,6 +25,7 @@ from addresses import Address
 from cards import Card
 from colors import Colored
 from companies import Company
+from credits import Credit
 from custids import Custid
 from deliveries import Delivery
 from discounts import Discount
@@ -51,6 +52,7 @@ import asyncio
 import calendar
 from calendar import Calendar
 from decimal import *
+getcontext().prec = 3
 from kv_generator import KvString
 from jobs import Job
 from static import Static
@@ -374,9 +376,9 @@ class MainScreen(Screen):
     def sync_db(self):
         sync = Sync()
 
-        # sync.migrate()
+        sync.migrate()
         # sync.run_sync()
-        sync.get_chunk(table='schedules', start=0, end=2000)
+        # sync.get_chunk(table='schedules', start=0, end=2000)
 
         # vars.WORKLIST.append("Sync")
         # threads_start()
@@ -5187,6 +5189,7 @@ class EditCustomerScreen(Screen):
             customer = customers.where(data)
             self.shirt_finish_spinner.bind(text=self.select_shirts_finish)
             self.shirt_preference_spinner.bind(text=self.select_shirts_preference)
+
             if customer:
                 for cust in customer:
                     self.last_name.text = cust['last_name'] if cust['last_name'] else ''
@@ -5378,7 +5381,6 @@ class EditCustomerScreen(Screen):
                 popup.content = Builder.load_string(KV.popup_alert('Successfully added a new mark!'))
                 popup.open()
 
-
     def set_delivery(self):
 
         self.street.hint_text = 'Street Address'
@@ -5568,7 +5570,7 @@ class EditCustomerScreen(Screen):
                 'last_name': Job.make_no_whitespace(data=self.last_name.text),
                 'first_name': Job.make_no_whitespace(data=self.first_name.text),
                 'email': self.email.text if Job.check_valid_email(email=self.email.text) else None,
-                'invoice_memo' : self.invoice_memo.text if self.invoice_memo.text else None,
+                'invoice_memo': self.invoice_memo.text if self.invoice_memo.text else None,
                 'important_memo': self.important_memo.text if self.important_memo.text else None,
                 'shirt': str(self.shirt_finish),
                 'starch': str(self.shirt_preference),
@@ -5595,7 +5597,7 @@ class EditCustomerScreen(Screen):
                                  'concierge_name': self.concierge_name.text,
                                  'special_instructions': self.special_instructions.text if self.special_instructions.text else None
                                  }
-                    Address().put(where=addr_where,data=addr_data)
+                    Address().put(where=addr_where, data=addr_data)
             if customers.put(where=where, data=data):
                 # create the customer mark
                 # marks = Custid()
@@ -8992,7 +8994,8 @@ class PickupScreen(Screen):
     total_quantity = 0
     total_tax = 0
     total_amount = 0
-    total_credit = 0
+    total_credit = ObjectProperty(None)
+    credits = 0
     total_discount = 0
     total_due = 0
     change_due = 0
@@ -9016,6 +9019,13 @@ class PickupScreen(Screen):
     card_box = None
 
     def reset(self):
+        # get credit total
+        self.credits = 0
+        customers = User().where({'user_id':vars.CUSTOMER_ID})
+        if customers:
+            for customer in customers:
+                self.credits = customer['credits'] if customer['credits'] else 0
+        self.total_credit.text = '[color=0AAC00]{}[/color]'.format('${:,.2f}'.format(self.credits))
         self.selected_invoices = []
         # setup invoice table
         self.invoice_table.clear_widgets()
@@ -9031,7 +9041,7 @@ class PickupScreen(Screen):
         self.total_quantity = 0
         self.total_tax = 0
         self.total_amount = 0
-        self.total_credit = 0
+
         self.total_discount = 0
         self.total_due = 0
         self.change_due = 0
@@ -9118,11 +9128,6 @@ class PickupScreen(Screen):
                 else:  # Not ready yet
                     state = 1
 
-                    if invoice_id in self.selected_invoices:
-                        self.total_quantity += quantity
-                        self.total_subtotal += invoice['pretax']
-                        self.total_tax += invoice['tax']
-                        self.total_amount += invoice['total']
                 selected = True if invoice_id in self.selected_invoices else False
 
                 tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id,
@@ -9147,56 +9152,56 @@ class PickupScreen(Screen):
                 self.invoice_table.add_widget(Builder.load_string(tr_4))
                 self.invoice_table.add_widget(Builder.load_string(tr_5))
 
+
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
-        # get invoice total
-        invoices = Invoice().where({'invoice_id': invoice_id})
-        if invoices:
-            for invoice in invoices:
-                total = invoice['total']
-                quantity = invoice['quantity']
-                subtotal = invoice['pretax']
-                tax = invoice['tax']
-        else:
-            total = 0
-            quantity = 0
-            subtotal = 0
-            tax = 0
+
         if invoice_id in self.selected_invoices:
-            idx = -1
-            for inv_id in self.selected_invoices:
-                idx += 1
-                if inv_id == invoice_id:
-                    del self.selected_invoices[idx]
-                    self.amount_tendered -= total
-                    self.total_amount -= total
-                    self.total_subtotal -= subtotal
-                    self.total_quantity -= quantity
-                    self.total_tax -= tax
+
+            self.selected_invoices.remove(invoice_id)
+
         else:
             self.selected_invoices.append(invoice_id)
-            self.amount_tendered += total
-            self.total_amount += total
-            self.total_subtotal += subtotal
-            self.total_quantity += quantity
-            self.total_tax += tax
+        total = 0
+        quantity = 0
+        subtotal = 0
+        tax = 0
+        if self.selected_invoices:
+            for invoice_id in self.selected_invoices:
+                # get invoice total
+                invoices = Invoice().where({'invoice_id': invoice_id})
+                if invoices:
+                    for invoice in invoices:
+                        total += invoice['total']
+                        quantity += invoice['quantity']
+                        subtotal += invoice['pretax']
+                        tax += invoice['tax']
+        self.amount_tendered = total
+        self.total_amount = total
+        self.total_subtotal = subtotal
+        self.total_quantity = quantity
+        self.total_tax = tax
+        if self.credits or self.total_discount:
 
-        self.total_due = 0 if self.total_credit >= self.total_amount else (
-            self.total_amount - self.total_credit - self.total_discount)
+            self.total_due = 0 if self.credits >= self.total_amount else float("%0.2f" % (
+                self.total_amount - self.credits - self.total_discount))
+        else:
+            self.total_due = float('%0.2f' % (self.total_amount))
+
 
         fix = 0 if self.total_amount <= 0 else self.total_amount
         fix_qty = 0 if self.total_quantity <= 0 else self.total_quantity
         fix_tax = 0 if self.total_tax <= 0 else self.total_tax
         fix_subtotal = 0 if self.total_subtotal <= 0 else self.total_subtotal
         fix_due = 0 if self.total_due <= 0 else self.total_due
-        self.total_amount = fix
-        self.amount_tendered = fix
+        self.total_amount = float('%0.2f' % (fix))
+        self.amount_tendered = float('%0.2f' % (fix))
         self.total_quantity = fix_qty
-        self.total_subtotal = fix_subtotal
-        self.total_tax = fix_tax
-        self.total_due = fix_due
+        self.total_subtotal = float('%0.2f' % (fix_subtotal))
+        self.total_tax = float('%0.2f' % (fix_tax))
+        self.total_due = float('%0.2f' % (fix_due))
 
         # update the subtotal label
         self.quantity_label.text = '[color=000000][b]{}[/b][/color]'.format(self.total_quantity)
@@ -9210,7 +9215,7 @@ class PickupScreen(Screen):
         self.calc_total.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_due))
 
         # calculate change due
-        self.change_due = self.amount_tendered - self.total_due
+        self.change_due = float("%0.2f" % (self.amount_tendered - self.total_due))
 
         # clear table and update selected rows
         self.invoice_table.clear_widgets()
@@ -9837,7 +9842,7 @@ class PickupScreen(Screen):
     def cash_tendered(self, amount):
         total = vars.us_dollar(int(''.join(amount)))
         self.amount_tendered = int(''.join(amount))
-        self.change_due = self.amount_tendered - self.total_due
+        self.change_due = float("%0.2f" % (self.amount_tendered - self.total_due))
         self.calc_total.text = '[color=000000][b]{}[/b][/color]'.format(total)
 
     def pay_popup_create(self):
@@ -9976,7 +9981,7 @@ class PickupScreen(Screen):
         transaction.tax = self.total_tax
         transaction.aftertax = self.total_amount
         transaction.discount = self.total_discount
-        transaction.total = self.total_amount
+
         last_four = None
         if self.payment_type == 'cc' and self.card_location == 1:
             type = 1
@@ -9989,12 +9994,30 @@ class PickupScreen(Screen):
             last_four = self.check_number.text
         else:
             type = 5
-
         transaction.type = type
         transaction.last_four = last_four
         transaction.tendered = self.amount_tendered
+        if self.credits:
+            credits_spent = self.total_amount if (self.credits - self.total_amount) >= 0 else self.credits
+            transaction.credit = credits_spent
+        else:
+            credits_spent = 0
+            transaction.credit = 0
+        transaction.total = self.total_due
         transaction.status = 1
         if transaction.add():
+            # update any discounts or credits
+            if self.credits:
+                old_credits = 0
+                customers = User()
+                custs = customers.where({'user_id':vars.CUSTOMER_ID})
+                if custs:
+                    for customer in custs:
+                        old_credits = customer['credits']
+                new_credits =float("%0.2f" % (old_credits - credits_spent))
+                customers.put(where={'user_id':vars.CUSTOMER_ID},data={'credits':new_credits})
+
+
             # update to server
             run_sync = threading.Thread(target=SYNC.run_sync)
             try:
@@ -10772,6 +10795,7 @@ class SearchScreen(Screen):
     cust_phone = ObjectProperty(None)
     cust_last_drop = ObjectProperty(None)
     cust_starch = ObjectProperty(None)
+    cust_credit_label = ObjectProperty(None)
     cust_credit = ObjectProperty(None)
     cust_invoice_memo = ObjectProperty(None)
     cust_important_memo = ObjectProperty(None)
@@ -10840,6 +10864,8 @@ class SearchScreen(Screen):
     concierge_name_input = None
     concierge_number_input = None
     root_payment_id = None
+    credit_reason = None
+    credit_amount = None
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
@@ -10879,7 +10905,8 @@ class SearchScreen(Screen):
         self.concierge_number_input = None
         self.view_deliveries_btn.text = 'View Delivery Schedule'
         self.root_payment_id = None
-
+        self.credit_reason = None
+        self.credit_amount = None
         if vars.SEARCH_RESULTS_STATUS:
             self.edit_invoice_btn.disabled = False if vars.INVOICE_ID is not None else True
             data = {'user_id': vars.CUSTOMER_ID}
@@ -11235,7 +11262,8 @@ class SearchScreen(Screen):
                 self.cust_phone.text = Job.make_us_phone(result['phone']) if result['phone'] else ''
                 self.cust_last_drop.text = last_drop
                 self.cust_starch.text = self.get_starch_by_id(result['starch'])
-                self.cust_credit.text = '0.00'
+                self.cust_credit_label.bind(on_ref_press=self.credit_history)
+                self.cust_credit.text = '${:,.2f}'.format(result['credits']) if result['credits'] else '$0.00'
                 try:
                     self.cust_invoice_memo.text = result['invoice_memo']
                 except AttributeError:
@@ -14466,6 +14494,143 @@ class SearchScreen(Screen):
         popup.content = layout
         popup.open()
 
+    def add_store_credit_popup(self):
+        self.main_popup.title = 'Add Store Credit'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = Factory.ScrollGrid()
+        inner_layout_1.ids.main_table.cols = 1
+        credit_amount_label = Factory.BottomLeftFormLabel(text="Credit Amount")
+        self.credit_amount = Factory.CenterVerticalTextInput()
+        inner_layout_1.ids.main_table.add_widget(credit_amount_label)
+        inner_layout_1.ids.main_table.add_widget(self.credit_amount)
+        credit_reason_label = Factory.BottomLeftFormLabel(text="Credit Reason")
+        credit_reason = Spinner(text='Select Reason',
+                                        values=[
+                                            'Customer Dissatisfaction',
+                                            'Gift Certificate',
+                                            'Human Error',
+                                            'Other'])
+        credit_reason.bind(text=self.select_credit_reason)
+        inner_layout_1.ids.main_table.add_widget(credit_reason_label)
+        inner_layout_1.ids.main_table.add_widget(credit_reason)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1,0.1))
+        cancel_button = Button(text='cancel',
+                               on_release=self.main_popup.dismiss)
+        save_button = Button(text='Add Credit',
+                             on_release=self.add_credit)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(save_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.main_popup.content = layout
+        self.main_popup.open()
+
+    def select_credit_reason(self, instance, value, *args, **kwargs):
+        self.credit_reason = value
+
+    def add_credit(self, *args, **kwargs):
+        print(vars.CUSTOMER_ID)
+        credits = Credit()
+        credits.employee_id = str(auth_user.user_id)
+        credits.customer_id = str(vars.CUSTOMER_ID)
+        credits.amount = str(self.credit_amount.text)
+        credits.reason = self.credit_reason
+        credits.status = str(1)
+
+        if credits.add():
+            customers = User()
+            # update user with new balance
+            custs = customers.where({'user_id':vars.CUSTOMER_ID})
+            old_credit = 0
+            if custs:
+                for customer in custs:
+                    old_credit = customer['credits'] if customer['credits'] else 0
+            added_credits = float(self.credit_amount.text) if self.credit_amount.text else 0
+            new_credits = old_credit + added_credits
+            if customers.put(where={'user_id':vars.CUSTOMER_ID},data={'credits':new_credits}):
+                run_sync = threading.Thread(target=SYNC.run_sync)
+                try:
+                    run_sync.start()
+                finally:
+                    run_sync.join()
+                    vars.SEARCH_RESULTS_STATUS = True
+                    vars.ROW_CAP = 0
+                    vars.INVOICE_ID = None
+                    vars.ROW_SEARCH = 0, 9
+                    self.reset()
+                    # last 10 setup
+                    vars.update_last_10()
+                    self.main_popup.dismiss()
+                    popup = Popup()
+                    popup.title = 'Store Credit'
+                    content = KV.popup_alert('Successfully added store credit.')
+                    popup.content = Builder.load_string(content)
+                    popup.open()
+                    # Beep Sound
+                    sys.stdout.write('\a')
+                    sys.stdout.flush()
+            else:
+
+                popup = Popup()
+                popup.title = 'Store Credit'
+                content = KV.popup_alert('Could not update store credit. Please try again.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+        pass
+
+    def credit_history(self, *args, **kwargs):
+        self.main_popup.title = 'Credit History'
+        layout = BoxLayout(orientation="vertical")
+        inner_layout_1 = Factory.ScrollGrid(size_hint=(1,0.9))
+        inner_layout_1.ids.main_table.cols = 6
+        credits = Credit().where({'customer_id':vars.CUSTOMER_ID})
+        th1 = KV.invoice_tr(0, '#')
+        th2 = KV.invoice_tr(0, 'Employee')
+        th3 = KV.invoice_tr(0, 'Customer')
+        th4 = KV.invoice_tr(0, 'Amount')
+        th5 = KV.invoice_tr(0, 'Reason')
+        th6 = KV.invoice_tr(0, 'Created')
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th1))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th2))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th3))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th4))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
+        if credits:
+            for credit in credits:
+                credit_id = credit['credit_id']
+                employee_id = credit['employee_id']
+                customer_id = credit['customer_id']
+                amount = '${:,.2f}'.format(credit['amount'])
+                reason = credit['reason']
+                created = datetime.datetime.strptime(credit['created_at'], "%Y-%m-%d %H:%M:%S")
+                created_formatted = created.strftime('%a %m/%d %I:%M%p')
+                td1 = Button(text=str(credit_id))
+                td2 = Button(text=str(employee_id))
+                td3 = Button(text=str(customer_id))
+                td4 = Button(text=str(amount))
+                td5 = Factory.TopLeftFormButton(text=str(reason))
+                td6 = Factory.TopLeftFormButton(text=str(created_formatted))
+                inner_layout_1.ids.main_table.add_widget(td1)
+                inner_layout_1.ids.main_table.add_widget(td2)
+                inner_layout_1.ids.main_table.add_widget(td3)
+                inner_layout_1.ids.main_table.add_widget(td4)
+                inner_layout_1.ids.main_table.add_widget(td5)
+                inner_layout_1.ids.main_table.add_widget(td6)
+
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1,0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=self.main_popup.dismiss)
+        inner_layout_2.add_widget(cancel_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.main_popup.content = layout
+        self.main_popup.open()
 
 class SearchResultsScreen(Screen):
     """Takes in a customer searched dictionary and gives a table to select which customer we want to find

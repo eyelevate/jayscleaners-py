@@ -7,6 +7,7 @@ from addresses import Address
 from cards import Card
 from colors import Colored
 from companies import Company
+from credits import Credit
 from custids import Custid
 from deliveries import Delivery
 from discounts import Discount
@@ -92,6 +93,12 @@ class Sync:
         if companies_1:
             to_upload['companies'] = companies_1
             to_upload_rows += len(to_upload['companies'])
+
+        credits_1 = Credit().where({'credit_id': None})
+        print(credits_1)
+        if credits_1:
+            to_upload['credits'] = credits_1
+            to_upload_rows += len(to_upload['credits'])
 
         custids_1 = Custid().where({'cust_id': None})
         if custids_1:
@@ -199,13 +206,13 @@ class Sync:
         to_update_rows = 0
 
         addresses_2 = Address().where({'address_id': {'!=': '""'},
-                                             'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+                                       'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if addresses_2:
             to_update['addresses'] = addresses_2
             to_update_rows += len(to_update['addresses'])
 
         cards_2 = Card().where({'card_id': {'!=': '""'},
-                                         'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+                                'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if cards_2:
             to_update['cards'] = cards_2
             to_update_rows += len(to_update['cards'])
@@ -221,6 +228,12 @@ class Sync:
         if companies_2:
             to_update['companies'] = companies_2
             to_update_rows += len(to_update['companies'])
+
+        credits_2 = Credit().where({'credit_id': {'!=': '""'},
+                                    'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        if credits_2:
+            to_update['credits'] = credits_2
+            to_update_rows += len(to_update['credits'])
 
         custids_2 = Custid().where({'cust_id': {'!=': '""'},
                                     'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
@@ -337,7 +350,7 @@ class Sync:
             to_update_rows += len(to_update['users'])
 
         zipcodes_2 = Zipcode().where({'zipcode_id': {'!=': '""'},
-                                            'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+                                      'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
         if zipcodes_2:
             to_update['zipcodes'] = zipcodes_2
             to_update_rows += len(to_update['zipcodes'])
@@ -353,15 +366,15 @@ class Sync:
         url = 'http://74.207.240.88/admins/api/update'
 
         # attempt to connect to server
-        data = parse.urlencode({'cid':company.id,
-                                'api':company.api_token,
-                                'servat':company.server_at,
-                                'upload':json.dumps(to_upload),
-                                'update':json.dumps(to_update)}).encode('utf-8')
+        data = parse.urlencode({'cid': company.id,
+                                'api': company.api_token,
+                                'servat': company.server_at,
+                                'upload': json.dumps(to_upload),
+                                'update': json.dumps(to_update)}).encode('utf-8')
 
         print(data)
 
-        req = request.Request(url=url, data = data)  # this will make the method "POST"
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
         # r = request.urlopen(req)
         # data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
         # print(data_1)
@@ -560,6 +573,7 @@ class Sync:
         card = Card()
         color = Colored()
         company = Company()
+        credit = Credit()
         custid = Custid()
         delivery = Delivery()
         discount = Discount()
@@ -580,6 +594,7 @@ class Sync:
         address.create_table()
         card.create_table()
         color.create_table()
+        credit.create_table()
         company.create_table()
         custid.create_table()
         delivery.create_table()
@@ -602,6 +617,7 @@ class Sync:
         card.close_connection()
         color.close_connection()
         company.close_connection()
+        credit.close_connection()
         custid.close_connection()
         delivery.close_connection()
         discount.close_connection()
@@ -619,7 +635,6 @@ class Sync:
         transaction.close_connection()
         user.close_connection()
         zipcode.close_connection()
-
 
     def server_login(self, username, password):
         users = User()

@@ -5,6 +5,7 @@ from addresses import Address
 from cards import Card
 from colors import Colored
 from companies import Company
+from credits import Credit
 from custids import Custid
 from deliveries import Delivery
 from discounts import Discount
@@ -156,7 +157,32 @@ def sync_from_server(data):
                 else:
                     company.add()
             company.close_connection()
+            
+        if 'credits' in updates:
+            for credits in updates['credits']:
+                credit = Credit()
+                credit.credit_id = credits['id']
+                credit.employee_id = credits['employee_id']
+                credit.customer_id = credits['customer_id']
+                credit.amount = credits['amount']
+                credit.reason = credits['reason']
+                credit.status = credits['status']
+                credit.deleted_at = credits['deleted_at']
+                credit.created_at = credits['created_at']
+                credit.updated_at = credits['updated_at']
+                # check to see already exists and update
 
+                count_credit = credit.where({'credit_id': credit.credit_id})
+                if len(count_credit) > 0 or credit.deleted_at:
+                    for data in count_credit:
+                        credit.id = data['id']
+                        if credit.deleted_at:
+                            credit.delete()
+                        else:
+                            credit.update()
+                else:
+                    credit.add()
+            credit.close_connection()
         if 'custids' in updates:
             for custids in updates['custids']:
                 custid = Custid()
@@ -552,6 +578,7 @@ def sync_from_server(data):
                 transaction.pretax = transactions['pretax']
                 transaction.tax = transactions['tax']
                 transaction.aftertax = transactions['aftertax']
+                transaction.credit = transactions['credit']
                 transaction.discount = transactions['discount']
                 transaction.total = transactions['total']
                 transaction.invoices = transactions['invoices'] if transactions['invoices'] else None
@@ -605,6 +632,7 @@ def sync_from_server(data):
                 user.reward_status = users['reward_status']
                 user.reward_points = users['reward_points']
                 user.account = users['account']
+                user.credits = users['credits']
                 user.starch = users['starch']
                 user.important_memo = users['important_memo']
                 user.invoice_memo = users['invoice_memo']
@@ -676,7 +704,12 @@ def update_database(data):
                     where = {'id': cards['id']}
                     data = {'card_id': cards['card_id']}
                     card.put(where=where, data=data)
-
+            if 'credits' in saved:
+                for credit in saved['credits']:
+                    credits = Credit()
+                    where = {'id': credit['id']}
+                    data = {'credit_id': credit['credit_id']}
+                    credits.put(where=where, data=data)
             if 'companies' in saved:
                 for companies in saved['companies']:
                     company = Company()

@@ -8,6 +8,7 @@
     cust_phone: customer_phone_ti
     cust_last_drop: customer_last_drop_ti
     cust_starch: customer_starch_ti
+    cust_credit_label: cust_credit_label
     cust_credit: customer_credit_ti
     cust_invoice_memo: customer_invoice_memo_ti
     cust_important_memo: customer_important_memo_ti
@@ -16,7 +17,6 @@
     history_btn: history_btn
     edit_invoice_btn: edit_invoice_btn
     edit_customer_btn: edit_customer_btn
-
     delivery_btn: delivery_btn
     reprint_btn: reprint_btn
     quick_btn: quick_btn
@@ -165,16 +165,23 @@
                         padding: [5,5,5,5]
                         text: ''
                     BottomLeftFormLabel:
-                        text: "Credit"
+                        id: cust_credit_label
+                        text: "[ref=credit_history][color=00ffff]Credit[/color][/ref]"
+                        markup:True
 
                     CenterVerticalTextInput:
                         id: customer_credit_ti
-                        font_size:'20sp'
+                        font_size:sp(20)
                         hint_text: "Credit"
                         multiline: False
                         readonly: True
                         padding: [5,5,5,5]
                         text: ''
+                    Button:
+                        text:'Add Store Credit'
+                        font_size:sp(20)
+                        on_release: root.add_store_credit_popup()
+
                     BottomLeftFormLabel:
                         text: "Invoice Memo"
 
@@ -207,6 +214,7 @@
                     Button:
                         id: view_deliveries_btn
                         text:'View Delivery Schedule'
+                        font_size:sp(20)
                         on_release: root.view_deliveries()
                     Label:
                         text: ""

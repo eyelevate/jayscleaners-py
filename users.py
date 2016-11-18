@@ -37,6 +37,7 @@ class User:
     reward_status = None
     reward_points = None
     account = None
+    credits = None
     starch = None
     important_memo = None
     invoice_memo = None
@@ -89,6 +90,7 @@ class User:
                                   IntegerField(column='reward_status').data_type(),
                                   IntegerField(column='reward_points').data_type(),
                                   IntegerField(column='account').data_type(),
+                                  FloatField(column='credits').data_type(),
                                   IntegerField(column='starch').data_type(),
                                   TextField(column='important_memo').data_type(),
                                   TextField(column='invoice_memo').data_type(),
@@ -110,9 +112,9 @@ class User:
         self.created_at = now
         self.c.execute('''INSERT INTO {t}(user_id,company_id,username,first_name,last_name,street,suite,city,state,
 zipcode,email,phone,intercom,concierge_name,concierge_number,special_instructions,shirt_old,shirt,delivery,profile_id,
-payment_id,payment_status,token,api_token,reward_status,reward_points,account,starch,important_memo,invoice_memo,
-password,role_id,remember_token,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table),
+payment_id,payment_status,token,api_token,reward_status,reward_points,account,credits,starch,important_memo,
+invoice_memo,password,role_id,remember_token,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table),
                        (self.user_id,
                         self.company_id,
                         self.username,
@@ -140,6 +142,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
                         self.reward_status,
                         self.reward_points,
                         self.account,
+                        self.credits,
                         self.starch,
                         self.important_memo,
                         self.invoice_memo,
@@ -184,8 +187,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
         self.c.execute('''UPDATE {t} SET user_id = ?, company_id = ?, username = ?, first_name = ?, last_name = ?,
 street = ?, suite = ?, city = ?, state = ?, zipcode = ?, email = ?, phone = ?, intercom = ?, concierge_name = ?,
 concierge_number = ?, special_instructions = ?, shirt_old = ?, shirt = ?, delivery = ?, profile_id = ?, payment_id = ?,
-payment_status = ?, token = ?, api_token = ?, reward_status = ?, reward_points = ?, account = ?, starch = ?,
-important_memo = ?, invoice_memo = ?, password = ?, role_id = ?, remember_token = ?, updated_at = ?
+payment_status = ?, token = ?, api_token = ?, reward_status = ?, reward_points = ?, account = ?, credits = ?,
+starch = ?, important_memo = ?, invoice_memo = ?, password = ?, role_id = ?, remember_token = ?, updated_at = ?
 WHERE id = ?'''.format(t=table), (self.user_id,
                                   self.company_id,
                                   self.username,
@@ -213,6 +216,7 @@ WHERE id = ?'''.format(t=table), (self.user_id,
                                   self.reward_status,
                                   self.reward_points,
                                   self.account,
+                                  self.credits,
                                   self.starch,
                                   self.important_memo,
                                   self.invoice_memo,
@@ -331,6 +335,7 @@ WHERE id = ?'''.format(t=table), (self.user_id,
                         self.reward_status = user['reward_status']
                         self.reward_points = user['reward_points']
                         self.account = user['account']
+                        self.credits = user['credits']
                         self.starch = user['starch']
                         self.important_memo = user['important_memo']
                         self.invoice_memo = user['invoice_memo']
