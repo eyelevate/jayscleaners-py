@@ -247,9 +247,9 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
         if len(data) > 0:
             for mrk in data:
                 if mrk['mark']:
-                    marks.append(mrk['mark'])
+                    marks.append(str(mrk['mark']))
                 else:
-                    marks.append(mrk['cust_id'])
+                    marks.append(str(mrk['cust_id']))
 
             return ', '.join(marks)
         else:
