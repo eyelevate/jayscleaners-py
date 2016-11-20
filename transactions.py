@@ -22,6 +22,8 @@ class Transaction:
     discount = None
     total = None
     invoices = None
+    account_paid = None
+    account_paid_on = None
     type = None
     last_four = None
     tendered = None
@@ -56,6 +58,8 @@ class Transaction:
                                   FloatField(column='discount').data_type(),
                                   FloatField(column='total').data_type(),
                                   TextField(column='invoices').data_type(),
+                                  FloatField(column='account_paid').data_type(),
+                                  TextField(column='account_paid_on').data_type(),
                                   IntegerField(column='type').data_type(),
                                   IntegerField(column='last_four').data_type(),
                                   FloatField(column='tendered').data_type(),
@@ -75,26 +79,29 @@ class Transaction:
         self.updated_at = now
         self.created_at = now
         self.c.execute('''INSERT INTO {t}(trans_id,company_id,customer_id,schedule_id,pretax,tax,aftertax,
-credit,discount,total,invoices,type,last_four,tendered,transaction_id,status,deleted_at,created_at,updated_at)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id,
-                                                                   self.company_id,
-                                                                   self.customer_id,
-                                                                   self.schedule_id,
-                                                                   self.pretax,
-                                                                   self.tax,
-                                                                   self.aftertax,
-                                                                   self.credit,
-                                                                   self.discount,
-                                                                   self.total,
-                                                                   self.invoices,
-                                                                   self.type,
-                                                                   self.last_four,
-                                                                   self.tendered,
-                                                                   self.transaction_id,
-                                                                   self.status,
-                                                                   self.deleted_at,
-                                                                   self.created_at,
-                                                                   self.updated_at)
+credit,discount,total,invoices,account_paid,account_paid_on,type,last_four,tendered,transaction_id,status,deleted_at,
+created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id,
+                                                                       self.company_id,
+                                                                       self.customer_id,
+                                                                       self.schedule_id,
+                                                                       self.pretax,
+                                                                       self.tax,
+                                                                       self.aftertax,
+                                                                       self.credit,
+                                                                       self.discount,
+                                                                       self.total,
+                                                                       self.invoices,
+                                                                       self.account_paid,
+                                                                       self.account_paid_on,
+                                                                       self.type,
+                                                                       self.last_four,
+                                                                       self.tendered,
+                                                                       self.transaction_id,
+                                                                       self.status,
+                                                                       self.deleted_at,
+                                                                       self.created_at,
+                                                                       self.updated_at)
                        )
 
         self.conn.commit()
@@ -129,25 +136,28 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.c.execute('''UPDATE {t} SET trans_id = ?, company_id = ?, customer_id = ?, schedule_id = ?,
-pretax = ?, tax = ?, aftertax = ?,credit = ?, discount = ?, total = ?, invoices = ?, type = ?, last_four = ?,
-tendered = ?, transaction_id = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.trans_id,
-                                                                                               self.company_id,
-                                                                                               self.customer_id,
-                                                                                               self.schedule_id,
-                                                                                               self.pretax,
-                                                                                               self.tax,
-                                                                                               self.aftertax,
-                                                                                               self.credit,
-                                                                                               self.discount,
-                                                                                               self.total,
-                                                                                               self.invoices,
-                                                                                               self.type,
-                                                                                               self.last_four,
-                                                                                               self.tendered,
-                                                                                               self.transaction_id,
-                                                                                               self.status,
-                                                                                               self.updated_at,
-                                                                                               self.id)
+pretax = ?, tax = ?, aftertax = ?,credit = ?, discount = ?, total = ?, invoices = ?, account_paid = ?,
+account_paid_on = ?, type = ?, last_four = ?, tendered = ?, transaction_id = ?, status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.trans_id,
+                                  self.company_id,
+                                  self.customer_id,
+                                  self.schedule_id,
+                                  self.pretax,
+                                  self.tax,
+                                  self.aftertax,
+                                  self.credit,
+                                  self.discount,
+                                  self.total,
+                                  self.invoices,
+                                  self.account_paid,
+                                  self.account_paid_on,
+                                  self.type,
+                                  self.last_four,
+                                  self.tendered,
+                                  self.transaction_id,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
                        )
 
         self.conn.commit()

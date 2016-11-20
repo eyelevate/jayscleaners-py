@@ -582,6 +582,8 @@ def sync_from_server(data):
                 transaction.discount = transactions['discount']
                 transaction.total = transactions['total']
                 transaction.invoices = transactions['invoices'] if transactions['invoices'] else None
+                transaction.account_paid = transactions['account_paid']
+                transaction.account_paid_on = transactions['account_paid_on']
                 transaction.type = transactions['type']
                 transaction.last_four = transactions['last_four']
                 transaction.tendered = transactions['tendered']
@@ -632,6 +634,7 @@ def sync_from_server(data):
                 user.reward_status = users['reward_status']
                 user.reward_points = users['reward_points']
                 user.account = users['account']
+                user.account_total = users['account_total']
                 user.credits = users['credits']
                 user.starch = users['starch']
                 user.important_memo = users['important_memo']
