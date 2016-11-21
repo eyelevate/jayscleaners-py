@@ -3250,10 +3250,10 @@ class EditInvoiceScreen(Screen):
         store_hours = Company().get_store_hours(auth_user.company_id)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
-        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
         new_date = today + datetime.timedelta(days=turn_around_day)
         date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
                                            turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
@@ -11125,6 +11125,8 @@ class SearchScreen(Screen):
             dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+        except TypeError:
+            dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
         due_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
         dow = vars.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
         due_date = dt.strftime('%m/%d {}').format(dow)
@@ -11348,10 +11350,11 @@ class SearchScreen(Screen):
         store_hours = Company().get_store_hours(auth_user.company_id)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
-        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+
+        turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
         new_date = today + datetime.timedelta(days=turn_around_day)
         date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
                                            turn_around_hour if turn_around_ampm == 'am' else int(
@@ -11391,10 +11394,10 @@ class SearchScreen(Screen):
         store_hours = Company().get_store_hours(auth_user.company_id)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
-        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
         new_date = today + datetime.timedelta(days=turn_around_day)
         date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
                                            turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
@@ -11573,9 +11576,9 @@ class SearchScreen(Screen):
         store_hours = Company().get_store_hours(auth_user.company_id)
 
         dow = int(selected_date.strftime("%w"))
-        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
         date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
                                            turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
                                            turn_around_minutes)
@@ -11622,6 +11625,7 @@ class SearchScreen(Screen):
         invoices.total = 0
         invoices.customer_id = vars.CUSTOMER_ID
         invoices.status = 1
+        invoices.due_date = self.due_date.strftime('%Y-%m-%d %H:%M:%S')
         invoices.memo = self.quick_box.ids.quick_invoice_memo.text
         if invoices.add():
             # save the invoices to the db and return the proper invoice_ids
@@ -13989,14 +13993,23 @@ class SearchScreen(Screen):
                 if deliveries:
                     for delivery in deliveries:
                         dow[delivery['day']] = delivery_id
-                        blackouts = json.loads(delivery['blackout'])
-                        if blackouts:
-                            for blackout in blackouts:
-                                blackout_dates.append(blackout)
-        pickup_date = datetime.datetime.strptime(str(self.pickup_date), "%Y-%m-%d %H:%M:%S")
-        today_date = pickup_date if self.pickup_date else datetime.datetime.today()
-        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
-        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+                        try:
+                            blackouts = json.loads(delivery['blackout']) if delivery['blackout'] else False
+                            if blackouts:
+                                for blackout in blackouts:
+                                    if blackout:
+                                        blackout_dates.append(blackout)
+                        except ValueError as e:
+                            print('no blackout dates')
+        if self.pickup_date:
+            pickup_date = datetime.datetime.strptime(str(self.pickup_date), "%Y-%m-%d %H:%M:%S")
+            today_date = pickup_date if self.pickup_date else datetime.datetime.today()
+            today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+            check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+        else:
+            today_date = datetime.datetime.today()
+            today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+            check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
 
         self.calendar_layout.clear_widgets()
         calendars = Calendar()
