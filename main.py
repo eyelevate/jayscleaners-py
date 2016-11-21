@@ -14092,10 +14092,14 @@ class SearchScreen(Screen):
                 if deliveries:
                     for delivery in deliveries:
                         dow[delivery['day']] = delivery_id
-                        blackouts = json.loads(delivery['blackout'])
-                        if blackouts:
-                            for blackout in blackouts:
-                                blackout_dates.append(blackout)
+                        try:
+                            blackouts = json.loads(delivery['blackout']) if delivery['blackout'] else False
+                            if blackouts:
+                                for blackout in blackouts:
+                                    if blackout:
+                                        blackout_dates.append(blackout)
+                        except ValueError as e:
+                            print('no blackout dates')
 
         today_date = datetime.datetime.today()
         today_string = today_date.strftime('%Y-%m-%d 00:00:00')
