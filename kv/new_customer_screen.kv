@@ -11,6 +11,7 @@
 #    default_shirts_finish: default_shirts_finish
 #    default_shirts_preference: default_shirts_preference
     is_delivery: is_delivery
+    is_account: is_account
     street: street
     suite: suite
     city: city
@@ -75,47 +76,7 @@
                                 id: is_delivery
                                 active: False
                                 on_active: root.set_delivery()
-                            BottomLeftFormLabel:
-                                text: "Street"
-                            CenterVerticalTextInput:
-                                id: street
-                                hint_text: "Street"
-                                font_size:'20sp'
-                                multiline: False
-                                padding: [5,5,5,5]
-                                disabled: True
-                                text: ''
 
-                            BottomLeftFormLabel:
-                                text: "Suite"
-                            CenterVerticalTextInput:
-                                id: suite
-                                hint_text: "Suite"
-                                font_size:'20sp'
-                                multiline: False
-                                padding: [5,5,5,5]
-                                disabled: True
-                                text: ''
-                            BottomLeftFormLabel:
-                                text: "City"
-                            CenterVerticalTextInput:
-                                id: city
-                                hint_text: "City"
-                                font_size:'20sp'
-                                multiline: False
-                                padding: [5,5,5,5]
-                                disabled: True
-                                text: ''
-                            BottomLeftFormLabel:
-                                text: "Zipcode"
-                            CenterVerticalTextInput:
-                                id: zipcode
-                                hint_text: "Zipcode"
-                                font_size:'20sp'
-                                multiline: False
-                                padding: [5,5,5,5]
-                                disabled: True
-                                text: ''
                             BottomLeftFormLabel:
                                 text: "Concierge"
                             CenterVerticalTextInput:
@@ -168,6 +129,75 @@
             id: tab_account_customer
             text: 'Account'
             BoxLayout:
-                orientation: 'horizontal'
-                GridLayout:
-                    cols:2
+                orientation: 'vertical'
+                RelativeLayout:
+                    size_hint: 1,0.9
+                    ScrollView:
+                        size_hint:(1,1)
+                        GridLayout:
+                            size_hint_y:None
+                            height: self.minimum_height
+                            cols: 1
+                            row_force_default: True
+                            row_default_height:sp(50)
+                            BottomLeftFormLabel:
+                                text: "Account?"
+                            Switch:
+                                id: is_account
+                                active: False
+                                on_active: root.set_account()
+                            BottomLeftFormLabel:
+                                text: "Street"
+                            CenterVerticalTextInput:
+                                id: street
+                                hint_text: "Street"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+
+                            BottomLeftFormLabel:
+                                text: "Suite"
+                            CenterVerticalTextInput:
+                                id: suite
+                                hint_text: "Suite"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "City"
+                            CenterVerticalTextInput:
+                                id: city
+                                hint_text: "City"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Zipcode"
+                            CenterVerticalTextInput:
+                                id: zipcode
+                                hint_text: "Zipcode"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                BoxLayout:
+                    size_hint: 1,0.1
+                    Button:
+                        id: cancel
+                        on_release: app.root.current = "search"
+                        font_size:'20sp'
+                        text: "Cancel"
+                        disabled: False
+                    Button:
+                        id: save
+                        on_release: root.validate()
+                        text: "Save"
+                        font_size:'20sp'
+                        disabled: False

@@ -13,6 +13,8 @@
     instore_button: instore_button
     online_button: online_button
     check_number: check_number
+    payment_panel: payment_panel
+    payment_account_header: payment_account_header
     on_enter: root.reset()
 
     BoxLayout:
@@ -264,6 +266,7 @@
                 size_hint: 0.5,1
                 orientation: 'vertical'
                 TabbedPanel:
+                    id: payment_panel
                     size_hint: 1,0.3
                     do_default_tab: False
                     TabbedPanelItem:
@@ -328,10 +331,11 @@
                                 hint_text: 'eg 4123'
 
                     TabbedPanelItem:
+                        id: payment_account_header
                         on_release: root.select_payment_type('ac')
                         text: 'Account'
                         Label:
-                            text: 'TODO: Account'
+                            text: 'This is an account customer.'
                 BoxLayout:
                     size_hint: 1,0.7
                     orientation: 'vertical'

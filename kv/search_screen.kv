@@ -3,6 +3,7 @@
     search: search
     customer_mark_l: customer_mark_l
     customer_id_ti: customer_id_ti
+    cust_info_label: cust_info_label
     cust_last_name: customer_last_name_ti
     cust_first_name: customer_first_name_ti
     cust_phone: customer_phone_ti
@@ -10,6 +11,8 @@
     cust_starch: customer_starch_ti
     cust_credit_label: cust_credit_label
     cust_credit: customer_credit_ti
+    cust_account_label: cust_account_label
+    cust_account: customer_account_ti
     cust_invoice_memo: customer_invoice_memo_ti
     cust_important_memo: customer_important_memo_ti
     invoice_table: invoice_table
@@ -91,7 +94,9 @@
                     row_default_height:sp(32)
                     cols: 1
                     BottomLeftFormLabel:
+                        id: cust_info_label
                         text: "Customer Info"
+                        markup:True
                         font_size: '20sp'
 
                     Label:
@@ -165,10 +170,25 @@
                         padding: [5,5,5,5]
                         text: ''
                     BottomLeftFormLabel:
+                        id: cust_account_label
+                        text: "Account"
+                        markup:True
+                    CenterVerticalTextInput:
+                        id: customer_account_ti
+                        font_size:sp(20)
+                        hint_text: "$0.00"
+                        multiline: False
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    Button:
+                        text:'Pay Account Balance'
+                        font_size:sp(20)
+                        on_release: root.pay_account_popup()
+                    BottomLeftFormLabel:
                         id: cust_credit_label
                         text: "[ref=credit_history][color=00ffff]Credit[/color][/ref]"
                         markup:True
-
                     CenterVerticalTextInput:
                         id: customer_credit_ti
                         font_size:sp(20)

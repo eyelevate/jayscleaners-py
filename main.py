@@ -52,6 +52,7 @@ import asyncio
 import calendar
 from calendar import Calendar
 from decimal import *
+
 getcontext().prec = 3
 from kv_generator import KvString
 from jobs import Job
@@ -376,9 +377,9 @@ class MainScreen(Screen):
     def sync_db(self):
         sync = Sync()
 
-        sync.migrate()
+        # sync.migrate()
         # sync.run_sync()
-        # sync.get_chunk(table='schedules', start=0, end=2000)
+        # sync.get_chunk(table='custids', start=5001, end=10000)
 
         # vars.WORKLIST.append("Sync")
         # threads_start()
@@ -5115,6 +5116,7 @@ class EditCustomerScreen(Screen):
     shirt_finish_spinner = ObjectProperty(None)
     shirt_preference_spinner = ObjectProperty(None)
     is_delivery = ObjectProperty(None)
+    is_account = ObjectProperty(None)
     mark_text = ObjectProperty(None)
     marks_table = ObjectProperty(None)
     street = ObjectProperty(None)
@@ -5176,6 +5178,7 @@ class EditCustomerScreen(Screen):
         self.special_instructions.disabled = True
         self.mark_text.text = ''
         self.is_delivery.active = False
+        self.is_account.active = False
 
         self.marks_table.clear_widgets()
 
@@ -5230,22 +5233,7 @@ class EditCustomerScreen(Screen):
                         for address in addresses:
                             self.address_id = address['id']
                             self.is_delivery.active = True
-                            self.street.text = address['street'] if address['street'] else ''
-                            self.street.hint_text = 'Street Address'
-                            self.street.hint_text_color = DEFAULT_COLOR
-                            self.street.disabled = False
-                            self.suite.text = address['suite'] if address['suite'] else ''
-                            self.suite.hint_text = 'Suite'
-                            self.suite.hint_text_color = DEFAULT_COLOR
-                            self.suite.disabled = False
-                            self.city.text = address['city'] if address['city'] else ''
-                            self.city.hint_text = 'City'
-                            self.city.hint_text_color = DEFAULT_COLOR
-                            self.city.disabled = False
-                            self.zipcode.text = address['zipcode'] if address['zipcode'] else ''
-                            self.zipcode.hint_text = 'Zipcode'
-                            self.zipcode.hint_text_color = DEFAULT_COLOR
-                            self.zipcode.disabled = False
+
                             self.concierge_name.text = address['concierge_name'] if address['concierge_name'] else ''
                             self.concierge_name.hint_text = 'Concierge Name'
                             self.concierge_name.hint_text_color = DEFAULT_COLOR
@@ -5261,8 +5249,8 @@ class EditCustomerScreen(Screen):
                             self.special_instructions.hint_text_color = DEFAULT_COLOR
                             self.special_instructions.disabled = False
 
-                    elif not addresses and cust['street']:
-                        self.is_delivery.active = True
+                    if cust['account']:
+                        self.is_account.active = True
                         self.street.text = cust['street'] if cust['street'] else ''
                         self.street.hint_text = 'Street Address'
                         self.street.hint_text_color = DEFAULT_COLOR
@@ -5279,23 +5267,8 @@ class EditCustomerScreen(Screen):
                         self.zipcode.hint_text = 'Zipcode'
                         self.zipcode.hint_text_color = DEFAULT_COLOR
                         self.zipcode.disabled = False
-                        self.concierge_name.text = cust['concierge_name'] if cust['concierge_name'] else ''
-                        self.concierge_name.hint_text = 'Concierge Name'
-                        self.concierge_name.hint_text_color = DEFAULT_COLOR
-                        self.concierge_name.disabled = False
-                        self.concierge_number.text = cust['concierge_number'] if cust['concierge_number'] else ''
-                        self.concierge_number.hint_text = 'Concierge Number'
-                        self.concierge_number.hint_text_color = DEFAULT_COLOR
-                        self.concierge_number.disabled = False
-                        self.special_instructions.text = cust['special_instructions'] if cust[
-                            'special_instructions'] else ''
-                        self.special_instructions.hint_text = 'Special Instructions'
-                        self.special_instructions.hint_text_color = DEFAULT_COLOR
-                        self.special_instructions.disabled = False
-                        self.mark_text.text = ''
-                        self.marks_table.clear_widgets()
-                        self.update_marks_table()
                     else:
+                        self.is_account.active = False
                         self.street.text = ''
                         self.street.hint_text = 'Street Address'
                         self.street.hint_text_color = DEFAULT_COLOR
@@ -5312,18 +5285,6 @@ class EditCustomerScreen(Screen):
                         self.zipcode.hint_text = 'Zipcode'
                         self.zipcode.hint_text_color = DEFAULT_COLOR
                         self.zipcode.disabled = True
-                        self.concierge_name.text = ''
-                        self.concierge_name.hint_text = 'Concierge Name'
-                        self.concierge_name.hint_text_color = DEFAULT_COLOR
-                        self.concierge_name.disabled = True
-                        self.concierge_number.text = ''
-                        self.concierge_number.hint_text = 'Concierge Number'
-                        self.concierge_number.hint_text_color = DEFAULT_COLOR
-                        self.concierge_number.disabled = True
-                        self.special_instructions.text = ''
-                        self.special_instructions.hint_text = 'Special Instructions'
-                        self.special_instructions.hint_text_color = DEFAULT_COLOR
-                        self.special_instructions.disabled = True
                         self.mark_text.text = ''
                         self.marks_table.clear_widgets()
 
@@ -5383,22 +5344,6 @@ class EditCustomerScreen(Screen):
 
     def set_delivery(self):
 
-        self.street.hint_text = 'Street Address'
-        self.street.hint_text_color = DEFAULT_COLOR
-        self.street.disabled = False if self.is_delivery.active else True
-
-        self.suite.hint_text = 'Suite'
-        self.suite.hint_text_color = DEFAULT_COLOR
-        self.suite.disabled = False if self.is_delivery.active else True
-
-        self.city.hint_text = 'City'
-        self.city.hint_text_color = DEFAULT_COLOR
-        self.city.disabled = False if self.is_delivery.active else True
-
-        self.zipcode.hint_text = 'Zipcode'
-        self.zipcode.hint_text_color = DEFAULT_COLOR
-        self.zipcode.disabled = False if self.is_delivery.active else True
-
         self.concierge_name.hint_text = 'Concierge Name'
         self.concierge_name.hint_text_color = DEFAULT_COLOR
         self.concierge_name.disabled = False if self.is_delivery.active else True
@@ -5410,6 +5355,23 @@ class EditCustomerScreen(Screen):
         self.special_instructions.hint_text = 'Special Instructions'
         self.special_instructions.hint_text_color = DEFAULT_COLOR
         self.special_instructions.disabled = False if self.is_delivery.active else True
+
+    def set_account(self):
+        self.street.hint_text = 'Street Address'
+        self.street.hint_text_color = DEFAULT_COLOR
+        self.street.disabled = False if self.is_account.active else True
+
+        self.suite.hint_text = 'Suite'
+        self.suite.hint_text_color = DEFAULT_COLOR
+        self.suite.disabled = False if self.is_account.active else True
+
+        self.city.hint_text = 'City'
+        self.city.hint_text_color = DEFAULT_COLOR
+        self.city.disabled = False if self.is_account.active else True
+
+        self.zipcode.hint_text = 'Zipcode'
+        self.zipcode.hint_text_color = DEFAULT_COLOR
+        self.zipcode.disabled = False if self.is_account.active else True
 
     def delete_mark(self, mark=False, *args, **kwargs):
         popup = Popup()
@@ -5540,6 +5502,9 @@ class EditCustomerScreen(Screen):
 
         # Check if delivery is active
         if self.is_delivery.active:
+            pass
+
+        if self.is_account.active:
             if self.street.text == '':
                 errors += 1
                 self.street.hint_text = 'required'
@@ -5582,22 +5547,21 @@ class EditCustomerScreen(Screen):
                 'concierge_number': Job.make_numeric(data=self.concierge_number.text),
                 'special_instructions': self.special_instructions.text if self.special_instructions.text else None
             }
-            print('data')
-            print(data)
-            if self.is_delivery.active:
 
-                # check address or else save
-                if self.address_id:
-                    addr_where = {'id': self.address_id}
-                    addr_data = {'name': 'Home',
-                                 'street': self.street.text,
-                                 'suite': Job.make_no_whitespace(data=self.suite.text),
-                                 'city': Job.make_no_whitespace(data=self.city.text),
-                                 'zipcode': Job.make_no_whitespace(data=self.zipcode.text),
-                                 'concierge_name': self.concierge_name.text,
-                                 'special_instructions': self.special_instructions.text if self.special_instructions.text else None
-                                 }
-                    Address().put(where=addr_where, data=addr_data)
+            # if self.is_account.active:
+            #
+            #     # check address or else save
+            #     if self.address_id:
+            #         addr_where = {'id': self.address_id}
+            #         addr_data = {'name': 'Home',
+            #                      'street': self.street.text,
+            #                      'suite': Job.make_no_whitespace(data=self.suite.text),
+            #                      'city': Job.make_no_whitespace(data=self.city.text),
+            #                      'zipcode': Job.make_no_whitespace(data=self.zipcode.text),
+            #                      'concierge_name': self.concierge_name.text,
+            #                      'special_instructions': self.special_instructions.text if self.special_instructions.text else None
+            #                      }
+            #         Address().put(where=addr_where, data=addr_data)
             if customers.put(where=where, data=data):
                 # create the customer mark
                 # marks = Custid()
@@ -8659,6 +8623,7 @@ class NewCustomerScreen(Screen):
     shirts_preference = ObjectProperty(None)
     # default_shirts_finish = ObjectProperty(None)
     is_delivery = ObjectProperty(None)
+    is_account = ObjectProperty(None)
     street = ObjectProperty(None)
     suite = ObjectProperty(None)
     city = ObjectProperty(None)
@@ -8700,6 +8665,7 @@ class NewCustomerScreen(Screen):
         self.special_instructions.hint_text_color = DEFAULT_COLOR
         self.special_instructions.disabled = True
         self.is_delivery.active = False
+        self.is_account.active = False
 
         self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="Phone"))
         self.phone = Factory.CenterVerticalTextInput()
@@ -8755,22 +8721,6 @@ class NewCustomerScreen(Screen):
         print(selected_value)
 
     def set_delivery(self):
-        self.street.text = ''
-        self.street.hint_text = 'Street Address'
-        self.street.hint_text_color = DEFAULT_COLOR
-        self.street.disabled = False if self.is_delivery.active else True
-        self.suite.text = ''
-        self.suite.hint_text = 'Suite'
-        self.suite.hint_text_color = DEFAULT_COLOR
-        self.suite.disabled = False if self.is_delivery.active else True
-        self.city.text = ''
-        self.city.hint_text = 'City'
-        self.city.hint_text_color = DEFAULT_COLOR
-        self.city.disabled = False if self.is_delivery.active else True
-        self.zipcode.text = ''
-        self.zipcode.hint_text = 'Zipcode'
-        self.zipcode.hint_text_color = DEFAULT_COLOR
-        self.zipcode.disabled = False if self.is_delivery.active else True
         self.concierge_name.text = ''
         self.concierge_name.hint_text = 'Concierge Name'
         self.concierge_name.hint_text_color = DEFAULT_COLOR
@@ -8783,6 +8733,24 @@ class NewCustomerScreen(Screen):
         self.special_instructions.hint_text = 'Special Instructions'
         self.special_instructions.hint_text_color = DEFAULT_COLOR
         self.special_instructions.disabled = False if self.is_delivery.active else True
+
+    def set_account(self):
+        self.street.text = ''
+        self.street.hint_text = 'Street Address'
+        self.street.hint_text_color = DEFAULT_COLOR
+        self.street.disabled = False if self.is_account.active else True
+        self.suite.text = ''
+        self.suite.hint_text = 'Suite'
+        self.suite.hint_text_color = DEFAULT_COLOR
+        self.suite.disabled = False if self.is_account.active else True
+        self.city.text = ''
+        self.city.hint_text = 'City'
+        self.city.hint_text_color = DEFAULT_COLOR
+        self.city.disabled = False if self.is_account.active else True
+        self.zipcode.text = ''
+        self.zipcode.hint_text = 'Zipcode'
+        self.zipcode.hint_text_color = DEFAULT_COLOR
+        self.zipcode.disabled = False if self.is_account.active else True
 
     def validate(self):
         customers = User()
@@ -8891,13 +8859,14 @@ class NewCustomerScreen(Screen):
 
             customers.starch = shirts_preference
             if self.is_delivery.active:
-                customers.suite = Job.make_no_whitespace(data=self.suite.text)
-                customers.city = Job.make_no_whitespace(data=self.city.text)
-                customers.zipcode = Job.make_no_whitespace(data=self.zipcode.text)
                 customers.concierge_name = self.concierge_name.text
                 customers.concierge_number = Job.make_numeric(data=self.concierge_number.text)
                 customers.special_instructions = self.special_instructions.text if self.special_instructions.text else None
-
+            if self.is_account.active:
+                customers.street = Job.make_no_whitespace(data=self.street.text)
+                customers.suite = Job.make_no_whitespace(data=self.suite.text)
+                customers.city = Job.make_no_whitespace(data=self.city.text)
+                customers.zipcode = Job.make_no_whitespace(data=self.zipcode.text)
             if customers.add():
                 run_sync = threading.Thread(target=SYNC.run_sync)
                 run_sync_2 = threading.Thread(target=SYNC.run_sync)
@@ -8987,6 +8956,8 @@ class PickupScreen(Screen):
     online_button = ObjectProperty(None)
     due_label = ObjectProperty(None)
     check_number = ObjectProperty(None)
+    payment_panel = ObjectProperty(None)
+    payment_account_header = ObjectProperty(None)
     calc_amount = []
     amount_tendered = 0
     selected_invoices = []
@@ -9021,10 +8992,19 @@ class PickupScreen(Screen):
     def reset(self):
         # get credit total
         self.credits = 0
-        customers = User().where({'user_id':vars.CUSTOMER_ID})
+        account_status = False
+        customers = User().where({'user_id': vars.CUSTOMER_ID})
         if customers:
             for customer in customers:
                 self.credits = customer['credits'] if customer['credits'] else 0
+                account_status = customer['account']
+
+        if account_status:
+            self.payment_panel.switch_to(header=self.payment_account_header)
+            self.payment_type = 'ac'
+        else:
+            self.payment_type = 'cc'
+
         self.total_credit.text = '[color=0AAC00]{}[/color]'.format('${:,.2f}'.format(self.credits))
         self.selected_invoices = []
         # setup invoice table
@@ -9045,7 +9025,7 @@ class PickupScreen(Screen):
         self.total_discount = 0
         self.total_due = 0
         self.change_due = 0
-        self.payment_type = 'cc'
+
         self.card_location = 1
         self.due_label.text = '[color=000000][b]$0.00[/b][/color]'
         self.check_number.text = ''
@@ -9152,7 +9132,6 @@ class PickupScreen(Screen):
                 self.invoice_table.add_widget(Builder.load_string(tr_4))
                 self.invoice_table.add_widget(Builder.load_string(tr_5))
 
-
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
 
@@ -9189,7 +9168,6 @@ class PickupScreen(Screen):
                 self.total_amount - self.credits - self.total_discount))
         else:
             self.total_due = float('%0.2f' % (self.total_amount))
-
 
         fix = 0 if self.total_amount <= 0 else self.total_amount
         fix_qty = 0 if self.total_quantity <= 0 else self.total_quantity
@@ -9994,6 +9972,7 @@ class PickupScreen(Screen):
             last_four = self.check_number.text
         else:
             type = 5
+
         transaction.type = type
         transaction.last_four = last_four
         transaction.tendered = self.amount_tendered
@@ -10004,36 +9983,56 @@ class PickupScreen(Screen):
             credits_spent = 0
             transaction.credit = 0
         transaction.total = self.total_due
-        transaction.status = 1
-        if transaction.add():
-            # update any discounts or credits
-            if self.credits:
-                old_credits = 0
-                customers = User()
-                custs = customers.where({'user_id':vars.CUSTOMER_ID})
-                if custs:
-                    for customer in custs:
-                        old_credits = customer['credits']
-                new_credits =float("%0.2f" % (old_credits - credits_spent))
-                customers.put(where={'user_id':vars.CUSTOMER_ID},data={'credits':new_credits})
 
 
-            # update to server
+        # check to see if account status 3 exists else create a new one
+        check_account = Transaction()
+        checks = check_account.where({'status': 3,
+                                      'customer_id': vars.CUSTOMER_ID})
+        standard_save = False
+        if type is 5 and len(checks) > 0:
+            transaction_id = None
+            for ca in checks:
+                transaction_id = ca['transaction_id']
+                old_subtotal = ca['pretax']
+                old_tax = ca['tax']
+                old_aftertax = ca['aftertax']
+                old_credit = ca['credit']
+                old_discount = ca['discount']
+                old_total = ca['total']
+                new_subtotal = old_subtotal + self.total_subtotal
+                new_tax = old_tax + self.total_tax
+                new_aftertax = old_aftertax + self.total_amount
+                new_credits = old_credit + credits_spent
+                new_discount = old_discount + 0
+                new_total = old_total + self.total_due
+                check_account.put(where={'customer_id':vars.CUSTOMER_ID,'status':3},data={'pretax':new_subtotal,
+                                                                                          'tax':new_tax,
+                                                                                          'aftertax':new_aftertax,
+                                                                                          'credit':new_credits,
+                                                                                          'discount':new_discount,
+                                                                                          'total':new_total})
+            # update any credited amount
+
+            old_credits = 0
+            customers = User()
+            custs = customers.where({'user_id': vars.CUSTOMER_ID})
+            if custs:
+                for customer in custs:
+                    old_credits = customer['credits'] if customer['credits'] > 0 else 0
+                    old_account_total = customer['account_total']
+            new_credits = float("%0.2f" % (old_credits - credits_spent))
+            new_account_total = float("%0.2f" % (old_account_total + self.total_due))
+            customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'credits': new_credits,
+                                                                     'account_total': new_account_total})
+
             run_sync = threading.Thread(target=SYNC.run_sync)
             try:
                 run_sync.start()
             finally:
                 run_sync.join()
-                # last transaction _id
                 time.sleep(1)
                 run_sync_2 = threading.Thread(target=SYNC.run_sync)
-                last_transaction = transaction.where({'id': {'>': 0}, 'ORDER_BY': 'id desc', 'LIMIT': 1})
-                if last_transaction:
-                    for trans in last_transaction:
-                        transaction_id = trans['trans_id']
-                else:
-                    transaction_id = None
-
                 # save transaction_id to Transaction and each invoice
                 if self.selected_invoices:
                     invoices = Invoice()
@@ -10046,6 +10045,62 @@ class PickupScreen(Screen):
                         run_sync_2.join()
                         self.set_result_status()
                         self.finish_popup.dismiss()
+
+        elif type is 5 and len(checks) is 0:
+            transaction.status = 3
+            standard_save = True
+            customers = User()
+            custs = customers.where({'user_id': vars.CUSTOMER_ID})
+            if custs:
+                for customer in custs:
+                    old_account_total = customer['account_total']
+            new_account_total = float("%0.2f" % (old_account_total + self.total_due))
+            customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'account_total': new_account_total})
+        else:
+            transaction.status = 1
+            standard_save = True
+
+        if standard_save:
+            if transaction.add():
+                # update any discounts or credits
+                if self.credits:
+                    old_credits = 0
+                    customers = User()
+                    custs = customers.where({'user_id': vars.CUSTOMER_ID})
+                    if custs:
+                        for customer in custs:
+                            old_credits = customer['credits']
+                    new_credits = float("%0.2f" % (old_credits - credits_spent))
+                    customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'credits': new_credits})
+
+                # update to server
+                run_sync = threading.Thread(target=SYNC.run_sync)
+                try:
+                    run_sync.start()
+                finally:
+                    run_sync.join()
+                    # last transaction _id
+                    time.sleep(1)
+                    run_sync_2 = threading.Thread(target=SYNC.run_sync)
+                    last_transaction = transaction.where({'id': {'>': 0}, 'ORDER_BY': 'id desc', 'LIMIT': 1})
+                    if last_transaction:
+                        for trans in last_transaction:
+                            transaction_id = trans['trans_id']
+                    else:
+                        transaction_id = None
+
+                    # save transaction_id to Transaction and each invoice
+                    if self.selected_invoices:
+                        invoices = Invoice()
+                        for invoice_id in self.selected_invoices:
+                            invoices.put(where={'invoice_id': invoice_id},
+                                         data={'status': 5, 'transaction_id': transaction_id})
+                        try:
+                            run_sync_2.start()
+                        finally:
+                            run_sync_2.join()
+                            self.set_result_status()
+                            self.finish_popup.dismiss()
 
         if print == 1:  # customer copy of invoice and finish
             if vars.EPSON:
@@ -10797,6 +10852,7 @@ class SearchScreen(Screen):
     cust_starch = ObjectProperty(None)
     cust_credit_label = ObjectProperty(None)
     cust_credit = ObjectProperty(None)
+    cust_account = ObjectProperty(None)
     cust_invoice_memo = ObjectProperty(None)
     cust_important_memo = ObjectProperty(None)
     customer_id_ti = ObjectProperty(None)
@@ -10833,6 +10889,7 @@ class SearchScreen(Screen):
     calc_history = []
     calc_amount = []
     tags_grid = ObjectProperty(None)
+    cust_info_label = ObjectProperty(None)
     selected_tags_list = []
     cards = None
     card_id = None
@@ -10866,6 +10923,8 @@ class SearchScreen(Screen):
     root_payment_id = None
     credit_reason = None
     credit_amount = None
+    selected_account_tr = None
+    inner_layout_1 = None
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
@@ -10875,6 +10934,8 @@ class SearchScreen(Screen):
         self.calc_history = []
         self.calc_amount = []
         self.selected_tags_list = []
+        self.selected_account_tr = []
+        self.inner_layout_1 = None
         self.cards = False
         self.card_id = None
         self.card_id_spinner = None
@@ -10907,6 +10968,7 @@ class SearchScreen(Screen):
         self.root_payment_id = None
         self.credit_reason = None
         self.credit_amount = None
+
         if vars.SEARCH_RESULTS_STATUS:
             self.edit_invoice_btn.disabled = False if vars.INVOICE_ID is not None else True
             data = {'user_id': vars.CUSTOMER_ID}
@@ -10926,8 +10988,10 @@ class SearchScreen(Screen):
             self.cust_last_drop.text = ''
             self.cust_starch.text = ''
             self.cust_credit.text = ''
+            self.cust_account.text = ''
             self.cust_invoice_memo.text = ''
             self.cust_important_memo.text = ''
+            self.cust_info_label.text = 'Customer Info:'
             # show the proper buttons
             self.history_btn.disabled = True
             self.edit_invoice_btn.disabled = True
@@ -11257,6 +11321,8 @@ class SearchScreen(Screen):
                 custid_string = custids.make_string(custids.where(data))
 
                 # display data
+                self.cust_info_label.text = 'Customer Info: [color=FF0000]Account[/color]' if result[
+                    'account'] else 'Customer Info:'
                 self.cust_mark_label.text = custid_string
                 self.customer_id_ti.text = str(vars.CUSTOMER_ID) if vars.CUSTOMER_ID else ''
                 self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
@@ -11266,6 +11332,8 @@ class SearchScreen(Screen):
                 self.cust_starch.text = self.get_starch_by_id(result['starch'])
                 self.cust_credit_label.bind(on_ref_press=self.credit_history)
                 self.cust_credit.text = '${:,.2f}'.format(result['credits']) if result['credits'] else '$0.00'
+                self.cust_account.text = '${:,.2f}'.format(result['account_total']) if result[
+                    'account_total'] else '$0.00'
                 try:
                     self.cust_invoice_memo.text = result['invoice_memo']
                 except AttributeError:
@@ -14522,16 +14590,16 @@ class SearchScreen(Screen):
         inner_layout_1.ids.main_table.add_widget(self.credit_amount)
         credit_reason_label = Factory.BottomLeftFormLabel(text="Credit Reason")
         credit_reason = Spinner(text='Select Reason',
-                                        values=[
-                                            'Customer Dissatisfaction',
-                                            'Gift Certificate',
-                                            'Human Error',
-                                            'Other'])
+                                values=[
+                                    'Customer Dissatisfaction',
+                                    'Gift Certificate',
+                                    'Human Error',
+                                    'Other'])
         credit_reason.bind(text=self.select_credit_reason)
         inner_layout_1.ids.main_table.add_widget(credit_reason_label)
         inner_layout_1.ids.main_table.add_widget(credit_reason)
         inner_layout_2 = BoxLayout(orientation='horizontal',
-                                   size_hint=(1,0.1))
+                                   size_hint=(1, 0.1))
         cancel_button = Button(text='cancel',
                                on_release=self.main_popup.dismiss)
         save_button = Button(text='Add Credit',
@@ -14558,14 +14626,14 @@ class SearchScreen(Screen):
         if credits.add():
             customers = User()
             # update user with new balance
-            custs = customers.where({'user_id':vars.CUSTOMER_ID})
+            custs = customers.where({'user_id': vars.CUSTOMER_ID})
             old_credit = 0
             if custs:
                 for customer in custs:
                     old_credit = customer['credits'] if customer['credits'] else 0
             added_credits = float(self.credit_amount.text) if self.credit_amount.text else 0
             new_credits = old_credit + added_credits
-            if customers.put(where={'user_id':vars.CUSTOMER_ID},data={'credits':new_credits}):
+            if customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'credits': new_credits}):
                 run_sync = threading.Thread(target=SYNC.run_sync)
                 try:
                     run_sync.start()
@@ -14602,9 +14670,9 @@ class SearchScreen(Screen):
     def credit_history(self, *args, **kwargs):
         self.main_popup.title = 'Credit History'
         layout = BoxLayout(orientation="vertical")
-        inner_layout_1 = Factory.ScrollGrid(size_hint=(1,0.9))
+        inner_layout_1 = Factory.ScrollGrid(size_hint=(1, 0.9))
         inner_layout_1.ids.main_table.cols = 6
-        credits = Credit().where({'customer_id':vars.CUSTOMER_ID})
+        credits = Credit().where({'customer_id': vars.CUSTOMER_ID})
         th1 = KV.invoice_tr(0, '#')
         th2 = KV.invoice_tr(0, 'Employee')
         th3 = KV.invoice_tr(0, 'Customer')
@@ -14640,7 +14708,7 @@ class SearchScreen(Screen):
                 inner_layout_1.ids.main_table.add_widget(td6)
 
         inner_layout_2 = BoxLayout(orientation="horizontal",
-                                   size_hint=(1,0.1))
+                                   size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
                                on_release=self.main_popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
@@ -14648,6 +14716,96 @@ class SearchScreen(Screen):
         layout.add_widget(inner_layout_2)
         self.main_popup.content = layout
         self.main_popup.open()
+
+    def pay_account_popup(self):
+        self.main_popup.title = 'Pay Account'
+        layout = BoxLayout(orientation="vertical")
+        self.inner_layout_1 = Factory.ScrollGrid()
+        self.inner_layout_1.ids.main_table.cols=6
+        self.make_pay_account_popup_table()
+
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint = (1,0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=self.main_popup.dismiss)
+        payment_button = Button(text="payment options",
+                                on_release=self.payment_options_popup)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(payment_button)
+        layout.add_widget(self.inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.main_popup.content = layout
+        self.main_popup.open()
+
+    def make_pay_account_popup_table(self):
+        self.inner_layout_1.ids.main_table.remove_widgets()
+        th1 = KV.invoice_tr(0, 'ID')
+        th2 = KV.invoice_tr(0, 'Date')
+        th3 = KV.invoice_tr(0, 'Due')
+        th4 = KV.invoice_tr(0, 'Paid')
+        th5 = KV.invoice_tr(0, 'Paid On')
+        th6 = KV.invoice_tr(0, 'Status')
+        self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th1))
+        self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th2))
+        self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th3))
+        self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th4))
+        self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
+        self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
+        transactions = Transaction()
+        trans = transactions.where({'status':{'>':1},
+                                    'customer_id':vars.CUSTOMER_ID,
+                                    'ORDER_BY':'id desc'})
+        if (len(trans) > 0):
+            for tran in trans:
+                billing_period_format = datetime.datetime.strptime(tran['created_at'], "%Y-%m-%d %H:%M:%S")
+                billing_period = billing_period_format.strftime("%b %Y")
+                due_amount = str('$%.2f' % (tran['total']))
+                account_paid_format = tran['account_paid'] if tran['account_paid'] else False
+                account_paid = str('$%.2f' % (account_paid_format)) if account_paid_format else 'Not Paid'
+                if tran['status'] is 1:
+                    status = 'Paid'
+
+                elif tran['status'] is 2:
+                    status = 'Bill Sent'
+                else:
+                    status = 'Current'
+
+                if tran['account_paid_on']:
+                    account_paid_on_format = datetime.datetime.strptime(tran['account_paid_on'], "%Y-%m-%d %H:%M:%S")
+                    account_paid_on = account_paid_on_format.strftime("%m/%d/%Y %I:%M %p")
+                else:
+                    account_paid_on = 'Not Paid'
+                tr1 = Button(text=str(tran['trans_id']),
+                             on_release=partial(self.select_account_tr,tran['trans_id']))
+                tr2 = Button(text=str(billing_period),
+                             on_release=partial(self.select_account_tr,tran['trans_id']))
+                tr3 = Button(text=due_amount,
+                             on_release=partial(self.select_account_tr, tran['trans_id']))
+                tr4 = Button(text=str(account_paid),
+                             on_release=partial(self.select_account_tr, tran['trans_id']))
+                tr5 = Button(text=str(account_paid_on),
+                             on_release=partial(self.select_account_tr, tran['trans_id']))
+                tr6 = Button(text=str(status),
+                             on_release=partial(self.select_account_tr, tran['trans_id']))
+                self.inner_layout_1.ids.main_table.add_widget(tr1)
+                self.inner_layout_1.ids.main_table.add_widget(tr2)
+                self.inner_layout_1.ids.main_table.add_widget(tr3)
+                self.inner_layout_1.ids.main_table.add_widget(tr4)
+                self.inner_layout_1.ids.main_table.add_widget(tr5)
+                self.inner_layout_1.ids.main_table.add_widget(tr6)
+
+    def payment_options_popup(self, *args, **kwargs):
+
+        pass
+
+    def select_account_tr(self,transaction_id, *args, **kwargs):
+        if transaction_id not in self.selected_account_tr:
+            self.selected_account_tr.append(transaction_id)
+        else:
+            self.selected_account_tr.remove(transaction_id)
+
+        self.make_pay_account_popup_table()
+
 
 class SearchResultsScreen(Screen):
     """Takes in a customer searched dictionary and gives a table to select which customer we want to find
