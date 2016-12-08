@@ -10925,6 +10925,10 @@ class SearchScreen(Screen):
     credit_amount = None
     selected_account_tr = None
     inner_layout_1 = None
+    change_input = None
+    total_input = None
+    tendered_input = None
+    payment_type = None
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
@@ -10968,6 +10972,10 @@ class SearchScreen(Screen):
         self.root_payment_id = None
         self.credit_reason = None
         self.credit_amount = None
+        self.change_input = None
+        self.total_input = None
+        self.tendered_input = None
+        self.payment_type = None
 
         if vars.SEARCH_RESULTS_STATUS:
             self.edit_invoice_btn.disabled = False if vars.INVOICE_ID is not None else True
@@ -14810,6 +14818,7 @@ class SearchScreen(Screen):
                 self.inner_layout_1.ids.main_table.add_widget(tr6)
 
     def payment_options_popup(self, *args, **kwargs):
+        self.payment_type = 1 #set initial payment type if user does not select a value
         self.payment_popup.title = 'Account Payment Options'
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = Factory.ScrollGrid()
@@ -14831,22 +14840,45 @@ class SearchScreen(Screen):
                         credits += transaction['credit']
                         discounts += transaction['discount']
                         due += transaction['total']
+
+        # compare with customer data account running balance total check to see if customer overpaid from last trans
+        customers = User().where({'user_id':vars.CUSTOMER_ID})
+        account_running_balance = 0
+        if customers:
+            for customer in customers:
+                account_running_balance = customer['account_total']
+
+        if account_running_balance < due:
+            due = account_running_balance
+
         subtotal_label = Factory.BottomLeftFormLabel(text="Subtotal")
-        subtotal_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (subtotal)))
+        subtotal_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (subtotal)),
+                                                         disabled=True)
         tax_label = Factory.BottomLeftFormLabel(text="Tax")
-        tax_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (tax)))
+        tax_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (tax)),
+                                                    disabled=True)
         aftertax_label = Factory.BottomLeftFormLabel(text="After Tax")
-        aftertax_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (aftertax)))
+        aftertax_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (aftertax)),
+                                                         disabled=True)
         credits_label = Factory.BottomLeftFormLabel(text="Credit")
-        credits_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (credits)))
+        credits_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (credits)),
+                                                        disabled=True)
         discounts_label = Factory.BottomLeftFormLabel(text="Discount")
-        discounts_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (discounts)))
+        discounts_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (discounts)),
+                                                          disabled=True)
         total_label = Factory.BottomLeftFormLabel(text="Total Due")
-        total_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (total)))
+        self.total_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (due)),
+                                                      disabled=True)
+        tendered_label = Factory.BottomLeftFormLabel(text="Tendered")
+        self.tendered_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (due)),
+                                                         on_text_validate=self.calculate_account_change)
+        change_label = Factory.BottomLeftFormLabel(text="Change Due")
+        self.change_input = Factory.CenterVerticalTextInput(text=str('0.00'))
         payment_type = Factory.BottomLeftFormLabel(text="Payment Type")
         values = ['Check','Credit','Cash']
         payment_spinner = Spinner(text="Check",
                                   values=values)
+        payment_spinner.bind(text=self.set_expected_value)
         last_four_label = Factory.BottomLeftFormLabel(text="Last Four / Check #")
         last_four_input = Factory.CenterVerticalTextInput()
         inner_layout_1.ids.main_table.add_widget(subtotal_label)
@@ -14860,11 +14892,17 @@ class SearchScreen(Screen):
         inner_layout_1.ids.main_table.add_widget(discounts_label)
         inner_layout_1.ids.main_table.add_widget(discounts_input)
         inner_layout_1.ids.main_table.add_widget(total_label)
-        inner_layout_1.ids.main_table.add_widget(total_input)
+        inner_layout_1.ids.main_table.add_widget(self.total_input)
+        inner_layout_1.ids.main_table.add_widget(tendered_label)
+        inner_layout_1.ids.main_table.add_widget(self.tendered_input)
+        inner_layout_1.ids.main_table.add_widget(change_label)
+        inner_layout_1.ids.main_table.add_widget(self.change_input)
         inner_layout_1.ids.main_table.add_widget(payment_type)
         inner_layout_1.ids.main_table.add_widget(payment_spinner)
         inner_layout_1.ids.main_table.add_widget(last_four_label)
         inner_layout_1.ids.main_table.add_widget(last_four_input)
+        inner_layout_1.ids.main_table.add_widget(Label(text="")) #spacing
+        inner_layout_1.ids.main_table.add_widget(Label(text=""))  # spacing
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1,0.1))
         cancel_button = Button(text="cancel",
@@ -14880,6 +14918,22 @@ class SearchScreen(Screen):
 
         pass
 
+    def set_expected_value(self, value, *args, **kwargs):
+
+        if value is 'Check':
+            payment_type = 3
+        elif value is 'Credit':
+            payment_type = 1
+        else:
+            payment_type = 2
+        self.payment_type = payment_type
+
+    def calculate_account_change(self,*args, **kwargs):
+        change_due = str('%.2f' % (Decimal(self.tendered_input.text) - Decimal(self.total_input.text)))
+        self.change_input.text = change_due
+        pass
+
+
     def select_account_tr(self, transaction_id, *args, **kwargs):
         if transaction_id not in self.selected_account_tr:
             self.selected_account_tr.append(transaction_id)
@@ -14888,7 +14942,92 @@ class SearchScreen(Screen):
 
         self.make_pay_account_popup_table()
 
-    def finish_account_payment(self):
+    def finish_account_payment(self, *args, **kwargs):
+        errors = 0
+        # validate data
+        if self.tendered_input.text is '':
+            self.tendered_input.hint_text = "Tendered Amount Required"
+            self.tendered_input.hint_text_color = ERROR_COLOR
+            errors += 1
+        else:
+            self.tendered_input.hint_text = ""
+            self.tendered_input.hint_text_color = DEFAULT_COLOR
+
+        if len(self.selected_account_tr) is 0:
+            errors += 1
+            popup = Popup()
+            popup.title = 'Form Error'
+            content = KV.popup_alert('Please select an account invoice and try again.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
+
+        # save data
+        if errors is 0:
+            saved = 0
+            for transaction_id in self.selected_account_tr:
+                trans = Transaction().where({'trans_id': transaction_id})
+                previous_total = 0;
+                if trans:
+                    for tran in trans:
+                        previous_total = tran['total']
+                account_paid_on = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+                where = {'trans_id': transaction_id}
+                data = {'tendered': self.tendered_input.text,
+                        'account_paid': previous_total,
+                        'account_paid_on': account_paid_on,
+                        'status': 1,
+                        'type': self.payment_type}
+                if Transaction().put(where=where, data=data):
+                    saved += 1
+            if saved > 0:
+                customers = User()
+                custs = customers.where({'user_id': vars.CUSTOMER_ID})
+                previous_account_total = 0
+                if custs:
+                    for cust in custs:
+                        previous_account_total = cust['account_total']
+
+                new_account_total = '%.2f' % (Decimal(previous_account_total) - Decimal(self.total_input.text))
+
+                update = customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'account_total': new_account_total})
+                if update:
+                    run_sync = threading.Thread(target=SYNC.run_sync)
+                    try:
+                        run_sync.start()
+                    finally:
+                        run_sync.join()
+
+                        popup = Popup()
+                        popup.title = 'Account Transaction Paid!'
+                        content = KV.popup_alert('Successfully paid account transaction.')
+                        popup.content = Builder.load_string(content)
+                        popup.open()
+                        # Beep Sound
+                        sys.stdout.write('\a')
+                        sys.stdout.flush()
+                        self.payment_popup.dismiss()
+                        self.main_popup.dismiss()
+                        vars.SEARCH_RESULTS_STATUS = True
+                        self.reset()
+                else:
+                    popup = Popup()
+                    popup.title = 'Could not save user data'
+                    content = KV.popup_alert('User table error, could not save. Please contact administrator')
+                    popup.content = Builder.load_string(content)
+                    popup.open()
+                    # Beep Sound
+                    sys.stdout.write('\a')
+                    sys.stdout.flush()
+                    self.payment_popup.dismiss()
+                    self.main_popup.dismiss()
+                    vars.SEARCH_RESULTS_STATUS = True
+                    self.reset()
+
+        # update server
         pass
 
 
