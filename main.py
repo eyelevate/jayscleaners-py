@@ -9984,7 +9984,6 @@ class PickupScreen(Screen):
             transaction.credit = 0
         transaction.total = self.total_due
 
-
         # check to see if account status 3 exists else create a new one
         check_account = Transaction()
         checks = check_account.where({'status': 3,
@@ -10006,12 +10005,12 @@ class PickupScreen(Screen):
                 new_credits = old_credit + credits_spent
                 new_discount = old_discount + 0
                 new_total = old_total + self.total_due
-                check_account.put(where={'customer_id':vars.CUSTOMER_ID,'status':3},data={'pretax':new_subtotal,
-                                                                                          'tax':new_tax,
-                                                                                          'aftertax':new_aftertax,
-                                                                                          'credit':new_credits,
-                                                                                          'discount':new_discount,
-                                                                                          'total':new_total})
+                check_account.put(where={'customer_id': vars.CUSTOMER_ID, 'status': 3}, data={'pretax': new_subtotal,
+                                                                                              'tax': new_tax,
+                                                                                              'aftertax': new_aftertax,
+                                                                                              'credit': new_credits,
+                                                                                              'discount': new_discount,
+                                                                                              'total': new_total})
             # update any credited amount
 
             old_credits = 0
@@ -10880,6 +10879,7 @@ class SearchScreen(Screen):
     calendar_layout = ObjectProperty(None)
     month_button = ObjectProperty(None)
     year_button = ObjectProperty(None)
+    payment_popup = Popup()
     print_popup = ObjectProperty(None)
     calendar_layout = ObjectProperty(None)
     create_calendar_table = ObjectProperty(None)
@@ -14721,11 +14721,11 @@ class SearchScreen(Screen):
         self.main_popup.title = 'Pay Account'
         layout = BoxLayout(orientation="vertical")
         self.inner_layout_1 = Factory.ScrollGrid()
-        self.inner_layout_1.ids.main_table.cols=6
+        self.inner_layout_1.ids.main_table.cols = 6
         self.make_pay_account_popup_table()
 
         inner_layout_2 = BoxLayout(orientation="horizontal",
-                                   size_hint = (1,0.1))
+                                   size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
                                on_release=self.main_popup.dismiss)
         payment_button = Button(text="payment options",
@@ -14738,7 +14738,7 @@ class SearchScreen(Screen):
         self.main_popup.open()
 
     def make_pay_account_popup_table(self):
-        self.inner_layout_1.ids.main_table.remove_widgets()
+        self.inner_layout_1.ids.main_table.clear_widgets()
         th1 = KV.invoice_tr(0, 'ID')
         th2 = KV.invoice_tr(0, 'Date')
         th3 = KV.invoice_tr(0, 'Due')
@@ -14752,9 +14752,9 @@ class SearchScreen(Screen):
         self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
         self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
         transactions = Transaction()
-        trans = transactions.where({'status':{'>':1},
-                                    'customer_id':vars.CUSTOMER_ID,
-                                    'ORDER_BY':'id desc'})
+        trans = transactions.where({'status': {'>': 1},
+                                    'customer_id': vars.CUSTOMER_ID,
+                                    'ORDER_BY': 'id desc'})
         if (len(trans) > 0):
             for tran in trans:
                 billing_period_format = datetime.datetime.strptime(tran['created_at'], "%Y-%m-%d %H:%M:%S")
@@ -14775,18 +14775,33 @@ class SearchScreen(Screen):
                     account_paid_on = account_paid_on_format.strftime("%m/%d/%Y %I:%M %p")
                 else:
                     account_paid_on = 'Not Paid'
-                tr1 = Button(text=str(tran['trans_id']),
-                             on_release=partial(self.select_account_tr,tran['trans_id']))
-                tr2 = Button(text=str(billing_period),
-                             on_release=partial(self.select_account_tr,tran['trans_id']))
-                tr3 = Button(text=due_amount,
-                             on_release=partial(self.select_account_tr, tran['trans_id']))
-                tr4 = Button(text=str(account_paid),
-                             on_release=partial(self.select_account_tr, tran['trans_id']))
-                tr5 = Button(text=str(account_paid_on),
-                             on_release=partial(self.select_account_tr, tran['trans_id']))
-                tr6 = Button(text=str(status),
-                             on_release=partial(self.select_account_tr, tran['trans_id']))
+
+                if tran['trans_id'] in self.selected_account_tr:
+                    tr1 = Factory.TagsSelectedButton(text=str(tran['trans_id']),
+                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr2 = Factory.TagsSelectedButton(text=str(billing_period),
+                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr3 = Factory.TagsSelectedButton(text=due_amount,
+                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr4 = Factory.TagsSelectedButton(text=str(account_paid),
+                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr5 = Factory.TagsSelectedButton(text=str(account_paid_on),
+                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr6 = Factory.TagsSelectedButton(text=str(status),
+                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                else:
+                    tr1 = Button(text=str(tran['trans_id']),
+                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr2 = Button(text=str(billing_period),
+                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr3 = Button(text=due_amount,
+                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr4 = Button(text=str(account_paid),
+                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr5 = Button(text=str(account_paid_on),
+                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr6 = Button(text=str(status),
+                                 on_release=partial(self.select_account_tr, tran['trans_id']))
                 self.inner_layout_1.ids.main_table.add_widget(tr1)
                 self.inner_layout_1.ids.main_table.add_widget(tr2)
                 self.inner_layout_1.ids.main_table.add_widget(tr3)
@@ -14795,16 +14810,86 @@ class SearchScreen(Screen):
                 self.inner_layout_1.ids.main_table.add_widget(tr6)
 
     def payment_options_popup(self, *args, **kwargs):
+        self.payment_popup.title = 'Account Payment Options'
+        layout = BoxLayout(orientation='vertical')
+        inner_layout_1 = Factory.ScrollGrid()
+        inner_layout_1.ids.main_table.cols = 1
+        subtotal = 0
+        tax = 0
+        aftertax = 0
+        credits = 0
+        discounts = 0
+        due = 0
+        if len(self.selected_account_tr) > 0:
+            for transaction_id in self.selected_account_tr:
+                transactions = Transaction().where({'trans_id':transaction_id})
+                if transactions:
+                    for transaction in transactions:
+                        subtotal += transaction['pretax']
+                        tax += transaction['tax']
+                        aftertax += transaction['aftertax']
+                        credits += transaction['credit']
+                        discounts += transaction['discount']
+                        due += transaction['total']
+        subtotal_label = Factory.BottomLeftFormLabel(text="Subtotal")
+        subtotal_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (subtotal)))
+        tax_label = Factory.BottomLeftFormLabel(text="Tax")
+        tax_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (tax)))
+        aftertax_label = Factory.BottomLeftFormLabel(text="After Tax")
+        aftertax_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (aftertax)))
+        credits_label = Factory.BottomLeftFormLabel(text="Credit")
+        credits_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (credits)))
+        discounts_label = Factory.BottomLeftFormLabel(text="Discount")
+        discounts_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (discounts)))
+        total_label = Factory.BottomLeftFormLabel(text="Total Due")
+        total_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (total)))
+        payment_type = Factory.BottomLeftFormLabel(text="Payment Type")
+        values = ['Check','Credit','Cash']
+        payment_spinner = Spinner(text="Check",
+                                  values=values)
+        last_four_label = Factory.BottomLeftFormLabel(text="Last Four / Check #")
+        last_four_input = Factory.CenterVerticalTextInput()
+        inner_layout_1.ids.main_table.add_widget(subtotal_label)
+        inner_layout_1.ids.main_table.add_widget(subtotal_input)
+        inner_layout_1.ids.main_table.add_widget(tax_label)
+        inner_layout_1.ids.main_table.add_widget(tax_input)
+        inner_layout_1.ids.main_table.add_widget(aftertax_label)
+        inner_layout_1.ids.main_table.add_widget(aftertax_input)
+        inner_layout_1.ids.main_table.add_widget(credits_label)
+        inner_layout_1.ids.main_table.add_widget(credits_input)
+        inner_layout_1.ids.main_table.add_widget(discounts_label)
+        inner_layout_1.ids.main_table.add_widget(discounts_input)
+        inner_layout_1.ids.main_table.add_widget(total_label)
+        inner_layout_1.ids.main_table.add_widget(total_input)
+        inner_layout_1.ids.main_table.add_widget(payment_type)
+        inner_layout_1.ids.main_table.add_widget(payment_spinner)
+        inner_layout_1.ids.main_table.add_widget(last_four_label)
+        inner_layout_1.ids.main_table.add_widget(last_four_input)
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1,0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=self.payment_popup.dismiss)
+        pay_button = Button(text="Finish",
+                            on_release=self.finish_account_payment)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(pay_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.payment_popup.content = layout
+        self.payment_popup.open()
 
         pass
 
-    def select_account_tr(self,transaction_id, *args, **kwargs):
+    def select_account_tr(self, transaction_id, *args, **kwargs):
         if transaction_id not in self.selected_account_tr:
             self.selected_account_tr.append(transaction_id)
         else:
             self.selected_account_tr.remove(transaction_id)
 
         self.make_pay_account_popup_table()
+
+    def finish_account_payment(self):
+        pass
 
 
 class SearchResultsScreen(Screen):
