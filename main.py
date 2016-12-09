@@ -10851,6 +10851,7 @@ class SearchScreen(Screen):
     cust_starch = ObjectProperty(None)
     cust_credit_label = ObjectProperty(None)
     cust_credit = ObjectProperty(None)
+    cust_account_label = ObjectProperty(None)
     cust_account = ObjectProperty(None)
     cust_invoice_memo = ObjectProperty(None)
     cust_important_memo = ObjectProperty(None)
@@ -11339,6 +11340,7 @@ class SearchScreen(Screen):
                 self.cust_last_drop.text = last_drop
                 self.cust_starch.text = self.get_starch_by_id(result['starch'])
                 self.cust_credit_label.bind(on_ref_press=self.credit_history)
+                self.cust_account_label.bind(on_ref_press=self.account_history_popup)
                 self.cust_credit.text = '${:,.2f}'.format(result['credits']) if result['credits'] else '$0.00'
                 self.cust_account.text = '${:,.2f}'.format(result['account_total']) if result[
                     'account_total'] else '$0.00'
@@ -14933,7 +14935,6 @@ class SearchScreen(Screen):
         self.change_input.text = change_due
         pass
 
-
     def select_account_tr(self, transaction_id, *args, **kwargs):
         if transaction_id not in self.selected_account_tr:
             self.selected_account_tr.append(transaction_id)
@@ -15029,6 +15030,207 @@ class SearchScreen(Screen):
 
         # update server
         pass
+
+    def account_history_popup(self,*args, **kwargs):
+        self.main_popup.title = 'Account History'
+        layout = BoxLayout(orientation="vertical")
+        inner_layout_1 = Factory.ScrollGrid()
+        inner_layout_1.ids.main_table.cols = 6
+        th1 = KV.invoice_tr(0, 'ID')
+        th2 = KV.invoice_tr(0, 'Date')
+        th3 = KV.invoice_tr(0, 'Due')
+        th4 = KV.invoice_tr(0, 'Paid')
+        th5 = KV.invoice_tr(0, 'Paid On')
+        th6 = KV.invoice_tr(0, 'Status')
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th1))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th2))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th3))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th4))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
+        transactions = Transaction()
+        trans = transactions.where({'customer_id': vars.CUSTOMER_ID,
+                                    'ORDER_BY': 'id desc'})
+        if (len(trans) > 0):
+            for tran in trans:
+                billing_period_format = datetime.datetime.strptime(tran['created_at'], "%Y-%m-%d %H:%M:%S")
+                billing_period = billing_period_format.strftime("%b %Y")
+                due_amount = str('$%.2f' % (tran['total']))
+                account_paid_format = tran['account_paid'] if tran['account_paid'] else False
+                account_paid = str('$%.2f' % (account_paid_format)) if account_paid_format else 'Not Paid'
+                if tran['status'] is 1:
+                    status = 'Paid'
+
+                elif tran['status'] is 2:
+                    status = 'Bill Sent'
+                else:
+                    status = 'Current'
+
+                if tran['account_paid_on']:
+                    account_paid_on_format = datetime.datetime.strptime(tran['account_paid_on'], "%Y-%m-%d %H:%M:%S")
+                    account_paid_on = account_paid_on_format.strftime("%m/%d/%y %I:%M %p")
+                else:
+                    account_paid_on = 'Not Paid'
+
+                if tran['trans_id'] in self.selected_account_tr:
+                    tr1 = Factory.TagsSelectedButton(text=str(tran['trans_id']),
+                                                     on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr2 = Factory.TagsSelectedButton(text=str(billing_period),
+                                                     on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr3 = Factory.TagsSelectedButton(text=due_amount,
+                                                     on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr4 = Factory.TagsSelectedButton(text=str(account_paid),
+                                                     on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr5 = Factory.TagsSelectedButton(text=str(account_paid_on),
+                                                     on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr6 = Factory.TagsSelectedButton(text=str(status),
+                                                     on_release=partial(self.show_invoice_details, tran['trans_id']))
+                else:
+                    tr1 = Button(text=str(tran['trans_id']),
+                                 on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr2 = Button(text=str(billing_period),
+                                 on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr3 = Button(text=due_amount,
+                                 on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr4 = Button(text=str(account_paid),
+                                 on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr5 = Button(text=str(account_paid_on),
+                                 on_release=partial(self.show_invoice_details, tran['trans_id']))
+                    tr6 = Button(text=str(status),
+                                 on_release=partial(self.show_invoice_details, tran['trans_id']))
+                inner_layout_1.ids.main_table.add_widget(tr1)
+                inner_layout_1.ids.main_table.add_widget(tr2)
+                inner_layout_1.ids.main_table.add_widget(tr3)
+                inner_layout_1.ids.main_table.add_widget(tr4)
+                inner_layout_1.ids.main_table.add_widget(tr5)
+                inner_layout_1.ids.main_table.add_widget(tr6)
+
+
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1,0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=self.main_popup.dismiss)
+        inner_layout_2.add_widget(cancel_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.main_popup.content = layout
+        self.main_popup.open()
+
+    def show_invoice_details(self, transaction_id, *args, **kwargs):
+        popup = Popup()
+        popup.title = 'Account Transaction Invoice Details'
+        layout = BoxLayout(orientation="vertical")
+        inner_layout_1 = Factory.ScrollGrid()
+        inner_layout_1.ids.main_table.cols = 7
+        th1 = KV.invoice_tr(0, 'ID')
+        th2 = KV.invoice_tr(0, 'Drop')
+        th3 = KV.invoice_tr(0, 'Due')
+        th4 = KV.invoice_tr(0, 'Qty')
+        th5 = KV.invoice_tr(0, 'Subtotal')
+        th6 = KV.invoice_tr(0, 'Tax')
+        th7 = KV.invoice_tr(0, 'Total')
+
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th1))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th2))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th3))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th4))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th7))
+
+        invoices = Invoice().where({'transaction_id':transaction_id})
+        if invoices:
+            for invoice in invoices:
+                drop_date_format = datetime.datetime.strptime(invoice['created_at'], "%Y-%m-%d %H:%M:%S")
+                due_date_format = datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S")
+                drop_date = drop_date_format.strftime('%m/%d/%y')
+                due_date = due_date_format.strftime('%m/%d/%y')
+                td1 = Button(text=str(invoice['invoice_id']),
+                             on_release = partial(self.account_view_items,invoice['invoice_id']))
+                td2 = Factory.TopLeftFormButton(text=str(drop_date),
+                             on_release=partial(self.account_view_items, invoice['invoice_id']))
+                td3 = Factory.TopLeftFormButton(text=str(due_date),
+                             on_release=partial(self.account_view_items, invoice['invoice_id']))
+                td4 = Button(text=str(invoice['quantity']),
+                             on_release=partial(self.account_view_items, invoice['invoice_id']))
+                td5 = Button(text=str('$%.2f' % invoice['pretax']),
+                             on_release=partial(self.account_view_items, invoice['invoice_id']))
+                td6 = Button(text=str('$%.2f' % invoice['tax']),
+                             on_release=partial(self.account_view_items, invoice['invoice_id']))
+                td7 = Button(text=str('$%.2f' % invoice['total']),
+                             on_release=partial(self.account_view_items, invoice['invoice_id']))
+                inner_layout_1.ids.main_table.add_widget(td1)
+                inner_layout_1.ids.main_table.add_widget(td2)
+                inner_layout_1.ids.main_table.add_widget(td3)
+                inner_layout_1.ids.main_table.add_widget(td4)
+                inner_layout_1.ids.main_table.add_widget(td5)
+                inner_layout_1.ids.main_table.add_widget(td6)
+                inner_layout_1.ids.main_table.add_widget(td7)
+
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1,0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=popup.dismiss)
+        inner_layout_2.add_widget(cancel_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+        pass
+
+    def account_view_items(self,invoice_id,*args, **kwargs):
+        popup = Popup()
+        popup.title = 'Account Transaction Invoice Details'
+        layout = BoxLayout(orientation="vertical")
+        inner_layout_1 = Factory.ScrollGrid()
+        inner_layout_1.ids.main_table.cols = 6
+        th1 = KV.invoice_tr(0, 'ID')
+        th2 = KV.invoice_tr(0, 'Name')
+        th3 = KV.invoice_tr(0, 'Color')
+        th4 = KV.invoice_tr(0, 'Memo')
+        th5 = KV.invoice_tr(0, 'Qty')
+        th6 = KV.invoice_tr(0, 'Subtotal')
+
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th1))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th2))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th3))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th4))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
+
+        invoice_items = InvoiceItem().where({'invoice_id':invoice_id})
+        if invoice_items:
+            for ii in invoice_items:
+                item_id = ii['item_id']
+                inventory_items = InventoryItem().where({'item_id':item_id})
+                item_name = None
+                if inventory_items:
+                    for iitem in inventory_items:
+                        item_name = iitem['name']
+                td1 = Button(text=str(ii['invoice_id']))
+                td2 = Button(text=str(item_name))
+                td3 = Button(text=str(ii['color']))
+                td4 = Factory.TopLeftFormButton(text=str(ii['memo']))
+                td5 = Button(text=str(ii['quantity']))
+                td6 = Button(text=str('$%.2f' % ii['pretax']))
+
+                inner_layout_1.ids.main_table.add_widget(td1)
+                inner_layout_1.ids.main_table.add_widget(td2)
+                inner_layout_1.ids.main_table.add_widget(td3)
+                inner_layout_1.ids.main_table.add_widget(td4)
+                inner_layout_1.ids.main_table.add_widget(td5)
+                inner_layout_1.ids.main_table.add_widget(td6)
+
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1,0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=popup.dismiss)
+        inner_layout_2.add_widget(cancel_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
 
 
 class SearchResultsScreen(Screen):
@@ -15166,6 +15368,8 @@ class SearchResultsScreen(Screen):
 
 
 class SettingsScreen(Screen):
+    def accounts_page(self):
+        webbrowser.open("http://74.207.240.88/accounts")
     pass
 
 
