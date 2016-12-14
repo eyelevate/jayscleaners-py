@@ -383,6 +383,7 @@ class MainScreen(Screen):
 
         # vars.WORKLIST.append("Sync")
         # threads_start()
+        print(6/2*(1+2))
 
     def test_sys(self):
         Sync().migrate()
@@ -8958,6 +8959,9 @@ class PickupScreen(Screen):
     check_number = ObjectProperty(None)
     payment_panel = ObjectProperty(None)
     payment_account_header = ObjectProperty(None)
+    discount_label = ObjectProperty(None)
+    total_discount = ObjectProperty(None)
+    main_popup = Popup()
     calc_amount = []
     amount_tendered = 0
     selected_invoices = []
@@ -8967,7 +8971,8 @@ class PickupScreen(Screen):
     total_amount = 0
     total_credit = ObjectProperty(None)
     credits = 0
-    total_discount = 0
+    credits_spent = 0
+    discount_total = 0
     total_due = 0
     change_due = 0
     payment_type = 'cc'
@@ -8988,10 +8993,12 @@ class PickupScreen(Screen):
     edit_card_billing_first_name = None
     edit_card_billing_last_name = None
     card_box = None
+    discount_id = None
 
     def reset(self):
         # get credit total
         self.credits = 0
+        self.credits_spent = 0
         account_status = False
         customers = User().where({'user_id': vars.CUSTOMER_ID})
         if customers:
@@ -9022,7 +9029,7 @@ class PickupScreen(Screen):
         self.total_tax = 0
         self.total_amount = 0
 
-        self.total_discount = 0
+        self.discount_total = 0
         self.total_due = 0
         self.change_due = 0
 
@@ -9043,10 +9050,16 @@ class PickupScreen(Screen):
         self.edit_card_billing_first_name = None
         self.edit_card_billing_last_name = None
         self.card_box = None
-
+        self.discount_id = None
         # reset states
         self.instore_button.state = 'down'
         self.online_button.state = 'normal'
+
+        self.quantity_label.text = '[color=000000][b]$0.00[/b][/color]'
+        self.subtotal_label.text = '[color=000000][b]$0.00[/b][/color]'
+        self.tax_label.text = '[color=000000][b]$0.00[/b][/color]'
+        self.total_label.text = '[color=000000][b]$0.00[/b][/color]'
+        self.total_discount.text = '[color=FF0000][b]($0.00)[/b][/color]'
 
         # reset cards on file ids
         vars.PROFILE_ID = None
@@ -9063,6 +9076,118 @@ class PickupScreen(Screen):
         else:
             self.cards = False
         self.select_card_location('1')
+
+        self.discount_label.bind(on_ref_press=self.discount_popup)
+
+    def discount_popup(self, *args, **kwargs):
+        self.main_popup.title = 'Discount Selection'
+        layout = BoxLayout(orientation="vertical")
+        inner_layout_1 = Factory.ScrollGrid()
+        inner_layout_1.ids.main_table.cols = 7
+        h1 = KV.invoice_tr(0, '#')
+        h2 = KV.invoice_tr(0, 'Name')
+        h3 = KV.invoice_tr(0, 'Type')
+        h4 = KV.invoice_tr(0, 'Discount')
+        h5 = KV.invoice_tr(0, 'Group')
+        h6 = KV.invoice_tr(0, 'Start')
+        h7 = KV.invoice_tr(0, 'End')
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(h1))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(h2))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(h3))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(h4))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(h5))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(h6))
+        inner_layout_1.ids.main_table.add_widget(Builder.load_string(h7))
+        discounts = Discount().where({'company_id':auth_user.company_id,
+                                      'ORDER_BY':'discount_id desc'})
+        if discounts:
+            for discount in discounts:
+                discount_id = discount['discount_id']
+                type = 'Rate' if discount['type'] is 1 else 'Price'
+                rate = discount['rate']
+                price = discount['discount']
+                discount_display = rate if discount['type'] is 1 else price
+                start = datetime.datetime.strptime(discount['start_date'], "%Y-%m-%d %H:%M:%S") if discount['start_date'] else None
+                end = datetime.datetime.strptime(discount['end_date'], "%Y-%m-%d %H:%M:%S") if discount['end_date'] else None
+                start_formatted = start.strftime('%m/%d/%Y')
+                end_formatted = end.strftime('%m/%d/%Y')
+                inventory_id = discount['inventory_id']
+                inventory_name = None
+                if inventory_id:
+                    inventories = Inventory().where({'inventory_id':inventory_id})
+
+                    if inventories:
+                        for inventory in inventories:
+                            inventory_name = inventory['name']
+                item_name = None
+                inventory_item_id = discount['inventory_item_id']
+                if inventory_item_id:
+                    inventory_items = InventoryItem().where({'item_id':inventory_item_id})
+                    if inventory_items:
+                        for inventory_item in inventory_items:
+                            item_name = inventory_item['name']
+
+                group = None
+                if inventory_name and item_name:
+                    group = '{} - {}'.format(inventory_name, item_name)
+                elif inventory_name and not item_name:
+                    group = str(inventory_name)
+                elif item_name and not inventory_name:
+                    group = str(item_name)
+
+
+                if discount_id is self.discount_id:
+                    id_button = Factory.TagsSelectedButton(text=str(discount_id))
+                    name_button = Factory.TagsSelectedButton(text=str(discount['name']))
+                    type_button = Factory.TagsSelectedButton(text=str(type))
+                    discount_button = Factory.TagsSelectedButton(text=str(discount_display))
+                    group_button = Factory.TagsSelectedButton(text=str(group))
+                    start_button = Factory.TagsSelectedButton(text=str(start_formatted))
+                    end_button = Factory.TagsSelectedButton(text=str(end_formatted))
+                else:
+                    id_button = Button(text=str(discount_id),
+                                       on_release=partial(self.select_discount,discount_id))
+
+                    name_button = Button(text=str(discount['name']),
+                                         on_release=partial(self.select_discount, discount_id))
+                    type_button = Button(text=str(type),
+                                             on_release=partial(self.select_discount, discount_id))
+                    discount_button = Button(text=str(discount_display),
+                                             on_release=partial(self.select_discount, discount_id))
+                    group_button = Button(text=str(group),
+                                          on_release=partial(self.select_discount, discount_id))
+                    start_button = Button(text=str(start_formatted),
+                                          on_release=partial(self.select_discount, discount_id))
+                    end_button = Button(text=str(end_formatted),
+                                        on_release=partial(self.select_discount, discount_id))
+
+
+                inner_layout_1.ids.main_table.add_widget(id_button)
+                inner_layout_1.ids.main_table.add_widget(name_button)
+                inner_layout_1.ids.main_table.add_widget(type_button)
+                inner_layout_1.ids.main_table.add_widget(discount_button)
+                inner_layout_1.ids.main_table.add_widget(group_button)
+                inner_layout_1.ids.main_table.add_widget(start_button)
+                inner_layout_1.ids.main_table.add_widget(end_button)
+
+
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1,0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=self.main_popup.dismiss)
+
+        inner_layout_2.add_widget(cancel_button)
+
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.main_popup.content = layout
+        self.main_popup.open()
+
+    def select_discount(self, discount_id, *args, **kwargs):
+        self.discount_id = discount_id
+        self.invoice_selected(None)
+        self.main_popup.dismiss()
+
 
     def invoice_create_rows(self):
         self.invoice_table.clear_widgets()
@@ -9136,17 +9261,19 @@ class PickupScreen(Screen):
         vars.SEARCH_RESULTS_STATUS = True
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
+        if invoice_id:
+            if invoice_id in self.selected_invoices:
 
-        if invoice_id in self.selected_invoices:
+                self.selected_invoices.remove(invoice_id)
 
-            self.selected_invoices.remove(invoice_id)
+            else:
+                self.selected_invoices.append(invoice_id)
 
-        else:
-            self.selected_invoices.append(invoice_id)
         total = 0
         quantity = 0
         subtotal = 0
         tax = 0
+        self.discount_total = 0
         if self.selected_invoices:
             for invoice_id in self.selected_invoices:
                 # get invoice total
@@ -9157,15 +9284,40 @@ class PickupScreen(Screen):
                         quantity += invoice['quantity']
                         subtotal += invoice['pretax']
                         tax += invoice['tax']
+
+                # get discounted totals
+                if self.discount_id:
+                    discount_invoice_total = 0
+                    discounts = Discount().where({'discount_id':self.discount_id})
+                    if discounts:
+                        for discount in discounts:
+                            discount_type = discount['type']
+                            discount_inventory_id = discount['inventory_id']
+                            discount_item_id = discount['inventory_item_id']
+                            if discount_inventory_id:
+                                invoice_items = InvoiceItem().where({'invoice_id': invoice_id,
+                                                                     'inventory_id':discount_inventory_id})
+                            elif discount_item_id:
+                                invoice_items = InvoiceItem().where({'invoice_id': invoice_id,
+                                                                     'item_id': discount_item_id})
+                            if invoice_items:
+                                for invoice_item in invoice_items:
+                                    discount_invoice_total += invoice_item['total']
+                            if discount_type is 1:
+                                discount_rate = discount['rate']
+                                self.discount_total += float('%0.2f' % (discount_invoice_total * discount_rate))
+                            else:
+                                self.discount_total += float('%0.2f' % discount['price'])
+        self.discount_total = float(self.discount_total)
         self.amount_tendered = total
         self.total_amount = total
         self.total_subtotal = subtotal
         self.total_quantity = quantity
         self.total_tax = tax
-        if self.credits or self.total_discount:
+        if self.credits or self.discount_total:
 
             self.total_due = 0 if self.credits >= self.total_amount else float("%0.2f" % (
-                self.total_amount - self.credits - self.total_discount))
+                self.total_amount - self.credits - self.discount_total))
         else:
             self.total_due = float('%0.2f' % (self.total_amount))
 
@@ -9186,6 +9338,8 @@ class PickupScreen(Screen):
         self.subtotal_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_subtotal))
         self.tax_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_tax))
         self.total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_amount))
+        self.total_discount.text = '[color=FF0000][b]({})[/b][/color]'.format(vars.us_dollar(self.discount_total))
+
         self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total_due))
 
         # update the calculator total
@@ -9958,7 +10112,7 @@ class PickupScreen(Screen):
         transaction.pretax = self.total_subtotal
         transaction.tax = self.total_tax
         transaction.aftertax = self.total_amount
-        transaction.discount = self.total_discount
+        transaction.discount = self.discount_total
 
         last_four = None
         if self.payment_type == 'cc' and self.card_location == 1:
@@ -9978,6 +10132,7 @@ class PickupScreen(Screen):
         transaction.tendered = self.amount_tendered
         if self.credits:
             credits_spent = self.total_amount if (self.credits - self.total_amount) >= 0 else self.credits
+            self.credits_spent = credits_spent
             transaction.credit = credits_spent
         else:
             credits_spent = 0
@@ -10003,7 +10158,7 @@ class PickupScreen(Screen):
                 new_tax = old_tax + self.total_tax
                 new_aftertax = old_aftertax + self.total_amount
                 new_credits = old_credit + credits_spent
-                new_discount = old_discount + 0
+                new_discount = old_discount + self.discount_total
                 new_total = old_total + self.total_due
                 check_account.put(where={'customer_id': vars.CUSTOMER_ID, 'status': 3}, data={'pretax': new_subtotal,
                                                                                               'tax': new_tax,
@@ -10317,8 +10472,30 @@ class PickupScreen(Screen):
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     vars.EPSON.write('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_tax)))
+
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                    vars.EPSON.write('       TOTAL:')
+                    vars.EPSON.write('   After Tax:')
+                    vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    string_length = len(vars.us_dollar(self.total_amount))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    vars.EPSON.write('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.total_amount)))
+
+                    vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    vars.EPSON.write('      Credit:')
+                    vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    string_length = len(vars.us_dollar(self.credits_spent))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    vars.EPSON.write('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.credits_spent)))
+
+                    vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    vars.EPSON.write('    Discount:')
+                    vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    string_length = len(vars.us_dollar(self.discount_total))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    vars.EPSON.write('{}{}\n'.format(' ' * string_offset, vars.us_dollar(self.discount_total)))
+
+                    vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    vars.EPSON.write('         Due:')
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(vars.us_dollar(self.total_due))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
