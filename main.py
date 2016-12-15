@@ -5546,7 +5546,8 @@ class EditCustomerScreen(Screen):
                 'zipcode': Job.make_no_whitespace(data=self.zipcode.text),
                 'concierge_name': self.concierge_name.text,
                 'concierge_number': Job.make_numeric(data=self.concierge_number.text),
-                'special_instructions': self.special_instructions.text if self.special_instructions.text else None
+                'special_instructions': self.special_instructions.text if self.special_instructions.text else None,
+                'account': 1 if self.is_account.active else 0
             }
 
             # if self.is_account.active:
@@ -10207,8 +10208,8 @@ class PickupScreen(Screen):
             custs = customers.where({'user_id': vars.CUSTOMER_ID})
             if custs:
                 for customer in custs:
-                    old_account_total = customer['account_total']
-            new_account_total = float("%0.2f" % (old_account_total + self.total_due))
+                    old_account_total = customer['account_total'] if customer['account_total'] else 0
+            new_account_total = float("%0.2f" % (float(old_account_total) + float(self.total_due)))
             customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'account_total': new_account_total})
         else:
             transaction.status = 1
