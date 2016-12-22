@@ -236,6 +236,13 @@ created_at = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.tax_id,
         else:
             return False
 
+    def truncate(self):
+
+        self.c.execute("""DELETE FROM {t}""".format(t=table))
+        self.conn.commit()
+        self.c.execute("""DELETE FROM SQLITE_SEQUENCE WHERE name='{t}'""".format(t=table))
+        self.conn.commit()
+
 
     def getTaxRate(self, company_id):
         taxes = Tax().where({'company_id':self.company_id,'ORDER_BY':'id desc','LIMIT':1})

@@ -254,6 +254,13 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         else:
             return False
 
+    def truncate(self):
+
+        self.c.execute("""DELETE FROM {t}""".format(t=table))
+        self.conn.commit()
+        self.c.execute("""DELETE FROM SQLITE_SEQUENCE WHERE name='{t}'""".format(t=table))
+        self.conn.commit()
+
     def get_printer_ids(self, company_id, type):
 
         printers = self.where({'company_id': company_id,

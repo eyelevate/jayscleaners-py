@@ -556,7 +556,7 @@ class Sync:
             start,
             end
         )
-        print(url)
+        # print(url)
         try:
             r = request.urlopen(url)
             data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
@@ -661,3 +661,749 @@ class Sync:
             authenticated = users.auth(username=username, password=password)
             users.close_connection()
             return authenticated
+
+    def auto_update(selfs):
+        company_id = 1
+        api_token = '2064535930-1'
+        sync = Sync()
+
+        # addresses
+        table = 'addresses'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0: # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format('addresses'))
+                    #reset local db table
+                    addresses = Address()
+                    addresses.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start,idx_end))
+                            t1 = Thread(target=sync.get_chunk(table='addresses', start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table='addresses', start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # cards
+        table = 'cards'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    cards = Card()
+                    cards.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # cards
+        table = 'colors'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    colors = Colored()
+                    colors.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # companies
+        table = 'companies'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    companies = Company()
+                    companies.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # credits
+        table = 'credits'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    credits = Credit()
+                    credits.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # custids
+        table = 'custids'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    custids = Custid()
+                    custids.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # deliveries
+        table = 'deliveries'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    deliveries= Delivery()
+                    deliveries.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+
+        # discounts
+        table = 'discounts'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    discounts= Discount()
+                    discounts.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # inventories
+        table = 'inventories'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    inventories = Inventory()
+                    inventories.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # inventory Items
+        table = 'inventory_items'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    inventory_items = InventoryItem()
+                    inventory_items.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # invoice
+        table = 'invoices'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    invoices= Invoice()
+                    invoices.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+
+        # Invoice Items
+        table = 'invoice_items'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    invoice_items= InvoiceItem()
+                    invoice_items.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+
+        # discounts
+        table = 'memos'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    memos= Memo()
+                    memos.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+
+        # discounts
+        table = 'printers'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    printers= Printer()
+                    printers.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # profiles
+        table = 'profiles'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    profiles= Profile()
+                    profiles.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # discounts
+        table = 'reward_transactions'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    rt= RewardTransaction()
+                    rt.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # rewards
+        table = 'rewards'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    rewards= Reward()
+                    rewards.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # schedules
+        table = 'schedules'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    schedules= Schedule()
+                    schedules.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # transactions
+        table = 'transactions'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    tr= Transaction()
+                    tr.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # users
+        table = 'users'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    users= User()
+                    users.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        # zipcodes
+        table = 'zipcodes'
+        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        start = 0
+        end = 0
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    print('Deleting current db table = {} on local db'.format(table))
+                    # reset local db table
+                    zipcodes= Zipcode()
+                    zipcodes.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
+
+        print('Process Complete. Local database has been completely synced.')

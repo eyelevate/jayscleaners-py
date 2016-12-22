@@ -299,6 +299,12 @@ schedule_id = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (se
                 return id
         else:
             return False
+    def truncate(self):
+
+        self.c.execute("""DELETE FROM {t}""".format(t=table))
+        self.conn.commit()
+        self.c.execute("""DELETE FROM SQLITE_SEQUENCE WHERE name='{t}'""".format(t=table))
+        self.conn.commit()
 
     def get_last_insert_id(self):
         sql = '''SELECT last_insert_rowid();'''

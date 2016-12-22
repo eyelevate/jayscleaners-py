@@ -332,6 +332,13 @@ updated_at = ?, server_at = ? WHERE id = ?'''.format(
                 list.append(company['name'])
         return list
 
+    def truncate(self):
+
+        self.c.execute("""DELETE FROM {t}""".format(t=table))
+        self.conn.commit()
+        self.c.execute("""DELETE FROM SQLITE_SEQUENCE WHERE name='{t}'""".format(t=table))
+        self.conn.commit()
+
     def close_connection(self):
         self.c.close()
         self.conn.close()

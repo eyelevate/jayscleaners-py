@@ -297,6 +297,13 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_items_id,
         else:
             return False
 
+    def truncate(self):
+
+        self.c.execute("""DELETE FROM {t}""".format(t=table))
+        self.conn.commit()
+        self.c.execute("""DELETE FROM SQLITE_SEQUENCE WHERE name='{t}'""".format(t=table))
+        self.conn.commit()
+
     def total_tags(self, invoice_id):
         total = 0
         invoice_items = self.where({'invoice_id': invoice_id})

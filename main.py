@@ -379,11 +379,12 @@ class MainScreen(Screen):
 
         # sync.migrate()
         # sync.run_sync()
-        # sync.get_chunk(table='custids', start=5001, end=10000)
+        # sync.get_chunk(table='invoices', start=65001, end=75000)
+
+        sync.auto_update()
 
         # vars.WORKLIST.append("Sync")
         # threads_start()
-        print(6/2*(1+2))
 
     def test_sys(self):
         Sync().migrate()

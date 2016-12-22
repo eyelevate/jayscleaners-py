@@ -296,6 +296,13 @@ WHERE id = ?'''.format(t=table), (self.trans_id,
         else:
             return False
 
+    def truncate(self):
+
+        self.c.execute("""DELETE FROM {t}""".format(t=table))
+        self.conn.commit()
+        self.c.execute("""DELETE FROM SQLITE_SEQUENCE WHERE name='{t}'""".format(t=table))
+        self.conn.commit()
+
     def get_last_insert_id(self):
         return self.c.lastrowid
 

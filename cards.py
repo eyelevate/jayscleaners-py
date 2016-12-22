@@ -457,3 +457,11 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
         else:
             return {'status': False,
                     'message': 'Could not authenticate with server'}
+
+
+    def truncate(self):
+
+        self.c.execute("""DELETE FROM {t}""".format(t=table))
+        self.conn.commit()
+        self.c.execute("""DELETE FROM SQLITE_SEQUENCE WHERE name='{t}'""".format(t=table))
+        self.conn.commit()
