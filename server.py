@@ -29,10 +29,10 @@ now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
 
 def sync_from_server(data):
-    print('sync from server')
+    # print('sync from server')
     # start upload text
     # print(data)
-    print(data['rows_to_create'])
+    # print(data['rows_to_create'])
     if int(data['rows_to_create']) > 0:
         updates = data['updates']
         if 'addresses' in updates:

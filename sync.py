@@ -273,6 +273,8 @@ class Sync:
                     invoices_2[idx]['rack_date'] = None
                 except ValueError:
                     invoices_2[idx]['rack_date'] = None
+                except OverflowError:
+                    invoices_2[idx]['rack_date'] = None
             to_update['invoices'] = invoices_2
             to_update_rows += len(to_update['invoices'])
 
@@ -1407,3 +1409,4 @@ class Sync:
             print(e)
 
         print('Process Complete. Local database has been completely synced.')
+        Company().server_at_update()

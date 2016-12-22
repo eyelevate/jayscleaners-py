@@ -292,7 +292,7 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
                 payment_gateway_id = str(company['payment_gateway_id'])
         if payment_api_login and payment_gateway_id:
             authorize.Configuration.configure(
-                authorize.Environment.TEST,
+                authorize.Environment.PRODUCTION,
                 payment_api_login,
                 payment_gateway_id,
             )
