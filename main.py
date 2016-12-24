@@ -52,11 +52,14 @@ import asyncio
 import calendar
 from calendar import Calendar
 from decimal import *
+import urllib
+from urllib import error, request, parse
 
 getcontext().prec = 3
 from kv_generator import KvString
 from jobs import Job
 from static import Static
+from multiprocessing import Process
 import threading
 import queue
 import authorize
@@ -71,6 +74,7 @@ import usb.core
 import usb.util
 import webbrowser
 import math
+from kivy.clock import Clock
 
 from kivy.app import App
 from kivy.factory import Factory
@@ -202,6 +206,11 @@ class MainScreen(Screen):
     login_popup = ObjectProperty(None)
     login_button = ObjectProperty(None)
     item_search_button = ObjectProperty(None)
+    main_popup = Popup()
+    pb_table = ObjectProperty(None)
+    pb_items = ObjectProperty(None)
+    table_description = ObjectProperty(None)
+    item_description = ObjectProperty(None)
 
     def update_info(self):
         info = "Last updated {}".format("today")
@@ -366,7 +375,8 @@ class MainScreen(Screen):
         # sync.migrate()
         # SYNC.db_sync()
 
-        # test multithreading here
+        # quick sync
+
         vars.WORKLIST.append("Sync")
         threads_start()
 
@@ -374,17 +384,63 @@ class MainScreen(Screen):
 
         # self.update_label.text = 'Server updated at {}'.format()
 
-    def sync_db(self):
+    def sync_db_popup(self):
+
+        self.main_popup.title = 'Auto Sync'
+        layout = BoxLayout(orientation="vertical")
+        inner_layout_1 = Factory.ScrollGrid()
+        inner_layout_1.ids.main_table.cols = 1
+        table_label = Factory.BottomLeftFormLabel(text="Overall Progress")
+        items_label = Factory.BottomLeftFormLabel(text="Table Progress")
+        self.pb_table = ProgressBar(max=21)
+        self.pb_items = ProgressBar()
+        self.table_description = Factory.TopLeftFormLabel()
+        self.item_description = Factory.TopLeftFormLabel()
+
+        inner_layout_1.ids.main_table.add_widget(table_label)
+        inner_layout_1.ids.main_table.add_widget(self.pb_table)
+        inner_layout_1.ids.main_table.add_widget(self.table_description)
+        inner_layout_1.ids.main_table.add_widget(items_label)
+        inner_layout_1.ids.main_table.add_widget(self.pb_items)
+        inner_layout_1.ids.main_table.add_widget(self.item_description)
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1,0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=self.main_popup.dismiss)
+        run_sync_button = Button(text="Run",
+                                 on_release=self.sync_db)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(run_sync_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.main_popup.content = layout
+        self.main_popup.open()
+
+    def set_pb_desc(self,description, *args, **kwargs):
+        self.table_description.text= description
+
+    def set_pb_value(self, value, *args, **kwargs):
+        self.pb_table.value = int(value)
+
+    def set_pb_items_desc(self,description, *args, **kwargs):
+        self.item_description.text = description
+
+    def set_pb_items_value(self, value, *args, **kwargs):
+        self.pb_items.value = int(value)
+
+    def set_pb_items_max(self, value, *args, **kwargs):
+        self.pb_items.max = int(value)
+
+
+    def sync_db(self, *args, **kwargs):
         sync = Sync()
 
-        # sync.migrate()
-        # sync.run_sync()
-        # sync.get_chunk(table='invoices', start=65001, end=75000)
 
-        sync.auto_update()
+        t1 = Thread(target=sync.auto_update,args=())
+        t1.start()
+        t1.join()
+        print('all done')
 
-        # vars.WORKLIST.append("Sync")
-        # threads_start()
 
     def test_sys(self):
         Sync().migrate()

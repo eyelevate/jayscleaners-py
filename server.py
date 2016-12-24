@@ -356,7 +356,6 @@ def sync_from_server(data):
 
         if 'invoice_items' in updates:
             for invoice_items in updates['invoice_items']:
-                print(invoice_items)
                 invoice_item = InvoiceItem()
                 invoice_item.invoice_items_id = invoice_items['id']
                 invoice_item.invoice_id = invoice_items['invoice_id']
@@ -758,7 +757,7 @@ def update_database(data):
 
             if 'invoices' in saved:
                 for invoices in saved['invoices']:
-                    print(invoices)
+
                     invoice = Invoice()
                     where = {'id': invoices['id']}
                     data = {'invoice_id': invoices['invoice_id']}
@@ -766,7 +765,7 @@ def update_database(data):
 
             if 'invoice_items' in saved:
                 for invoice_items in saved['invoice_items']:
-                    print(invoice_items)
+
                     invoice_item = InvoiceItem()
                     where = {'id': invoice_items['id']}
                     data = {'invoice_items_id': invoice_items['invoice_items_id']}

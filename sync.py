@@ -547,7 +547,7 @@ class Sync:
             except urllib.error.URLError as e:
                 print('This is a chunk error: {}'.format(e.reason))
 
-    def get_chunk(self, table=False, start=False, end=False):
+    def get_chunk(self, table=False, start=False, end=False, *args, **kwargs):
         company_id = 1
         api_token = '2064535930-1'
 
@@ -665,40 +665,32 @@ class Sync:
             return authenticated
 
     def auto_update(selfs):
-        company_id = 1
-        api_token = '2064535930-1'
         sync = Sync()
-
         # addresses
         table = 'addresses'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table,1))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
-                if int(end - start) > 0: # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format('addresses'))
-                    #reset local db table
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    # reset local db table
                     addresses = Address()
                     addresses.truncate()
                     if end > 5000:
                         for num in range(start, end, 5000):
                             idx_start = num
                             idx_end = num + 5000
-                            print('Obtaining rows {} through {}'.format(idx_start,idx_end))
-                            t1 = Thread(target=sync.get_chunk(table='addresses', start=idx_start, end=idx_end))
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
                             t1.start()
                             t1.join()
-
-
                     else:
-                        print('Obtaining rows {} through {}'.format(0, 5000))
-                        t1 = Thread(target=sync.get_chunk(table='addresses', start=0, end=5000))
+                        print('Obtaining rows {} through {}'.format(start, end))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
                         t1.start()
                         t1.join()
         except urllib.error.URLError as e:
@@ -707,17 +699,15 @@ class Sync:
         # cards
         table = 'cards'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 2))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    msg = 'Deleting current db table = {} on local db'.format(table)
                     # reset local db table
                     cards = Card()
                     cards.truncate()
@@ -729,30 +719,25 @@ class Sync:
                             t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
                             t1.start()
                             t1.join()
-
-
                     else:
-                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        print('Obtaining rows {} through {}'.format(start, end))
                         t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
                         t1.start()
                         t1.join()
         except urllib.error.URLError as e:
             print(e)
 
-        # cards
+        # colors
         table = 'colors'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 3))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
                     # reset local db table
                     colors = Colored()
                     colors.truncate()
@@ -764,10 +749,8 @@ class Sync:
                             t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
                             t1.start()
                             t1.join()
-
-
                     else:
-                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        print('Obtaining rows {} through {}'.format(start, end))
                         t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
                         t1.start()
                         t1.join()
@@ -777,17 +760,14 @@ class Sync:
         # companies
         table = 'companies'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 4))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
                     # reset local db table
                     companies = Company()
                     companies.truncate()
@@ -795,14 +775,12 @@ class Sync:
                         for num in range(start, end, 5000):
                             idx_start = num
                             idx_end = num + 5000
-                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            print('Obtaining rows {} through {}'.format(start, end))
                             t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
                             t1.start()
                             t1.join()
-
-
                     else:
-                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        print('Obtaining rows {} through {}'.format(start, end))
                         t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
                         t1.start()
                         t1.join()
@@ -812,32 +790,28 @@ class Sync:
         # credits
         table = 'credits'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 5))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
                     # reset local db table
                     credits = Credit()
                     credits.truncate()
                     if end > 5000:
                         for num in range(start, end, 5000):
+
                             idx_start = num
                             idx_end = num + 5000
                             print('Obtaining rows {} through {}'.format(idx_start, idx_end))
                             t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
                             t1.start()
                             t1.join()
-
-
                     else:
-                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        print('Obtaining rows {} through {}'.format(start, end))
                         t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
                         t1.start()
                         t1.join()
@@ -847,32 +821,29 @@ class Sync:
         # custids
         table = 'custids'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 6))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+
                     # reset local db table
                     custids = Custid()
                     custids.truncate()
                     if end > 5000:
                         for num in range(start, end, 5000):
+
                             idx_start = num
                             idx_end = num + 5000
                             print('Obtaining rows {} through {}'.format(idx_start, idx_end))
                             t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
                             t1.start()
                             t1.join()
-
-
                     else:
-                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        print('Obtaining rows {} through {}'.format(start, end))
                         t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
                         t1.start()
                         t1.join()
@@ -882,17 +853,15 @@ class Sync:
         # deliveries
         table = 'deliveries'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 7))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     deliveries= Delivery()
                     deliveries.truncate()
@@ -918,17 +887,15 @@ class Sync:
         # discounts
         table = 'discounts'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 8))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     discounts= Discount()
                     discounts.truncate()
@@ -953,17 +920,15 @@ class Sync:
         # inventories
         table = 'inventories'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 9))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     inventories = Inventory()
                     inventories.truncate()
@@ -988,17 +953,15 @@ class Sync:
         # inventory Items
         table = 'inventory_items'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 10))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     inventory_items = InventoryItem()
                     inventory_items.truncate()
@@ -1023,17 +986,15 @@ class Sync:
         # invoice
         table = 'invoices'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 11))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     invoices= Invoice()
                     invoices.truncate()
@@ -1059,17 +1020,15 @@ class Sync:
         # Invoice Items
         table = 'invoice_items'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 12))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     invoice_items= InvoiceItem()
                     invoice_items.truncate()
@@ -1095,17 +1054,15 @@ class Sync:
         # discounts
         table = 'memos'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 13))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     memos= Memo()
                     memos.truncate()
@@ -1131,17 +1088,15 @@ class Sync:
         # discounts
         table = 'printers'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 14))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     printers= Printer()
                     printers.truncate()
@@ -1166,17 +1121,15 @@ class Sync:
         # profiles
         table = 'profiles'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 15))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if (count_data['status'] is 200):
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
-
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     profiles= Profile()
                     profiles.truncate()
@@ -1201,8 +1154,7 @@ class Sync:
         # discounts
         table = 'reward_transactions'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 16))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
@@ -1211,7 +1163,7 @@ class Sync:
                 end = int(count_data['data']['last_row'])
 
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     rt= RewardTransaction()
                     rt.truncate()
@@ -1236,8 +1188,7 @@ class Sync:
         # rewards
         table = 'rewards'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 17))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
@@ -1246,7 +1197,7 @@ class Sync:
                 end = int(count_data['data']['last_row'])
 
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     rewards= Reward()
                     rewards.truncate()
@@ -1271,8 +1222,7 @@ class Sync:
         # schedules
         table = 'schedules'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 18))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
@@ -1281,7 +1231,7 @@ class Sync:
                 end = int(count_data['data']['last_row'])
 
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     schedules= Schedule()
                     schedules.truncate()
@@ -1306,8 +1256,7 @@ class Sync:
         # transactions
         table = 'transactions'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 19))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
@@ -1316,7 +1265,7 @@ class Sync:
                 end = int(count_data['data']['last_row'])
 
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     tr= Transaction()
                     tr.truncate()
@@ -1341,8 +1290,7 @@ class Sync:
         # users
         table = 'users'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 20))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
@@ -1351,7 +1299,7 @@ class Sync:
                 end = int(count_data['data']['last_row'])
 
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     users= User()
                     users.truncate()
@@ -1376,8 +1324,7 @@ class Sync:
         # zipcodes
         table = 'zipcodes'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
-        start = 0
-        end = 0
+        print('Syncing table - {} ({} / 21)'.format(table, 21))
         try:
             r = request.urlopen(url)
             count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
@@ -1386,7 +1333,7 @@ class Sync:
                 end = int(count_data['data']['last_row'])
 
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    print('Deleting current db table = {} on local db'.format(table))
+                    
                     # reset local db table
                     zipcodes= Zipcode()
                     zipcodes.truncate()
