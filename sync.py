@@ -1051,7 +1051,7 @@ class Sync:
             print(e)
 
 
-        # discounts
+        # memos
         table = 'memos'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 13))
@@ -1085,7 +1085,7 @@ class Sync:
             print(e)
 
 
-        # discounts
+        # printers
         table = 'printers'
         url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 14))

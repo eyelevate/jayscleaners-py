@@ -54,6 +54,7 @@ from calendar import Calendar
 from decimal import *
 import urllib
 from urllib import error, request, parse
+from zebra import zebra
 
 getcontext().prec = 3
 from kv_generator import KvString
@@ -384,6 +385,24 @@ class MainScreen(Screen):
 
         # self.update_label.text = 'Server updated at {}'.format()
 
+    def test_label_printer(self):
+        z = zebra()
+        z.getqueues()
+        print(z.getqueues())
+        z.setqueue('TLP2844')
+#         z.output('''
+# N
+# q304
+# Q203
+# D7
+# B65,10,0,1,1,3,50,B,"12345"
+# A65,100,0,2,1,1,N,"test12345"
+# A65,130,0,2,1,1,N,"wondo choung"
+# P1
+# ''')
+        print(z)
+        print('test')
+
     def sync_db_popup(self):
 
         self.main_popup.title = 'Auto Sync'
@@ -531,56 +550,6 @@ class MainScreen(Screen):
             sys.stdout.write('\a')
             sys.stdout.flush()
 
-    # def print_setup_tag(self, vendor_id, product_id):
-    #     vendor_int = int(vendor_id, 16)
-    #     vendor_id_hex = hex(vendor_int)
-    #     product_int = int(product_id, 16)
-    #     product_id_hex = hex(product_int)
-    #     interface_number = 0
-    #     in_ep = 0x81
-    #     out_ep = 0x02
-    #
-    #     # find our device
-    #     dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
-    #     print(vars.BIXOLON)
-    #     # was it found?
-    #     if dev:
-    #
-    #         # set the active configuration. With no arguments, the first
-    #         # configuration will be the active one
-    #         dev.set_configuration()
-    #
-    #         # get an endpoint instance
-    #         cfg = dev.get_active_configuration()
-    #         intf = cfg[(0, 0)]
-    #         for cfg in dev:
-    #             sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
-    #             for intf in cfg:
-    #                 interface_number = intf.bInterfaceNumber
-    #                 idx = 0
-    #                 for ep in intf:
-    #                     print(hex(ep.bEndpointAddress))
-    #                     idx += 1
-    #                     if idx is 1:
-    #                         in_ep = ep.bEndpointAddress
-    #                     elif idx is 2:
-    #                         out_ep = ep.bEndpointAddress
-    #
-    #         # vars.BIXOLON = Usb(vendor_int, product_int, interface=interface_number, in_ep=130, out_ep=1)
-    #         try:
-    #             vars.BIXOLON = Usb(0x0419, 0x3c01, 0, 0x82, 0x01)
-    #         except AttributeError as e:
-    #             print(e)
-    #
-    #     else:
-    #         popup = Popup()
-    #         popup.title = 'Printer Error'
-    #         content = KV.popup_alert('Tag printer not found.')
-    #         popup.content = Builder.load_string(content)
-    #         popup.open()
-    #         # Beep Sound
-    #         sys.stdout.write('\a')
-    #         sys.stdout.flush()
 
     def print_setup(self, vendor_id, product_id):
         vendor_int = int(vendor_id, 16)
