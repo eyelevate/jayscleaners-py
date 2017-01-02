@@ -21,6 +21,7 @@ class Static:
     THREADS = []
     EPSON = None
     BIXOLON = None
+    ZEBRA = None
 
     def update_last_10(self):
         if self.CUSTOMER_ID in self.LAST10:

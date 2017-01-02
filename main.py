@@ -54,7 +54,6 @@ from calendar import Calendar
 from decimal import *
 import urllib
 from urllib import error, request, parse
-from zebra import zebra
 
 getcontext().prec = 3
 from kv_generator import KvString
@@ -313,6 +312,11 @@ class MainScreen(Screen):
                 if print_data_tag:
                     for prt in print_data_tag:
                         self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
+
+                print_data_label = Printer().where({'company_id': auth_user.company_id, 'type': 3})
+                if print_data_label:
+                    for prl in print_data_label:
+                        self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
                 popup.title = 'Authentication Success!'
                 popup.content = Builder.load_string(
                     KV.popup_alert('You are now logged in as {}!'.format(user.username)))
@@ -341,6 +345,10 @@ class MainScreen(Screen):
                     if print_data_tag:
                         for prt in print_data_tag:
                             self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
+                    print_data_label = Printer().where({'company_id': auth_user.company_id, 'type': 3})
+                    if print_data_label:
+                        for prl in print_data_label:
+                            self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
 
                     SYNC.company_id = data['company_id']
                     popup.title = 'Authentication Success!'
@@ -385,23 +393,43 @@ class MainScreen(Screen):
 
         # self.update_label.text = 'Server updated at {}'.format()
 
-    def test_label_printer(self):
-        z = zebra()
-        z.getqueues()
-        print(z.getqueues())
-        z.setqueue('TLP2844')
-#         z.output('''
-# N
-# q304
-# Q203
-# D7
-# B65,10,0,1,1,3,50,B,"12345"
-# A65,100,0,2,1,1,N,"test12345"
-# A65,130,0,2,1,1,N,"wondo choung"
-# P1
-# ''')
-        print(z)
-        print('test')
+    def print_setup_label(self, vendor_id, product_id):
+        vendor_int = int(vendor_id, 16)
+        product_int = int(product_id, 16)
+        # find our device
+        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
+
+        # was it found?
+        if dev is not None:
+            print('device found')
+
+            # set the active configuration. With no arguments, the first
+            # configuration will be the active one
+            dev.set_configuration()
+
+            # get an endpoint instance
+            cfg = dev.get_active_configuration()
+            intf = cfg[(0, 0)]
+
+            vars.ZEBRA = usb.util.find_descriptor(
+                intf,
+                # match the first OUT endpoint
+                custom_match= \
+                    lambda e: \
+                        usb.util.endpoint_direction(e.bEndpointAddress) == \
+                        usb.util.ENDPOINT_OUT)
+
+        else:
+            vars.ZEBRA = False
+            popup = Popup()
+            popup.title = 'Printer Error'
+            content = KV.popup_alert('Tag printer not found.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
 
     def sync_db_popup(self):
 
@@ -465,14 +493,7 @@ class MainScreen(Screen):
         Sync().migrate()
 
     def test_mark(self):
-        # marks = Custid()
-        # customers = User()
-        # starch = customers.get_starch(3)
-        # custid = marks.create_customer_mark(last_name='Tim',
-        #                                     customer_id=str(6251) if Job.is_int(6251) else '6251',
-        #                                     starch='Medium')
-        # print(starch)
-        # print(custid)
+
         invoices = Invoice()
         data = {'id': {'>': 0}}
         invs = invoices.where(data)
@@ -503,15 +524,8 @@ class MainScreen(Screen):
         pass
 
     def print_setup_test(self):
-        print('start')
-        pr = Printer()
-        vars.EPSON.write(
-            pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
-                        invert=False, smooth=False, flip=False))
-        vars.EPSON.write('test \n')
-        vars.EPSON.write(pr.pcmd_barcode('123456'))
 
-        vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
+        pass
 
     def print_setup_tag(self, vendor_id, product_id):
         vendor_int = int(vendor_id, 16)
@@ -11134,6 +11148,8 @@ class SearchScreen(Screen):
     total_input = None
     tendered_input = None
     payment_type = None
+    label_input = None
+    tag_input = None
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
@@ -11181,6 +11197,8 @@ class SearchScreen(Screen):
         self.total_input = None
         self.tendered_input = None
         self.payment_type = None
+        self.label_input = None
+        self.tag_input = None
 
         if vars.SEARCH_RESULTS_STATUS:
             self.edit_invoice_btn.disabled = False if vars.INVOICE_ID is not None else True
@@ -13181,6 +13199,114 @@ class SearchScreen(Screen):
             popup = Popup()
             popup.title = 'Reprint Error'
             content = KV.popup_alert('Please select an invoice item to print tag.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+
+    def label_popup(self):
+        popup = Popup()
+        popup.title = "Label Management"
+        layout = BoxLayout(orientation="vertical")
+        inner_layout_1 = Factory.ScrollGrid()
+        inner_layout_1.ids.main_table.cols = 1
+        label_form = Factory.BottomLeftFormLabel(text="Label Count")
+        self.label_input = Factory.CenterVerticalTextInput()
+        tag_form = Factory.BottomLeftFormLabel(text="Tag ID")
+        self.tag_input = Factory.CenterVerticalTextInput()
+        inner_layout_1.ids.main_table.add_widget(label_form)
+        inner_layout_1.ids.main_table.add_widget(self.label_input)
+        inner_layout_1.ids.main_table.add_widget(tag_form)
+        inner_layout_1.ids.main_table.add_widget(self.tag_input)
+        inner_layout_2 = BoxLayout(orientation="horizontal",
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(text="cancel",
+                               on_release=popup.dismiss)
+        print_button = Button(text="Print",
+                              on_release=self.print_label)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(print_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        popup.content = layout
+        popup.open()
+
+    def print_label(self, *args, **kwargs):
+        if vars.CUSTOMER_ID:
+            count = int(self.label_input.text)
+            row_mark = (count / 4)
+            rows = math.ceil(row_mark) if row_mark > 0 else 0
+            labels = []
+            users = User().where({'user_id':vars.CUSTOMER_ID})
+            name = ''
+            if users:
+                for user in users:
+                    first_name = user['first_name'][1:].capitalize()
+                    last_name = user['last_name'].capitalize()
+                    name = '{}.{}'.format(first_name,
+                                          last_name)
+
+
+            if rows > 0:
+                idx = 0
+                for i in range(rows):
+                    idx += 1
+                    if idx <= count:
+                        labels.append([1,2,3,4])
+            midx = 0
+            for label in labels:
+                inititate = '''
+    N
+    D15
+    '''
+                content = ''
+                a = 345
+                b = 330
+                c = 310
+                close = '''
+P1
+'''
+                for lidx in label:
+                    midx += 1
+                    if midx <= count:
+                        a_horizontal = a - (lidx * 65)
+                        b_horizontal = b - (lidx * 65)
+                        c_horizontal = c - (lidx * 65)
+                        content = '''
+A{a},20,1,1,1,1,N,"{name}"
+B{b},1,1,1,2,1,20,N,"{cust_id}"
+A{c},20,1,1,1,1,N,"{tag}"
+'''.format(a=a_horizontal,
+           b=b_horizontal,
+           c=c_horizontal,
+           name=name,
+           cust_id=vars.CUSTOMER_ID,
+           tag=str(self.tag_input.text))
+                    else:
+
+                        final_content = '''
+{a}
+{b}
+{c}
+'''.format(a=inititate,
+           b=content,
+           c=close)
+                        vars.ZEBRA.write(final_content)
+                        break
+
+                final_content = '''
+{a}
+{b}
+{c}
+'''.format(a=inititate,
+            b=content,
+            c=close)
+            vars.ZEBRA.write(final_content)
+        else:
+            popup = Popup()
+            popup.title = 'Label Error'
+            content = KV.popup_alert('Please select a customer before printing out a label')
             popup.content = Builder.load_string(content)
             popup.open()
             # Beep Sound
