@@ -994,7 +994,7 @@ class Sync:
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    
+
                     # reset local db table
                     invoices= Invoice()
                     invoices.truncate()
@@ -1028,7 +1028,7 @@ class Sync:
                 start = int(count_data['data']['first_row'])
                 end = int(count_data['data']['last_row'])
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    
+
                     # reset local db table
                     invoice_items= InvoiceItem()
                     invoice_items.truncate()
