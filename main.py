@@ -8708,7 +8708,7 @@ class NewCustomerScreen(Screen):
         self.special_instructions.disabled = True
         self.is_delivery.active = False
         self.is_account.active = False
-
+        self.main_grid.clear_widgets()
         self.main_grid.add_widget(Factory.BottomLeftFormLabel(text="Phone"))
         self.phone = Factory.CenterVerticalTextInput()
         self.main_grid.add_widget(self.phone)
