@@ -357,7 +357,7 @@ class Sync:
             to_update['zipcodes'] = zipcodes_2
             to_update_rows += len(to_update['zipcodes'])
 
-        error_find = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+        error_find = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
             cid=company.id,
             api=company.api_token,
             servat=company.server_at,
@@ -365,7 +365,7 @@ class Sync:
             update=json.dumps(to_update).replace(" ", "__")
         )
         print(error_find)
-        url = 'http://74.207.240.88/admins/api/update'
+        url = 'http://www.jayscleaners.com/admins/api/update'
 
         # attempt to connect to server
         data = parse.urlencode({'cid': company.id,
@@ -408,7 +408,7 @@ class Sync:
             #         update_string = json.dumps(to_update).replace(" ", "__")
             #
             #         # first check the length of update
-            #         url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+            #         url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
             #             cid=company.id,
             #             api=company.api_token,
             #             servat=company.server_at,
@@ -446,7 +446,7 @@ class Sync:
             #                     if rows:
             #                         for row in rows:
             #                             to_upload_chunk[table] = chunk_up_list[table][row]
-            #                             url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+            #                             url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
             #                                 cid=company.id,
             #                                 api=company.api_token,
             #                                 servat=company.server_at,
@@ -459,7 +459,7 @@ class Sync:
             #                             print('sent update #{}'.format(row))
             #
             #             # Update chunk
-            #             url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+            #             url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
             #                 cid=company.id,
             #                 api=company.api_token,
             #                 servat=company.server_at,
@@ -497,7 +497,7 @@ class Sync:
             #                         if rows:
             #                             for row in rows:
             #                                 to_update_chunk[table] = chunk_upd_list[table][row]
-            #                                 url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+            #                                 url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
             #                                     cid=company.id,
             #                                     api=company.api_token,
             #                                     servat=company.server_at,
@@ -514,7 +514,7 @@ class Sync:
             # if e.reason == 'Not Found':  # we found a / in the string replace it with a OR
             #     upload = json.dumps(to_upload).replace(" ", "__").replace("/", "OR")
             #     update = json.dumps(to_update).replace(" ", "__").replace("/", "OR")
-            #     url = 'http://74.207.240.88/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
+            #     url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
             #         cid=company.id,
             #         api=company.api_token,
             #         servat=company.server_at,
@@ -551,7 +551,7 @@ class Sync:
         company_id = 1
         api_token = '2064535930-1'
 
-        url = 'http://74.207.240.88/admins/api/chunk/{}/{}/{}/{}/{}'.format(
+        url = 'http://www.jayscleaners.com/admins/api/chunk/{}/{}/{}/{}/{}'.format(
             company_id,
             api_token,
             table,
@@ -640,7 +640,7 @@ class Sync:
 
     def server_login(self, username, password):
         users = User()
-        url = 'http://74.207.240.88/admins/api/authenticate/{}/{}'.format(
+        url = 'http://www.jayscleaners.com/admins/api/authenticate/{}/{}'.format(
             username,
             password
         )
@@ -668,7 +668,7 @@ class Sync:
         sync = Sync()
         # addresses
         table = 'addresses'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table,1))
         try:
             r = request.urlopen(url)
@@ -698,7 +698,7 @@ class Sync:
 
         # cards
         table = 'cards'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 2))
         try:
             r = request.urlopen(url)
@@ -729,7 +729,7 @@ class Sync:
 
         # colors
         table = 'colors'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 3))
         try:
             r = request.urlopen(url)
@@ -759,7 +759,7 @@ class Sync:
 
         # companies
         table = 'companies'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 4))
         try:
             r = request.urlopen(url)
@@ -789,7 +789,7 @@ class Sync:
 
         # credits
         table = 'credits'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 5))
         try:
             r = request.urlopen(url)
@@ -820,7 +820,7 @@ class Sync:
 
         # custids
         table = 'custids'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 6))
         try:
             r = request.urlopen(url)
@@ -852,7 +852,7 @@ class Sync:
 
         # deliveries
         table = 'deliveries'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 7))
         try:
             r = request.urlopen(url)
@@ -886,7 +886,7 @@ class Sync:
 
         # discounts
         table = 'discounts'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 8))
         try:
             r = request.urlopen(url)
@@ -919,7 +919,7 @@ class Sync:
 
         # inventories
         table = 'inventories'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 9))
         try:
             r = request.urlopen(url)
@@ -952,7 +952,7 @@ class Sync:
 
         # inventory Items
         table = 'inventory_items'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 10))
         try:
             r = request.urlopen(url)
@@ -985,7 +985,7 @@ class Sync:
 
         # invoice
         table = 'invoices'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 11))
         try:
             r = request.urlopen(url)
@@ -1019,7 +1019,7 @@ class Sync:
 
         # Invoice Items
         table = 'invoice_items'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 12))
         try:
             r = request.urlopen(url)
@@ -1053,7 +1053,7 @@ class Sync:
 
         # memos
         table = 'memos'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 13))
         try:
             r = request.urlopen(url)
@@ -1087,7 +1087,7 @@ class Sync:
 
         # printers
         table = 'printers'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 14))
         try:
             r = request.urlopen(url)
@@ -1120,7 +1120,7 @@ class Sync:
 
         # profiles
         table = 'profiles'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://ja/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 15))
         try:
             r = request.urlopen(url)
@@ -1153,7 +1153,7 @@ class Sync:
 
         # discounts
         table = 'reward_transactions'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 16))
         try:
             r = request.urlopen(url)
@@ -1187,7 +1187,7 @@ class Sync:
 
         # rewards
         table = 'rewards'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 17))
         try:
             r = request.urlopen(url)
@@ -1221,7 +1221,7 @@ class Sync:
 
         # schedules
         table = 'schedules'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 18))
         try:
             r = request.urlopen(url)
@@ -1255,7 +1255,7 @@ class Sync:
 
         # transactions
         table = 'transactions'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 19))
         try:
             r = request.urlopen(url)
@@ -1289,7 +1289,7 @@ class Sync:
 
         # users
         table = 'users'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 20))
         try:
             r = request.urlopen(url)
@@ -1323,7 +1323,7 @@ class Sync:
 
         # zipcodes
         table = 'zipcodes'
-        url = 'http://74.207.240.88/admins/api/auto/{}'.format(table)
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
         print('Syncing table - {} ({} / 21)'.format(table, 21))
         try:
             r = request.urlopen(url)
