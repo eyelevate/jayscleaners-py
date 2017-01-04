@@ -12796,10 +12796,11 @@ class SearchScreen(Screen):
             for ii in invitems:
                 invoice_items_id = ii['invoice_items_id']
                 iitem_id = ii['item_id']
+                tags_to_print = 1
                 try:
                     tags_to_print = InventoryItem().tagsToPrint(iitem_id)
                 except TypeError:
-                    print(iitem_id)
+                    tags_to_print = 1
                 item_name = InventoryItem().getItemName(iitem_id)
                 item_color = ii['color']
                 item_memo = ii['memo']
