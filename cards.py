@@ -326,11 +326,13 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
                         card['first_name'] = result.payment_profile.bill_to.first_name
                         card['last_name'] = result.payment_profile.bill_to.last_name
                         cards_update.append(card)
-
+                print(cards_update)
                 return cards_update
             else:
+                print('collection failed')
                 return False
         else:
+            print('no such profile id or paymentid')
             return False
 
     def create_profile(self, company_id, data):
