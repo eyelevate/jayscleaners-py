@@ -1760,7 +1760,7 @@ GridLayout:
         self.items_grid.add_widget(Builder.load_string(item_th4))
         self.items_grid.add_widget(Builder.load_string(item_th5))
 
-        if self.invoice_list_copy[vars.ITEM_ID]:
+        if vars.ITEM_ID in self.invoice_list_copy:
             idx = -1
             for items in self.invoice_list_copy[vars.ITEM_ID]:
                 idx += 1
