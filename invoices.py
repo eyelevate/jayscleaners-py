@@ -3,8 +3,7 @@ import time
 import sqlite3
 from model import *
 
-unix = time.time()
-now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+
 table = 'invoices'
 
 
@@ -27,8 +26,8 @@ class Invoice:
     transaction_id = None
     status = None
     deleted_at = None
-    created_at = now
-    updated_at = now
+    created_at = None
+    updated_at = None
 
     def __init__(self):
         """Create the database and the table if they do not exist"""
