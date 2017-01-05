@@ -1,7 +1,6 @@
 <MainScreen>:
     id:screen_main
     name:"main"
-    update_label:update_data_label
     settings_button: settings_button
     reports_button: reports_button
     delivery_button: delivery_button
@@ -86,16 +85,9 @@
     Button:
         id: update_button
         text:"Update"
-        disabled:False
+        disabled:True
         on_release: root.sync_db_popup()
         size_hint: 0.1,0.1
         pos_hint: {'x':0, 'y':0}
         font_size:'20sp'
-    Label:
-        id: update_data_label
-        text:root.update_info()
-        size_hint_y: None
-        text_size: self.width, None
-        height: self.texture_size[1]
-        pos_hint: {'x':0.1, 'y':0}
-        font_size:'20sp'
+

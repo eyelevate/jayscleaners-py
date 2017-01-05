@@ -4684,7 +4684,7 @@ GridLayout:
                             'tax': '%.2f' % self.tax,
                             'total': '%.2f' % self.total,
                             'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))})
-
+        time.sleep(1)
         run_sync = threading.Thread(target=SYNC.run_sync)
         try:
             run_sync.start()
@@ -4747,11 +4747,11 @@ GridLayout:
                     customers.role_id = user['role_id']
                     customers.remember_token = user['remember_token']
 
-            if not type or not vars.EPSON:
+            if not type:
                 self.set_result_status()
                 self.print_popup.dismiss()
                 pass
-            elif type == 2:
+            elif type is 2:
                 vars.EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                              invert=False, smooth=False, flip=False))
                 vars.EPSON.write("{}\n".format(companies.name))
@@ -4990,7 +4990,7 @@ GridLayout:
                         # Cut paper
                         vars.EPSON.write('\n\n\n\n\n\n')
                         vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
-            else:
+            elif type is 1:
                 # Print store copies
                 if print_invoice:  # if invoices synced
                     for invoice_id, item_id in print_invoice.items():
@@ -5132,6 +5132,7 @@ GridLayout:
                         # Cut paper
                         vars.EPSON.write('\n\n\n\n\n\n')
                         vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
+
         else:
             popup = Popup()
             popup.title = 'Printer Error'
@@ -10285,7 +10286,7 @@ class PickupScreen(Screen):
                         for trans in last_transaction:
                             transaction_id = trans['trans_id']
                     if transaction_id > 0:
-                        
+
                         # save transaction_id to Transaction and each invoice
                         if self.selected_invoices:
                             invoices = Invoice()
