@@ -8993,6 +8993,7 @@ class NewCustomerScreen(Screen):
 
 
 class PickupScreen(Screen):
+    status_popup = Popup()
     invoice_table = ObjectProperty(None)
     quantity_label = ObjectProperty(None)
     subtotal_label = ObjectProperty(None)
@@ -10031,9 +10032,11 @@ class PickupScreen(Screen):
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.9))
         button_1 = Factory.PrintButton(text='Finish + Receipt',
-                                       on_press=partial(self.finish_transaction, 1))
+                                       on_release=partial(self.finish_transaction, 1),
+                                       on_press=self.please_wait)
         button_2 = Factory.PrintButton(text='Finish + No Receipt',
-                                       on_press=partial(self.finish_transaction, 2))
+                                       on_release=partial(self.finish_transaction, 2),
+                                       on_press=self.please_wait)
         if self.payment_type == 'cc':
             self.amount_tendered = self.total_amount
             if self.card_location == 1:
@@ -10149,6 +10152,12 @@ class PickupScreen(Screen):
             self.card_box.ids.card_message = "Could not locate card on file. Please try again."
 
         pass
+
+    def please_wait(self,*args,**kwargs):
+        self.status_popup.title = 'System Message'
+        content = KV.popup_alert('Syncing data to server please wait...')
+        self.status_popup.content = Builder.load_string(content)
+        self.status_popup.open()
 
     def finish_transaction(self, print, *args, **kwargs):
 
@@ -10279,8 +10288,10 @@ class PickupScreen(Screen):
                 # update to server
                 run_sync = threading.Thread(target=SYNC.run_sync)
 
+
                 try:
                     run_sync.start()
+
                 finally:
                     run_sync.join()
                     # last transaction _id
@@ -10576,7 +10587,7 @@ class PickupScreen(Screen):
                 # Beep Sound
                 sys.stdout.write('\a')
                 sys.stdout.flush()
-
+        self.status_popup.dismiss()
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
 
