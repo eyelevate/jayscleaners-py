@@ -296,7 +296,15 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
             if users:
                 for user in users:
                     last_name = user['last_name'][:1].capitalize()
-                    starch = user['starch'][:1].capitalize()
+                    if user['starch'] is 1:
+                        starch = 'N'
+                    elif starch is 2:
+                        starch = 'L'
+                    elif starch is 3:
+                        starch = 'M'
+                    else:
+                        starch = 'H'
+
                     mark = '{}{}{}'.format(last_name,str(customer_id),starch)
             else:
                 return False

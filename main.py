@@ -1759,66 +1759,66 @@ GridLayout:
         self.items_grid.add_widget(Builder.load_string(item_th3))
         self.items_grid.add_widget(Builder.load_string(item_th4))
         self.items_grid.add_widget(Builder.load_string(item_th5))
+        if vars.ITEM_ID:
+            if vars.ITEM_ID in self.invoice_list_copy:
+                idx = -1
+                for items in self.invoice_list_copy[vars.ITEM_ID]:
+                    idx += 1
+                    background_color = (0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
+                        0.89803922, 0.89803922, 0.89803922, 1)
+                    background_normal = ''
+                    text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
+                    item_name = items['item_name']
+                    item_color = items['color']
+                    item_memo = items['memo']
+                    items_tr1 = Button(markup=True,
+                                       text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                        msg=str((idx + 1))),
+                                       on_press=partial(self.item_row_selected, idx),
+                                       size_hint_x=0.1,
+                                       font_size='12sp',
+                                       background_color=background_color,
+                                       background_normal=background_normal)
+                    items_tr2 = Button(markup=True,
+                                       text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                        msg=item_name),
+                                       on_press=partial(self.item_row_selected, idx),
+                                       size_hint_x=0.2,
+                                       font_size='12sp',
+                                       background_color=background_color,
+                                       background_normal=background_normal)
 
-        if vars.ITEM_ID in self.invoice_list_copy:
-            idx = -1
-            for items in self.invoice_list_copy[vars.ITEM_ID]:
-                idx += 1
-                background_color = (0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
-                    0.89803922, 0.89803922, 0.89803922, 1)
-                background_normal = ''
-                text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
-                item_name = items['item_name']
-                item_color = items['color']
-                item_memo = items['memo']
-                items_tr1 = Button(markup=True,
-                                   text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                    msg=str((idx + 1))),
-                                   on_press=partial(self.item_row_selected, idx),
-                                   size_hint_x=0.1,
-                                   font_size='12sp',
-                                   background_color=background_color,
-                                   background_normal=background_normal)
-                items_tr2 = Button(markup=True,
-                                   text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                    msg=item_name),
-                                   on_press=partial(self.item_row_selected, idx),
-                                   size_hint_x=0.2,
-                                   font_size='12sp',
-                                   background_color=background_color,
-                                   background_normal=background_normal)
+                    items_tr3 = Button(markup=True,
+                                       text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                        msg=item_color),
+                                       on_press=partial(self.item_row_selected, idx),
+                                       size_hint_x=0.2,
+                                       font_size='12sp',
+                                       background_color=background_color,
+                                       background_normal=background_normal)
+                    items_tr4 = Factory.LongButton(text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                                                    msg=item_memo),
+                                                   on_press=partial(self.item_row_selected, idx),
+                                                   size_hint_x=0.4,
+                                                   size_hint_y=None,
+                                                   background_color=background_color,
+                                                   background_normal=background_normal)
+                    items_tr5 = Button(markup=True,
+                                       text='[color=ff0000][b]Edit[b][/color]',
+                                       on_press=partial(self.item_row_selected, idx),
+                                       on_release=partial(self.item_row_edit, idx),
+                                       size_hint_x=0.1,
+                                       font_size='12sp',
+                                       background_color=background_color,
+                                       background_normal=background_normal)
 
-                items_tr3 = Button(markup=True,
-                                   text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                    msg=item_color),
-                                   on_press=partial(self.item_row_selected, idx),
-                                   size_hint_x=0.2,
-                                   font_size='12sp',
-                                   background_color=background_color,
-                                   background_normal=background_normal)
-                items_tr4 = Factory.LongButton(text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                                msg=item_memo),
-                                               on_press=partial(self.item_row_selected, idx),
-                                               size_hint_x=0.4,
-                                               size_hint_y=None,
-                                               background_color=background_color,
-                                               background_normal=background_normal)
-                items_tr5 = Button(markup=True,
-                                   text='[color=ff0000][b]Edit[b][/color]',
-                                   on_press=partial(self.item_row_selected, idx),
-                                   on_release=partial(self.item_row_edit, idx),
-                                   size_hint_x=0.1,
-                                   font_size='12sp',
-                                   background_color=background_color,
-                                   background_normal=background_normal)
+                    self.items_grid.add_widget(items_tr1)
+                    self.items_grid.add_widget(items_tr2)
+                    self.items_grid.add_widget(items_tr3)
+                    self.items_grid.add_widget(items_tr4)
+                    items_tr4.text_size = (items_tr4.width + 200, items_tr4.height)
 
-                self.items_grid.add_widget(items_tr1)
-                self.items_grid.add_widget(items_tr2)
-                self.items_grid.add_widget(items_tr3)
-                self.items_grid.add_widget(items_tr4)
-                items_tr4.text_size = (items_tr4.width + 200, items_tr4.height)
-
-                self.items_grid.add_widget(items_tr5)
+                    self.items_grid.add_widget(items_tr5)
         self.items_grid.bind(minimum_height=self.items_grid.setter('height'))
 
     def add_memo(self, *args, **kwargs):
