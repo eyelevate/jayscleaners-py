@@ -12547,6 +12547,8 @@ class SearchScreen(Screen):
                     # Print store copies
                     if print_sync_invoice:  # if invoices synced
                         for invoice_id, item_id in print_sync_invoice.items():
+                            if isinstance(invoice_id,str):
+                                invoice_id = int(invoice_id)
 
                             # start invoice
                             vars.EPSON.write(
