@@ -2977,7 +2977,8 @@ GridLayout:
                             vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
                     else:
                         for invoice_id, item_id in print_invoice.items():
-
+                            if isinstance(invoice_id, str):
+                                invoice_id = int(invoice_id)
                             # start invoice
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2,
@@ -4861,7 +4862,8 @@ GridLayout:
                 # Print store copies
                 if print_invoice:  # if invoices synced
                     for invoice_id, item_id in print_invoice.items():
-
+                        if isinstance( invoice_id, str ):
+                            invoice_id = int(invoice_id)
                         # start invoice
                         vars.EPSON.write(
                             pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
@@ -4999,7 +5001,8 @@ GridLayout:
                 # Print store copies
                 if print_invoice:  # if invoices synced
                     for invoice_id, item_id in print_invoice.items():
-
+                        if isinstance( invoice_id, str ):
+                            invoice_id = int(invoice_id)
                         # start invoice
                         vars.EPSON.write(
                             pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
