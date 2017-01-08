@@ -1822,22 +1822,24 @@ GridLayout:
         self.items_grid.bind(minimum_height=self.items_grid.setter('height'))
 
     def add_memo(self, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
-            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
-            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                self.invoice_list_copy[vars.ITEM_ID]) else 0
-            self.item_selected_row = next_row
-            self.make_items_table()
-            self.memo_text_input.text = ''
-            self.memo_list = []
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
+                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
+                next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                    self.invoice_list_copy[vars.ITEM_ID]) else 0
+                self.item_selected_row = next_row
+                self.make_items_table()
+                self.memo_text_input.text = ''
+                self.memo_list = []
 
     def color_selected(self, color=False, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
-            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
-            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                self.invoice_list_copy[vars.ITEM_ID]) else 0
-            self.item_selected_row = next_row
-            self.make_items_table()
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
+                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
+                next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                    self.invoice_list_copy[vars.ITEM_ID]) else 0
+                self.item_selected_row = next_row
+                self.make_items_table()
 
     def item_row_edit(self, row, *args, **kwargs):
         popup = Popup(title='Remove Colors / Memo')
@@ -1865,22 +1867,24 @@ GridLayout:
         popup.open()
 
     def remove_color(self, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
-            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
-            self.make_items_table()
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
+                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
+                self.make_items_table()
 
     def remove_memo(self, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
-            self.memo_list = []
-            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
-            self.make_items_table()
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
+                self.memo_list = []
+                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
+                self.make_items_table()
 
     def item_row_selected(self, row, *args, **kwargs):
         self.item_selected_row = row
         self.make_items_table()
 
     def save_memo_color(self, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID]:
+        if vars.ITEM_ID in self.invoice_list_copy:
             idx = -1
             for items in self.invoice_list_copy[vars.ITEM_ID]:
                 idx += 1
@@ -1946,79 +1950,80 @@ GridLayout:
 
     def make_adjustment_sum_table(self):
         self.adjust_sum_grid.clear_widgets()
-        if len(self.invoice_list_copy[vars.ITEM_ID]) > 1:
-            # create th
-            h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
-            h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-            h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
-            h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-            self.adjust_sum_grid.add_widget(Builder.load_string(h1))
-            self.adjust_sum_grid.add_widget(Builder.load_string(h2))
-            self.adjust_sum_grid.add_widget(Builder.load_string(h3))
-            self.adjust_sum_grid.add_widget(Builder.load_string(h4))
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if len(self.invoice_list_copy[vars.ITEM_ID]) > 1:
+                # create th
+                h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
+                h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
+                h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+                h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+                self.adjust_sum_grid.add_widget(Builder.load_string(h1))
+                self.adjust_sum_grid.add_widget(Builder.load_string(h2))
+                self.adjust_sum_grid.add_widget(Builder.load_string(h3))
+                self.adjust_sum_grid.add_widget(Builder.load_string(h4))
 
-            if self.invoice_list:
+                if self.invoice_list:
 
-                for key, values in OrderedDict(reversed(list(self.invoice_list_copy.items()))).items():
-                    if key == vars.ITEM_ID:
-                        item_id = key
-                        total_qty = len(values)
-                        colors = {}
-                        item_price = 0
-                        color_string = []
-                        memo_string = []
-                        if values:
-                            for item in values:
-                                item_name = item['item_name']
-                                item_type = item['type']
-                                item_color = item['color']
-                                item_memo = item['memo']
-                                item_price += item['item_price'] if item['item_price'] else 0
-                                if item['color']:
-                                    if item_color in colors:
-                                        colors[item_color] += 1
-                                    else:
-                                        colors[item_color] = 1
-                                if item_memo:
-                                    memo_string.append(item_memo)
-                            if colors:
-                                for color_name, color_amount in colors.items():
-                                    if color_name:
-                                        color_string.append('{}-{}'.format(color_amount, color_name))
+                    for key, values in OrderedDict(reversed(list(self.invoice_list_copy.items()))).items():
+                        if key == vars.ITEM_ID:
+                            item_id = key
+                            total_qty = len(values)
+                            colors = {}
+                            item_price = 0
+                            color_string = []
+                            memo_string = []
+                            if values:
+                                for item in values:
+                                    item_name = item['item_name']
+                                    item_type = item['type']
+                                    item_color = item['color']
+                                    item_memo = item['memo']
+                                    item_price += item['item_price'] if item['item_price'] else 0
+                                    if item['color']:
+                                        if item_color in colors:
+                                            colors[item_color] += 1
+                                        else:
+                                            colors[item_color] = 1
+                                    if item_memo:
+                                        memo_string.append(item_memo)
+                                if colors:
+                                    for color_name, color_amount in colors.items():
+                                        if color_name:
+                                            color_string.append('{}-{}'.format(color_amount, color_name))
 
-                            item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                                      '/ '.join(memo_string))
-                            tr1 = Button(size_hint_x=0.1,
-                                         markup=True,
-                                         text='{}'.format(item_type),
-                                         on_release=partial(self.adjustment_calculator,
-                                                            1,
-                                                            item_price))
-                            tr2 = Button(size_hint_x=0.1,
-                                         markup=True,
-                                         text='{}'.format(total_qty),
-                                         on_release=partial(self.adjustment_calculator,
-                                                            1,
-                                                            item_price))
-                            tr3 = Factory.LongButton(size_hint_x=0.6,
-                                                     size_hint_y=None,
-                                                     markup=True,
-                                                     text='{}'.format(item_string),
-                                                     on_release=partial(self.adjustment_calculator,
-                                                                        1,
-                                                                        item_price))
+                                item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
+                                                                          '/ '.join(memo_string))
+                                tr1 = Button(size_hint_x=0.1,
+                                             markup=True,
+                                             text='{}'.format(item_type),
+                                             on_release=partial(self.adjustment_calculator,
+                                                                1,
+                                                                item_price))
+                                tr2 = Button(size_hint_x=0.1,
+                                             markup=True,
+                                             text='{}'.format(total_qty),
+                                             on_release=partial(self.adjustment_calculator,
+                                                                1,
+                                                                item_price))
+                                tr3 = Factory.LongButton(size_hint_x=0.6,
+                                                         size_hint_y=None,
+                                                         markup=True,
+                                                         text='{}'.format(item_string),
+                                                         on_release=partial(self.adjustment_calculator,
+                                                                            1,
+                                                                            item_price))
 
-                            tr4 = Button(size_hint_x=0.2,
-                                         markup=True,
-                                         text='{}'.format(vars.us_dollar(item_price)),
-                                         on_release=partial(self.adjustment_calculator,
-                                                            1,
-                                                            item_price))
+                                tr4 = Button(size_hint_x=0.2,
+                                             markup=True,
+                                             text='{}'.format(vars.us_dollar(item_price)),
+                                             on_release=partial(self.adjustment_calculator,
+                                                                1,
+                                                                item_price))
 
-                            self.adjust_sum_grid.add_widget(tr1)
-                            self.adjust_sum_grid.add_widget(tr2)
-                            self.adjust_sum_grid.add_widget(tr3)
-                            self.adjust_sum_grid.add_widget(tr4)
+                                self.adjust_sum_grid.add_widget(tr1)
+                                self.adjust_sum_grid.add_widget(tr2)
+                                self.adjust_sum_grid.add_widget(tr3)
+                                self.adjust_sum_grid.add_widget(tr4)
 
     def make_adjustment_individual_table(self):
         self.adjust_individual_grid.clear_widgets()
@@ -2219,7 +2224,7 @@ GridLayout:
         self.adjusted_price.text = '[color=e5e5e5][b]{}[/b][/color]'.format(vars.us_dollar(self.adjust_price))
 
     def set_price_adjustment_sum_correct_individual(self, row, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID]:
+        if  vars.ITEM_ID in self.invoice_list_copy:
             total_count = len(self.invoice_list_copy[vars.ITEM_ID])
             new_avg_price = round(self.adjust_price / total_count, 2)
             minus_total = self.adjust_price
@@ -2235,14 +2240,14 @@ GridLayout:
             self.make_adjustment_individual_table()
 
     def set_price_adjustment_individual_correct_sum(self, row, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][row]:
-            self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
-            self.make_adjustment_sum_table()
-            self.make_adjustment_individual_table()
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if row in self.invoice_list_copy[vars.ITEM_ID]:
+                self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
+                self.make_adjustment_sum_table()
+                self.make_adjustment_individual_table()
 
     def save_price_adjustment(self, *args, **kwargs):
-
-        if self.invoice_list_copy[vars.ITEM_ID]:
+        if vars.ITEM_ID in self.invoice_list_copy:
             idx = -1
             for items in self.invoice_list_copy[vars.ITEM_ID]:
                 idx += 1
@@ -2371,7 +2376,7 @@ GridLayout:
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
+        if selected_month in year_dates:
             for month in year_dates[selected_month]:
                 for week in month:
                     for day in week:
@@ -2519,65 +2524,67 @@ GridLayout:
             print_invoice = {}  # if not synced to server
             print_totals = {}
             for inventory_id, invoice_group in save_invoice.items():
-                if len(save_invoice[inventory_id]) > 0:
-                    tax_amount = save_totals[inventory_id]['subtotal'] * vars.TAX_RATE
-                    total = save_totals[inventory_id]['subtotal'] * (1 + vars.TAX_RATE)
+                if inventory_id in save_invoice:
+                    if len(save_invoice[inventory_id]) > 0:
+                        tax_amount = save_totals[inventory_id]['subtotal'] * vars.TAX_RATE
+                        total = save_totals[inventory_id]['subtotal'] * (1 + vars.TAX_RATE)
 
-                    # set invoice data to save
-                    new_invoice = Invoice()
-                    new_invoice.company_id = auth_user.company_id
-                    new_invoice.customer_id = vars.CUSTOMER_ID
-                    new_invoice.quantity = save_totals[inventory_id]['quantity']
-                    new_invoice.pretax = float('%.2f' % (save_totals[inventory_id]['subtotal']))
-                    new_invoice.tax = float('%.2f' % (tax_amount))
-                    new_invoice.total = float('%.2f' % (total))
-                    new_invoice.due_date = '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))
-                    new_invoice.status = 1
-                    # save to local db
-                    if new_invoice.add():
-                        last_insert_id = new_invoice.get_last_insert_id()
-                        print_totals[last_insert_id] = {
-                            'quantity': new_invoice.quantity,
-                            'subtotal': new_invoice.pretax,
-                            'tax': new_invoice.tax,
-                            'total': new_invoice.total
-                        }
-                        save_invoice_items[last_insert_id] = invoice_group
-                        idx = -1
-                        colors = {}
-                        print_invoice[last_insert_id] = {}
-                        for inv_items in save_invoice_items[last_insert_id]:
-                            idx += 1
-                            save_invoice_items[last_insert_id][idx]['status'] = 3
-                            save_invoice_items[last_insert_id][idx]['invoice_id'] = last_insert_id
-                            save_invoice_items[last_insert_id][idx]['inventory_id'] = inventory_id
-                            item_id = save_invoice_items[last_insert_id][idx]['item_id']
-                            item_name = save_invoice_items[last_insert_id][idx]['item_name']
-                            item_price = save_invoice_items[last_insert_id][idx]['item_price']
-                            item_type = save_invoice_items[last_insert_id][idx]['type']
-                            item_color = save_invoice_items[last_insert_id][idx]['color']
-                            item_memo = save_invoice_items[last_insert_id][idx]['memo']
-                            if item_color in colors:
-                                colors[item_color] += 1
-                            else:
-                                colors[item_color] = 1
-                            if item_id in print_invoice[last_insert_id]:
-                                print_invoice[last_insert_id][item_id]['item_price'] += item_price
-                                print_invoice[last_insert_id][item_id]['qty'] += 1
-                                print_invoice[last_insert_id][item_id]['colors'] = colors
-                                if item_memo:
-                                    print_invoice[last_insert_id][item_id]['memos'].append(item_memo)
-                            else:
+                        # set invoice data to save
+                        new_invoice = Invoice()
+                        new_invoice.company_id = auth_user.company_id
+                        new_invoice.customer_id = vars.CUSTOMER_ID
+                        new_invoice.quantity = save_totals[inventory_id]['quantity']
+                        new_invoice.pretax = float('%.2f' % (save_totals[inventory_id]['subtotal']))
+                        new_invoice.tax = float('%.2f' % (tax_amount))
+                        new_invoice.total = float('%.2f' % (total))
+                        new_invoice.due_date = '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))
+                        new_invoice.status = 1
+                        # save to local db
+                        if new_invoice.add():
+                            last_insert_id = new_invoice.get_last_insert_id()
+                            print_totals[last_insert_id] = {
+                                'quantity': new_invoice.quantity,
+                                'subtotal': new_invoice.pretax,
+                                'tax': new_invoice.tax,
+                                'total': new_invoice.total
+                            }
+                            save_invoice_items[last_insert_id] = invoice_group
+                            idx = -1
+                            colors = {}
+                            print_invoice[last_insert_id] = {}
+                            for inv_items in save_invoice_items[last_insert_id]:
+                                idx += 1
+                                save_invoice_items[last_insert_id][idx]['status'] = 3
+                                save_invoice_items[last_insert_id][idx]['invoice_id'] = last_insert_id
+                                save_invoice_items[last_insert_id][idx]['inventory_id'] = inventory_id
+                                item_id = save_invoice_items[last_insert_id][idx]['item_id']
+                                item_name = save_invoice_items[last_insert_id][idx]['item_name']
+                                item_price = save_invoice_items[last_insert_id][idx]['item_price']
+                                item_type = save_invoice_items[last_insert_id][idx]['type']
+                                item_color = save_invoice_items[last_insert_id][idx]['color']
+                                item_memo = save_invoice_items[last_insert_id][idx]['memo']
+                                if item_color in colors:
+                                    colors[item_color] += 1
+                                else:
+                                    colors[item_color] = 1
+                                if last_insert_id in print_invoice:
+                                    if item_id in print_invoice[last_insert_id]:
+                                        print_invoice[last_insert_id][item_id]['item_price'] += item_price
+                                        print_invoice[last_insert_id][item_id]['qty'] += 1
+                                        print_invoice[last_insert_id][item_id]['colors'] = colors
+                                        if item_memo:
+                                            print_invoice[last_insert_id][item_id]['memos'].append(item_memo)
+                                    else:
 
-                                print_invoice[last_insert_id][item_id] = {
-                                    'item_id': item_id,
-                                    'type': item_type,
-                                    'name': item_name,
-                                    'item_price': item_price,
-                                    'qty': 1,
-                                    'memos': [item_memo] if item_memo else [],
-                                    'colors': colors
-                                }
+                                        print_invoice[last_insert_id][item_id] = {
+                                            'item_id': item_id,
+                                            'type': item_type,
+                                            'name': item_name,
+                                            'item_price': item_price,
+                                            'qty': 1,
+                                            'memos': [item_memo] if item_memo else [],
+                                            'colors': colors
+                                        }
 
             # save the invoices to the db and return the proper invoice_ids
             run_sync = threading.Thread(target=SYNC.run_sync)
@@ -2614,23 +2621,24 @@ GridLayout:
                                     colors[item_color] += 1
                                 else:
                                     colors[item_color] = 1
-                                if item_id in print_sync_invoice[new_invoice_id]:
+                                if new_invoice_id in print_sync_invoice:
+                                    if item_id in print_sync_invoice[new_invoice_id]:
 
-                                    print_sync_invoice[new_invoice_id][item_id]['item_price'] += item_price
-                                    print_sync_invoice[new_invoice_id][item_id]['qty'] += 1
-                                    if item_memo:
-                                        print_sync_invoice[new_invoice_id][item_id]['memos'].append(item_memo)
-                                    print_sync_invoice[new_invoice_id][item_id]['colors'] = colors
-                                else:
-                                    print_sync_invoice[new_invoice_id][item_id] = {
-                                        'item_id': item_id,
-                                        'type': item_type,
-                                        'name': item_name,
-                                        'item_price': item_price,
-                                        'qty': 1,
-                                        'memos': [item_memo] if item_memo else [],
-                                        'colors': {item_color: 1}
-                                    }
+                                        print_sync_invoice[new_invoice_id][item_id]['item_price'] += item_price
+                                        print_sync_invoice[new_invoice_id][item_id]['qty'] += 1
+                                        if item_memo:
+                                            print_sync_invoice[new_invoice_id][item_id]['memos'].append(item_memo)
+                                        print_sync_invoice[new_invoice_id][item_id]['colors'] = colors
+                                    else:
+                                        print_sync_invoice[new_invoice_id][item_id] = {
+                                            'item_id': item_id,
+                                            'type': item_type,
+                                            'name': item_name,
+                                            'item_price': item_price,
+                                            'qty': 1,
+                                            'memos': [item_memo] if item_memo else [],
+                                            'colors': {item_color: 1}
+                                        }
 
             if len(save_invoice_items) > 0:
                 for iitems_id in save_invoice_items:
@@ -2875,8 +2883,7 @@ GridLayout:
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                             density=1, invert=False, smooth=False, flip=False))
                             vars.EPSON.write('-----------------------------------------\n')
-
-                            if print_sync_invoice[invoice_id]:
+                            if invoice_id in print_sync_invoice:
                                 for item_id, invoice_item in print_sync_invoice[invoice_id].items():
                                     item_name = invoice_item['name']
                                     item_price = invoice_item['item_price']
@@ -3023,43 +3030,43 @@ GridLayout:
                                             density=1,
                                             invert=False, smooth=False, flip=False))
                             vars.EPSON.write('-----------------------------------------\n')
+                            if invoice_id in print_sync_invoice:
+                                if item_id in print_sync_invoice[invoice_id]:
+                                    for invoice_item in print_sync_invoice[invoice_id][item_id]:
+                                        item_name = invoice_item['name']
+                                        item_price = invoice_item['item_price']
+                                        item_qty = invoice_item['qty']
+                                        item_color_string = []
+                                        item_memo = invoice_item['memos']
+                                        item_type = invoice_item['type']
+                                        if invoice_item['colors']:
+                                            for color_name, color_qty in invoice_item['colors'].items():
+                                                if color_name:
+                                                    item_color_string.append('{}-{}'.format(color_qty, color_name))
+                                        string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
+                                            vars.us_dollar(item_price)) + 4
+                                        string_offset = 42 - string_length if 42 - string_length > 0 else 0
+                                        vars.EPSON.write('{} {}   {}{}{}\n'.format(item_type,
+                                                                                   item_qty,
+                                                                                   item_name,
+                                                                                   ' ' * string_offset,
+                                                                                   vars.us_dollar(item_price)))
 
-                            if print_sync_invoice[invoice_id][item_id]:
-                                for invoice_item in print_sync_invoice[invoice_id][item_id]:
-                                    item_name = invoice_item['name']
-                                    item_price = invoice_item['item_price']
-                                    item_qty = invoice_item['qty']
-                                    item_color_string = []
-                                    item_memo = invoice_item['memos']
-                                    item_type = invoice_item['type']
-                                    if invoice_item['colors']:
-                                        for color_name, color_qty in invoice_item['colors'].items():
-                                            if color_name:
-                                                item_color_string.append('{}-{}'.format(color_qty, color_name))
-                                    string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
-                                        vars.us_dollar(item_price)) + 4
-                                    string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                    vars.EPSON.write('{} {}   {}{}{}\n'.format(item_type,
-                                                                               item_qty,
-                                                                               item_name,
-                                                                               ' ' * string_offset,
-                                                                               vars.us_dollar(item_price)))
+                                        if len(item_memo) > 0:
+                                            vars.EPSON.write(pr.pcmd('HT'))
 
-                                    if len(item_memo) > 0:
-                                        vars.EPSON.write(pr.pcmd('HT'))
-
-                                        vars.EPSON.write(
-                                            pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                        height=1,
-                                                        density=5, invert=False, smooth=False, flip=False))
-                                        vars.EPSON.write('  {}\n'.format('/ '.join(item_memo)))
-                                    if len(item_color_string) > 0:
-                                        vars.EPSON.write(pr.pcmd('HT'))
-                                        vars.EPSON.write(
-                                            pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
-                                                        height=1,
-                                                        density=5, invert=False, smooth=False, flip=False))
-                                        vars.EPSON.write('  {}\n'.format(', '.join(item_color_string)))
+                                            vars.EPSON.write(
+                                                pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                            height=1,
+                                                            density=5, invert=False, smooth=False, flip=False))
+                                            vars.EPSON.write('  {}\n'.format('/ '.join(item_memo)))
+                                        if len(item_color_string) > 0:
+                                            vars.EPSON.write(pr.pcmd('HT'))
+                                            vars.EPSON.write(
+                                                pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                                            height=1,
+                                                            density=5, invert=False, smooth=False, flip=False))
+                                            vars.EPSON.write('  {}\n'.format(', '.join(item_color_string)))
 
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
@@ -3937,22 +3944,24 @@ GridLayout:
         self.items_grid.bind(minimum_height=self.items_grid.setter('height'))
 
     def add_memo(self, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
-            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
-            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                self.invoice_list_copy[vars.ITEM_ID]) else 0
-            self.item_selected_row = next_row
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
+                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
+                next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                    self.invoice_list_copy[vars.ITEM_ID]) else 0
+                self.item_selected_row = next_row
 
-            self.make_items_table()
-            self.memo_text_input.text = ''
+                self.make_items_table()
+                self.memo_text_input.text = ''
 
     def color_selected(self, color=False, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
-            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
-            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                self.invoice_list_copy[vars.ITEM_ID]) else 0
-            self.item_selected_row = next_row
-            self.make_items_table()
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
+                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
+                next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                    self.invoice_list_copy[vars.ITEM_ID]) else 0
+                self.item_selected_row = next_row
+                self.make_items_table()
 
     def item_row_edit(self, row, *args, **kwargs):
         popup = Popup(title='Remove Colors / Memo')
@@ -3980,21 +3989,23 @@ GridLayout:
         popup.open()
 
     def remove_color(self, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
-            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
-            self.make_items_table()
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
+                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
+                self.make_items_table()
 
     def remove_memo(self, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]:
-            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
-            self.make_items_table()
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
+                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
+                self.make_items_table()
 
     def item_row_selected(self, row, *args, **kwargs):
         self.item_selected_row = row
         self.make_items_table()
 
     def save_memo_color(self, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID]:
+        if vars.ITEM_ID in self.invoice_list_copy:
             idx = -1
             for items in self.invoice_list_copy[vars.ITEM_ID]:
                 idx += 1
@@ -4333,7 +4344,7 @@ GridLayout:
         self.adjusted_price.text = '[color=e5e5e5][b]{}[/b][/color]'.format(vars.us_dollar(self.adjust_price))
 
     def set_price_adjustment_sum_correct_individual(self, row, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID]:
+        if vars.ITEM_ID in self.invoice_list_copy:
             total_count = len(self.invoice_list_copy[vars.ITEM_ID])
             new_avg_price = round(self.adjust_price / total_count, 2)
             minus_total = self.adjust_price
@@ -4349,10 +4360,12 @@ GridLayout:
             self.make_adjustment_individual_table()
 
     def set_price_adjustment_individual_correct_sum(self, row, *args, **kwargs):
-        if self.invoice_list_copy[vars.ITEM_ID][row]:
-            self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
-            self.make_adjustment_sum_table()
-            self.make_adjustment_individual_table()
+        if vars.ITEM_ID in self.invoice_list_copy:
+            if row in self.invoice_list_copy[vars.ITEM_ID]:
+
+                self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
+                self.make_adjustment_sum_table()
+                self.make_adjustment_individual_table()
 
     def save_price_adjustment(self, *args, **kwargs):
 
@@ -4366,10 +4379,11 @@ GridLayout:
             self.create_summary_totals()
 
     def item_row_delete_selected(self, row, *args, **kwargs):
-
-        if 'invoice_items_id' in self.invoice_list[vars.ITEM_ID][row]:
-            self.invoice_list[vars.ITEM_ID][row]['delete'] = True
-            self.deleted_rows.append(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
+        if vars.ITEM_ID in self.invoice_list:
+            if row in self.invoice_list[vars.ITEM_ID]:
+                if 'invoice_items_id' in self.invoice_list[vars.ITEM_ID][row]:
+                    self.invoice_list[vars.ITEM_ID][row]['delete'] = True
+                    self.deleted_rows.append(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
         print(self.deleted_rows)
         del self.invoice_list[vars.ITEM_ID][row]
         del self.invoice_list_copy[vars.ITEM_ID][row]
@@ -4490,8 +4504,8 @@ GridLayout:
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
-            for month in year_dates[selected_month]:
+        if selected_month in year_dates:
+            for month in year_dates:
                 for week in month:
                     for day in week:
                         if day[0] > 0:
@@ -4638,23 +4652,24 @@ GridLayout:
                         colors[item_color] += 1
                     else:
                         colors[item_color] = 1
-                    if item_id in print_invoice[vars.INVOICE_ID]:
-                        print_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_price
-                        print_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
-                        print_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
-                        if item_memo:
-                            print_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
-                    else:
+                    if vars.INVOICE_ID in print_invoice:
+                        if item_id in print_invoice[vars.INVOICE_ID]:
+                            print_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_price
+                            print_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
+                            print_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
+                            if item_memo:
+                                print_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
+                        else:
 
-                        print_invoice[vars.INVOICE_ID][item_id] = {
-                            'item_id': item_id,
-                            'type': item_type,
-                            'name': item_name,
-                            'item_price': item_price,
-                            'qty': 1,
-                            'memos': [item_memo] if item_memo else [],
-                            'colors': colors
-                        }
+                            print_invoice[vars.INVOICE_ID][item_id] = {
+                                'item_id': item_id,
+                                'type': item_type,
+                                'name': item_name,
+                                'item_price': item_price,
+                                'qty': 1,
+                                'memos': [item_memo] if item_memo else [],
+                                'colors': colors
+                            }
                     if 'invoice_items_id' in iivalue:
                         invoice_items.put(where={'invoice_items_id': iivalue['invoice_items_id']},
                                           data={'quantity': iivalue['qty'],
@@ -4903,8 +4918,7 @@ GridLayout:
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                         invert=False, smooth=False, flip=False))
                         vars.EPSON.write('-----------------------------------------\n')
-
-                        if print_invoice[invoice_id]:
+                        if invoice_id in print_invoice:
                             for item_id, invoice_item in print_invoice[invoice_id].items():
                                 item_name = invoice_item['name']
                                 item_price = invoice_item['item_price']
@@ -4912,7 +4926,7 @@ GridLayout:
                                 item_color_string = []
                                 item_memo = invoice_item['memos']
                                 item_type = invoice_item['type']
-                                if invoice_item['colors']:
+                                if 'colors' in invoice_item:
                                     for color_name, color_qty in invoice_item['colors'].items():
                                         if color_name:
                                             item_color_string.append('{}-{}'.format(color_qty, color_name))
@@ -5043,7 +5057,7 @@ GridLayout:
                                         invert=False, smooth=False, flip=False))
                         vars.EPSON.write('-----------------------------------------\n')
 
-                        if print_invoice[invoice_id]:
+                        if invoice_id in print_invoice:
                             for item_id, invoice_item in print_invoice[invoice_id].items():
                                 item_name = invoice_item['name']
                                 item_price = invoice_item['item_price']
@@ -5051,7 +5065,7 @@ GridLayout:
                                 item_color_string = []
                                 item_memo = invoice_item['memos']
                                 item_type = invoice_item['type']
-                                if invoice_item['colors']:
+                                if 'colors' in invoice_item:
                                     for color_name, color_qty in invoice_item['colors'].items():
                                         if color_name:
                                             item_color_string.append('{}-{}'.format(color_qty, color_name))
@@ -5299,7 +5313,7 @@ class EditCustomerScreen(Screen):
                             self.special_instructions.hint_text_color = DEFAULT_COLOR
                             self.special_instructions.disabled = False
 
-                    if cust['account']:
+                    if 'account' in cust:
                         self.is_account.active = True
                         self.street.text = cust['street'] if cust['street'] else ''
                         self.street.hint_text = 'Street Address'
@@ -6635,21 +6649,22 @@ class HistoryScreen(Screen):
                             colors[item_color] = 1
                         item_memo = invoice_item['memo']
                         item_subtotal = invoice_item['pretax']
-                        if item_id in print_sync_invoice[vars.INVOICE_ID]:
-                            print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_subtotal
-                            print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
-                            if item_memo:
-                                print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
-                            print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
-                        else:
-                            print_sync_invoice[vars.INVOICE_ID][item_id] = {
-                                'item_id': item_id,
-                                'type': inventory_init,
-                                'name': display_name,
-                                'item_price': item_subtotal,
-                                'qty': 1,
-                                'memos': [item_memo] if item_memo else [],
-                                'colors': {item_color: 1}
+                        if vars.INVOICE_ID in print_sync_invoice:
+                            if item_id in print_sync_invoice[vars.INVOICE_ID]:
+                                print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_subtotal
+                                print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
+                                if item_memo:
+                                    print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
+                                print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
+                            else:
+                                print_sync_invoice[vars.INVOICE_ID][item_id] = {
+                                    'item_id': item_id,
+                                    'type': inventory_init,
+                                    'name': display_name,
+                                    'item_price': item_subtotal,
+                                    'qty': 1,
+                                    'memos': [item_memo] if item_memo else [],
+                                    'colors': {item_color: 1}
                             }
                 now = datetime.datetime.now()
                 if type == 2:
@@ -6694,7 +6709,7 @@ class HistoryScreen(Screen):
                                     invert=False, smooth=False, flip=False))
                     vars.EPSON.write('-----------------------------------------\n')
 
-                    if print_sync_invoice[vars.INVOICE_ID]:
+                    if vars.INVOICE_ID in print_sync_invoice:
                         for item_id, invoice_item in print_sync_invoice[vars.INVOICE_ID].items():
                             item_name = invoice_item['name']
                             item_price = invoice_item['item_price']
@@ -6702,7 +6717,7 @@ class HistoryScreen(Screen):
                             item_color_string = []
                             item_memo = invoice_item['memos']
                             item_type = invoice_item['type']
-                            if invoice_item['colors']:
+                            if 'colors' in invoice_item:
                                 for color_name, color_qty in invoice_item['colors'].items():
                                     if color_name:
                                         item_color_string.append('{}-{}'.format(color_qty, color_name))
@@ -6796,7 +6811,7 @@ class HistoryScreen(Screen):
                                             invert=False, smooth=False, flip=False))
                             vars.EPSON.write('-----------------------------------------\n')
 
-                            if print_sync_invoice[invoice_id]:
+                            if invoice_id in print_sync_invoice:
                                 for item_id, invoice_item in print_sync_invoice[invoice_id].items():
                                     item_name = invoice_item['name']
                                     item_price = invoice_item['item_price']
@@ -6804,7 +6819,7 @@ class HistoryScreen(Screen):
                                     item_color_string = []
                                     item_memo = invoice_item['memos']
                                     item_type = invoice_item['type']
-                                    if invoice_item['colors']:
+                                    if 'colors' in invoice_item:
                                         for color_name, color_qty in invoice_item['colors'].items():
                                             if color_name:
                                                 item_color_string.append('{}-{}'.format(color_qty, color_name))
@@ -7635,7 +7650,7 @@ class InventoryItemsScreen(Screen):
                         item_price = '${:,.2f}'.format(item['price'])
                         self.reorder_list[inventory_id].append(item_id)
 
-                        if self.item_id == item_id:
+                        if self.item_id is item_id:
                             items_button = Factory.ItemsFromButton(text='[b]{}[/b]\n[i]{}[/i]'.format(item['name'],
                                                                                                       item_price),
                                                                    on_release=partial(self.set_item, item_id))
@@ -7648,7 +7663,7 @@ class InventoryItemsScreen(Screen):
                 layout.add_widget(content)
                 tph.content = layout
                 self.items_panel.add_widget(tph)
-                if self.inventory_id == inventory_id:
+                if self.inventory_id is inventory_id:
                     self.items_panel.switch_to(tph)
 
     def set_inventory(self, inventory_id, *args, **kwargs):
@@ -7657,13 +7672,13 @@ class InventoryItemsScreen(Screen):
     def set_item(self, item_id, *args, **kwargs):
         self.item_id = item_id
         if self.from_id:
-            if self.reorder_list[self.inventory_id]:
+            if self.inventory_id in self.reorder_list:
                 idx = -1
                 for list_id in self.reorder_list[self.inventory_id]:
                     idx += 1
-                    if list_id == self.item_id:
+                    if list_id is self.item_id:
                         self.reorder_list[self.inventory_id][idx] = self.from_id
-                    if list_id == self.from_id:
+                    if list_id is self.from_id:
                         self.reorder_list[self.inventory_id][idx] = self.item_id
                 row = 0
                 inv_items = InventoryItem()
@@ -8454,7 +8469,7 @@ class MemosScreen(Screen):
                     memo_item = Factory.LongButton(text='{}'.format(memo_msg),
                                                    on_press=partial(self.set_memo_id, m_id),
                                                    on_release=self.memo_actions_popup)
-                elif self.reorder_start_id == m_id:
+                elif self.reorder_start_id is m_id:
                     memo_item = Factory.LongButton(text='{}'.format(memo_msg),
                                                    markup=True,
                                                    on_press=partial(self.set_memo_id, m_id),
@@ -8842,7 +8857,7 @@ class NewCustomerScreen(Screen):
                 self.phone.hint_text = "(XXX) XXX-XXXX"
                 self.phone.hint_text_color = DEFAULT_COLOR
 
-        if self.last_name.text == '':
+        if self.last_name.text is '':
             errors += 1
             self.last_name.hint_text = "required"
             self.last_name.hint_text_color = ERROR_COLOR
@@ -8850,7 +8865,7 @@ class NewCustomerScreen(Screen):
             self.last_name.hint_text = "Last Name"
             self.last_name.hint_text_color = DEFAULT_COLOR
 
-        if self.first_name.text == '':
+        if self.first_name.text is '':
             errors += 1
             self.first_name.hint_text = "required"
             self.first_name.hint_text_color = ERROR_COLOR
@@ -9903,7 +9918,7 @@ class PickupScreen(Screen):
                             }
                         }
                         result = Card().create_card(company_id, profile_id, new_card)
-                        if result['status']:
+                        if 'status' in result:
                             save_success += 1
                             payment_id = result['payment_id']
 
@@ -9959,7 +9974,7 @@ class PickupScreen(Screen):
                         }
                         make_profile = Card().create_profile(company_id, new_data)
 
-                        if make_profile['status']:
+                        if 'status' in make_profile:
                             save_success += 1
                             profile_id = make_profile['profile_id']
                             payment_id = make_profile['payment_id']
@@ -10420,22 +10435,23 @@ class PickupScreen(Screen):
                                     colors[item_color] = 1
                                 item_memo = invoice_item['memo']
                                 item_subtotal = invoice_item['pretax']
-                                if item_id in print_sync_invoice[invoice_id]:
-                                    print_sync_invoice[invoice_id][item_id]['item_price'] += item_subtotal
-                                    print_sync_invoice[invoice_id][item_id]['qty'] += 1
-                                    if item_memo:
-                                        print_sync_invoice[invoice_id][item_id]['memos'].append(item_memo)
-                                    print_sync_invoice[invoice_id][item_id]['colors'] = colors
-                                else:
-                                    print_sync_invoice[invoice_id][item_id] = {
-                                        'item_id': item_id,
-                                        'type': inventory_init,
-                                        'name': display_name,
-                                        'item_price': item_subtotal,
-                                        'qty': 1,
-                                        'memos': [item_memo] if item_memo else [],
-                                        'colors': {item_color: 1}
-                                    }
+                                if invoice_id in print_sync_invoice:
+                                    if item_id in print_sync_invoice[invoice_id]:
+                                        print_sync_invoice[invoice_id][item_id]['item_price'] += item_subtotal
+                                        print_sync_invoice[invoice_id][item_id]['qty'] += 1
+                                        if item_memo:
+                                            print_sync_invoice[invoice_id][item_id]['memos'].append(item_memo)
+                                        print_sync_invoice[invoice_id][item_id]['colors'] = colors
+                                    else:
+                                        print_sync_invoice[invoice_id][item_id] = {
+                                            'item_id': item_id,
+                                            'type': inventory_init,
+                                            'name': display_name,
+                                            'item_price': item_subtotal,
+                                            'qty': 1,
+                                            'memos': [item_memo] if item_memo else [],
+                                            'colors': {item_color: 1}
+                                        }
                         now = datetime.datetime.now()
                 # Print payment copies
                 if print_sync_invoice:  # if invoices synced
@@ -10477,7 +10493,7 @@ class PickupScreen(Screen):
                     vars.EPSON.write('-----------------------------------------\n')
                     for invoice_id, item_id in print_sync_invoice.items():
 
-                        if print_sync_invoice[invoice_id]:
+                         if invoice_id in print_sync_invoice:
                             for item_id, invoice_item in print_sync_invoice[invoice_id].items():
                                 item_name = invoice_item['name']
                                 item_price = invoice_item['item_price']
@@ -10485,7 +10501,7 @@ class PickupScreen(Screen):
                                 item_color_string = []
                                 item_memo = invoice_item['memos']
                                 item_type = invoice_item['type']
-                                if invoice_item['colors']:
+                                if 'colors' in invoice_item:
                                     for color_name, color_qty in invoice_item['colors'].items():
                                         if color_name:
                                             item_color_string.append('{}-{}'.format(color_qty, color_name))
@@ -11826,7 +11842,7 @@ class SearchScreen(Screen):
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
+        if selected_month in year_dates:
             for month in year_dates[selected_month]:
                 for week in month:
                     for day in week:
@@ -12438,22 +12454,23 @@ class SearchScreen(Screen):
                             colors[item_color] = 1
                         item_memo = invoice_item['memo']
                         item_subtotal = invoice_item['pretax']
-                        if item_id in print_sync_invoice[vars.INVOICE_ID]:
-                            print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_subtotal
-                            print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
-                            if item_memo:
-                                print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
-                            print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
-                        else:
-                            print_sync_invoice[vars.INVOICE_ID][item_id] = {
-                                'item_id': item_id,
-                                'type': inventory_init,
-                                'name': display_name,
-                                'item_price': item_subtotal,
-                                'qty': 1,
-                                'memos': [item_memo] if item_memo else [],
-                                'colors': {item_color: 1}
-                            }
+                        if vars.INVOICE_ID in print_sync_invoice:
+                            if item_id in print_sync_invoice[vars.INVOICE_ID]:
+                                print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_subtotal
+                                print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
+                                if item_memo:
+                                    print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
+                                print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
+                            else:
+                                print_sync_invoice[vars.INVOICE_ID][item_id] = {
+                                    'item_id': item_id,
+                                    'type': inventory_init,
+                                    'name': display_name,
+                                    'item_price': item_subtotal,
+                                    'qty': 1,
+                                    'memos': [item_memo] if item_memo else [],
+                                    'colors': {item_color: 1}
+                                }
                 now = datetime.datetime.now()
                 if type == 2:
                     vars.EPSON.write(
@@ -12497,7 +12514,7 @@ class SearchScreen(Screen):
                                     invert=False, smooth=False, flip=False))
                     vars.EPSON.write('-----------------------------------------\n')
 
-                    if print_sync_invoice[vars.INVOICE_ID]:
+                    if vars.INVOICE_ID in print_sync_invoice:
                         for item_id, invoice_item in print_sync_invoice[vars.INVOICE_ID].items():
                             item_name = invoice_item['name']
                             item_price = invoice_item['item_price']
@@ -12505,7 +12522,7 @@ class SearchScreen(Screen):
                             item_color_string = []
                             item_memo = invoice_item['memos']
                             item_type = invoice_item['type']
-                            if invoice_item['colors']:
+                            if 'colors' in invoice_item:
                                 for color_name, color_qty in invoice_item['colors'].items():
                                     if color_name:
                                         item_color_string.append('{}-{}'.format(color_qty, color_name))
@@ -12600,7 +12617,7 @@ class SearchScreen(Screen):
                                             invert=False, smooth=False, flip=False))
                             vars.EPSON.write('-----------------------------------------\n')
 
-                            if print_sync_invoice[invoice_id]:
+                            if invoice_id in print_sync_invoice:
                                 for item_id, invoice_item in print_sync_invoice[invoice_id].items():
                                     item_name = invoice_item['name']
                                     item_price = invoice_item['item_price']
@@ -12608,7 +12625,7 @@ class SearchScreen(Screen):
                                     item_color_string = []
                                     item_memo = invoice_item['memos']
                                     item_type = invoice_item['type']
-                                    if invoice_item['colors']:
+                                    if 'colors' in invoice_item:
                                         for color_name, color_qty in invoice_item['colors'].items():
                                             if color_name:
                                                 item_color_string.append('{}-{}'.format(color_qty, color_name))
@@ -14478,7 +14495,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
+        if selected_month in year_dates:
             for month in year_dates[selected_month]:
                 for week in month:
                     for day in week:
@@ -14572,7 +14589,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
+        if selected_month in year_dates:
             for month in year_dates[selected_month]:
                 for week in month:
                     for day in week:
