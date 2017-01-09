@@ -2237,10 +2237,9 @@ GridLayout:
 
     def set_price_adjustment_individual_correct_sum(self, row, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if row in self.invoice_list_copy[vars.ITEM_ID]:
-                self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
-                self.make_adjustment_sum_table()
-                self.make_adjustment_individual_table()
+            self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
+            self.make_adjustment_sum_table()
+            self.make_adjustment_individual_table()
 
     def save_price_adjustment(self, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
@@ -4354,11 +4353,9 @@ GridLayout:
 
     def set_price_adjustment_individual_correct_sum(self, row, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if row in self.invoice_list_copy[vars.ITEM_ID]:
-
-                self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
-                self.make_adjustment_sum_table()
-                self.make_adjustment_individual_table()
+            self.invoice_list_copy[vars.ITEM_ID][row]['item_price'] = self.adjust_price
+            self.make_adjustment_sum_table()
+            self.make_adjustment_individual_table()
 
     def save_price_adjustment(self, *args, **kwargs):
 
