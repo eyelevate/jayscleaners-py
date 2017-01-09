@@ -1823,23 +1823,21 @@ GridLayout:
 
     def add_memo(self, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
-                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
-                next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                    self.invoice_list_copy[vars.ITEM_ID]) else 0
-                self.item_selected_row = next_row
-                self.make_items_table()
-                self.memo_text_input.text = ''
-                self.memo_list = []
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
+            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                self.invoice_list_copy[vars.ITEM_ID]) else 0
+            self.item_selected_row = next_row
+            self.make_items_table()
+            self.memo_text_input.text = ''
+            self.memo_list = []
 
     def color_selected(self, color=False, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
-                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
-                next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                    self.invoice_list_copy[vars.ITEM_ID]) else 0
-                self.item_selected_row = next_row
-                self.make_items_table()
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
+            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                self.invoice_list_copy[vars.ITEM_ID]) else 0
+            self.item_selected_row = next_row
+            self.make_items_table()
 
     def item_row_edit(self, row, *args, **kwargs):
         popup = Popup(title='Remove Colors / Memo')
@@ -3945,23 +3943,22 @@ GridLayout:
 
     def add_memo(self, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
-                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
-                next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                    self.invoice_list_copy[vars.ITEM_ID]) else 0
-                self.item_selected_row = next_row
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = self.memo_text_input.text
+            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                self.invoice_list_copy[vars.ITEM_ID]) else 0
+            self.item_selected_row = next_row
 
-                self.make_items_table()
-                self.memo_text_input.text = ''
+            self.make_items_table()
+            self.memo_text_input.text = ''
 
     def color_selected(self, color=False, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
-                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
-                next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                    self.invoice_list_copy[vars.ITEM_ID]) else 0
-                self.item_selected_row = next_row
-                self.make_items_table()
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = color
+            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
+                self.invoice_list_copy[vars.ITEM_ID]) else 0
+            self.item_selected_row = next_row
+            self.make_items_table()
+
 
     def item_row_edit(self, row, *args, **kwargs):
         popup = Popup(title='Remove Colors / Memo')
