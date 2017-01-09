@@ -2483,6 +2483,7 @@ GridLayout:
         self.print_popup.open()
 
     def finish_invoice(self, type, *args, **kwargs):
+        self.now = datetime.datetime.now()
         # determine the types of invoices we need to print
         # set the printer data
         laundry_to_print = []
@@ -4610,7 +4611,7 @@ GridLayout:
 
     def finish_invoice(self, type, *args, **kwargs):
         # determine the types of invoices we need to print
-
+        self.now = datetime.datetime.now()
         # set the printer data
 
         if self.deleted_rows:
