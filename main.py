@@ -2372,7 +2372,7 @@ GridLayout:
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if selected_month in year_dates:
+        if year_dates[selected_month]:
             for month in year_dates[selected_month]:
                 for week in month:
                     for day in week:
@@ -4497,7 +4497,7 @@ GridLayout:
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if selected_month in year_dates:
+        if year_dates[selected_month]:
             for month in year_dates:
                 for week in month:
                     for day in week:
@@ -11835,7 +11835,7 @@ class SearchScreen(Screen):
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if selected_month in year_dates:
+        if year_dates[selected_month]:
             for month in year_dates[selected_month]:
                 for week in month:
                     for day in week:
@@ -14488,7 +14488,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if selected_month in year_dates:
+        if year_dates[selected_month]:
             for month in year_dates[selected_month]:
                 for week in month:
                     for day in week:
@@ -14582,7 +14582,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         self.calendar_layout.add_widget(Builder.load_string(th5))
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
-        if selected_month in year_dates:
+        if year_dates[selected_month]:
             for month in year_dates[selected_month]:
                 for week in month:
                     for day in week:
