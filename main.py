@@ -1866,16 +1866,14 @@ GridLayout:
 
     def remove_color(self, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
-                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
-                self.make_items_table()
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
+            self.make_items_table()
 
     def remove_memo(self, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
-                self.memo_list = []
-                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
-                self.make_items_table()
+            self.memo_list = []
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
+            self.make_items_table()
 
     def item_row_selected(self, row, *args, **kwargs):
         self.item_selected_row = row
@@ -3987,15 +3985,13 @@ GridLayout:
 
     def remove_color(self, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
-                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
-                self.make_items_table()
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['color'] = ''
+            self.make_items_table()
 
     def remove_memo(self, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
-            if self.item_selected_row in self.invoice_list_copy[vars.ITEM_ID]:
-                self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
-                self.make_items_table()
+            self.invoice_list_copy[vars.ITEM_ID][self.item_selected_row]['memo'] = ''
+            self.make_items_table()
 
     def item_row_selected(self, row, *args, **kwargs):
         self.item_selected_row = row
