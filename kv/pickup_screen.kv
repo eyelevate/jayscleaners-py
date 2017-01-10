@@ -14,6 +14,7 @@
     online_button: online_button
     check_number: check_number
     payment_panel: payment_panel
+    credit_card_header: credit_card_header
     payment_account_header: payment_account_header
     discount_label: discount_label
     total_discount: total_discount
@@ -273,6 +274,7 @@
                     size_hint: 1,0.3
                     do_default_tab: False
                     TabbedPanelItem:
+                        id: credit_card_header
                         text: 'Credit Card'
                         on_release: root.select_payment_type('cc')
                         BoxLayout:

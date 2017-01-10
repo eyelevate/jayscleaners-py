@@ -5234,7 +5234,6 @@ class EditCustomerScreen(Screen):
         self.mark_text.text = ''
         self.is_delivery.active = False
         self.is_account.active = False
-
         self.marks_table.clear_widgets()
 
     def load(self):
@@ -5284,25 +5283,27 @@ class EditCustomerScreen(Screen):
                         self.shirt_preference_spinner.text = 'Heavy'
                         self.shirt_preference = 4
 
-                    if addresses:
-                        for address in addresses:
-                            self.address_id = address['id']
-                            self.is_delivery.active = True
+                    # if addresses:
+                    #     for address in addresses:
+                    #         self.address_id = address['id']
+                    #         self.is_delivery.active = True
+                    #
+                    #         self.concierge_name.text = address['concierge_name'] if address['concierge_name'] else ''
+                    #         self.concierge_name.hint_text = 'Concierge Name'
+                    #         self.concierge_name.hint_text_color = DEFAULT_COLOR
+                    #         self.concierge_name.disabled = False
+                    #         self.concierge_number.text = address['concierge_number'] if address[
+                    #             'concierge_number'] else ''
+                    #         self.concierge_number.hint_text = 'Concierge Number'
+                    #         self.concierge_number.hint_text_color = DEFAULT_COLOR
+                    #         self.concierge_number.disabled = False
+                    #         # self.special_instructions.text = address['special_instructions'] if address[
+                    #         #     'special_instructions'] else ''
+                    #         self.special_instructions.hint_text = 'Special Instructions'
+                    #         self.special_instructions.hint_text_color = DEFAULT_COLOR
+                    #         self.special_instructions.disabled = False
 
-                            self.concierge_name.text = address['concierge_name'] if address['concierge_name'] else ''
-                            self.concierge_name.hint_text = 'Concierge Name'
-                            self.concierge_name.hint_text_color = DEFAULT_COLOR
-                            self.concierge_name.disabled = False
-                            self.concierge_number.text = address['concierge_number'] if address[
-                                'concierge_number'] else ''
-                            self.concierge_number.hint_text = 'Concierge Number'
-                            self.concierge_number.hint_text_color = DEFAULT_COLOR
-                            self.concierge_number.disabled = False
-                            self.special_instructions.text = address['special_instructions'] if address[
-                                'special_instructions'] else ''
-                            self.special_instructions.hint_text = 'Special Instructions'
-                            self.special_instructions.hint_text_color = DEFAULT_COLOR
-                            self.special_instructions.disabled = False
+                    self.update_marks_table()
 
                     if 'account' in cust:
                         self.is_account.active = True
@@ -5341,7 +5342,6 @@ class EditCustomerScreen(Screen):
                         self.zipcode.hint_text_color = DEFAULT_COLOR
                         self.zipcode.disabled = True
                         self.mark_text.text = ''
-                        self.marks_table.clear_widgets()
 
     def select_shirts_finish(self, *args, **kwargs):
         self.shirt_finish = self.shirt_finish_spinner.text
@@ -5391,6 +5391,7 @@ class EditCustomerScreen(Screen):
             marks.status = 1
             if marks.add():
                 # update the marks table
+                self.mark_text.text = ''
                 self.update_marks_table()
                 marks.close_connection()
                 popup.title = 'Success'
@@ -9015,6 +9016,7 @@ class PickupScreen(Screen):
     due_label = ObjectProperty(None)
     check_number = ObjectProperty(None)
     payment_panel = ObjectProperty(None)
+    credit_card_header = ObjectProperty(None)
     payment_account_header = ObjectProperty(None)
     discount_label = ObjectProperty(None)
     total_discount = ObjectProperty(None)
@@ -9067,6 +9069,7 @@ class PickupScreen(Screen):
             self.payment_panel.switch_to(header=self.payment_account_header)
             self.payment_type = 'ac'
         else:
+            self.payment_panel.switch_to(header=self.credit_card_header)
             self.payment_type = 'cc'
 
         self.total_credit.text = '[color=0AAC00]{}[/color]'.format('${:,.2f}'.format(self.credits))
@@ -9078,6 +9081,7 @@ class PickupScreen(Screen):
         self.invoice_create_rows()
 
         # reset payment values
+        self.calc_total.text = '[color=000000][b]$0.00[/b][/color]'
         self.calc_amount = []
         self.amount_tendered = 0
         self.selected_invoices = []
@@ -10029,10 +10033,22 @@ class PickupScreen(Screen):
         threads_start()
 
     def cash_tendered(self, amount):
-        total = vars.us_dollar(int(''.join(amount)))
-        self.amount_tendered = int(''.join(amount))
-        self.change_due = float("%0.2f" % (self.amount_tendered - self.total_due))
-        self.calc_total.text = '[color=000000][b]{}[/b][/color]'.format(total)
+        if len(self.selected_invoices) > 0:
+            total = vars.us_dollar(int(''.join(amount)))
+            self.amount_tendered = int(''.join(amount))
+            self.change_due = float("%0.2f" % (self.amount_tendered - self.total_due))
+            self.calc_total.text = '[color=000000][b]{}[/b][/color]'.format(total)
+        else:
+            # finish and reset
+            popup = Popup()
+            popup.title = 'Transaction Error'
+            content = KV.popup_alert(
+                'Please select an invoice before processing.')
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
 
     def pay_popup_create(self):
 
