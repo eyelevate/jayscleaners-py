@@ -298,9 +298,9 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
                     last_name = user['last_name'][:1].capitalize()
                     if user['starch'] is 1:
                         starch = 'N'
-                    elif starch is 2:
+                    elif user['starch'] is 2:
                         starch = 'L'
-                    elif starch is 3:
+                    elif user['starch'] is 3:
                         starch = 'M'
                     else:
                         starch = 'H'
