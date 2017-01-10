@@ -5642,6 +5642,15 @@ class EditCustomerScreen(Screen):
                     popup.open()
 
             customers.close_connection()
+        else:
+            popup = Popup()
+            popup.title = 'Edit Error'
+            content = KV.popup_alert('{} Errors in your form. Please check to see if account or delivery is improperly set.'.format(errors))
+            popup.content = Builder.load_string(content)
+            popup.open()
+            # Beep Sound
+            sys.stdout.write('\a')
+            sys.stdout.flush()
 
     def customer_select(self, customer_id, *args, **kwargs):
         print(customer_id)
