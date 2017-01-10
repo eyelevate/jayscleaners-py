@@ -12522,6 +12522,7 @@ class SearchScreen(Screen):
                     vars.EPSON.write('-----------------------------------------\n')
 
                     if vars.INVOICE_ID in print_sync_invoice:
+                        item_type = 'D'
                         for item_id, invoice_item in print_sync_invoice[vars.INVOICE_ID].items():
                             item_name = invoice_item['name']
                             item_price = invoice_item['item_price']
@@ -12574,6 +12575,7 @@ class SearchScreen(Screen):
                     # Print store copies
                     if print_sync_invoice:  # if invoices synced
                         for invoice_id, item_id in print_sync_invoice.items():
+                            item_type = 'D'
                             if isinstance(invoice_id,str):
                                 invoice_id = int(invoice_id)
 
