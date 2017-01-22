@@ -287,10 +287,10 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
 
     def getCustomerMark(self, customer_id):
         marks = self.where({'customer_id':customer_id})
+        mark = ''
         if marks:
             for m in marks:
-                mark = m['mark']
-                break
+                return m['mark']
         else:
             users = User().where({'user_id':customer_id})
             if users:
@@ -306,9 +306,9 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
                         starch = 'H'
 
                     mark = '{}{}{}'.format(last_name,str(customer_id),starch)
+                    return mark
             else:
-                return False
-        print(mark)
+                return '#{}#'.format(customer_id)
         return mark
 
 
