@@ -140,15 +140,15 @@ class MultiThread(threading.Thread):
         self.q = q
 
     def run(self):
-        popup = Popup()
-        popup.title = "Database Syncing"
-        content = KV.popup_alert('Please wait while database is in sync mode. This should take a few seconds.')
-        popup.content = Builder.load_string(content)
-        popup.open()
+        # popup = Popup()
+        # popup.title = "Database Syncing"
+        # content = KV.popup_alert('Please wait while database is in sync mode. This should take a few seconds.')
+        # popup.content = Builder.load_string(content)
+        # popup.open()
         print("Starting " + self.name)
         process_data(threadName=self.name, q=self.q)
         print("Exiting " + self.name)
-        popup.dismiss()
+        # popup.dismiss()
 
 
 def process_data(threadName, q):
