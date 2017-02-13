@@ -3369,12 +3369,14 @@ class EditInvoiceScreen(Screen):
     deleted_rows = []
     inventory_id = 1
     starch = None
+    colors_table_main = ObjectProperty(None)
 
     def reset(self):
         # reset the inventory table
         self.inventory_panel.clear_widgets()
         self.get_inventory()
         self.summary_table.clear_widgets()
+        self.colors_table_main.clear_widgets()
         store_hours = Company().get_store_hours(auth_user.company_id)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
@@ -3529,6 +3531,7 @@ class EditInvoiceScreen(Screen):
         self.summary_table.add_widget(Builder.load_string(h3))
         self.summary_table.add_widget(Builder.load_string(h4))
         self.get_inventory()
+        self.get_colors_main()
         taxes = Tax().where({'company_id': auth_user.company_id, 'status': 1})
         if taxes:
             for tax in taxes:
@@ -3542,6 +3545,69 @@ class EditInvoiceScreen(Screen):
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
         self.summary_table.clear_widgets()
+
+
+    def get_colors_main(self):
+
+        colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        if colors:
+            for color in colors:
+                color_btn = Button(markup=True,
+                                   text='[b]{color_name}[/b]'.format(color_name=color['name']),
+                                   on_release=partial(self.color_selected_main, color['name']))
+                color_btn.background_normal = ''
+                color_btn.background_color = vars.color_rgba(color['name'])
+                self.colors_table_main.add_widget(color_btn)
+
+    def color_selected_main(self, color_name, *args, **kwargs):
+        # quantity
+
+        qty = self.inv_qty
+
+        if vars.ITEM_ID in self.invoice_list_copy:
+            #loop through the invoice list and see how many colors are set and which is the last row to be set
+            total_colors_usable = 0
+            rows_updatable = []
+            row_to_update = -1
+            for row in self.invoice_list_copy[vars.ITEM_ID]:
+                row_to_update += 1
+
+                if 'color' in self.invoice_list_copy[vars.ITEM_ID][row_to_update]:
+                    if self.invoice_list_copy[vars.ITEM_ID][row_to_update]['color'] is '':
+                        total_colors_usable += 1
+                        rows_updatable.append(row_to_update)
+
+            if total_colors_usable >= qty:
+                qty_countdown = qty
+                for row in rows_updatable:
+
+                        if 'color' in self.invoice_list_copy[vars.ITEM_ID][row]:
+                            if self.invoice_list_copy[vars.ITEM_ID][row]['color'] is '':
+                                qty_countdown -= 1
+                                if qty_countdown >= 0:
+                                    self.invoice_list_copy[vars.ITEM_ID][row]['color'] = color_name
+
+                # save rows and continue
+
+                self.save_memo_color()
+
+                self.create_summary_table()
+            else:
+                popup = Popup()
+                popup.title = 'Color Quantity Error'
+                content = KV.popup_alert('Color quantity does not match invoice item quantity. Please try again.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+
+
+
+        # reset qty
+        self.set_qty('C')
+
+        pass
 
     def get_inventory(self):
         inventories = Inventory().where({'company_id': '{}'.format(auth_user.company_id)})

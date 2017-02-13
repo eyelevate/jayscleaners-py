@@ -10,6 +10,7 @@
     summary_discount_label: summary_discount_label
     summary_total_label: summary_total_label
     date_picker: date_picker
+    colors_table_main: colors_table_main
     on_enter: root.reset()
     BoxLayout:
         orientation: 'vertical'
@@ -73,8 +74,20 @@
                 do_default_tab: False
                 size_hint: 0.5,1
             RelativeLayout:
+                size_hint: 0.1,1
+                ScrollView:
+                    size_hint:(1,1)
+                    pos_hint:{'top':1}
+                    GridLayout:
+                        cols:1
+                        id:colors_table_main
+                        row_force_default: True
+                        row_default_height: sp(50)
+                        size_hint_y:None
+                        height: self.minimum_height
+            RelativeLayout:
                 pos_hint:{'x':1,'y':0}
-                size_hint: 0.5,1
+                size_hint: 0.4,1
                 ScrollView:
                     size_hint_x: 1
                     size_hint_y: 0.7
