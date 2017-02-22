@@ -142,11 +142,9 @@ class MultiThread(threading.Thread):
         self.q = q
 
     def run(self):
-
         print("Starting " + self.name)
         process_data(threadName=self.name, q=self.q)
         print("Exiting " + self.name)
-
 
 
 def process_data(threadName, q):
@@ -323,7 +321,8 @@ class MainScreen(Screen):
                         self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
                 SYNC_POPUP.title = 'Authentication Success!'
                 SYNC_POPUP.content = Builder.load_string(
-                    KV.popup_alert('You are now logged in as {}! Please wait as we sync the database.'.format(user.username)))
+                    KV.popup_alert(
+                        'You are now logged in as {}! Please wait as we sync the database.'.format(user.username)))
                 self.login_popup.dismiss()
                 db_sync_status = True
             else:  # did not find user in local db, look for user on server
@@ -357,7 +356,8 @@ class MainScreen(Screen):
 
                     SYNC.company_id = data['company_id']
                     SYNC_POPUP.title = 'Authentication Success!'
-                    content = KV.popup_alert(msg='You are now logged in as {}! Please wait as we sync the database.'.format(user.username))
+                    content = KV.popup_alert(
+                        msg='You are now logged in as {}! Please wait as we sync the database.'.format(user.username))
                     SYNC_POPUP.content = Builder.load_string(content)
                     self.login_popup.dismiss()
                     db_sync_status = True
@@ -373,8 +373,6 @@ class MainScreen(Screen):
 
             if db_sync_status:
                 Clock.schedule_once(self.db_sync, 1)
-
-
 
     def logout(self, *args, **kwargs):
         self.username.text = ''
@@ -448,7 +446,6 @@ class MainScreen(Screen):
             sys.stdout.write('\a')
             sys.stdout.flush()
 
-
     def sync_db_popup(self):
 
         self.main_popup.title = 'Auto Sync'
@@ -469,7 +466,7 @@ class MainScreen(Screen):
         inner_layout_1.ids.main_table.add_widget(self.pb_items)
         inner_layout_1.ids.main_table.add_widget(self.item_description)
         inner_layout_2 = BoxLayout(orientation="horizontal",
-                                   size_hint=(1,0.1))
+                                   size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
                                on_release=self.main_popup.dismiss)
         run_sync_button = Button(text="Run",
@@ -481,13 +478,13 @@ class MainScreen(Screen):
         self.main_popup.content = layout
         self.main_popup.open()
 
-    def set_pb_desc(self,description, *args, **kwargs):
-        self.table_description.text= description
+    def set_pb_desc(self, description, *args, **kwargs):
+        self.table_description.text = description
 
     def set_pb_value(self, value, *args, **kwargs):
         self.pb_table.value = int(value)
 
-    def set_pb_items_desc(self,description, *args, **kwargs):
+    def set_pb_items_desc(self, description, *args, **kwargs):
         self.item_description.text = description
 
     def set_pb_items_value(self, value, *args, **kwargs):
@@ -496,16 +493,13 @@ class MainScreen(Screen):
     def set_pb_items_max(self, value, *args, **kwargs):
         self.pb_items.max = int(value)
 
-
     def sync_db(self, *args, **kwargs):
         sync = Sync()
 
-
-        t1 = Thread(target=sync.auto_update,args=())
+        t1 = Thread(target=sync.auto_update, args=())
         t1.start()
         t1.join()
         print('all done')
-
 
     def test_sys(self):
         Sync().migrate()
@@ -581,7 +575,6 @@ class MainScreen(Screen):
             # Beep Sound
             sys.stdout.write('\a')
             sys.stdout.flush()
-
 
     def print_setup(self, vendor_id, product_id):
         vendor_int = int(vendor_id, 16)
@@ -1377,14 +1370,13 @@ class DropoffScreen(Screen):
                 color_btn.background_color = vars.color_rgba(color['name'])
                 self.colors_table_main.add_widget(color_btn)
 
-
     def color_selected_main(self, color_name, *args, **kwargs):
         # quantity
 
         qty = self.inv_qty
 
         if vars.ITEM_ID in self.invoice_list_copy:
-            #loop through the invoice list and see how many colors are set and which is the last row to be set
+            # loop through the invoice list and see how many colors are set and which is the last row to be set
             total_colors_usable = 0
             rows_updatable = []
             row_to_update = -1
@@ -1400,11 +1392,11 @@ class DropoffScreen(Screen):
                 qty_countdown = qty
                 for row in rows_updatable:
 
-                        if 'color' in self.invoice_list_copy[vars.ITEM_ID][row]:
-                            if self.invoice_list_copy[vars.ITEM_ID][row]['color'] is '':
-                                qty_countdown -= 1
-                                if qty_countdown >= 0:
-                                    self.invoice_list_copy[vars.ITEM_ID][row]['color'] = color_name
+                    if 'color' in self.invoice_list_copy[vars.ITEM_ID][row]:
+                        if self.invoice_list_copy[vars.ITEM_ID][row]['color'] is '':
+                            qty_countdown -= 1
+                            if qty_countdown >= 0:
+                                self.invoice_list_copy[vars.ITEM_ID][row]['color'] = color_name
 
                 # save rows and continue
 
@@ -1420,8 +1412,6 @@ class DropoffScreen(Screen):
                 # Beep Sound
                 sys.stdout.write('\a')
                 sys.stdout.flush()
-
-
 
         # reset qty
         self.set_qty('C')
@@ -1578,7 +1568,6 @@ GridLayout:
 
         self.create_summary_table()
         self.set_qty('C')
-
 
     def create_summary_table(self):
         self.summary_table.clear_widgets()
@@ -1880,13 +1869,14 @@ GridLayout:
                                        font_size='12sp',
                                        background_color=background_color,
                                        background_normal=background_normal)
-                    items_tr4 = Factory.LongButton(text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                                    msg=item_memo),
-                                                   on_press=partial(self.item_row_selected, idx),
-                                                   size_hint_x=0.4,
-                                                   size_hint_y=None,
-                                                   background_color=background_color,
-                                                   background_normal=background_normal)
+                    items_tr4 = Factory.LongButton(
+                        text='[color=#{text_color}]{msg}[/color]'.format(text_color=text_color,
+                                                                         msg=item_memo),
+                        on_press=partial(self.item_row_selected, idx),
+                        size_hint_x=0.4,
+                        size_hint_y=None,
+                        background_color=background_color,
+                        background_normal=background_normal)
                     items_tr5 = Button(markup=True,
                                        text='[color=ff0000][b]Edit[b][/color]',
                                        on_press=partial(self.item_row_selected, idx),
@@ -2304,7 +2294,7 @@ GridLayout:
         self.adjusted_price.text = '[color=e5e5e5][b]{}[/b][/color]'.format(vars.us_dollar(self.adjust_price))
 
     def set_price_adjustment_sum_correct_individual(self, row, *args, **kwargs):
-        if  vars.ITEM_ID in self.invoice_list_copy:
+        if vars.ITEM_ID in self.invoice_list_copy:
             total_count = len(self.invoice_list_copy[vars.ITEM_ID])
             new_avg_price = round(self.adjust_price / total_count, 2)
             minus_total = self.adjust_price
@@ -2549,15 +2539,15 @@ GridLayout:
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.7))
         button_1 = Factory.PrintButton(text='Cust. + Store',
-                                       on_release=partial(self.wait_popup,'both'))
+                                       on_release=partial(self.wait_popup, 'both'))
 
         inner_layout_1.add_widget(button_1)
         button_2 = Factory.PrintButton(text='Store Only',
-                                       on_release=partial(self.wait_popup,'store'))
+                                       on_release=partial(self.wait_popup, 'store'))
 
         inner_layout_1.add_widget(button_2)
         button_3 = Factory.PrintButton(text='No Print',
-                                       on_release=partial(self.wait_popup,'none'))
+                                       on_release=partial(self.wait_popup, 'none'))
 
         inner_layout_1.add_widget(button_3)
         inner_layout_2 = BoxLayout(orientation='horizontal',
@@ -2575,7 +2565,7 @@ GridLayout:
         content = KV.popup_alert("Syncing data to server, please wait...")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
-        Clock.schedule_once(partial(self.finish_invoice,type))
+        Clock.schedule_once(partial(self.finish_invoice, type))
 
     def finish_invoice(self, type, *args, **kwargs):
         self.now = datetime.datetime.now()
@@ -2816,7 +2806,7 @@ GridLayout:
                         customers.remember_token = user['remember_token']
                 # print invoices
                 if vars.EPSON:
-                    if type is 'both': # print customer copy
+                    if type is 'both':  # print customer copy
 
                         # CENTER ALIGN
                         vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
@@ -3349,7 +3339,6 @@ GridLayout:
         self.print_popup.dismiss()
 
 
-
 class EditInvoiceScreen(Screen):
     inv_qty_list = ['1']
     qty_clicks = 0
@@ -3575,7 +3564,6 @@ class EditInvoiceScreen(Screen):
         vars.SEARCH_RESULTS_STATUS = True
         self.summary_table.clear_widgets()
 
-
     def get_colors_main(self):
 
         colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
@@ -3594,7 +3582,7 @@ class EditInvoiceScreen(Screen):
         qty = self.inv_qty
 
         if vars.ITEM_ID in self.invoice_list_copy:
-            #loop through the invoice list and see how many colors are set and which is the last row to be set
+            # loop through the invoice list and see how many colors are set and which is the last row to be set
             total_colors_usable = 0
             rows_updatable = []
             row_to_update = -1
@@ -3610,11 +3598,11 @@ class EditInvoiceScreen(Screen):
                 qty_countdown = qty
                 for row in rows_updatable:
 
-                        if 'color' in self.invoice_list_copy[vars.ITEM_ID][row]:
-                            if self.invoice_list_copy[vars.ITEM_ID][row]['color'] is '':
-                                qty_countdown -= 1
-                                if qty_countdown >= 0:
-                                    self.invoice_list_copy[vars.ITEM_ID][row]['color'] = color_name
+                    if 'color' in self.invoice_list_copy[vars.ITEM_ID][row]:
+                        if self.invoice_list_copy[vars.ITEM_ID][row]['color'] is '':
+                            qty_countdown -= 1
+                            if qty_countdown >= 0:
+                                self.invoice_list_copy[vars.ITEM_ID][row]['color'] = color_name
 
                 # save rows and continue
 
@@ -3630,8 +3618,6 @@ class EditInvoiceScreen(Screen):
                 # Beep Sound
                 sys.stdout.write('\a')
                 sys.stdout.flush()
-
-
 
         # reset qty
         self.set_qty('C')
@@ -4130,7 +4116,6 @@ GridLayout:
                 self.invoice_list_copy[vars.ITEM_ID]) else 0
             self.item_selected_row = next_row
             self.make_items_table()
-
 
     def item_row_edit(self, row, *args, **kwargs):
         popup = Popup(title='Remove Colors / Memo')
@@ -4789,7 +4774,7 @@ GridLayout:
         content = KV.popup_alert("Syncing data to server, please wait...")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
-        Clock.schedule_once(partial(self.finish_invoice,type))
+        Clock.schedule_once(partial(self.finish_invoice, type))
 
     def finish_invoice(self, type, *args, **kwargs):
         # determine the types of invoices we need to print
@@ -5057,7 +5042,7 @@ GridLayout:
                 # Print store copies
                 if print_invoice:  # if invoices synced
                     for invoice_id, item_id in print_invoice.items():
-                        if isinstance( invoice_id, str ):
+                        if isinstance(invoice_id, str):
                             invoice_id = int(invoice_id)
                         # start invoice
                         vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
@@ -5196,7 +5181,7 @@ GridLayout:
                 # Print store copies
                 if print_invoice:  # if invoices synced
                     for invoice_id, item_id in print_invoice.items():
-                        if isinstance( invoice_id, str ):
+                        if isinstance(invoice_id, str):
                             invoice_id = int(invoice_id)
                         # start invoice
                         vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
@@ -5837,7 +5822,8 @@ class EditCustomerScreen(Screen):
         else:
             popup = Popup()
             popup.title = 'Edit Error'
-            content = KV.popup_alert('{} Errors in your form. Please check to see if account or delivery is improperly set.'.format(errors))
+            content = KV.popup_alert(
+                '{} Errors in your form. Please check to see if account or delivery is improperly set.'.format(errors))
             popup.content = Builder.load_string(content)
             popup.open()
             # Beep Sound
@@ -6866,7 +6852,7 @@ class HistoryScreen(Screen):
                                     'qty': 1,
                                     'memos': [item_memo] if item_memo else [],
                                     'colors': {item_color: 1}
-                            }
+                                }
                 now = datetime.datetime.now()
                 if type == 2:
                     vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
@@ -9377,8 +9363,8 @@ class PickupScreen(Screen):
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(h5))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(h6))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(h7))
-        discounts = Discount().where({'company_id':auth_user.company_id,
-                                      'ORDER_BY':'discount_id desc'})
+        discounts = Discount().where({'company_id': auth_user.company_id,
+                                      'ORDER_BY': 'discount_id desc'})
         if discounts:
             for discount in discounts:
                 discount_id = discount['discount_id']
@@ -9386,14 +9372,16 @@ class PickupScreen(Screen):
                 rate = discount['rate']
                 price = discount['discount']
                 discount_display = rate if discount['type'] is 1 else price
-                start = datetime.datetime.strptime(discount['start_date'], "%Y-%m-%d %H:%M:%S") if discount['start_date'] else None
-                end = datetime.datetime.strptime(discount['end_date'], "%Y-%m-%d %H:%M:%S") if discount['end_date'] else None
+                start = datetime.datetime.strptime(discount['start_date'], "%Y-%m-%d %H:%M:%S") if discount[
+                    'start_date'] else None
+                end = datetime.datetime.strptime(discount['end_date'], "%Y-%m-%d %H:%M:%S") if discount[
+                    'end_date'] else None
                 start_formatted = start.strftime('%m/%d/%Y')
                 end_formatted = end.strftime('%m/%d/%Y')
                 inventory_id = discount['inventory_id']
                 inventory_name = None
                 if inventory_id:
-                    inventories = Inventory().where({'inventory_id':inventory_id})
+                    inventories = Inventory().where({'inventory_id': inventory_id})
 
                     if inventories:
                         for inventory in inventories:
@@ -9401,7 +9389,7 @@ class PickupScreen(Screen):
                 item_name = None
                 inventory_item_id = discount['inventory_item_id']
                 if inventory_item_id:
-                    inventory_items = InventoryItem().where({'item_id':inventory_item_id})
+                    inventory_items = InventoryItem().where({'item_id': inventory_item_id})
                     if inventory_items:
                         for inventory_item in inventory_items:
                             item_name = inventory_item['name']
@@ -9414,7 +9402,6 @@ class PickupScreen(Screen):
                 elif item_name and not inventory_name:
                     group = str(item_name)
 
-
                 if discount_id is self.discount_id:
                     id_button = Factory.TagsSelectedButton(text=str(discount_id))
                     name_button = Factory.TagsSelectedButton(text=str(discount['name']))
@@ -9425,12 +9412,12 @@ class PickupScreen(Screen):
                     end_button = Factory.TagsSelectedButton(text=str(end_formatted))
                 else:
                     id_button = Button(text=str(discount_id),
-                                       on_release=partial(self.select_discount,discount_id))
+                                       on_release=partial(self.select_discount, discount_id))
 
                     name_button = Button(text=str(discount['name']),
                                          on_release=partial(self.select_discount, discount_id))
                     type_button = Button(text=str(type),
-                                             on_release=partial(self.select_discount, discount_id))
+                                         on_release=partial(self.select_discount, discount_id))
                     discount_button = Button(text=str(discount_display),
                                              on_release=partial(self.select_discount, discount_id))
                     group_button = Button(text=str(group),
@@ -9440,7 +9427,6 @@ class PickupScreen(Screen):
                     end_button = Button(text=str(end_formatted),
                                         on_release=partial(self.select_discount, discount_id))
 
-
                 inner_layout_1.ids.main_table.add_widget(id_button)
                 inner_layout_1.ids.main_table.add_widget(name_button)
                 inner_layout_1.ids.main_table.add_widget(type_button)
@@ -9449,9 +9435,8 @@ class PickupScreen(Screen):
                 inner_layout_1.ids.main_table.add_widget(start_button)
                 inner_layout_1.ids.main_table.add_widget(end_button)
 
-
         inner_layout_2 = BoxLayout(orientation="horizontal",
-                                   size_hint=(1,0.1))
+                                   size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
                                on_release=self.main_popup.dismiss)
 
@@ -9466,7 +9451,6 @@ class PickupScreen(Screen):
         self.discount_id = discount_id
         self.invoice_selected(None)
         self.main_popup.dismiss()
-
 
     def invoice_create_rows(self):
         self.invoice_table.clear_widgets()
@@ -9567,7 +9551,7 @@ class PickupScreen(Screen):
                 # get discounted totals
                 if self.discount_id:
                     discount_invoice_total = 0
-                    discounts = Discount().where({'discount_id':self.discount_id})
+                    discounts = Discount().where({'discount_id': self.discount_id})
                     if discounts:
                         for discount in discounts:
                             discount_type = discount['type']
@@ -9575,7 +9559,7 @@ class PickupScreen(Screen):
                             discount_item_id = discount['inventory_item_id']
                             if discount_inventory_id:
                                 invoice_items = InvoiceItem().where({'invoice_id': invoice_id,
-                                                                     'inventory_id':discount_inventory_id})
+                                                                     'inventory_id': discount_inventory_id})
                             elif discount_item_id:
                                 invoice_items = InvoiceItem().where({'invoice_id': invoice_id,
                                                                      'item_id': discount_item_id})
@@ -10396,7 +10380,7 @@ class PickupScreen(Screen):
 
         pass
 
-    def please_wait(self,*args,**kwargs):
+    def please_wait(self, *args, **kwargs):
         self.status_popup.title = 'System Message'
         content = KV.popup_alert('Syncing data to server please wait...')
         self.status_popup.content = Builder.load_string(content)
@@ -10530,7 +10514,6 @@ class PickupScreen(Screen):
 
                 # update to server
                 run_sync = threading.Thread(target=SYNC.run_sync)
-
 
                 try:
                     run_sync.start()
@@ -10718,7 +10701,7 @@ class PickupScreen(Screen):
                     vars.EPSON.write('-----------------------------------------\n')
                     for invoice_id, item_id in print_sync_invoice.items():
 
-                         if invoice_id in print_sync_invoice:
+                        if invoice_id in print_sync_invoice:
                             for item_id, invoice_item in print_sync_invoice[invoice_id].items():
                                 item_name = invoice_item['name']
                                 item_price = invoice_item['item_price']
@@ -10832,6 +10815,7 @@ class PickupScreen(Screen):
                 sys.stdout.write('\a')
                 sys.stdout.flush()
         self.status_popup.dismiss()
+
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
 
@@ -11710,52 +11694,205 @@ class SearchScreen(Screen):
         # check to see if invoice is overdue
 
         invoice_status = row['status']
-        if invoice_status is 5:
-            state = 5
-        elif invoice_status is 4:
-            state = 4
-        elif invoice_status is 3:
-            state = 4
-        elif invoice_status is 2:
-            state = 3
-        else:
-            if due_strtotime < now_strtotime:  # overdue
-                state = 2
-            elif count_invoice_items == 0:  # #quick drop
-                state = 6
-            else:
-                state = 1
-        # if rack:  # racked and ready
-        #     state = 3
-        # elif due_strtotime < now_strtotime:  # overdue
-        #     state = 2
-        # else:  # Not ready yet
-        #     state = 1
-
         selected = True if invoice_id == check_invoice_id else False
+        if invoice_status is 5: #state 5
+            if selected:
+                text_color = 'e5e5e5'
+                tr_1 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color,
+                                                                              '{0:06d}'.format(invoice_id)),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_2 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_3 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_4 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, rack),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_5 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_6 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, total),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+            else:
+                text_color = '000000'
+                tr_1 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color,
+                                                                              '{0:06d}'.format(invoice_id)),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_2 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_3 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_4 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_5 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_6 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, total),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+        elif invoice_status is 4 or invoice_status is 3: #state 4
+            if selected:
+                text_color = 'ffcccc'
+                tr_1 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color,
+                                                                              '{0:06d}'.format(invoice_id)),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_2 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_3 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_4 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, rack),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_5 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_6 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, total),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+            else:
+                text_color = 'ff0000'
+                tr_1 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color,
+                                                                              '{0:06d}'.format(invoice_id)),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_2 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_3 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_4 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_5 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_6 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, total),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+        elif invoice_status is 2: # state 3
+            if selected:
+                text_color = 'D8F7D8'
+                tr_1 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color,
+                                                                              '{0:06d}'.format(invoice_id)),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_2 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_3 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_4 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, rack),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_5 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_6 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, total),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+            else:
+                text_color = '00A326'
+                tr_1 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color,
+                                                                              '{0:06d}'.format(invoice_id)),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_2 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_3 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_4 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_5 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+                tr_6 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, total),
+                                           on_release=partial(self.invoice_selected, invoice_id))
+        else:
+            if due_strtotime < now_strtotime:  # overdue state 2
+                if selected:
+                    text_color = 'D0D8F5'
+                    tr_1 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,
+                                                                                  '{0:06d}'.format(invoice_id)),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_2 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,company_name),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_3 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,due_date),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_4 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,rack),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_5 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,quantity),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_6 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,total),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                else:
+                    text_color = '0F47FF'
+                    tr_1 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color,
+                                                                                  '{0:06d}'.format(invoice_id)),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_2 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_3 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_4 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_5 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_6 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, total),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+            elif count_invoice_items == 0:  # #quick drop state 6
+                text_color = '000000'
+                if selected:
+                    tr_1 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color,
+                                                                                  '{0:06d}'.format(invoice_id)),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_2 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_3 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_4 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, rack),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_5 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_6 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, total),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                else:
+                    tr_1 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color,
+                                                                                  '{0:06d}'.format(invoice_id)),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_2 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_3 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_4 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_5 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_6 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, total),
+                                               on_release=partial(self.invoice_selected, invoice_id))
 
-        tr_1 = KV.invoice_tr(state, '{0:06d}'.format(invoice_id), selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
-        tr_2 = KV.invoice_tr(state, company_name, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
-        tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
-        tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
-        tr_5 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
-        tr_6 = KV.invoice_tr(state, total, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.parent.invoice_selected({})'.format(invoice_id))
-        self.invoice_table.add_widget(Builder.load_string(tr_1))
-        self.invoice_table.add_widget(Builder.load_string(tr_2))
-        self.invoice_table.add_widget(Builder.load_string(tr_3))
-        self.invoice_table.add_widget(Builder.load_string(tr_4))
-        self.invoice_table.add_widget(Builder.load_string(tr_5))
-        self.invoice_table.add_widget(Builder.load_string(tr_6))
+            else: # state 1
+                if selected:
+                    text_color = 'e5e5e5'
+                    tr_1 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color,
+                                                                                  '{0:06d}'.format(invoice_id)),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_2 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_3 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_4 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, rack),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_5 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_6 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, total),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                else:
+                    text_color = '000000'
+                    tr_1 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color,
+                                                                                  '{0:06d}'.format(invoice_id)),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_2 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_3 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_4 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_5 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+                    tr_6 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, total),
+                                               on_release=partial(self.invoice_selected, invoice_id))
+
+        self.invoice_table.add_widget(tr_1)
+        self.invoice_table.add_widget(tr_2)
+        self.invoice_table.add_widget(tr_3)
+        self.invoice_table.add_widget(tr_4)
+        self.invoice_table.add_widget(tr_5)
+        self.invoice_table.add_widget(tr_6)
 
         return True
 
-    def invoice_selected(self, invoice_id):
+    def invoice_selected(self, invoice_id, *args, **kwargs):
         vars.INVOICE_ID = invoice_id
         data = {
             'user_id': '"{}"'.format(vars.CUSTOMER_ID)
@@ -12820,7 +12957,7 @@ class SearchScreen(Screen):
                     if print_sync_invoice:  # if invoices synced
                         for invoice_id, item_id in print_sync_invoice.items():
                             item_type = 'D'
-                            if isinstance(invoice_id,str):
+                            if isinstance(invoice_id, str):
                                 invoice_id = int(invoice_id)
 
                             # start invoice
@@ -13069,7 +13206,6 @@ class SearchScreen(Screen):
             vars.EPSON.write("{}\n".format(Job.make_us_phone(customers.phone)))
             vars.EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                          invert=False, smooth=False, flip=False))
-
 
             vars.EPSON.write('-----------------------------------------\n')
             # Cut paper
@@ -13551,7 +13687,7 @@ class SearchScreen(Screen):
             row_mark = (count / 4)
             rows = math.ceil(row_mark) if row_mark > 0 else 0
             labels = []
-            users = User().where({'user_id':vars.CUSTOMER_ID})
+            users = User().where({'user_id': vars.CUSTOMER_ID})
             name = ''
             if users:
                 for user in users:
@@ -13560,13 +13696,12 @@ class SearchScreen(Screen):
                     name = '{}.{}'.format(first_name,
                                           last_name)
 
-
             if rows > 0:
                 idx = 0
                 for i in range(rows):
                     idx += 1
                     if idx <= count:
-                        labels.append([1,2,3,4])
+                        labels.append([1, 2, 3, 4])
             midx = 0
             for label in labels:
                 inititate = '''
@@ -13613,8 +13748,8 @@ A{c},20,1,1,1,1,N,"{tag}"
 {b}
 {c}
 '''.format(a=inititate,
-            b=content,
-            c=close)
+           b=content,
+           c=close)
             vars.ZEBRA.write(final_content)
         else:
             popup = Popup()
@@ -15431,17 +15566,17 @@ A{c},20,1,1,1,1,N,"{tag}"
 
                 if tran['trans_id'] in self.selected_account_tr:
                     tr1 = Factory.TagsSelectedButton(text=str(tran['trans_id']),
-                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
                     tr2 = Factory.TagsSelectedButton(text=str(billing_period),
-                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
                     tr3 = Factory.TagsSelectedButton(text=due_amount,
-                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
                     tr4 = Factory.TagsSelectedButton(text=str(account_paid),
-                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
                     tr5 = Factory.TagsSelectedButton(text=str(account_paid_on),
-                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
                     tr6 = Factory.TagsSelectedButton(text=str(status),
-                                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
                 else:
                     tr1 = Button(text=str(tran['trans_id']),
                                  on_release=partial(self.select_account_tr, tran['trans_id']))
@@ -15463,7 +15598,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                 self.inner_layout_1.ids.main_table.add_widget(tr6)
 
     def payment_options_popup(self, *args, **kwargs):
-        self.payment_type = 1 #set initial payment type if user does not select a value
+        self.payment_type = 1  # set initial payment type if user does not select a value
         self.payment_popup.title = 'Account Payment Options'
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = Factory.ScrollGrid()
@@ -15476,7 +15611,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         due = 0
         if len(self.selected_account_tr) > 0:
             for transaction_id in self.selected_account_tr:
-                transactions = Transaction().where({'trans_id':transaction_id})
+                transactions = Transaction().where({'trans_id': transaction_id})
                 if transactions:
                     for transaction in transactions:
                         subtotal += transaction['pretax']
@@ -15487,7 +15622,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                         due += transaction['total']
 
         # compare with customer data account running balance total check to see if customer overpaid from last trans
-        customers = User().where({'user_id':vars.CUSTOMER_ID})
+        customers = User().where({'user_id': vars.CUSTOMER_ID})
         account_running_balance = 0
         if customers:
             for customer in customers:
@@ -15513,14 +15648,14 @@ A{c},20,1,1,1,1,N,"{tag}"
                                                           disabled=True)
         total_label = Factory.BottomLeftFormLabel(text="Total Due")
         self.total_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (due)),
-                                                      disabled=True)
+                                                           disabled=True)
         tendered_label = Factory.BottomLeftFormLabel(text="Tendered")
         self.tendered_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (due)),
-                                                         on_text_validate=self.calculate_account_change)
+                                                              on_text_validate=self.calculate_account_change)
         change_label = Factory.BottomLeftFormLabel(text="Change Due")
         self.change_input = Factory.CenterVerticalTextInput(text=str('0.00'))
         payment_type = Factory.BottomLeftFormLabel(text="Payment Type")
-        values = ['Check','Credit','Cash']
+        values = ['Check', 'Credit', 'Cash']
         payment_spinner = Spinner(text="Check",
                                   values=values)
         payment_spinner.bind(text=self.set_expected_value)
@@ -15546,10 +15681,10 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_1.ids.main_table.add_widget(payment_spinner)
         inner_layout_1.ids.main_table.add_widget(last_four_label)
         inner_layout_1.ids.main_table.add_widget(last_four_input)
-        inner_layout_1.ids.main_table.add_widget(Label(text="")) #spacing
+        inner_layout_1.ids.main_table.add_widget(Label(text=""))  # spacing
         inner_layout_1.ids.main_table.add_widget(Label(text=""))  # spacing
         inner_layout_2 = BoxLayout(orientation="horizontal",
-                                   size_hint=(1,0.1))
+                                   size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
                                on_release=self.payment_popup.dismiss)
         pay_button = Button(text="Finish",
@@ -15573,7 +15708,7 @@ A{c},20,1,1,1,1,N,"{tag}"
             payment_type = 2
         self.payment_type = payment_type
 
-    def calculate_account_change(self,*args, **kwargs):
+    def calculate_account_change(self, *args, **kwargs):
         change_due = str('%.2f' % (Decimal(self.tendered_input.text) - Decimal(self.total_input.text)))
         self.change_input.text = change_due
         pass
@@ -15607,7 +15742,6 @@ A{c},20,1,1,1,1,N,"{tag}"
             # Beep Sound
             sys.stdout.write('\a')
             sys.stdout.flush()
-
 
         # save data
         if errors is 0:
@@ -15674,7 +15808,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         # update server
         pass
 
-    def account_history_popup(self,*args, **kwargs):
+    def account_history_popup(self, *args, **kwargs):
         self.main_popup.title = 'Account History'
         layout = BoxLayout(orientation="vertical")
         inner_layout_1 = Factory.ScrollGrid()
@@ -15748,9 +15882,8 @@ A{c},20,1,1,1,1,N,"{tag}"
                 inner_layout_1.ids.main_table.add_widget(tr5)
                 inner_layout_1.ids.main_table.add_widget(tr6)
 
-
         inner_layout_2 = BoxLayout(orientation="horizontal",
-                                   size_hint=(1,0.1))
+                                   size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
                                on_release=self.main_popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
@@ -15781,7 +15914,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th7))
 
-        invoices = Invoice().where({'transaction_id':transaction_id})
+        invoices = Invoice().where({'transaction_id': transaction_id})
         if invoices:
             for invoice in invoices:
                 drop_date_format = datetime.datetime.strptime(invoice['created_at'], "%Y-%m-%d %H:%M:%S")
@@ -15789,11 +15922,11 @@ A{c},20,1,1,1,1,N,"{tag}"
                 drop_date = drop_date_format.strftime('%m/%d/%y')
                 due_date = due_date_format.strftime('%m/%d/%y')
                 td1 = Button(text=str(invoice['invoice_id']),
-                             on_release = partial(self.account_view_items,invoice['invoice_id']))
+                             on_release=partial(self.account_view_items, invoice['invoice_id']))
                 td2 = Factory.TopLeftFormButton(text=str(drop_date),
-                             on_release=partial(self.account_view_items, invoice['invoice_id']))
+                                                on_release=partial(self.account_view_items, invoice['invoice_id']))
                 td3 = Factory.TopLeftFormButton(text=str(due_date),
-                             on_release=partial(self.account_view_items, invoice['invoice_id']))
+                                                on_release=partial(self.account_view_items, invoice['invoice_id']))
                 td4 = Button(text=str(invoice['quantity']),
                              on_release=partial(self.account_view_items, invoice['invoice_id']))
                 td5 = Button(text=str('$%.2f' % invoice['pretax']),
@@ -15811,7 +15944,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                 inner_layout_1.ids.main_table.add_widget(td7)
 
         inner_layout_2 = BoxLayout(orientation="horizontal",
-                                   size_hint=(1,0.1))
+                                   size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
                                on_release=popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
@@ -15822,7 +15955,7 @@ A{c},20,1,1,1,1,N,"{tag}"
 
         pass
 
-    def account_view_items(self,invoice_id,*args, **kwargs):
+    def account_view_items(self, invoice_id, *args, **kwargs):
         popup = Popup()
         popup.title = 'Account Transaction Invoice Details'
         layout = BoxLayout(orientation="vertical")
@@ -15842,11 +15975,11 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
 
-        invoice_items = InvoiceItem().where({'invoice_id':invoice_id})
+        invoice_items = InvoiceItem().where({'invoice_id': invoice_id})
         if invoice_items:
             for ii in invoice_items:
                 item_id = ii['item_id']
-                inventory_items = InventoryItem().where({'item_id':item_id})
+                inventory_items = InventoryItem().where({'item_id': item_id})
                 item_name = None
                 if inventory_items:
                     for iitem in inventory_items:
@@ -15866,7 +15999,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                 inner_layout_1.ids.main_table.add_widget(td6)
 
         inner_layout_2 = BoxLayout(orientation="horizontal",
-                                   size_hint=(1,0.1))
+                                   size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
                                on_release=popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
@@ -16003,7 +16136,7 @@ class SearchResultsScreen(Screen):
         content = KV.popup_alert("Gathering information on selected customer. Please wait...")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
-        Clock.schedule_once(partial(self.customer_select_sync,customer_id))
+        Clock.schedule_once(partial(self.customer_select_sync, customer_id))
 
     def customer_select_sync(self, customer_id, *args, **kwargs):
         # sync db
@@ -16027,6 +16160,7 @@ class SearchResultsScreen(Screen):
 class SettingsScreen(Screen):
     def accounts_page(self):
         webbrowser.open("http://74.207.240.88/accounts")
+
     pass
 
 
