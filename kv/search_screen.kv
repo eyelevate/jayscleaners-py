@@ -386,6 +386,7 @@
             disabled: True
         Button:
             id: dropoff_btn
+            on_release: root.open_popup()
             on_release: app.root.current = "dropoff"
             font_size:'20sp'
             text: "Dropoff"

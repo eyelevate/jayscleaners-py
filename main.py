@@ -129,6 +129,7 @@ queueLock = threading.Lock()
 workQueue = queue.Queue(10)
 list_len = []
 printer_list = {}
+SYNC_POPUP = Popup()
 
 
 # handles multithreads for database sync
@@ -140,15 +141,11 @@ class MultiThread(threading.Thread):
         self.q = q
 
     def run(self):
-        # popup = Popup()
-        # popup.title = "Database Syncing"
-        # content = KV.popup_alert('Please wait while database is in sync mode. This should take a few seconds.')
-        # popup.content = Builder.load_string(content)
-        # popup.open()
+
         print("Starting " + self.name)
         process_data(threadName=self.name, q=self.q)
         print("Exiting " + self.name)
-        # popup.dismiss()
+
 
 
 def process_data(threadName, q):
@@ -196,6 +193,7 @@ def threads_start():
     vars.THREADID = 1
 
     print("Exiting Main Thread")
+    SYNC_POPUP.dismiss()
 
 
 # SCREEN CLASSES
@@ -276,7 +274,7 @@ class MainScreen(Screen):
         popup.size_hint = (None, None)
         popup.size = '600sp', '400sp'
         popup.title = 'Login Screen'
-
+        db_sync_status = False
         # validate the form data
         if not user.username:
             self.username.hint_text = "Username must exist"
@@ -325,8 +323,9 @@ class MainScreen(Screen):
                         self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
                 popup.title = 'Authentication Success!'
                 popup.content = Builder.load_string(
-                    KV.popup_alert('You are now logged in as {}!'.format(user.username)))
+                    KV.popup_alert('You are now logged in as {}! Please wait as we sync the database.'.format(user.username)))
                 self.login_popup.dismiss()
+                db_sync_status = True
             else:  # did not find user in local db, look for user on server
 
                 data = SYNC.server_login(username=user.username, password=user.password)
@@ -358,17 +357,25 @@ class MainScreen(Screen):
 
                     SYNC.company_id = data['company_id']
                     popup.title = 'Authentication Success!'
-                    content = KV.popup_alert(msg='You are now logged in as {}!'.format(user.username))
+                    content = KV.popup_alert(msg='You are now logged in as {}! Please wait as we sync the database.'.format(user.username))
                     popup.content = Builder.load_string(content)
                     self.login_popup.dismiss()
+                    db_sync_status = True
 
                 else:
                     popup.title = 'Authentication Failed!'
                     popup.content = Builder.load_string(
                         KV.popup_alert(msg='Could not find any user with these credentials. '
                                            'Please try again!!'))
+
             user.close_connection()
             popup.open()
+            if db_sync_status:
+                t1 = Thread(target=SYNC.db_sync(), args=())
+                t1.start()
+                t1.join()
+                popup.dismiss()
+
 
     def logout(self, *args, **kwargs):
         self.username.text = ''
@@ -391,9 +398,16 @@ class MainScreen(Screen):
         # SYNC.db_sync()
 
         # quick sync
+        SYNC_POPUP.title = "Database Syncing"
 
-        vars.WORKLIST.append("Sync")
-        threads_start()
+        content = KV.popup_alert('Please wait while database is in sync mode. This should take a few seconds.')
+        SYNC_POPUP.content = Builder.load_string(content)
+        SYNC_POPUP.open()
+
+        if isinstance(App.get_running_app().root_window.children[0], Popup):
+            # vars.WORKLIST.append("Sync")
+            # threads_start()
+            print('popup is showing')
 
 
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
@@ -1347,6 +1361,8 @@ class DropoffScreen(Screen):
                 self.starch = vars.get_starch_by_code(customer['starch'])
         else:
             self.starch = vars.get_starch_by_code(None)
+
+        SYNC_POPUP.dismiss()
 
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
@@ -11473,6 +11489,12 @@ class SearchScreen(Screen):
             print('sync now finished')
             vars.SEARCH_RESULTS_STATUS = True if vars.CUSTOMER_ID else False
             self.reset()
+
+    def open_popup(self, *args, **kwargs):
+        SYNC_POPUP.title = "Loading"
+        content = KV.popup_alert("Please wait while the page is loading")
+        SYNC_POPUP.content = Builder.load_string(content)
+        SYNC_POPUP.open()
 
     def search_customer(self, *args, **kwargs):
         popup = Popup()
