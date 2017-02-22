@@ -6291,6 +6291,8 @@ class HistoryScreen(Screen):
         if vars.INVOICE_ID:
             self.items_table_update()
 
+        SYNC_POPUP.dismiss()
+
     pass
 
     def create_invoice_row(self, row, *args, **kwargs):

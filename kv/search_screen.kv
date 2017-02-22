@@ -345,6 +345,7 @@
                 Button:
                     id: history_btn
                     font_size:'20sp'
+                    on_release: root.open_popup()
                     on_release: app.root.current = "history"
                     text: "History"
                     disabled: True
