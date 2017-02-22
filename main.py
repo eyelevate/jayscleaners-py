@@ -2575,7 +2575,7 @@ GridLayout:
         content = KV.popup_alert("Syncing data to server, please wait...")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
-        Clock.schedule_once(partial(self.finish_invoice,type), 1)
+        Clock.schedule_once(partial(self.finish_invoice,type))
 
     def finish_invoice(self, type, *args, **kwargs):
         self.now = datetime.datetime.now()
@@ -4789,7 +4789,7 @@ GridLayout:
         content = KV.popup_alert("Syncing data to server, please wait...")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
-        Clock.schedule_once(partial(self.finish_invoice,type), 1)
+        Clock.schedule_once(partial(self.finish_invoice,type))
 
     def finish_invoice(self, type, *args, **kwargs):
         # determine the types of invoices we need to print
