@@ -271,7 +271,7 @@ class MainScreen(Screen):
         user = User()
         user.username = self.username.text
         user.password = self.password.text  # cipher and salt later
-        SYNC_POPUP.size_hint = (None, None)
+        # SYNC_POPUP.size_hint = (None, None)
         # SYNC_POPUP.size = '600sp', '400sp'
         SYNC_POPUP.title = 'Login Screen'
         db_sync_status = False
