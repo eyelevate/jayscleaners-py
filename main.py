@@ -9348,6 +9348,7 @@ class PickupScreen(Screen):
         self.select_card_location('1')
 
         self.discount_label.bind(on_ref_press=self.discount_popup)
+        SYNC_POPUP.dismiss()
 
     def discount_popup(self, *args, **kwargs):
         self.main_popup.title = 'Discount Selection'

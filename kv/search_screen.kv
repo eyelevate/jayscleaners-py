@@ -381,6 +381,7 @@
             on_release: root.quick_popup()
         Button:
             id: pickup_btn
+            on_release: root.open_popup()
             on_release: app.root.current = "pickup"
             font_size:'20sp'
             text: "Pickup"
