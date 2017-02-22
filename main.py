@@ -11162,6 +11162,12 @@ class RackScreen(Screen):
         self.edited_rack = False
         self.update_rack_table()
 
+    def open_popup(self, *args, **kwargs):
+        SYNC_POPUP.title = "Sync In Progress"
+        content = KV.popup_alert("Please wait while we sync the database.")
+        SYNC_POPUP.content = Builder.load_string(content)
+        SYNC_POPUP.open()
+
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
         self.reset()
@@ -15945,6 +15951,12 @@ class SearchResultsScreen(Screen):
         self.search_results_footer.add_widget(Builder.load_string(fc_down))
         vars.SEARCH_RESULTS = []
 
+    def open_popup(self, *args, **kwargs):
+        SYNC_POPUP.title = "Loading"
+        content = KV.popup_alert("Please wait while gather information on the selected customer..")
+        SYNC_POPUP.content = Builder.load_string(content)
+        SYNC_POPUP.open()
+
     def next(self):
         if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
             vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
@@ -15987,6 +15999,13 @@ class SearchResultsScreen(Screen):
         self.get_results()
 
     def customer_select(self, customer_id, *args, **kwargs):
+        SYNC_POPUP.title = "Loading"
+        content = KV.popup_alert("Gathering information on selected customer. Please wait...")
+        SYNC_POPUP.content = Builder.load_string(content)
+        SYNC_POPUP.open()
+        Clock.schedule_once(partial(self.customer_select_sync,customer_id))
+
+    def customer_select_sync(self, customer_id, *args, **kwargs):
         # sync db
         run_sync = threading.Thread(target=SYNC.run_sync)
         try:
@@ -16002,6 +16021,7 @@ class SearchResultsScreen(Screen):
             self.parent.current = 'search'
             # last 10 setup
             vars.update_last_10()
+            SYNC_POPUP.dismiss()
 
 
 class SettingsScreen(Screen):

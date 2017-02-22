@@ -40,4 +40,5 @@
             Button:
                 markup: True
                 text: 'Cancel'
-                on_press: app.root.current = 'search'
+                on_release: root.open_popup()
+                on_release: app.root.current = 'search'
