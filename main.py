@@ -108,6 +108,7 @@ from kivy.uix.tabbedpanel import TabbedPanelContent
 from kivy.graphics.instructions import Canvas
 from kivy.graphics import Rectangle, Color
 from kivy.uix.widget import WidgetException
+from kivy.clock import Clock
 
 auth_user = User()
 Job = Job()
@@ -270,10 +271,9 @@ class MainScreen(Screen):
         user = User()
         user.username = self.username.text
         user.password = self.password.text  # cipher and salt later
-        popup = Popup()
-        popup.size_hint = (None, None)
-        popup.size = '600sp', '400sp'
-        popup.title = 'Login Screen'
+        SYNC_POPUP.size_hint = (None, None)
+        SYNC_POPUP.size = '600sp', '400sp'
+        SYNC_POPUP.title = 'Login Screen'
         db_sync_status = False
         # validate the form data
         if not user.username:
@@ -321,8 +321,8 @@ class MainScreen(Screen):
                 if print_data_label:
                     for prl in print_data_label:
                         self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
-                popup.title = 'Authentication Success!'
-                popup.content = Builder.load_string(
+                SYNC_POPUP.title = 'Authentication Success!'
+                SYNC_POPUP.content = Builder.load_string(
                     KV.popup_alert('You are now logged in as {}! Please wait as we sync the database.'.format(user.username)))
                 self.login_popup.dismiss()
                 db_sync_status = True
@@ -356,25 +356,24 @@ class MainScreen(Screen):
                             self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
 
                     SYNC.company_id = data['company_id']
-                    popup.title = 'Authentication Success!'
+                    SYNC_POPUP.title = 'Authentication Success!'
                     content = KV.popup_alert(msg='You are now logged in as {}! Please wait as we sync the database.'.format(user.username))
-                    popup.content = Builder.load_string(content)
+                    SYNC_POPUP.content = Builder.load_string(content)
                     self.login_popup.dismiss()
                     db_sync_status = True
 
                 else:
-                    popup.title = 'Authentication Failed!'
-                    popup.content = Builder.load_string(
+                    SYNC_POPUP.title = 'Authentication Failed!'
+                    SYNC_POPUP.content = Builder.load_string(
                         KV.popup_alert(msg='Could not find any user with these credentials. '
                                            'Please try again!!'))
 
             user.close_connection()
-            popup.open()
+            SYNC_POPUP.open()
+
             if db_sync_status:
-                t1 = Thread(target=SYNC.db_sync(), args=())
-                t1.start()
-                t1.join()
-                popup.dismiss()
+                Clock.schedule_once(self.db_sync, 1)
+
 
 
     def logout(self, *args, **kwargs):
@@ -398,16 +397,14 @@ class MainScreen(Screen):
         # SYNC.db_sync()
 
         # quick sync
-        SYNC_POPUP.title = "Database Syncing"
-
-        content = KV.popup_alert('Please wait while database is in sync mode. This should take a few seconds.')
-        SYNC_POPUP.content = Builder.load_string(content)
-        SYNC_POPUP.open()
-
-        if isinstance(App.get_running_app().root_window.children[0], Popup):
-            # vars.WORKLIST.append("Sync")
-            # threads_start()
-            print('popup is showing')
+        t1 = Thread(target=SYNC.db_sync(), args=())
+        t1.start()
+        t1.join()
+        SYNC_POPUP.dismiss()
+        # if isinstance(App.get_running_app().root_window.children[0], Popup):
+        #     # vars.WORKLIST.append("Sync")
+        #     # threads_start()
+        #     print('popup is showing')
 
 
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
@@ -2552,16 +2549,16 @@ GridLayout:
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.7))
         button_1 = Factory.PrintButton(text='Cust. + Store',
-                                       on_release=self.wait_popup)
-        button_1.bind(on_release=partial(self.finish_invoice, 'both'))
+                                       on_release=partial(self.wait_popup,'both'))
+
         inner_layout_1.add_widget(button_1)
         button_2 = Factory.PrintButton(text='Store Only',
-                                       on_release=self.wait_popup)
-        button_2.bind(on_release=partial(self.finish_invoice, 'store'))
+                                       on_release=partial(self.wait_popup,'store'))
+
         inner_layout_1.add_widget(button_2)
         button_3 = Factory.PrintButton(text='No Print',
-                                       on_release=self.wait_popup)
-        button_3.bind(on_release=partial(self.finish_invoice, 'none'))
+                                       on_release=partial(self.wait_popup,'none'))
+
         inner_layout_1.add_widget(button_3)
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.3))
@@ -2573,11 +2570,12 @@ GridLayout:
         self.print_popup.content = layout
         self.print_popup.open()
 
-    def wait_popup(self, *args, **kwargs):
+    def wait_popup(self, type, *args, **kwargs):
         SYNC_POPUP.title = 'Syncing Data'
         content = KV.popup_alert("Syncing data to server, please wait...")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
+        Clock.schedule_once(partial(self.finish_invoice,type), 1)
 
     def finish_invoice(self, type, *args, **kwargs):
         self.now = datetime.datetime.now()
@@ -3346,9 +3344,10 @@ GridLayout:
                     vars.BIXOLON.write('\n\n\n\n\n\n')
                     vars.BIXOLON.write('\x1b\x6d')
 
+        SYNC_POPUP.dismiss()
         self.set_result_status()
         self.print_popup.dismiss()
-        SYNC_POPUP.dismiss()
+
 
 
 class EditInvoiceScreen(Screen):
@@ -4763,18 +4762,17 @@ GridLayout:
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.7))
-
         button_1 = Factory.PrintButton(text='Cust. + Store',
-                                       on_release=self.wait_popup)
-        button_1.bind(on_release=partial(self.finish_invoice, 'both'))
+                                       on_release=partial(self.wait_popup, 'both'))
+
         inner_layout_1.add_widget(button_1)
         button_2 = Factory.PrintButton(text='Store Only',
-                                       on_release=self.wait_popup)
-        button_2.bind(on_release=partial(self.finish_invoice, 'store'))
+                                       on_release=partial(self.wait_popup, 'store'))
+
         inner_layout_1.add_widget(button_2)
         button_3 = Factory.PrintButton(text='No Print',
-                                       on_release=self.wait_popup)
-        button_3.bind(on_release=partial(self.finish_invoice, 'none'))
+                                       on_release=partial(self.wait_popup, 'none'))
+
         inner_layout_1.add_widget(button_3)
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.3))
@@ -4786,11 +4784,12 @@ GridLayout:
         self.print_popup.content = layout
         self.print_popup.open()
 
-    def wait_popup(self, *args, **kwargs):
+    def wait_popup(self, type, *args, **kwargs):
         SYNC_POPUP.title = 'Syncing Data'
         content = KV.popup_alert("Syncing data to server, please wait...")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
+        Clock.schedule_once(partial(self.finish_invoice,type), 1)
 
     def finish_invoice(self, type, *args, **kwargs):
         # determine the types of invoices we need to print
