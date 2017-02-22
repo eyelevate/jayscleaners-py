@@ -2551,14 +2551,18 @@ GridLayout:
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.7))
-
-        button_1 = Factory.PrintButton(text='Customer + Store Copy',
-                                       on_press=partial(self.finish_invoice, 'both'))
-
+        button_1 = Factory.PrintButton(text='Cust. + Store',
+                                       on_release=self.wait_popup)
+        button_1.bind(on_release=partial(self.finish_invoice, 'both'))
         inner_layout_1.add_widget(button_1)
-        button_2 = Factory.PrintButton(text='Store Copy Only',
-                                       on_press=partial(self.finish_invoice, 'store'))
+        button_2 = Factory.PrintButton(text='Store Only',
+                                       on_release=self.wait_popup)
+        button_2.bind(on_release=partial(self.finish_invoice, 'store'))
         inner_layout_1.add_widget(button_2)
+        button_3 = Factory.PrintButton(text='No Print',
+                                       on_release=self.wait_popup)
+        button_3.bind(on_release=partial(self.finish_invoice, 'none'))
+        inner_layout_1.add_widget(button_3)
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.3))
         inner_layout_2.add_widget(Button(markup=True,
@@ -2568,6 +2572,12 @@ GridLayout:
         layout.add_widget(inner_layout_2)
         self.print_popup.content = layout
         self.print_popup.open()
+
+    def wait_popup(self, *args, **kwargs):
+        SYNC_POPUP.title = 'Syncing Data'
+        content = KV.popup_alert("Syncing data to server, please wait...")
+        SYNC_POPUP.content = Builder.load_string(content)
+        SYNC_POPUP.open()
 
     def finish_invoice(self, type, *args, **kwargs):
         self.now = datetime.datetime.now()
@@ -3338,6 +3348,7 @@ GridLayout:
 
         self.set_result_status()
         self.print_popup.dismiss()
+        SYNC_POPUP.dismiss()
 
 
 class EditInvoiceScreen(Screen):
@@ -3559,6 +3570,7 @@ class EditInvoiceScreen(Screen):
         self.create_summary_table()
         self.create_summary_totals()
         self.deleted_rows = []
+        SYNC_POPUP.dismiss()
 
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
@@ -4753,14 +4765,16 @@ GridLayout:
                                    size_hint=(1, 0.7))
 
         button_1 = Factory.PrintButton(text='Cust. + Store',
-                                       on_press=partial(self.finish_invoice, 'both'))
-
+                                       on_release=self.wait_popup)
+        button_1.bind(on_release=partial(self.finish_invoice, 'both'))
         inner_layout_1.add_widget(button_1)
         button_2 = Factory.PrintButton(text='Store Only',
-                                       on_press=partial(self.finish_invoice, 'store'))
+                                       on_release=self.wait_popup)
+        button_2.bind(on_release=partial(self.finish_invoice, 'store'))
         inner_layout_1.add_widget(button_2)
         button_3 = Factory.PrintButton(text='No Print',
-                                       on_press=partial(self.finish_invoice, 'none'))
+                                       on_release=self.wait_popup)
+        button_3.bind(on_release=partial(self.finish_invoice, 'none'))
         inner_layout_1.add_widget(button_3)
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.3))
@@ -4771,6 +4785,12 @@ GridLayout:
         layout.add_widget(inner_layout_2)
         self.print_popup.content = layout
         self.print_popup.open()
+
+    def wait_popup(self, *args, **kwargs):
+        SYNC_POPUP.title = 'Syncing Data'
+        content = KV.popup_alert("Syncing data to server, please wait...")
+        SYNC_POPUP.content = Builder.load_string(content)
+        SYNC_POPUP.open()
 
     def finish_invoice(self, type, *args, **kwargs):
         # determine the types of invoices we need to print
@@ -5329,6 +5349,7 @@ GridLayout:
 
         self.set_result_status()
         self.print_popup.dismiss()
+        SYNC_POPUP.dismiss
 
 
 class EditCustomerScreen(Screen):

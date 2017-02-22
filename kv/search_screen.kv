@@ -338,6 +338,7 @@
                 Button:
                     id: edit_invoice_btn
                     font_size:'20sp'
+                    on_release: root.open_popup()
                     on_release: app.root.current = "edit_invoice"
                     text: "Edit"
                     disabled: True
