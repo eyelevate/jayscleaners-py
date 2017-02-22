@@ -104,6 +104,7 @@
         Button:
             id: cancel
             on_press: root.set_result_status()
+            on_release: root.open_popup()
             on_release: app.root.current = "search"
             font_size:'20sp'
             text: "Cancel"

@@ -6295,6 +6295,12 @@ class HistoryScreen(Screen):
 
     pass
 
+    def open_popup(self, *args, **kwargs):
+        SYNC_POPUP.title = "Loading"
+        content = KV.popup_alert("Please wait while the page is loading")
+        SYNC_POPUP.content = Builder.load_string(content)
+        SYNC_POPUP.open()
+
     def create_invoice_row(self, row, *args, **kwargs):
         """ Creates invoice table row and displays it to screen """
         check_invoice_id = int(vars.INVOICE_ID) if vars.INVOICE_ID else vars.INVOICE_ID
@@ -11502,6 +11508,7 @@ class SearchScreen(Screen):
         self.search.focus = True
 
         vars.SEARCH_RESULTS_STATUS = False
+        SYNC_POPUP.dismiss()
 
     def sync_db(self):
         run_sync = threading.Thread(target=SYNC.run_sync)
