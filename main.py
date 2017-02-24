@@ -11687,7 +11687,7 @@ class SearchScreen(Screen):
 
         invoice_status = row['status']
         if invoice_status is 5:  # state 5
-            text_color = '000000'
+            text_color = [0, 0, 0, 1]
             self.background_rgba = [0.826, 0.826, 0.826, 0.1]
             self.background_color = [0.826, 0.826, 0.826, 1]
             self.status = 5
@@ -11696,7 +11696,7 @@ class SearchScreen(Screen):
                                      group="tr")
 
         elif invoice_status is 4 or invoice_status is 3:  # state 4
-            text_color = 'ff0000'
+            text_color = [1, 0, 0, 1]
             self.background_rgba = [1, 0.717, 0.717, 0.1]
             self.background_color = [1, 0.717, 0.717, 1]
             self.status = 4
@@ -11704,7 +11704,7 @@ class SearchScreen(Screen):
                                      group="tr")
 
         elif invoice_status is 2:  # state 3
-            text_color = '00A326'
+            text_color = [0, 0.639, 0.149, 1]
             self.background_rgba = [0.847,0.968,0.847,0.1]
             self.background_color = [0.847,0.968,0.847,1]
             self.status = 3
@@ -11714,7 +11714,7 @@ class SearchScreen(Screen):
 
         else:
             if due_strtotime < now_strtotime:  # overdue state 2
-                text_color = '0F47FF'
+                text_color = [0.059, 0.278, 1, 1]
                 self.background_rgba = [0.816, 0.847, 0.961, 0.1]
                 self.background_color = [0.816, 0.847, 0.961, 1]
                 self.status = 2
@@ -11722,7 +11722,7 @@ class SearchScreen(Screen):
                                          group="tr")
 
             elif count_invoice_items == 0:  # #quick drop state 6
-                text_color = '000000'
+                text_color = [0, 0, 0, 1]
                 self.background_rgba = [0.9960784314,1,0.7176470588,0.1]
                 self.background_color = [0.9960784314,1,0.7176470588,1]
                 self.status = 6
@@ -11731,7 +11731,7 @@ class SearchScreen(Screen):
 
 
             else:  # state 1
-                text_color = '000000'
+                text_color = [0, 0, 0, 1]
                 self.background_rgba = [0.826, 0.826, 0.826, 0.1]
                 self.background_color = [0.826, 0.826, 0.826, 1]
                 self.status = 1
@@ -11742,22 +11742,28 @@ class SearchScreen(Screen):
         tr_1.set_color = self.background_color
         tr_1.background_color = self.background_rgba
         label_1 = Label(markup=True,
-                        text="[color={}]{}[/color]".format(text_color, '{0:06d}'.format(invoice_id)))
+                        color=text_color,
+                        text="{}".format('{0:06d}'.format(invoice_id)))
         tr_1.ids.invoice_table_row_td.add_widget(label_1)
         label_2 = Label(markup=True,
-                        text='[color={}]{}[/color]'.format(text_color, company_name))
+                        color=text_color,
+                        text='{}'.format(company_name))
         tr_1.ids.invoice_table_row_td.add_widget(label_2)
         label_3 = Label(markup=True,
-                        text='[color={}]{}[/color]'.format(text_color, due_date))
+                        color=text_color,
+                        text='{}'.format(due_date))
         tr_1.ids.invoice_table_row_td.add_widget(label_3)
         label_4 = Label(markup=True,
-                        text='[color={}]{}[/color]'.format(text_color, rack))
+                        color=text_color,
+                        text='{}'.format(rack))
         tr_1.ids.invoice_table_row_td.add_widget(label_4)
         label_5 = Label(markup=True,
-                        text='[color={}]{}[/color]'.format(text_color, quantity))
+                        color=text_color,
+                        text='{}'.format(quantity))
         tr_1.ids.invoice_table_row_td.add_widget(label_5)
         label_6 = Label(markup=True,
-                        text='[color={}]{}[/color]'.format(text_color, total))
+                        color=text_color,
+                        text='{}'.format(total))
         tr_1.ids.invoice_table_row_td.add_widget(label_6)
 
         self.invoice_table_body.add_widget(tr_1)
@@ -11779,43 +11785,59 @@ class SearchScreen(Screen):
                 # find status and change the background color
 
                 if child.status is 1:
+                    text_color = [0.898, 0.898, 0.898, 1]
                     child.background_color = [0.369,0.369,0.369,0.1]
                     child.set_color = [0.369,0.369,0.369,1]
-
                 elif child.status is 2:
+                    text_color = [0.8156, 0.847, 0.961, 1]
                     child.background_color = [0.059,0.278,1,0.1]
                     child.set_color = [0.059,0.278,1,1]
                 elif child.status is 3:
+                    text_color = [0.847, 0.969, 0.847, 1]
                     child.background_color = [0,0.64,0.149,0.1]
                     child.set_color = [0,0.64,0.149,1]
                 elif child.status is 4:
+                    text_color = [1, 0.8, 0.8, 1]
                     child.background_color = [1,0,0,0.1]
                     child.set_color = [1,0,0,1]
                 elif child.status is 5:
+                    text_color = [0.898, 0.898, 0.898, 1]
                     child.background_color = [0.369, 0.369, 0.369, 0.1]
                     child.set_color = [0.369, 0.369, 0.369, 1]
                 else:
+                    text_color = [0, 0, 0, 1]
                     child.background_color = [0.98431373,1,0,0.1]
                     child.set_color = [0.98431373,1,0,1]
+
+
             else:
                 if child.status is 1:
+                    text_color = [0, 0, 0, 1]
                     child.background_color = [0.826, 0.826, 0.826, 0.1]
                     child.set_color=[0.826, 0.826, 0.826, 1]
                 elif child.status is 2:
+                    text_color = [0.059, 0.278, 1, 1]
                     child.background_color=[0.816, 0.847, 0.961, 0.1]
                     child.set_color=[0.816, 0.847, 0.961, 1]
                 elif child.status is 3:
+                    text_color = [0, 0.639, 0.149, 1]
                     child.background_color=[0.847,0.968,0.847,0.1]
                     child.set_color=[0.847,0.968,0.847,1]
                 elif child.status is 4:
+                    text_color = [1, 0, 0, 1]
                     child.background_color=[1, 0.717, 0.717, 0.1]
                     child.set_color=[1, 0.717, 0.717, 1]
                 elif child.status is 5:
+                    text_color = [0, 0, 0, 1]
                     child.background_color=[0.826, 0.826, 0.826, 0.1]
                     child.set_color=[0.826, 0.826, 0.826, 1]
                 else:
+                    text_color = [0, 0, 0, 1]
                     child.background_color=[0.9960784314,1,0.7176470588,0.1]
                     child.set_color=[0.9960784314,1,0.7176470588,1]
+            for grandchild in child.children:
+                for ggc in grandchild.children:
+                    ggc.color = text_color
 
         # show the edit button
         self.edit_invoice_btn.disabled = False
