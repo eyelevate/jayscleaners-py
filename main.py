@@ -11407,6 +11407,9 @@ class SearchScreen(Screen):
     payment_type = None
     label_input = None
     tag_input = None
+    background_color = None
+    background_rgba = None
+    status = None
 
     def reset(self, *args, **kwargs):
         vars.ROW_SEARCH = 0, 10
@@ -11456,6 +11459,9 @@ class SearchScreen(Screen):
         self.payment_type = None
         self.label_input = None
         self.tag_input = None
+        self.background_color = None
+        self.background_rgba = None
+        self.status = None
 
         if vars.SEARCH_RESULTS_STATUS:
             self.edit_invoice_btn.disabled = False if vars.INVOICE_ID is not None else True
@@ -11680,71 +11686,61 @@ class SearchScreen(Screen):
         # check to see if invoice is overdue
 
         invoice_status = row['status']
-        selected = True if invoice_id == check_invoice_id else False
         if invoice_status is 5:  # state 5
-            if selected:
-                text_color = 'e5e5e5'
-                tr_1 = Factory.InvoiceTr5S(on_release=partial(self.invoice_selected, invoice_id),
-                                           group="tr")
+            text_color = '000000'
+            self.background_rgba = [0.826, 0.826, 0.826, 0.1]
+            self.background_color = [0.826, 0.826, 0.826, 1]
+            self.status = 5
 
-            else:
-                text_color = '000000'
-                tr_1 = Factory.InvoiceTr5NS(on_release=partial(self.invoice_selected, invoice_id),
-                                            group="tr")
+            tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
+                                     group="tr")
 
         elif invoice_status is 4 or invoice_status is 3:  # state 4
-            if selected:
-                text_color = 'ffcccc'
-                tr_1 = Factory.InvoiceTr4S(on_release=partial(self.invoice_selected, invoice_id),
-                                           group="tr")
-
-            else:
-                text_color = 'ff0000'
-                tr_1 = Factory.InvoiceTr4NS(on_release=partial(self.invoice_selected, invoice_id),
-                                            group="tr")
+            text_color = 'ff0000'
+            self.background_rgba = [1, 0.717, 0.717, 0.1]
+            self.background_color = [1, 0.717, 0.717, 1]
+            self.status = 4
+            tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
+                                     group="tr")
 
         elif invoice_status is 2:  # state 3
-            if selected:
-                text_color = 'D8F7D8'
-                tr_1 = Factory.InvoiceTr3S(on_release=partial(self.invoice_selected, invoice_id),
-                                           group="tr")
+            text_color = '00A326'
+            self.background_rgba = [0.847,0.968,0.847,0.1]
+            self.background_color = [0.847,0.968,0.847,1]
+            self.status = 3
+            tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
+                                     group="tr")
 
-            else:
-                text_color = '00A326'
-                tr_1 = Factory.InvoiceTr3NS(on_release=partial(self.invoice_selected, invoice_id),
-                                            group="tr")
 
         else:
             if due_strtotime < now_strtotime:  # overdue state 2
-                if selected:
-                    text_color = 'D0D8F5'
-                    tr_1 = Factory.InvoiceTr2S(on_release=partial(self.invoice_selected, invoice_id),
-                                               group="tr")
-                else:
-                    text_color = '0F47FF'
-                    tr_1 = Factory.InvoiceTr2NS(on_release=partial(self.invoice_selected, invoice_id),
-                                                group="tr")
+                text_color = '0F47FF'
+                self.background_rgba = [0.816, 0.847, 0.961, 0.1]
+                self.background_color = [0.816, 0.847, 0.961, 1]
+                self.status = 2
+                tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
+                                         group="tr")
+
             elif count_invoice_items == 0:  # #quick drop state 6
                 text_color = '000000'
-                if selected:
-                    tr_1 = Factory.InvoiceTr6S(on_release=partial(self.invoice_selected, invoice_id),
-                                               group="tr")
-                else:
-                    tr_1 = Factory.InvoiceTr6NS(on_release=partial(self.invoice_selected, invoice_id),
-                                                group="tr")
+                self.background_rgba = [0.9960784314,1,0.7176470588,0.1]
+                self.background_color = [0.9960784314,1,0.7176470588,1]
+                self.status = 6
+                tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
+                                         group="tr")
+
 
             else:  # state 1
-                if selected:
-                    text_color = 'e5e5e5'
-                    tr_1 = Factory.InvoiceTr1S(on_release=partial(self.invoice_selected, invoice_id),
-                                               group="tr")
+                text_color = '000000'
+                self.background_rgba = [0.826, 0.826, 0.826, 0.1]
+                self.background_color = [0.826, 0.826, 0.826, 1]
+                self.status = 1
+                tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
+                                         group="tr")
 
-                else:
-                    text_color = '000000'
-                    tr_1 = Factory.InvoiceTr1NS(on_release=partial(self.invoice_selected, invoice_id),
-                                                group="tr")
-
-
+        tr_1.status = self.status
+        tr_1.set_color = self.background_color
+        tr_1.background_color = self.background_rgba
         label_1 = Label(markup=True,
                         text="[color={}]{}[/color]".format(text_color, '{0:06d}'.format(invoice_id)))
         tr_1.ids.invoice_table_row_td.add_widget(label_1)
@@ -11778,7 +11774,48 @@ class SearchScreen(Screen):
 
         cust1 = customers.where(data)
         # self.customer_results(cust1)
+        for child in self.invoice_table_body.children:
+            if child.state is 'down':
+                # find status and change the background color
 
+                if child.status is 1:
+                    child.background_color = [0.369,0.369,0.369,0.1]
+                    child.set_color = [0.369,0.369,0.369,1]
+
+                elif child.status is 2:
+                    child.background_color = [0.059,0.278,1,0.1]
+                    child.set_color = [0.059,0.278,1,1]
+                elif child.status is 3:
+                    child.background_color = [0,0.64,0.149,0.1]
+                    child.set_color = [0,0.64,0.149,1]
+                elif child.status is 4:
+                    child.background_color = [1,0,0,0.1]
+                    child.set_color = [1,0,0,1]
+                elif child.status is 5:
+                    child.background_color = [0.369, 0.369, 0.369, 0.1]
+                    child.set_color = [0.369, 0.369, 0.369, 1]
+                else:
+                    child.background_color = [0.98431373,1,0,0.1]
+                    child.set_color = [0.98431373,1,0,1]
+            else:
+                if child.status is 1:
+                    child.background_color = [0.826, 0.826, 0.826, 0.1]
+                    child.set_color=[0.826, 0.826, 0.826, 1]
+                elif child.status is 2:
+                    child.background_color=[0.816, 0.847, 0.961, 0.1]
+                    child.set_color=[0.816, 0.847, 0.961, 1]
+                elif child.status is 3:
+                    child.background_color=[0.847,0.968,0.847,0.1]
+                    child.set_color=[0.847,0.968,0.847,1]
+                elif child.status is 4:
+                    child.background_color=[1, 0.717, 0.717, 0.1]
+                    child.set_color=[1, 0.717, 0.717, 1]
+                elif child.status is 5:
+                    child.background_color=[0.826, 0.826, 0.826, 0.1]
+                    child.set_color=[0.826, 0.826, 0.826, 1]
+                else:
+                    child.background_color=[0.9960784314,1,0.7176470588,0.1]
+                    child.set_color=[0.9960784314,1,0.7176470588,1]
 
         # show the edit button
         self.edit_invoice_btn.disabled = False
