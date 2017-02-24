@@ -11970,9 +11970,9 @@ class SearchScreen(Screen):
             'user_id': '"{}"'.format(vars.CUSTOMER_ID)
         }
         customers = User()
-        
+
         cust1 = customers.where(data)
-        self.customer_results(cust1)
+        # self.customer_results(cust1)
 
         # self.invoice_table.ids.
 
