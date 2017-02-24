@@ -86,6 +86,7 @@ from kivy.uix.filechooser import FileChooser
 from kivy.uix.filechooser import FileChooserListView
 from kivy.uix.filechooser import FileChooserIconView
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.listview import ListView
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.stacklayout import StackLayout
 from kivy.lang import Builder
@@ -11652,18 +11653,18 @@ class SearchScreen(Screen):
 
     def create_invoice_headers(self):
 
-        h1 = KV.invoice_tr(0, 'Inv')
-        h2 = KV.invoice_tr(0, 'Loc')
-        h3 = KV.invoice_tr(0, 'Due')
-        h4 = KV.invoice_tr(0, 'Rack')
-        h5 = KV.invoice_tr(0, 'Qty')
-        h6 = KV.invoice_tr(0, 'Total')
-        self.invoice_table.add_widget(Builder.load_string(h1))
-        self.invoice_table.add_widget(Builder.load_string(h2))
-        self.invoice_table.add_widget(Builder.load_string(h3))
-        self.invoice_table.add_widget(Builder.load_string(h4))
-        self.invoice_table.add_widget(Builder.load_string(h5))
-        self.invoice_table.add_widget(Builder.load_string(h6))
+        # h1 = KV.invoice_tr(0, 'Inv')
+        # h2 = KV.invoice_tr(0, 'Loc')
+        # h3 = KV.invoice_tr(0, 'Due')
+        # h4 = KV.invoice_tr(0, 'Rack')
+        # h5 = KV.invoice_tr(0, 'Qty')
+        # h6 = KV.invoice_tr(0, 'Total')
+        # self.invoice_table.add_widget(Builder.load_string(h1))
+        # self.invoice_table.add_widget(Builder.load_string(h2))
+        # self.invoice_table.add_widget(Builder.load_string(h3))
+        # self.invoice_table.add_widget(Builder.load_string(h4))
+        # self.invoice_table.add_widget(Builder.load_string(h5))
+        # self.invoice_table.add_widget(Builder.load_string(h6))
         return True
 
     def create_invoice_row(self, row, *args, **kwargs):
@@ -11695,200 +11696,271 @@ class SearchScreen(Screen):
 
         invoice_status = row['status']
         selected = True if invoice_id == check_invoice_id else False
-        if invoice_status is 5: #state 5
+        if invoice_status is 5:  # state 5
             if selected:
                 text_color = 'e5e5e5'
                 tr_1 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color,
                                                                               '{0:06d}'.format(invoice_id)),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_2 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_3 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_4 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, rack),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_5 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_6 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, total),
-                                           on_release=partial(self.invoice_selected, invoice_id))
+                                           on_release=partial(self.invoice_selected, invoice_id),
+                                           group="tr")
+                # tr_2 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_3 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_4 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, rack),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_5 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_6 = Factory.InvoiceTr5S(text='[color={}]{}[/color]'.format(text_color, total),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
             else:
                 text_color = '000000'
                 tr_1 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color,
-                                                                              '{0:06d}'.format(invoice_id)),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_2 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_3 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_4 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, rack),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_5 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_6 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, total),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-        elif invoice_status is 4 or invoice_status is 3: #state 4
+                                                                               '{0:06d}'.format(invoice_id)),
+                                            on_release=partial(self.invoice_selected, invoice_id),
+                                            group="tr")
+                # tr_2 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_3 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_4 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_5 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_6 = Factory.InvoiceTr5NS(text='[color={}]{}[/color]'.format(text_color, total),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+        elif invoice_status is 4 or invoice_status is 3:  # state 4
             if selected:
                 text_color = 'ffcccc'
                 tr_1 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color,
                                                                               '{0:06d}'.format(invoice_id)),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_2 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_3 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_4 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, rack),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_5 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_6 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, total),
-                                           on_release=partial(self.invoice_selected, invoice_id))
+                                           on_release=partial(self.invoice_selected, invoice_id),
+                                           group="tr")
+                # tr_2 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_3 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_4 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, rack),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_5 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_6 = Factory.InvoiceTr4S(text='[color={}]{}[/color]'.format(text_color, total),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
             else:
                 text_color = 'ff0000'
                 tr_1 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color,
-                                                                              '{0:06d}'.format(invoice_id)),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_2 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_3 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_4 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, rack),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_5 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_6 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, total),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-        elif invoice_status is 2: # state 3
+                                                                               '{0:06d}'.format(invoice_id)),
+                                            on_release=partial(self.invoice_selected, invoice_id),
+                                            group="tr")
+                # tr_2 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_3 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_4 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_5 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_6 = Factory.InvoiceTr4NS(text='[color={}]{}[/color]'.format(text_color, total),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+        elif invoice_status is 2:  # state 3
             if selected:
                 text_color = 'D8F7D8'
                 tr_1 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color,
                                                                               '{0:06d}'.format(invoice_id)),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_2 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_3 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_4 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, rack),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_5 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_6 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, total),
-                                           on_release=partial(self.invoice_selected, invoice_id))
+                                           on_release=partial(self.invoice_selected, invoice_id),
+                                           group="tr")
+                # tr_2 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_3 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_4 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, rack),
+                #                            on_release=partial(self.invoice_selected, invoice_id))
+                # tr_5 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
+                # tr_6 = Factory.InvoiceTr3S(text='[color={}]{}[/color]'.format(text_color, total),
+                #                            on_release=partial(self.invoice_selected, invoice_id),
+                #                            group="tr")
             else:
                 text_color = '00A326'
                 tr_1 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color,
-                                                                              '{0:06d}'.format(invoice_id)),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_2 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_3 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_4 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, rack),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_5 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                           on_release=partial(self.invoice_selected, invoice_id))
-                tr_6 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, total),
-                                           on_release=partial(self.invoice_selected, invoice_id))
+                                                                               '{0:06d}'.format(invoice_id)),
+                                            on_release=partial(self.invoice_selected, invoice_id),
+                                            group="tr")
+                # tr_2 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_3 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_4 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_5 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
+                # tr_6 = Factory.InvoiceTr3NS(text='[color={}]{}[/color]'.format(text_color, total),
+                #                             on_release=partial(self.invoice_selected, invoice_id),
+                #                             group="tr")
         else:
             if due_strtotime < now_strtotime:  # overdue state 2
                 if selected:
                     text_color = 'D0D8F5'
                     tr_1 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,
                                                                                   '{0:06d}'.format(invoice_id)),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_2 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,company_name),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_3 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,due_date),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_4 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,rack),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_5 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,quantity),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_6 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color,total),
-                                               on_release=partial(self.invoice_selected, invoice_id))
+                                               on_release=partial(self.invoice_selected, invoice_id),
+                                               group="tr")
+                    # tr_2 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_3 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_4 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color, rack),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_5 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_6 = Factory.InvoiceTr2S(text='[color={}]{}[/color]'.format(text_color, total),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
                 else:
                     text_color = '0F47FF'
                     tr_1 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color,
-                                                                                  '{0:06d}'.format(invoice_id)),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_2 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_3 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_4 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, rack),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_5 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_6 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, total),
-                                               on_release=partial(self.invoice_selected, invoice_id))
+                                                                                   '{0:06d}'.format(invoice_id)),
+                                                on_release=partial(self.invoice_selected, invoice_id),
+                                                group="tr")
+                    # tr_2 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_3 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_4 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_5 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_6 = Factory.InvoiceTr2NS(text='[color={}]{}[/color]'.format(text_color, total),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
             elif count_invoice_items == 0:  # #quick drop state 6
                 text_color = '000000'
                 if selected:
                     tr_1 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color,
                                                                                   '{0:06d}'.format(invoice_id)),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_2 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_3 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_4 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, rack),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_5 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_6 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, total),
-                                               on_release=partial(self.invoice_selected, invoice_id))
+                                               on_release=partial(self.invoice_selected, invoice_id),
+                                               group="tr")
+                    # tr_2 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_3 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_4 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, rack),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_5 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_6 = Factory.InvoiceTr6S(text='[color={}]{}[/color]'.format(text_color, total),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
                 else:
                     tr_1 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color,
-                                                                                  '{0:06d}'.format(invoice_id)),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_2 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_3 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_4 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, rack),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_5 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_6 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, total),
-                                               on_release=partial(self.invoice_selected, invoice_id))
+                                                                                   '{0:06d}'.format(invoice_id)),
+                                                on_release=partial(self.invoice_selected, invoice_id),
+                                                group="tr")
+                    # tr_2 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_3 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_4 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_5 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_6 = Factory.InvoiceTr6NS(text='[color={}]{}[/color]'.format(text_color, total),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
 
-            else: # state 1
+            else:  # state 1
                 if selected:
                     text_color = 'e5e5e5'
                     tr_1 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color,
                                                                                   '{0:06d}'.format(invoice_id)),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_2 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_3 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_4 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, rack),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_5 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_6 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, total),
-                                               on_release=partial(self.invoice_selected, invoice_id))
+                                               on_release=partial(self.invoice_selected, invoice_id),
+                                               group="tr")
+                    # tr_2 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, company_name),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_3 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, due_date),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_4 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, rack),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_5 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, quantity),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
+                    # tr_6 = Factory.InvoiceTr1S(text='[color={}]{}[/color]'.format(text_color, total),
+                    #                            on_release=partial(self.invoice_selected, invoice_id),
+                    #                            group="tr")
                 else:
                     text_color = '000000'
                     tr_1 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color,
-                                                                                  '{0:06d}'.format(invoice_id)),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_2 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, company_name),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_3 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, due_date),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_4 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, rack),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_5 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, quantity),
-                                               on_release=partial(self.invoice_selected, invoice_id))
-                    tr_6 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, total),
-                                               on_release=partial(self.invoice_selected, invoice_id))
+                                                                                   '{0:06d}'.format(invoice_id)),
+                                                on_release=partial(self.invoice_selected, invoice_id),
+                                                group="tr")
+                    # tr_2 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, company_name),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_3 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, due_date),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_4 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, rack),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_5 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, quantity),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
+                    # tr_6 = Factory.InvoiceTr1NS(text='[color={}]{}[/color]'.format(text_color, total),
+                    #                             on_release=partial(self.invoice_selected, invoice_id),
+                    #                             group="tr")
 
         self.invoice_table.add_widget(tr_1)
-        self.invoice_table.add_widget(tr_2)
-        self.invoice_table.add_widget(tr_3)
-        self.invoice_table.add_widget(tr_4)
-        self.invoice_table.add_widget(tr_5)
-        self.invoice_table.add_widget(tr_6)
+        # self.invoice_table.add_widget(tr_2)
+        # self.invoice_table.add_widget(tr_3)
+        # self.invoice_table.add_widget(tr_4)
+        # self.invoice_table.add_widget(tr_5)
+        # self.invoice_table.add_widget(tr_6)
 
         return True
 
@@ -11898,8 +11970,11 @@ class SearchScreen(Screen):
             'user_id': '"{}"'.format(vars.CUSTOMER_ID)
         }
         customers = User()
+        
         cust1 = customers.where(data)
         self.customer_results(cust1)
+
+        # self.invoice_table.ids.
 
         # show the edit button
         self.edit_invoice_btn.disabled = False

@@ -245,7 +245,7 @@
             ScrollView:
                 GridLayout:
                     id:invoice_table
-                    cols: 6
+                    cols: 1
                     size_hint_y:None
                     size_hint_x:1
                     height: self.minimum_height
@@ -258,66 +258,7 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text: "[color=000000][b]Inv[/b][/color]"
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text: "[color=000000][b]Loc[/b][/color]"
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text: "[color=000000][b]Due[/b][/color]"
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text: "[color=000000][b]Rack[/b][/color]"
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text: "[color=000000][b]Qty[/b][/color]"
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text: "[color=000000][b]Total[/b][/color]"
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
+
 
             BoxLayout:
                 orientation: 'vertical'
