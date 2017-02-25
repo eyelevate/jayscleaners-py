@@ -6220,7 +6220,7 @@ class HistoryScreen(Screen):
     selected_tags_list = []
     tags_grid = ObjectProperty(None)
 
-    def get_history(self):
+    def reset(self):
         # check if an invoice was previously selected
         self.items_table.clear_widgets()
 
@@ -6248,7 +6248,7 @@ class HistoryScreen(Screen):
             'ORDER_BY': 'id DESC',
             'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
         }
-
+        print(data)
         invoices = Invoice()
         invs = invoices.like(data=data, deleted_at=False)
         vars.SEARCH_RESULTS = invs
@@ -6266,8 +6266,52 @@ class HistoryScreen(Screen):
             self.items_table_update()
 
         SYNC_POPUP.dismiss()
+    def reset_next(self):
+        # check if an invoice was previously selected
+        self.items_table.clear_widgets()
 
-    pass
+        # set any necessary variables
+        customers = User().where({'user_id': vars.CUSTOMER_ID})
+        if customers:
+            for customer in customers:
+                self.starch = vars.get_starch_by_code(customer['starch'])
+        else:
+            self.starch = vars.get_starch_by_code(None)
+
+        # create the invoice count list
+        invoices = Invoice()
+        data = {'customer_id': vars.CUSTOMER_ID}
+        vars.ROW_CAP = len(invoices.where(data=data, deleted_at=False))
+        if vars.ROW_CAP < 10 and vars.ROW_CAP <= vars.ROW_SEARCH[1]:
+            vars.ROW_SEARCH = 0, vars.ROW_CAP
+        self.invs_results_label.text = '[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]'.format(
+            vars.ROW_SEARCH[0],
+            vars.ROW_SEARCH[1],
+            vars.ROW_CAP
+        )
+        data = {
+            'customer_id': '"%{}%"'.format(vars.CUSTOMER_ID),
+            'ORDER_BY': 'id DESC',
+            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
+        }
+        print(data)
+        invoices = Invoice()
+        invs = invoices.like(data=data, deleted_at=False)
+        vars.SEARCH_RESULTS = invs
+        # get invoice rows and display them to the table
+
+        # create Tbody TR
+        self.invoice_table_body.clear_widgets()
+        # if len(vars.SEARCH_RESULTS) > 0:
+        #     for cust in vars.SEARCH_RESULTS:
+        #         self.create_invoice_row(cust)
+        #
+        # vars.SEARCH_RESULTS = []
+        #
+        # if vars.INVOICE_ID:
+        #     self.items_table_update()
+
+        SYNC_POPUP.dismiss()
 
     def open_popup(self, *args, **kwargs):
         SYNC_POPUP.title = "Loading"
@@ -6454,28 +6498,16 @@ class HistoryScreen(Screen):
             for grandchild in child.children:
                 for ggc in grandchild.children:
                     ggc.color = text_color
-        # self.get_history()
+        # self.reset()
         self.items_table_update()
 
     def invoice_next(self):
-        self.invoice_table_body.clear_widgets()
         if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
             vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
         else:
             vars.ROW_SEARCH = vars.ROW_SEARCH[1] + 1, vars.ROW_SEARCH[1] + 10
-        data = {
-            'customer_id': '"%{}%"'.format(vars.CUSTOMER_ID),
-            'ORDER_BY': 'id DESC',
-            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
-        }
 
-        invoices = Invoice()
-        invs = invoices.like(data=data, deleted_at=False)
-        vars.SEARCH_RESULTS = invs
-        self.invs_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
-            vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
-        )
-        self.get_history()
+        self.reset()
 
     def invoice_prev(self):
         if vars.ROW_SEARCH[0] - 10 < 10:
@@ -6483,22 +6515,7 @@ class HistoryScreen(Screen):
         else:
             vars.ROW_SEARCH = vars.ROW_SEARCH[0] - 10, vars.ROW_SEARCH[1] - 10
 
-        self.invs_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
-            vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
-        )
-
-        data = {
-            'customer_id': '"%{}%"'.format(vars.CUSTOMER_ID),
-            'ORDER_BY': 'id DESC',
-            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
-        }
-        invoices = Invoice()
-        invs = invoices.like(data=data, deleted_at=False)
-        vars.SEARCH_RESULTS = invs
-        self.invs_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
-            vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
-        )
-        self.get_history()
+        self.reset()
 
     def items_table_update(self):
         self.items_table.clear_widgets()
@@ -6669,7 +6686,7 @@ class HistoryScreen(Screen):
         popup.content = Builder.load_string(msg)
         popup.open()
         self.history_popup.dismiss()
-        self.get_history()
+        self.reset()
 
     def undo_invoice_confirm(self):
         self.history_popup = Popup()
@@ -6787,7 +6804,7 @@ class HistoryScreen(Screen):
         popup.content = Builder.load_string(msg)
         popup.open()
         self.history_popup.dismiss()
-        self.get_history()
+        self.reset()
 
     def reprint_popup(self):
         popup = Popup()
