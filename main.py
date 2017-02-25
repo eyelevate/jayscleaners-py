@@ -6219,6 +6219,7 @@ class HistoryScreen(Screen):
     starch = None
     selected_tags_list = []
     tags_grid = ObjectProperty(None)
+    row_set = 0
 
     def reset(self):
         # check if an invoice was previously selected
@@ -6233,20 +6234,21 @@ class HistoryScreen(Screen):
             self.starch = vars.get_starch_by_code(None)
 
         # create the invoice count list
+
         invoices = Invoice()
         data = {'customer_id': vars.CUSTOMER_ID}
         vars.ROW_CAP = len(invoices.where(data=data, deleted_at=False))
-        if vars.ROW_CAP < 10 and vars.ROW_CAP <= vars.ROW_SEARCH[1]:
-            vars.ROW_SEARCH = 0, vars.ROW_CAP
+        if vars.ROW_CAP < 10 and vars.ROW_CAP <= vars.ROW_GROUP[self.row_set][1]:
+            self.row_set = 0
         self.invs_results_label.text = '[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]'.format(
-            vars.ROW_SEARCH[0],
-            vars.ROW_SEARCH[1],
+            vars.ROW_GROUP[self.row_set][0],
+            vars.ROW_GROUP[self.row_set][0] + 9,
             vars.ROW_CAP
         )
         data = {
             'customer_id': '"%{}%"'.format(vars.CUSTOMER_ID),
             'ORDER_BY': 'id DESC',
-            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
+            'LIMIT': '{},{}'.format(vars.ROW_GROUP[self.row_set][0], vars.ROW_GROUP[self.row_set][1])
         }
         print(data)
         invoices = Invoice()
@@ -6266,52 +6268,7 @@ class HistoryScreen(Screen):
             self.items_table_update()
 
         SYNC_POPUP.dismiss()
-    def reset_next(self):
-        # check if an invoice was previously selected
-        self.items_table.clear_widgets()
 
-        # set any necessary variables
-        customers = User().where({'user_id': vars.CUSTOMER_ID})
-        if customers:
-            for customer in customers:
-                self.starch = vars.get_starch_by_code(customer['starch'])
-        else:
-            self.starch = vars.get_starch_by_code(None)
-
-        # create the invoice count list
-        invoices = Invoice()
-        data = {'customer_id': vars.CUSTOMER_ID}
-        vars.ROW_CAP = len(invoices.where(data=data, deleted_at=False))
-        if vars.ROW_CAP < 10 and vars.ROW_CAP <= vars.ROW_SEARCH[1]:
-            vars.ROW_SEARCH = 0, vars.ROW_CAP
-        self.invs_results_label.text = '[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]'.format(
-            vars.ROW_SEARCH[0],
-            vars.ROW_SEARCH[1],
-            vars.ROW_CAP
-        )
-        data = {
-            'customer_id': '"%{}%"'.format(vars.CUSTOMER_ID),
-            'ORDER_BY': 'id DESC',
-            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
-        }
-        print(data)
-        invoices = Invoice()
-        invs = invoices.like(data=data, deleted_at=False)
-        vars.SEARCH_RESULTS = invs
-        # get invoice rows and display them to the table
-
-        # create Tbody TR
-        self.invoice_table_body.clear_widgets()
-        # if len(vars.SEARCH_RESULTS) > 0:
-        #     for cust in vars.SEARCH_RESULTS:
-        #         self.create_invoice_row(cust)
-        #
-        # vars.SEARCH_RESULTS = []
-        #
-        # if vars.INVOICE_ID:
-        #     self.items_table_update()
-
-        SYNC_POPUP.dismiss()
 
     def open_popup(self, *args, **kwargs):
         SYNC_POPUP.title = "Loading"
@@ -6502,18 +6459,21 @@ class HistoryScreen(Screen):
         self.items_table_update()
 
     def invoice_next(self):
-        if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
-            vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
-        else:
-            vars.ROW_SEARCH = vars.ROW_SEARCH[1] + 1, vars.ROW_SEARCH[1] + 10
+        next_row = self.row_set + 1
+        self.row_set = 1 if next_row in vars.ROW_GROUP else next_row
+        # if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
+        #     vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
+        # else:
+        #     vars.ROW_SEARCH = vars.ROW_SEARCH[1] + 1, vars.ROW_SEARCH[1] + 10
 
         self.reset()
 
     def invoice_prev(self):
-        if vars.ROW_SEARCH[0] - 10 < 10:
-            vars.ROW_SEARCH = 0, 10
-        else:
-            vars.ROW_SEARCH = vars.ROW_SEARCH[0] - 10, vars.ROW_SEARCH[1] - 10
+        self.row_set = 0 if self.row_set <= 0 else self.row_set - 1
+        # if vars.ROW_SEARCH[0] - 10 < 10:
+        #     vars.ROW_SEARCH = 0, 10
+        # else:
+        #     vars.ROW_SEARCH = vars.ROW_SEARCH[0] - 10, vars.ROW_SEARCH[1] - 10
 
         self.reset()
 

@@ -9,6 +9,7 @@ class Static:
     SEARCH_RESULTS = []
     SEARCH_RESULTS_STATUS = False
     SEARCH_TEXT = None
+    ROW_GROUP = [(0,10),(10,10),(20,10),(30,10),(40,10),(50,10),(60,10),(70,10),(80,10),(90,10),(100,10)]
     ROW_SEARCH = 0,9
     ROW_CAP = 0
     TAX_RATE = 1
