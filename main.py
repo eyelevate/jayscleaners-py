@@ -6220,6 +6220,9 @@ class HistoryScreen(Screen):
     selected_tags_list = []
     tags_grid = ObjectProperty(None)
     row_set = 0
+    row_increment = 10
+    up_btn = ObjectProperty(None)
+    down_btn = ObjectProperty(None)
 
     def reset(self):
         # check if an invoice was previously selected
@@ -6238,17 +6241,19 @@ class HistoryScreen(Screen):
         invoices = Invoice()
         data = {'customer_id': vars.CUSTOMER_ID}
         vars.ROW_CAP = len(invoices.where(data=data, deleted_at=False))
-        if vars.ROW_CAP < 10 and vars.ROW_CAP <= vars.ROW_GROUP[self.row_set][1]:
+        if vars.ROW_CAP < 10 and vars.ROW_CAP <= self.row_set:
             self.row_set = 0
+
+        row_end = self.row_set + 9
         self.invs_results_label.text = '[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]'.format(
-            vars.ROW_GROUP[self.row_set][0],
-            vars.ROW_GROUP[self.row_set][0] + 9,
+            self.row_set,
+            row_end,
             vars.ROW_CAP
         )
         data = {
             'customer_id': '"%{}%"'.format(vars.CUSTOMER_ID),
             'ORDER_BY': 'id DESC',
-            'LIMIT': '{},{}'.format(vars.ROW_GROUP[self.row_set][0], vars.ROW_GROUP[self.row_set][1])
+            'LIMIT': '{},{}'.format(self.row_set, self.row_increment)
         }
         print(data)
         invoices = Invoice()
@@ -6459,8 +6464,8 @@ class HistoryScreen(Screen):
         self.items_table_update()
 
     def invoice_next(self):
-        next_row = self.row_set + 1
-        self.row_set = 1 if next_row in vars.ROW_GROUP else next_row
+        self.row_set += self.row_increment
+        self.down_btn.disabled = True if (self.row_set +10) > vars.ROW_CAP else False
         # if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
         #     vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
         # else:
@@ -6469,7 +6474,9 @@ class HistoryScreen(Screen):
         self.reset()
 
     def invoice_prev(self):
-        self.row_set = 0 if self.row_set <= 0 else self.row_set - 1
+        row_prev = self.row_set - self.row_increment
+        self.up_btn.disabled = True if self.row_set - self.row_increment <= 0 else False
+        self.row_set = 0 if self.row_set - self.row_increment <= 0 else row_prev
         # if vars.ROW_SEARCH[0] - 10 < 10:
         #     vars.ROW_SEARCH = 0, 10
         # else:
