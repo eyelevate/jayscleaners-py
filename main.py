@@ -6255,7 +6255,6 @@ class HistoryScreen(Screen):
             'ORDER_BY': 'id DESC',
             'LIMIT': '{},{}'.format(self.row_set, self.row_increment)
         }
-        print(data)
         invoices = Invoice()
         invs = invoices.like(data=data, deleted_at=False)
         vars.SEARCH_RESULTS = invs
@@ -6472,10 +6471,12 @@ class HistoryScreen(Screen):
         #     vars.ROW_SEARCH = vars.ROW_SEARCH[1] + 1, vars.ROW_SEARCH[1] + 10
 
         self.reset()
+        self.up_btn.disabled = True if self.row_set <= 0 else False
 
     def invoice_prev(self):
         row_prev = self.row_set - self.row_increment
         self.up_btn.disabled = True if self.row_set - self.row_increment <= 0 else False
+
         self.row_set = 0 if self.row_set - self.row_increment <= 0 else row_prev
         # if vars.ROW_SEARCH[0] - 10 < 10:
         #     vars.ROW_SEARCH = 0, 10
@@ -6483,6 +6484,7 @@ class HistoryScreen(Screen):
         #     vars.ROW_SEARCH = vars.ROW_SEARCH[0] - 10, vars.ROW_SEARCH[1] - 10
 
         self.reset()
+        self.down_btn.disabled = False if self.row_set < vars.ROW_CAP else True
 
     def items_table_update(self):
         self.items_table.clear_widgets()
