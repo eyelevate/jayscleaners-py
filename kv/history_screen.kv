@@ -11,96 +11,91 @@
         orientation: 'horizontal'
         pos_hint: {'top':1}
         size_hint: 1,0.8
-        RelativeLayout:
-            size_hint_x: 0.4
-            ScrollView:
-                size_hint:(1,1)
+        ScrollView:
+            size_hint:(0.4,1)
+            GridLayout:
+                id:invoices_table
+                cols: 1
+                size_hint_y:None
+                height: self.minimum_height
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
                 GridLayout:
-                    id:invoices_table
+                    rows: 1
+                    cols: 6
+                    size_hint_y: None
+                    size_hint_x: 1
+                    spacing: 2
+                    height: self.minimum_height
+                    row_force_default: True
+                    row_default_height: sp(50)
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]ID[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Loc[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Due[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Rack[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Qty[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Total[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                GridLayout:
+                    id: invoice_table_body
                     cols: 1
                     size_hint_y:None
                     size_hint_x:1
                     height: self.minimum_height
                     spacing: 2
                     row_force_default: True
-                    row_default_height:sp(50)
-                    canvas.before:
-                        Color:
-                            rgba: 0, 0, 0, 1
-                        Rectangle:
-                            pos: self.pos
-                            size: self.size
-                    GridLayout:
-                        rows: 1
-                        cols: 6
-                        size_hint_y: None
-                        size_hint_x: 1
-                        spacing: 2
-                        row_force_default: True
-                        row_default_height: sp(50)
-                        Label:
-                            markup: True
-                            text: "[color=000000][b]ID[/b][/color]"
-                            canvas.before:
-                                Color:
-                                    rgba: 1, 1, 1, 1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            markup: True
-                            text: "[color=000000][b]Loc[/b][/color]"
-                            canvas.before:
-                                Color:
-                                    rgba: 1, 1, 1, 1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            markup: True
-                            text: "[color=000000][b]Due[/b][/color]"
-                            canvas.before:
-                                Color:
-                                    rgba: 1, 1, 1, 1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            markup: True
-                            text: "[color=000000][b]Rack[/b][/color]"
-                            canvas.before:
-                                Color:
-                                    rgba: 1, 1, 1, 1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            markup: True
-                            text: "[color=000000][b]Qty[/b][/color]"
-                            canvas.before:
-                                Color:
-                                    rgba: 1, 1, 1, 1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            markup: True
-                            text: "[color=000000][b]Total[/b][/color]"
-                            canvas.before:
-                                Color:
-                                    rgba: 1, 1, 1, 1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                    GridLayout:
-                        id: invoice_table_body
-                        cols: 1
-                        size_hint_y:None
-                        size_hint_x:1
-                        height: self.minimum_height
-                        spacing: 2
-                        row_force_default: True
-                        row_default_height:sp(50)
+                    row_default_height:sp(32)
         BoxLayout:
             orientation: 'vertical'
             pos_hint:{'top':1}
@@ -163,14 +158,12 @@
                     Rectangle:
                         pos: self.pos
                         size: self.size
-
     BoxLayout:
-        id:invs_results_label
-        size_hint: 1,0.1
-        pos_hint:{'top':0.2}
-        orientation: 'horizontal'
+        size_hint: 1,0.2
+        orientation: 'vertical'
         Label:
             id:invs_results_label
+            size_hint: 1, 0.5
             markup: True
             text: "[color=000000]Showing rows [b]1[/b] - [b]10[/b] out of [b]10[/b][/color]"
             canvas.before:
@@ -179,11 +172,9 @@
                 Rectangle:
                     pos: self.pos
                     size: self.size
-
-    BoxLayout:
-        size_hint: 1,0.1
         Button:
             id: cancel
+            size_hint: 1, 0.5
             on_press: root.open_popup()
             on_release: root.set_result_status()
             on_release: app.root.current = "search"
