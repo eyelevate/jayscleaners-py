@@ -6210,6 +6210,7 @@ class EmployeesScreen(Screen):
 
 class HistoryScreen(Screen):
     invoices_table = ObjectProperty(None)
+    invoice_table_body = ObjectProperty(None)
     item_image = ObjectProperty(None)
     items_table = ObjectProperty(None)
     invs_results_label = ObjectProperty(None)
@@ -6221,7 +6222,6 @@ class HistoryScreen(Screen):
 
     def get_history(self):
         # check if an invoice was previously selected
-        self.invoices_table.clear_widgets()
         self.items_table.clear_widgets()
 
         # set any necessary variables
@@ -6254,21 +6254,8 @@ class HistoryScreen(Screen):
         vars.SEARCH_RESULTS = invs
         # get invoice rows and display them to the table
 
-        # create TH
-        h1 = KV.invoice_tr(0, 'ID')
-        h2 = KV.invoice_tr(0, 'Loc')
-        h3 = KV.invoice_tr(0, 'Due')
-        h4 = KV.invoice_tr(0, 'Rack')
-        h5 = KV.invoice_tr(0, 'Qty')
-        h6 = KV.invoice_tr(0, 'Total')
-        self.invoices_table.add_widget(Builder.load_string(h1))
-        self.invoices_table.add_widget(Builder.load_string(h2))
-        self.invoices_table.add_widget(Builder.load_string(h3))
-        self.invoices_table.add_widget(Builder.load_string(h4))
-        self.invoices_table.add_widget(Builder.load_string(h5))
-        self.invoices_table.add_widget(Builder.load_string(h6))
-
         # create Tbody TR
+        self.invoice_table_body.clear_widgets()
         if len(vars.SEARCH_RESULTS) > 0:
             for cust in vars.SEARCH_RESULTS:
                 self.create_invoice_row(cust)
@@ -6316,6 +6303,7 @@ class HistoryScreen(Screen):
 
         now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
         invoice_status = row['status']
+        selected = True if invoice_id == check_invoice_id else False
         if deleted_at:
             state = 4
         else:
@@ -6335,26 +6323,61 @@ class HistoryScreen(Screen):
                 else:
                     state = 1
 
-        selected = True if invoice_id == check_invoice_id else False
+        if state is 1:
+            text_color = [0.898,0.898,0.898,1] if selected else [0, 0, 0, 1]
+            background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
+            background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
+        elif state is 2:
+            text_color = [0.8157,0.847,0.961,1] if selected else [0.059,0.278,1,1]
+            background_rgba = [0.059,0.278,1,0.1] if selected else [0.816, 0.847, 0.961, 0.1]
+            background_color = [0.059,0.278,1,1] if selected else [0.816, 0.847, 0.961, 1]
+        elif state is 3:
+            text_color = [0.847,0.967,0.847,1] if selected else [0,0.639,0.149,1]
+            background_rgba = [0,0.64,0.149,0.1] if selected else [0.847,0.968,0.847,0.1]
+            background_color = [0,0.64,0.149,1] if selected else [0.847,0.968,0.847,1]
+        elif state is 4:
+            text_color = [1, 0.8, 0.8, 1] if selected else [1, 0, 0, 1]
+            background_rgba = [1,0,0,0.1] if selected else [1, 0.717, 0.717, 0.1]
+            background_color = [1,0,0,1] if selected else [1, 0.717, 0.717, 1]
+        elif state is 5:
+            text_color = [0.898,0.898,0.898,1] if selected else [0, 0, 0, 1]
+            background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
+            background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
+        else:
+            text_color = [0, 0, 0, 1] if selected else [0, 0, 0, 1]
+            background_rgba = [0.98431373,1,0,0.1] if selected else [0.9960784314,1,0.7176470588,1]
+            background_color = [0.98431373,1,0,1] if selected else [0.9960784314,1,0.7176470588, 1]
+        tr = Factory.InvoiceTr(on_release=partial(self.select_invoice, invoice_id),
+                               group="tr")
+        tr.status = state
+        tr.set_color = background_color
+        tr.background_color = background_rgba
+        label_1 = Label(markup=True,
+                        color=text_color,
+                        text="{}".format('{0:06d}'.format(invoice_id)))
+        tr.ids.invoice_table_row_td.add_widget(label_1)
+        label_2 = Label(markup=True,
+                        color=text_color,
+                        text='{}'.format(company_id))
+        tr.ids.invoice_table_row_td.add_widget(label_2)
+        label_3 = Label(markup=True,
+                        color=text_color,
+                        text='{}'.format(due_date))
+        tr.ids.invoice_table_row_td.add_widget(label_3)
+        label_4 = Label(markup=True,
+                        color=text_color,
+                        text='{}'.format(rack))
+        tr.ids.invoice_table_row_td.add_widget(label_4)
+        label_5 = Label(markup=True,
+                        color=text_color,
+                        text='{}'.format(quantity))
+        tr.ids.invoice_table_row_td.add_widget(label_5)
+        label_6 = Label(markup=True,
+                        color=text_color,
+                        text='{}'.format(total))
+        tr.ids.invoice_table_row_td.add_widget(label_6)
 
-        tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
-        tr_2 = KV.invoice_tr(state, company_id, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
-        tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
-        tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
-        tr_5 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
-        tr_6 = KV.invoice_tr(state, total, selected=selected, invoice_id=invoice_id,
-                             callback='self.parent.parent.parent.parent.select_invoice({})'.format(invoice_id))
-        self.invoices_table.add_widget(Builder.load_string(tr_1))
-        self.invoices_table.add_widget(Builder.load_string(tr_2))
-        self.invoices_table.add_widget(Builder.load_string(tr_3))
-        self.invoices_table.add_widget(Builder.load_string(tr_4))
-        self.invoices_table.add_widget(Builder.load_string(tr_5))
-        self.invoices_table.add_widget(Builder.load_string(tr_6))
+        self.invoice_table_body.add_widget(tr)
 
         return True
 
@@ -6370,14 +6393,72 @@ class HistoryScreen(Screen):
         vars.WORKLIST.append("Sync")
         threads_start()
 
-    def select_invoice(self, invoice_id):
+    def select_invoice(self, invoice_id, *args, **kwargs):
         # set selected invoice and update the table to show it
         vars.INVOICE_ID = invoice_id
-        # self.invoices_table.clear_widgets()
-        self.get_history()
+
+        # check state of button and update rows
+        for child in self.invoice_table_body.children:
+            if child.state is 'down':
+                # find status and change the background color
+
+                if child.status is 1:
+                    text_color = [0.898, 0.898, 0.898, 1]
+                    child.background_color = [0.369, 0.369, 0.369, 0.1]
+                    child.set_color = [0.369, 0.369, 0.369, 1]
+                elif child.status is 2:
+                    text_color = [0.8156, 0.847, 0.961, 1]
+                    child.background_color = [0.059, 0.278, 1, 0.1]
+                    child.set_color = [0.059, 0.278, 1, 1]
+                elif child.status is 3:
+                    text_color = [0.847, 0.969, 0.847, 1]
+                    child.background_color = [0, 0.64, 0.149, 0.1]
+                    child.set_color = [0, 0.64, 0.149, 1]
+                elif child.status is 4:
+                    text_color = [1, 0.8, 0.8, 1]
+                    child.background_color = [1, 0, 0, 0.1]
+                    child.set_color = [1, 0, 0, 1]
+                elif child.status is 5:
+                    text_color = [0.898, 0.898, 0.898, 1]
+                    child.background_color = [0.369, 0.369, 0.369, 0.1]
+                    child.set_color = [0.369, 0.369, 0.369, 1]
+                else:
+                    text_color = [0, 0, 0, 1]
+                    child.background_color = [0.98431373, 1, 0, 0.1]
+                    child.set_color = [0.98431373, 1, 0, 1]
+            else:
+                if child.status is 1:
+                    text_color = [0, 0, 0, 1]
+                    child.background_color = [0.826, 0.826, 0.826, 0.1]
+                    child.set_color = [0.826, 0.826, 0.826, 1]
+                elif child.status is 2:
+                    text_color = [0.059, 0.278, 1, 1]
+                    child.background_color = [0.816, 0.847, 0.961, 0.1]
+                    child.set_color = [0.816, 0.847, 0.961, 1]
+                elif child.status is 3:
+                    text_color = [0, 0.639, 0.149, 1]
+                    child.background_color = [0.847, 0.968, 0.847, 0.1]
+                    child.set_color = [0.847, 0.968, 0.847, 1]
+                elif child.status is 4:
+                    text_color = [1, 0, 0, 1]
+                    child.background_color = [1, 0.717, 0.717, 0.1]
+                    child.set_color = [1, 0.717, 0.717, 1]
+                elif child.status is 5:
+                    text_color = [0, 0, 0, 1]
+                    child.background_color = [0.826, 0.826, 0.826, 0.1]
+                    child.set_color = [0.826, 0.826, 0.826, 1]
+                else:
+                    text_color = [0, 0, 0, 1]
+                    child.background_color = [0.9960784314, 1, 0.7176470588, 0.1]
+                    child.set_color = [0.9960784314, 1, 0.7176470588, 1]
+            for grandchild in child.children:
+                for ggc in grandchild.children:
+                    ggc.color = text_color
+        # self.get_history()
         self.items_table_update()
 
     def invoice_next(self):
+        self.invoice_table_body.clear_widgets()
         if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
             vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
         else:
@@ -11692,25 +11773,17 @@ class SearchScreen(Screen):
             self.background_color = [0.826, 0.826, 0.826, 1]
             self.status = 5
 
-            tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
-                                     group="tr")
-
         elif invoice_status is 4 or invoice_status is 3:  # state 4
             text_color = [1, 0, 0, 1]
             self.background_rgba = [1, 0.717, 0.717, 0.1]
             self.background_color = [1, 0.717, 0.717, 1]
             self.status = 4
-            tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
-                                     group="tr")
 
         elif invoice_status is 2:  # state 3
             text_color = [0, 0.639, 0.149, 1]
             self.background_rgba = [0.847,0.968,0.847,0.1]
             self.background_color = [0.847,0.968,0.847,1]
             self.status = 3
-            tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
-                                     group="tr")
-
 
         else:
             if due_strtotime < now_strtotime:  # overdue state 2
@@ -11718,26 +11791,19 @@ class SearchScreen(Screen):
                 self.background_rgba = [0.816, 0.847, 0.961, 0.1]
                 self.background_color = [0.816, 0.847, 0.961, 1]
                 self.status = 2
-                tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
-                                         group="tr")
 
             elif count_invoice_items == 0:  # #quick drop state 6
                 text_color = [0, 0, 0, 1]
                 self.background_rgba = [0.9960784314,1,0.7176470588,0.1]
                 self.background_color = [0.9960784314,1,0.7176470588,1]
                 self.status = 6
-                tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
-                                         group="tr")
-
-
             else:  # state 1
                 text_color = [0, 0, 0, 1]
                 self.background_rgba = [0.826, 0.826, 0.826, 0.1]
                 self.background_color = [0.826, 0.826, 0.826, 1]
                 self.status = 1
-                tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
-                                         group="tr")
-
+        tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
+                                 group="tr")
         tr_1.status = self.status
         tr_1.set_color = self.background_color
         tr_1.background_color = self.background_rgba
