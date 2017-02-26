@@ -6397,8 +6397,11 @@ class HistoryScreen(Screen):
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
         # update db with current changes
-        vars.WORKLIST.append("Sync")
-        threads_start()
+        t1 = Thread(target=SYNC.db_sync,args="")
+        t1.start()
+        t1.join()
+        # vars.WORKLIST.append("Sync")
+        # threads_start()
 
     def select_invoice(self, invoice_id, *args, **kwargs):
         # set selected invoice and update the table to show it
