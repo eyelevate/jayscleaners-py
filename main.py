@@ -501,8 +501,8 @@ class MainScreen(Screen):
 
         t1 = Thread(target=sync.auto_update, args=())
         t1.start()
-        t1.join()
-        print('all done')
+        # t1.join()
+        # print('all done')
 
     def test_sys(self):
         Sync().migrate()
