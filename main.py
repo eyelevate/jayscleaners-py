@@ -370,10 +370,11 @@ class MainScreen(Screen):
                                            'Please try again!!'))
 
             user.close_connection()
-            SYNC_POPUP.open()
+            # SYNC_POPUP.open()
 
             if db_sync_status:
-                Clock.schedule_once(self.db_sync, 1)
+                t1 = Thread(target=self.db_sync,args="")
+                t1.start()
 
     def logout(self, *args, **kwargs):
         self.username.text = ''
@@ -396,10 +397,11 @@ class MainScreen(Screen):
         # SYNC.db_sync()
 
         # quick sync
-        t1 = Thread(target=SYNC.db_sync(), args=())
-        t1.start()
-        t1.join()
-        SYNC_POPUP.dismiss()
+        SYNC.db_sync()
+        # t1 = Thread(target=SYNC.db_sync(), args=())
+        # t1.start()
+        # t1.join()
+        # SYNC_POPUP.dismiss()
         # if isinstance(App.get_running_app().root_window.children[0], Popup):
         #     # vars.WORKLIST.append("Sync")
         #     # threads_start()
