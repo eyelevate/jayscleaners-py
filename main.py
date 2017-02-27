@@ -1278,9 +1278,10 @@ class DropoffScreen(Screen):
     starch = None
     memo_list = []
     colors_table_main = ObjectProperty(None)
+    customer_id_backup = None
 
     def reset(self):
-        print(vars.CUSTOMER_ID)
+
         # reset the inventory table
         self.inventory_panel.clear_widgets()
         self.get_inventory()
@@ -1323,6 +1324,7 @@ class DropoffScreen(Screen):
         self.discount = 0
         self.total = 0
         self.adjust_price = 0
+        self.customer_id_backup = vars.CUSTOMER_ID
         self.adjust_price_list = []
         vars.ITEM_ID = None
         # reset the inventory table
@@ -1355,6 +1357,7 @@ class DropoffScreen(Screen):
                 self.starch = vars.get_starch_by_code(customer['starch'])
         else:
             self.starch = vars.get_starch_by_code(None)
+
 
         SYNC_POPUP.dismiss()
 
@@ -2615,14 +2618,10 @@ GridLayout:
                         total = save_totals[inventory_id]['subtotal'] * (1 + vars.TAX_RATE)
 
                         # set invoice data to save
-                        if vars.CUSTOMER_ID != '':
-                            print(vars.CUSTOMER_ID)
-                        else:
-                            print('NO INVOICE ID WHY?')
                         new_invoice = Invoice()
                         new_invoice.company_id = auth_user.company_id
-                        print(vars.CUSTOMER_ID)
-                        new_invoice.customer_id = vars.CUSTOMER_ID
+                        print('customer_id is {}'.format(self.customer_id_backup))
+                        new_invoice.customer_id = self.customer_id_backup
                         new_invoice.quantity = save_totals[inventory_id]['quantity']
                         new_invoice.pretax = float('%.2f' % (save_totals[inventory_id]['subtotal']))
                         new_invoice.tax = float('%.2f' % (tax_amount))
