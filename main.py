@@ -2847,7 +2847,7 @@ GridLayout:
                         vars.EPSON.write(
                             pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
                                         invert=False, smooth=False, flip=False))
-                        padded_customer_id = '{0:05d}'.format(vars.CUSTOMER_ID)
+                        padded_customer_id = '{0:05d}'.format(self.customer_id_backup)
                         vars.EPSON.write("{}\n".format(padded_customer_id))
 
                         # Print barcode
@@ -2972,7 +2972,7 @@ GridLayout:
                                             density=6, invert=False, smooth=False, flip=False))
 
                             vars.EPSON.write(
-                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
+                                '{}, {}\n'.format(customers.last_name, customers.first_name))
 
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
@@ -3118,7 +3118,7 @@ GridLayout:
                                             density=6,
                                             invert=False, smooth=False, flip=False))
                             vars.EPSON.write(
-                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
+                                '{}, {}\n'.format(customers.last_name, customers.first_name))
 
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
