@@ -11690,16 +11690,23 @@ class SearchScreen(Screen):
                         self.customer_results(cust1)
 
                     elif len(search_text) == 6:  # this is an invoice number
+                        print('searching for invoice')
                         data = {
                             'invoice_id': '"{}"'.format(int(self.search.text))
                         }
                         inv = Invoice()
                         inv_1 = inv.where(data)
+                        print(inv_1)
                         if len(inv_1) > 0:
                             for invoice in inv_1:
                                 vars.INVOICE_ID = self.search.text
                                 vars.CUSTOMER_ID = invoice['customer_id']
+                                data = {'user_id': '"{}"'.format(vars.CUSTOMER_ID)}
+                                cust1 = customers.where(data)
+                                self.customer_results(cust1)
                                 self.invoice_selected(invoice_id=vars.INVOICE_ID)
+
+
 
                         else:
                             popup.title = 'No such invoice'
@@ -11837,6 +11844,7 @@ class SearchScreen(Screen):
         return True
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
+        print('found customer = {} and invoice id = {}'.format(vars.CUSTOMER_ID,invoice_id))
         vars.INVOICE_ID = invoice_id
         data = {
             'user_id': '"{}"'.format(vars.CUSTOMER_ID)
