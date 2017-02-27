@@ -3068,7 +3068,7 @@ GridLayout:
                             if item_type == 'L':
                                 # get customer mark
                                 marks = Custid()
-                                marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                                marks_list = marks.where({'customer_id': self.customer_id_backup, 'status': 1})
                                 if marks_list:
                                     m_list = []
                                     for mark in marks_list:
@@ -3221,7 +3221,7 @@ GridLayout:
                             if item_type == 'L':
                                 # get customer mark
                                 marks = Custid()
-                                marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                                marks_list = marks.where({'customer_id': self.customer_id_backup, 'status': 1})
                                 if marks_list:
                                     m_list = []
                                     for mark in marks_list:
@@ -3309,7 +3309,7 @@ GridLayout:
                     vars.BIXOLON.write('\x1b\x6d')
                 else:
                     laundry_count = len(laundry_to_print)
-                    shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                    shirt_mark = Custid().getCustomerMark(self.customer_id_backup)
                     name_text_offset = total_length - len(text_name) - len(text_name)
                     shirt_mark_length = len(shirt_mark)
                     mark_text_offset = 16 - (shirt_mark_length * 2)
@@ -3344,8 +3344,10 @@ GridLayout:
                     vars.BIXOLON.write('\x1b\x6d')
 
         SYNC_POPUP.dismiss()
+        self.customer_id_backup = self.customer_id_backup
         self.set_result_status()
         self.print_popup.dismiss()
+
 
 
 class EditInvoiceScreen(Screen):
