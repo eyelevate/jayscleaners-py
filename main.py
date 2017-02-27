@@ -11657,9 +11657,9 @@ class SearchScreen(Screen):
         else:
 
             if len(self.search.text) > 0:
-                data = {'mark': '"%{}%"'.format(self.search.text)}
+                data = {'mark': '"{}"'.format(self.search.text)}
                 marks = Custid()
-                custids = marks.like(data)
+                custids = marks.where(data)
                 where = []
                 for custid in custids:
                     cust_id = custid['customer_id']
