@@ -2738,7 +2738,7 @@ GridLayout:
                         # set invoice data to save
                         new_invoice_item = InvoiceItem()
                         new_invoice_item.company_id = auth_user.company_id
-                        new_invoice_item.customer_id = vars.CUSTOMER_ID
+                        new_invoice_item.customer_id = self.customer_id_backup
                         new_invoice_item.invoice_id = item['invoice_id']
                         new_invoice_item.item_id = item['item_id']
                         new_invoice_item.inventory_id = item['inventory_id']
@@ -2783,7 +2783,7 @@ GridLayout:
                         customers.company_id = user['company_id']
                         customers.username = user['username']
                         customers.first_name = user['first_name'].upper() if user['first_name'] else ''
-                        customers.last_name = user['last_name']
+                        customers.last_name = user['last_name'].upper() if user['last_name'] else ''
                         customers.street = user['street']
                         customers.suite = user['suite']
                         customers.city = user['city']
