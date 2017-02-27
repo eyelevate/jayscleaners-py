@@ -11709,12 +11709,12 @@ class SearchScreen(Screen):
 
                 else:  # Lookup by last name || mark
 
-                    data = {'last_name': '"%{}%"'.format(self.search.text)}
+                    data = {'last_name': '"%{}"'.format(self.search.text)}
                     vars.ROW_CAP = len(customers.like(data))
                     vars.SEARCH_TEXT = self.search.text
 
                     data = {
-                        'last_name': '"%{}%"'.format(self.search.text),
+                        'last_name': '"%{}"'.format(self.search.text),
                         'ORDER_BY': 'last_name ASC',
                         'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
                     }
@@ -16093,7 +16093,7 @@ class SearchResultsScreen(Screen):
         data = {
             'last_name': '"%{}%"'.format(vars.SEARCH_TEXT),
             'ORDER_BY': 'last_name ASC',
-            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
+            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], 10)
         }
         customers = User()
         cust1 = customers.like(data)
@@ -16116,7 +16116,7 @@ class SearchResultsScreen(Screen):
         data = {
             'last_name': '"%{}%"'.format(vars.SEARCH_TEXT),
             'ORDER_BY': 'last_name ASC',
-            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
+            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], 10)
         }
         customers = User()
         cust1 = customers.like(data)
@@ -16132,6 +16132,7 @@ class SearchResultsScreen(Screen):
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
         Clock.schedule_once(partial(self.customer_select_sync, customer_id))
+        vars.CUSTOMER_ID = customer_id
 
     def customer_select_sync(self, customer_id, *args, **kwargs):
         # sync db
@@ -16145,7 +16146,7 @@ class SearchResultsScreen(Screen):
             vars.ROW_CAP = 0
             vars.CUSTOMER_ID = customer_id
             vars.INVOICE_ID = None
-            vars.ROW_SEARCH = 0, 9
+            vars.ROW_SEARCH = 0, 10
             self.parent.current = 'search'
             # last 10 setup
             vars.update_last_10()

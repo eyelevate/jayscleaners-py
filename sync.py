@@ -819,36 +819,36 @@ class Sync:
         #     print(e)
         #
         # # custids
-        table = 'custids'
-        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        print('Syncing table - {} ({} / 21)'.format(table, 6))
-        try:
-            r = request.urlopen(url)
-            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if (count_data['status'] is 200):
-                start = int(count_data['data']['first_row'])
-                end = int(count_data['data']['last_row'])
-                if int(end - start) > 0:  # reset table db and start pulling in new data from server
-
-                    # reset local db table
-                    custids = Custid()
-                    custids.truncate()
-                    if end > 5000:
-                        for num in range(start, end, 5000):
-
-                            idx_start = num
-                            idx_end = num + 5000
-                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-                            t1.start()
-                            t1.join()
-                    else:
-                        print('Obtaining rows {} through {}'.format(start, end))
-                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-                        t1.start()
-                        t1.join()
-        except urllib.error.URLError as e:
-            print(e)
+        # table = 'custids'
+        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
+        # print('Syncing table - {} ({} / 21)'.format(table, 6))
+        # try:
+        #     r = request.urlopen(url)
+        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+        #     if (count_data['status'] is 200):
+        #         start = int(count_data['data']['first_row'])
+        #         end = int(count_data['data']['last_row'])
+        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
+        #
+        #             # reset local db table
+        #             custids = Custid()
+        #             custids.truncate()
+        #             if end > 5000:
+        #                 for num in range(start, end, 5000):
+        #
+        #                     idx_start = num
+        #                     idx_end = num + 5000
+        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+        #                     t1.start()
+        #                     t1.join()
+        #             else:
+        #                 print('Obtaining rows {} through {}'.format(start, end))
+        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+        #                 t1.start()
+        #                 t1.join()
+        # except urllib.error.URLError as e:
+        #     print(e)
         #
         # # deliveries
         # table = 'deliveries'
@@ -984,37 +984,37 @@ class Sync:
         #     print(e)
         #
         # # invoice
-        # table = 'invoices'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 11))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             invoices= Invoice()
-        #             invoices.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
+        table = 'invoices'
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
+        print('Syncing table - {} ({} / 21)'.format(table, 11))
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+
+                    # reset local db table
+                    invoices= Invoice()
+                    invoices.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
         #
         #
         # # Invoice Items
@@ -1254,38 +1254,38 @@ class Sync:
         #     print(e)
         #
         # # transactions
-        # table = 'transactions'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 19))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             tr= Transaction()
-        #             tr.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
+        table = 'transactions'
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
+        print('Syncing table - {} ({} / 21)'.format(table, 19))
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+
+                    # reset local db table
+                    tr= Transaction()
+                    tr.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
+                            t1.start()
+                            t1.join()
+
+
+                    else:
+                        print('Obtaining rows {} through {}'.format(0, 5000))
+                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
+                        t1.start()
+                        t1.join()
+        except urllib.error.URLError as e:
+            print(e)
         #
         # # users
         table = 'users'
