@@ -2777,7 +2777,7 @@ GridLayout:
                         customers.user_id = user['user_id']
                         customers.company_id = user['company_id']
                         customers.username = user['username']
-                        customers.first_name = user['first_name']
+                        customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                         customers.last_name = user['last_name']
                         customers.street = user['street']
                         customers.suite = user['suite']
@@ -2851,7 +2851,7 @@ GridLayout:
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                         invert=False, smooth=False, flip=False))
-                        vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                        vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
@@ -2965,8 +2965,9 @@ GridLayout:
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
                                             density=6, invert=False, smooth=False, flip=False))
+
                             vars.EPSON.write(
-                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
@@ -3112,7 +3113,7 @@ GridLayout:
                                             density=6,
                                             invert=False, smooth=False, flip=False))
                             vars.EPSON.write(
-                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
@@ -4896,7 +4897,7 @@ GridLayout:
                     customers.user_id = user['user_id']
                     customers.company_id = user['company_id']
                     customers.username = user['username']
-                    customers.first_name = user['first_name']
+                    customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                     customers.last_name = user['last_name']
                     customers.street = user['street']
                     customers.suite = user['suite']
@@ -4968,7 +4969,7 @@ GridLayout:
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                 invert=False, smooth=False, flip=False))
-                vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
@@ -5077,7 +5078,7 @@ GridLayout:
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                         invert=False, smooth=False, flip=False))
-                        vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                        vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
@@ -5216,7 +5217,7 @@ GridLayout:
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                         invert=False, smooth=False, flip=False))
-                        vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                        vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
@@ -6832,7 +6833,7 @@ class HistoryScreen(Screen):
                         customers.user_id = user['user_id']
                         customers.company_id = user['company_id']
                         customers.username = user['username']
-                        customers.first_name = user['first_name']
+                        customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                         customers.last_name = user['last_name']
                         customers.street = user['street']
                         customers.suite = user['suite']
@@ -6965,7 +6966,7 @@ class HistoryScreen(Screen):
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                     invert=False, smooth=False, flip=False))
-                    vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                    vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
@@ -7066,7 +7067,7 @@ class HistoryScreen(Screen):
                                             density=6,
                                             invert=False, smooth=False, flip=False))
                             vars.EPSON.write(
-                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
@@ -7315,7 +7316,7 @@ class HistoryScreen(Screen):
                     customers.user_id = user['user_id']
                     customers.company_id = user['company_id']
                     customers.username = user['username']
-                    customers.first_name = user['first_name']
+                    customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                     customers.last_name = user['last_name']
                     customers.street = user['street']
                     customers.suite = user['suite']
@@ -7469,7 +7470,7 @@ class HistoryScreen(Screen):
                     customers.user_id = user['user_id']
                     customers.company_id = user['company_id']
                     customers.username = user['username']
-                    customers.first_name = user['first_name']
+                    customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                     customers.last_name = user['last_name']
                     customers.street = user['street']
                     customers.suite = user['suite']
@@ -10643,7 +10644,7 @@ class PickupScreen(Screen):
                         customers.user_id = user['user_id']
                         customers.company_id = user['company_id']
                         customers.username = user['username']
-                        customers.first_name = user['first_name']
+                        customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                         customers.last_name = user['last_name']
                         customers.street = user['street']
                         customers.suite = user['suite']
@@ -10762,7 +10763,7 @@ class PickupScreen(Screen):
                                                  density=6,
                                                  invert=False, smooth=False, flip=False))
                     vars.EPSON.write(
-                        '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                        '{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                     vars.EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                  density=2,
@@ -12372,7 +12373,7 @@ class SearchScreen(Screen):
                         customers.user_id = user['user_id']
                         customers.company_id = user['company_id']
                         customers.username = user['username']
-                        customers.first_name = user['first_name']
+                        customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                         customers.last_name = user['last_name']
                         customers.street = user['street']
                         customers.suite = user['suite']
@@ -12434,7 +12435,7 @@ class SearchScreen(Screen):
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                 invert=False, smooth=False, flip=False))
-                vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
@@ -12541,7 +12542,7 @@ class SearchScreen(Screen):
                         customers.user_id = user['user_id']
                         customers.company_id = user['company_id']
                         customers.username = user['username']
-                        customers.first_name = user['first_name']
+                        customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                         customers.last_name = user['last_name']
                         customers.street = user['street']
                         customers.suite = user['suite']
@@ -12603,7 +12604,7 @@ class SearchScreen(Screen):
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                 invert=False, smooth=False, flip=False))
-                vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
@@ -12665,7 +12666,7 @@ class SearchScreen(Screen):
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                 invert=False, smooth=False, flip=False))
-                vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                 vars.EPSON.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
@@ -12749,7 +12750,7 @@ class SearchScreen(Screen):
                         customers.user_id = user['user_id']
                         customers.company_id = user['company_id']
                         customers.username = user['username']
-                        customers.first_name = user['first_name']
+                        customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                         customers.last_name = user['last_name']
                         customers.street = user['street']
                         customers.suite = user['suite']
@@ -12886,7 +12887,7 @@ class SearchScreen(Screen):
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                     invert=False, smooth=False, flip=False))
-                    vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                    vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
@@ -12990,7 +12991,7 @@ class SearchScreen(Screen):
                                             density=6,
                                             invert=False, smooth=False, flip=False))
                             vars.EPSON.write(
-                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+                                '{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
@@ -13140,7 +13141,7 @@ class SearchScreen(Screen):
                     customers.user_id = user['user_id']
                     customers.company_id = user['company_id']
                     customers.username = user['username']
-                    customers.first_name = user['first_name']
+                    customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                     customers.last_name = user['last_name']
                     customers.street = user['street']
                     customers.suite = user['suite']
@@ -13194,7 +13195,7 @@ class SearchScreen(Screen):
             vars.EPSON.write(pr.pcmd_barcode(str(padded_customer_id)))
             vars.EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                          invert=False, smooth=False, flip=False))
-            vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name.upper()))
+            vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
             vars.EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
                                          invert=False, smooth=False, flip=False))
@@ -13337,7 +13338,7 @@ class SearchScreen(Screen):
                     customers.user_id = user['user_id']
                     customers.company_id = user['company_id']
                     customers.username = user['username']
-                    customers.first_name = user['first_name']
+                    customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                     customers.last_name = user['last_name']
                     customers.street = user['street']
                     customers.suite = user['suite']
@@ -13493,7 +13494,7 @@ class SearchScreen(Screen):
                     customers.user_id = user['user_id']
                     customers.company_id = user['company_id']
                     customers.username = user['username']
-                    customers.first_name = user['first_name']
+                    customers.first_name = user['first_name'].upper() if user['first_name'] else ''
                     customers.last_name = user['last_name']
                     customers.street = user['street']
                     customers.suite = user['suite']
