@@ -2775,7 +2775,7 @@ GridLayout:
                         companies.email = company['email']
                         companies.phone = company['phone']
                 customers = User()
-                custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+                custs = customers.where({'user_id': '{}'.format(self.customer_id_backup)}, set=True)
                 if custs:
                     for user in custs:
                         customers.id = user['id']
@@ -2856,7 +2856,7 @@ GridLayout:
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                         invert=False, smooth=False, flip=False))
-                        vars.EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
+                        vars.EPSON.write('{}, {}\n'.format(customers.last_name, customers.first_name))
 
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
