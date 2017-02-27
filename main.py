@@ -1280,6 +1280,7 @@ class DropoffScreen(Screen):
     colors_table_main = ObjectProperty(None)
 
     def reset(self):
+        print(vars.CUSTOMER_ID)
         # reset the inventory table
         self.inventory_panel.clear_widgets()
         self.get_inventory()
@@ -16133,7 +16134,7 @@ class SearchResultsScreen(Screen):
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
         Clock.schedule_once(partial(self.customer_select_sync, customer_id))
-        vars.CUSTOMER_ID = customer_id
+        print(customer_id)
 
     def customer_select_sync(self, customer_id, *args, **kwargs):
         # sync db
