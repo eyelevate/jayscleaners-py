@@ -2615,8 +2615,13 @@ GridLayout:
                         total = save_totals[inventory_id]['subtotal'] * (1 + vars.TAX_RATE)
 
                         # set invoice data to save
+                        if vars.CUSTOMER_ID != '':
+                            print(vars.CUSTOMER_ID)
+                        else:
+                            print('NO INVOICE ID WHY?')
                         new_invoice = Invoice()
                         new_invoice.company_id = auth_user.company_id
+                        print(vars.CUSTOMER_ID)
                         new_invoice.customer_id = vars.CUSTOMER_ID
                         new_invoice.quantity = save_totals[inventory_id]['quantity']
                         new_invoice.pretax = float('%.2f' % (save_totals[inventory_id]['subtotal']))
@@ -11659,9 +11664,9 @@ class SearchScreen(Screen):
         else:
 
             if len(self.search.text) > 0:
-                data = {'mark': '"{}"'.format(self.search.text)}
+                data = {'mark': '"%{}%"'.format(self.search.text)}
                 marks = Custid()
-                custids = marks.where(data)
+                custids = marks.like(data)
                 where = []
                 for custid in custids:
                     cust_id = custid['customer_id']
@@ -11711,12 +11716,12 @@ class SearchScreen(Screen):
 
                 else:  # Lookup by last name || mark
 
-                    data = {'last_name': '"%{}"'.format(self.search.text)}
+                    data = {'last_name': '"%{}%"'.format(self.search.text)}
                     vars.ROW_CAP = len(customers.like(data))
                     vars.SEARCH_TEXT = self.search.text
 
                     data = {
-                        'last_name': '"%{}"'.format(self.search.text),
+                        'last_name': '"%{}%"'.format(self.search.text),
                         'ORDER_BY': 'last_name ASC',
                         'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
                     }
