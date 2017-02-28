@@ -10637,7 +10637,7 @@ class PickupScreen(Screen):
             custs = customers.where({'user_id': vars.CUSTOMER_ID})
             if custs:
                 for customer in custs:
-                    old_credits = customer['credits'] if customer['credits'] > 0 else 0
+                    old_credits = customer['credits'] if float(customer['credits']) > 0 else 0
                     old_account_total = customer['account_total']
             new_credits = float("%0.2f" % (old_credits - credits_spent))
             new_account_total = float("%0.2f" % (old_account_total + self.total_due))
