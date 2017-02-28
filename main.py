@@ -133,6 +133,8 @@ workQueue = queue.Queue(10)
 list_len = []
 printer_list = {}
 SYNC_POPUP = Popup()
+SCHEDULER = BackgroundScheduler()
+SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=10)
 
 
 # handles multithreads for database sync
@@ -396,10 +398,8 @@ class MainScreen(Screen):
         # quick sync
         print('starting initial sync this may take a few minutes')
         SYNC.db_sync()
-        # print('initializing auto-sync every 10 minutes')
-        # scheduler = BackgroundScheduler()
-        # scheduler.add_job(SYNC.db_sync, 'interval', minutes=10)
-        # scheduler.start()
+        print('initializing auto-sync every 20 seconds')
+        SCHEDULER.start()
 
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
 
@@ -491,6 +491,8 @@ class MainScreen(Screen):
         self.pb_items.max = int(value)
 
     def sync_db(self, *args, **kwargs):
+        # Pause Schedule
+        SCHEDULER.pause()
         sync = Sync()
 
         t1 = Thread(target=sync.auto_update, args=())
@@ -685,6 +687,8 @@ class ColorsScreen(Screen):
     reorder_end_id = False
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         self.set_color_table()
         self.color_hex = ''
         self.color_id = ''
@@ -1015,6 +1019,8 @@ class CompanyScreen(Screen):
     load_count = False
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         companies = Company().where({'company_id': auth_user.company_id})
         if companies:
             for company in companies:
@@ -1275,7 +1281,8 @@ class DropoffScreen(Screen):
     customer_id_backup = None
 
     def reset(self):
-
+        # Pause Schedule
+        SCHEDULER.pause()
         # reset the inventory table
         self.inventory_panel.clear_widgets()
         self.get_inventory()
@@ -3401,6 +3408,8 @@ class EditInvoiceScreen(Screen):
     customer_id_backup = None
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         # reset the inventory table
         self.customer_id_backup = vars.CUSTOMER_ID
         print(self.customer_id_backup)
@@ -5384,6 +5393,8 @@ class EditCustomerScreen(Screen):
     delete_customer = None
     popup = Popup()
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         self.last_name.text = ''
         self.last_name.hint_text = 'Last Name'
         self.last_name.hint_text_color = DEFAULT_COLOR
@@ -5936,6 +5947,8 @@ class EmployeesScreen(Screen):
     password = None
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         self.create_table()
         self.employee_id = None
         self.username = None
@@ -6305,6 +6318,8 @@ class HistoryScreen(Screen):
     down_btn = ObjectProperty(None)
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         # check if an invoice was previously selected
         self.items_table.clear_widgets()
 
@@ -7704,6 +7719,8 @@ class InventoriesScreen(Screen):
     add_popup = Popup()
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         self.inventory_id = None
         self.inventory_laundry = 0
         self.update_inventory_table()
@@ -7962,6 +7979,8 @@ class InventoryItemsScreen(Screen):
         # popup.dismiss
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         self.inventory_id = None
         self.get_inventory()
         self.item_id = None
@@ -8375,6 +8394,8 @@ class ItemDetailsScreen(Screen):
     inventory_item_name = ObjectProperty(None)
 
     def get_details(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         # reset invoice_items_id
         vars.INVOICE_ITEMS_ID = None
         # make the items
@@ -8510,6 +8531,8 @@ class InvoiceDetailsScreen(Screen):
     due_label = ObjectProperty(None)
 
     def get_details(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         invoices = Invoice().where({'invoice_id': vars.INVOICE_ID})
         if invoices:
             # reset the page first
@@ -8710,6 +8733,8 @@ class Last10Screen(Screen):
     last10_footer = ObjectProperty(None)
 
     def get_last10(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         vars.SEARCH_RESULTS_STATUS = True  # make sure search screen isnt reset
         self.last10_table.clear_widgets()
         self.last10_footer.clear_widgets()
@@ -8798,6 +8823,8 @@ class MemosScreen(Screen):
     msg = None
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         self.memo_id = None
         self.create_memo_table()
         pass
@@ -9047,7 +9074,8 @@ class NewCustomerScreen(Screen):
     main_grid = ObjectProperty(None)
 
     def reset(self):
-
+        # Pause Schedule
+        SCHEDULER.pause()
         self.street.text = ''
         self.street.hint_text = 'Street Address'
         self.street.hint_text_color = DEFAULT_COLOR
@@ -9409,6 +9437,8 @@ class PickupScreen(Screen):
     discount_id = None
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         # get credit total
         self.credits = 0
         self.credits_spent = 0
@@ -10990,6 +11020,8 @@ class PrinterScreen(Screen):
     edit_printer_id = None
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         self.printer_name.text = ''
         self.printer_model_number.text = ''
         self.printer_nick_name.text = ''
@@ -11289,6 +11321,8 @@ class RackScreen(Screen):
     edited_rack = False
 
     def reset(self):
+        # Pause sync scheduler
+        SCHEDULER.pause()
         self.racks = OrderedDict()
         self.rack_number.text = ''
         self.invoice_number.text = ''
@@ -11562,6 +11596,9 @@ class SearchScreen(Screen):
     status = None
 
     def reset(self, *args, **kwargs):
+        # Resume auto sync
+        SCHEDULER.resume()
+        print('Auto Sync Resumed')
         vars.ROW_SEARCH = 0, 10
         vars.ROW_CAP = 0
         vars.SEARCH_TEXT = None
@@ -16098,6 +16135,8 @@ class SearchResultsScreen(Screen):
     search_results_label = ObjectProperty(None)
 
     def get_results(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         self.search_results_table.clear_widgets()
         self.search_results_footer.clear_widgets()
         self.search_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
@@ -16249,6 +16288,8 @@ class TaxesScreen(Screen):
     tax_rate_input = ObjectProperty(None)
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         taxes = Tax()
         tax_rate = None
         tax_data = taxes.where({'company_id': auth_user.company_id, 'ORDER_BY': 'id asc', 'LIMIT': 1})
@@ -16305,6 +16346,8 @@ class UpdateScreen(Screen):
     invoice_id = None
 
     def reset(self):
+        # Pause Schedule
+        SCHEDULER.pause()
         self.search_input.text = ''
         self.company_select.text = "Store Name"
         self.company_select.values = Company().prepareCompanyList()
