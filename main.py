@@ -9447,7 +9447,7 @@ class PickupScreen(Screen):
         customers = User().where({'user_id': vars.CUSTOMER_ID})
         if customers:
             for customer in customers:
-                self.credits = customer['credits'] if customer['credits'] else 0
+                self.credits = customer['credits'] if customer['credits'] is not None else 0
                 account_status = customer['account']
 
         if account_status:
@@ -10638,7 +10638,7 @@ class PickupScreen(Screen):
             custs = customers.where({'user_id': vars.CUSTOMER_ID})
             if custs:
                 for customer in custs:
-                    old_credits = customer['credits'] if float(customer['credits']) > 0 else 0
+                    old_credits = customer['credits'] if customer['credits'] is not None else 0
                     old_account_total = customer['account_total']
             new_credits = float("%0.2f" % (old_credits - credits_spent))
             new_account_total = float("%0.2f" % (old_account_total + self.total_due))
@@ -11600,9 +11600,11 @@ class SearchScreen(Screen):
         # Resume auto sync
         try:
             SCHEDULER.resume()
+            print('Auto Sync Resumed')
         except SchedulerNotRunningError:
             SCHEDULER.start()
-        print('Auto Sync Resumed')
+            print('Auto Sync failed to launch starting again')
+
         vars.ROW_SEARCH = 0, 10
         vars.ROW_CAP = 0
         vars.SEARCH_TEXT = None
@@ -15539,7 +15541,7 @@ A{c},20,1,1,1,1,N,"{tag}"
             old_credit = 0
             if custs:
                 for customer in custs:
-                    old_credit = customer['credits'] if customer['credits'] else 0
+                    old_credit = customer['credits'] if customer['credits'] is not None else 0
             added_credits = float(self.credit_amount.text) if self.credit_amount.text else 0
             new_credits = old_credit + added_credits
             if customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'credits': new_credits}):
