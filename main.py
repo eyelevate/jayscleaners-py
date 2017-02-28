@@ -5430,7 +5430,7 @@ class EditCustomerScreen(Screen):
         self.is_delivery.active = False
         self.is_account.active = False
         self.delete_customer = False
-        self.delete_customer_spinner.text = "No"
+        #reset spinner values
         self.marks_table.clear_widgets()
 
     def load(self):
@@ -5466,6 +5466,7 @@ class EditCustomerScreen(Screen):
                     self.invoice_memo.hint_text = 'Invoiced Memo'
                     self.invoice_memo.hint_text_color = DEFAULT_COLOR
                     self.shirt_finish_spinner.text = 'Hanger' if cust['shirt'] is 1 else 'Box'
+                    self.delete_customer_spinner.text = "No"
                     self.shirt_finish = cust['shirt']
 
                     if cust['starch'] == 1:
