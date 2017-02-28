@@ -54,6 +54,7 @@ from calendar import Calendar
 from decimal import *
 import urllib
 from urllib import error, request, parse
+from apscheduler.schedulers.background import BackgroundScheduler
 
 getcontext().prec = 3
 from kv_generator import KvString
@@ -397,7 +398,12 @@ class MainScreen(Screen):
         # SYNC.db_sync()
 
         # quick sync
+        print('starting initial sync this may take a few minutes')
         SYNC.db_sync()
+        print('initializing auto-sync every 10 minutes')
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(SYNC.db_sync, 'interval', minutes=10)
+        scheduler.start()
         # t1 = Thread(target=SYNC.db_sync(), args=())
         # t1.start()
         # t1.join()
@@ -411,6 +417,7 @@ class MainScreen(Screen):
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
 
         # self.update_label.text = 'Server updated at {}'.format()
+
 
     def print_setup_label(self, vendor_id, product_id):
         vendor_int = int(vendor_id, 16)
