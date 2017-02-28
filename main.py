@@ -1484,6 +1484,12 @@ GridLayout:
         if qty == 'C':
             self.qty_clicks = 0
             self.inv_qty_list = ['1']
+        elif self.qty_clicks is 0 and qty is 0:
+            self.qty_clicks += 0
+            self.inv_qty_list = ['0']
+        elif self.qty_clicks == 0 and qty is 1:
+            self.qty_clicks += 1
+            self.inv_qty_list = ['1']
         elif self.qty_clicks == 0 and qty > 1:
             self.qty_clicks += 1
             self.inv_qty_list = ['{}'.format(str(qty))]
@@ -3691,11 +3697,16 @@ GridLayout:
                 self.inventory_panel.add_widget(tph)
                 if idx == 1:
                     self.inventory_panel.switch_to(tph)
-
     def set_qty(self, qty):
 
-        if qty == 'C':
+        if qty is 'C':
             self.qty_clicks = 0
+            self.inv_qty_list = ['1']
+        elif self.qty_clicks is 0 and qty is 0:
+            self.qty_clicks += 0
+            self.inv_qty_list = ['0']
+        elif self.qty_clicks == 0 and qty is 1:
+            self.qty_clicks += 1
             self.inv_qty_list = ['1']
         elif self.qty_clicks == 0 and qty > 1:
             self.qty_clicks += 1
