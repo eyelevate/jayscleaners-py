@@ -55,6 +55,7 @@ from decimal import *
 import urllib
 from urllib import error, request, parse
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers import SchedulerNotRunningError
 
 getcontext().prec = 3
 from kv_generator import KvString
@@ -134,7 +135,7 @@ list_len = []
 printer_list = {}
 SYNC_POPUP = Popup()
 SCHEDULER = BackgroundScheduler()
-SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=30)
+SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=20)
 
 
 # handles multithreads for database sync
@@ -11597,7 +11598,10 @@ class SearchScreen(Screen):
 
     def reset(self, *args, **kwargs):
         # Resume auto sync
-        SCHEDULER.resume()
+        try:
+            SCHEDULER.resume()
+        except SchedulerNotRunningError:
+            SCHEDULER.start()
         print('Auto Sync Resumed')
         vars.ROW_SEARCH = 0, 10
         vars.ROW_CAP = 0
