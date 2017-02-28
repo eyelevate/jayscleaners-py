@@ -11838,7 +11838,10 @@ class SearchScreen(Screen):
                     # turn search into list
                     full_name = self.search.text.split()
                     last_name = full_name[0]
-                    first_name = full_name[1] if full_name[1] is not None else None
+                    try:
+                        first_name = full_name[1] if full_name[1] is not None else None
+                    except IndexError:
+                        first_name = None
                     data = {
                         'last_name': '"%{}%"'.format(last_name),
                         'ORDER_BY': 'last_name ASC',
