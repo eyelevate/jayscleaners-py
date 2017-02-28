@@ -393,26 +393,13 @@ class MainScreen(Screen):
 
     def db_sync(self, *args, **kwargs):
 
-        # self.update_label.text = 'Connecting to server...
-        # sync.migrate()
-        # SYNC.db_sync()
-
         # quick sync
         print('starting initial sync this may take a few minutes')
         SYNC.db_sync()
-        print('initializing auto-sync every 10 minutes')
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(SYNC.db_sync, 'interval', minutes=10)
-        scheduler.start()
-        # t1 = Thread(target=SYNC.db_sync(), args=())
-        # t1.start()
-        # t1.join()
-        # SYNC_POPUP.dismiss()
-        # if isinstance(App.get_running_app().root_window.children[0], Popup):
-        #     # vars.WORKLIST.append("Sync")
-        #     # threads_start()
-        #     print('popup is showing')
-
+        # print('initializing auto-sync every 10 minutes')
+        # scheduler = BackgroundScheduler()
+        # scheduler.add_job(SYNC.db_sync, 'interval', minutes=10)
+        # scheduler.start()
 
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
 
