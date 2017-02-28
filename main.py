@@ -3398,9 +3398,12 @@ class EditInvoiceScreen(Screen):
     inventory_id = 1
     starch = None
     colors_table_main = ObjectProperty(None)
+    customer_id_backup = None
 
     def reset(self):
         # reset the inventory table
+        self.customer_id_backup = vars.CUSTOMER_ID
+        print(self.customer_id_backup)
         self.inventory_panel.clear_widgets()
         self.get_inventory()
         self.summary_table.clear_widgets()
@@ -3421,7 +3424,7 @@ class EditInvoiceScreen(Screen):
         invoice_items = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
         self.invoice_list = OrderedDict()
         self.invoice_list_copy = OrderedDict()
-        customers = User().where({'user_id': vars.CUSTOMER_ID})
+        customers = User().where({'user_id': self.customer_id_backup})
         if customers:
             for customer in customers:
                 self.starch = vars.get_starch_by_code(customer['starch'])
@@ -4851,7 +4854,7 @@ GridLayout:
                     else:
                         new_invoice_item = InvoiceItem()
                         new_invoice_item.company_id = auth_user.company_id
-                        new_invoice_item.customer_id = vars.CUSTOMER_ID
+                        new_invoice_item.customer_id = self.customer_id_backup
                         new_invoice_item.invoice_id = vars.INVOICE_ID
                         new_invoice_item.item_id = iivalue['item_id']
                         new_invoice_item.inventory_id = inventory_id if inventory_id else None
@@ -4897,7 +4900,7 @@ GridLayout:
                     companies.email = company['email']
                     companies.phone = company['phone']
             customers = User()
-            custs = customers.where({'user_id': vars.CUSTOMER_ID}, set=True)
+            custs = customers.where({'user_id': self.customer_id_backup}, set=True)
             if custs:
                 for user in custs:
                     customers.id = user['id']
@@ -4967,7 +4970,7 @@ GridLayout:
 
                 vars.EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
                                              invert=False, smooth=False, flip=False))
-                padded_customer_id = '{0:05d}'.format(vars.CUSTOMER_ID)
+                padded_customer_id = '{0:05d}'.format(self.customer_id_backup)
                 vars.EPSON.write("{}\n".format(padded_customer_id))
 
                 # Print barcode
@@ -5174,7 +5177,7 @@ GridLayout:
                         if item_type == 'L':
                             # get customer mark
                             marks = Custid()
-                            marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                            marks_list = marks.where({'customer_id': self.customer_id_backup, 'status': 1})
                             if marks_list:
                                 m_list = []
                                 for mark in marks_list:
@@ -5319,7 +5322,7 @@ GridLayout:
                         if item_type == 'L':
                             # get customer mark
                             marks = Custid()
-                            marks_list = marks.where({'customer_id': vars.CUSTOMER_ID, 'status': 1})
+                            marks_list = marks.where({'customer_id': self.customer_id_backup, 'status': 1})
                             if marks_list:
                                 m_list = []
                                 for mark in marks_list:
@@ -5342,6 +5345,8 @@ GridLayout:
             sys.stdout.write('\a')
             sys.stdout.flush()
 
+
+        vars.CUSTOMER_ID = self.customer_id_backup
         self.set_result_status()
         self.print_popup.dismiss()
         SYNC_POPUP.dismiss
@@ -11703,9 +11708,8 @@ class SearchScreen(Screen):
                                 vars.CUSTOMER_ID = invoice['customer_id']
                                 data = {'user_id': '"{}"'.format(vars.CUSTOMER_ID)}
                                 cust1 = customers.where(data)
-                                self.customer_results(cust1)
                                 self.invoice_selected(invoice_id=vars.INVOICE_ID)
-
+                                self.customer_results(cust1)
 
 
                         else:
