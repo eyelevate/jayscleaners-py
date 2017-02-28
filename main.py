@@ -5375,7 +5375,9 @@ class EditCustomerScreen(Screen):
     concierge_number = ObjectProperty(None)
     special_instructions = ObjectProperty(None)
     address_id = None
-
+    delete_customer_spinner = ObjectProperty(None)
+    delete_customer = None
+    popup = Popup()
     def reset(self):
         self.last_name.text = ''
         self.last_name.hint_text = 'Last Name'
@@ -5427,6 +5429,8 @@ class EditCustomerScreen(Screen):
         self.mark_text.text = ''
         self.is_delivery.active = False
         self.is_account.active = False
+        self.delete_customer = False
+        self.delete_customer_spinner.text = "No"
         self.marks_table.clear_widgets()
 
     def load(self):
@@ -5439,6 +5443,7 @@ class EditCustomerScreen(Screen):
             customer = customers.where(data)
             self.shirt_finish_spinner.bind(text=self.select_shirts_finish)
             self.shirt_preference_spinner.bind(text=self.select_shirts_preference)
+            self.delete_customer_spinner.bind(text=self.select_delete_customer)
 
             if customer:
                 for cust in customer:
@@ -5475,6 +5480,9 @@ class EditCustomerScreen(Screen):
                     if cust['starch'] == 4:
                         self.shirt_preference_spinner.text = 'Heavy'
                         self.shirt_preference = 4
+
+                    # delete customer
+
 
                     # if addresses:
                     #     for address in addresses:
@@ -5556,6 +5564,58 @@ class EditCustomerScreen(Screen):
         elif self.shirt_preference_spinner.text is 'Heavy':
             self.shirt_preference = 4
         print(self.shirt_preference)
+
+    
+    def select_delete_customer(self, *args, **kwargs):
+        if self.delete_customer_spinner.text is 'Yes':
+
+            self.popup.title = 'Are you sure?'
+            content = BoxLayout(orientation="vertical")
+            inner_layout_1 = BoxLayout(orientation="horizontal",
+                                       size_hint=(1,0.9))
+            msg = Label(text="Are you sure you wish to delete this customer?")
+            inner_layout_1.add_widget(msg)
+            inner_layout_2 = BoxLayout(orientation="horizontal",
+                                       size_hint=(1,0.1))
+            cancel = Button(text="cancel",
+                            on_release=self.popup.dismiss)
+            delete_btn = Button(markup=True,
+                                text="[color=FF0000]Delete[/color]",
+                                on_release=self.delete_final)
+            inner_layout_2.add_widget(cancel)
+            inner_layout_2.add_widget(delete_btn)
+            content.add_widget(inner_layout_1)
+            content.add_widget(inner_layout_2)
+            self.popup.content = content
+            self.popup.open()
+            
+        pass
+    
+    def delete_final(self, *args, **kwargs):
+        customer = User()
+        customers = customer.where({'user_id':vars.CUSTOMER_ID})
+        if customer:
+            for cust in customers:
+                customer.id = cust['id']
+                if (customer.delete()):
+                    t1 = Thread(target=SYNC.db_sync, args="")
+                    t1.start()
+                    vars.SEARCH_RESULTS_STATUS = False
+                    vars.ROW_CAP = 0
+                    vars.CUSTOMER_ID = None
+                    vars.INVOICE_ID = None
+                    vars.ROW_SEARCH = 0, 9
+
+                    self.parent.current = 'search'
+                    self.popup.dismiss()
+                    popup = Popup()
+                    popup.content = Builder.load_string(KV.popup_alert("Sucessfully deleted customer from system"))
+                    popup.open()
+                    # last 10 setup
+                    vars.update_last_10()
+
+
+
 
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
@@ -5847,7 +5907,6 @@ class EditCustomerScreen(Screen):
             sys.stdout.flush()
 
     def customer_select(self, customer_id, *args, **kwargs):
-        print(customer_id)
         vars.SEARCH_RESULTS_STATUS = True
         vars.ROW_CAP = 0
         vars.CUSTOMER_ID = customer_id

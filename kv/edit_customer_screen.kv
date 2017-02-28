@@ -21,6 +21,7 @@
     mark_text: mark_text
     shirt_finish_spinner: shirt_finish_spinner
     shirt_preference_spinner: shirt_preference_spinner
+    delete_customer_spinner: delete_customer_spinner
 
     on_enter:root.load()
 
@@ -91,6 +92,7 @@
                                 padding: [5,5,5,5]
                                 text: ''
                             BottomLeftFormLabel:
+                                markup: True
                                 text: "Invoice Memo"
                             CenterVerticalTextInput:
                                 id: invoice_memo
@@ -125,6 +127,21 @@
                                 size_hint_x:1
                                 size_hint_y:0.5
                                 pos_hint:{'center_x': .5, 'center_y': .5}
+
+                            BottomLeftFormLabel:
+                                text: "[color=FF0000]Delete Customer?[/color]"
+                            Spinner:
+                                id: delete_customer_spinner
+                                text: 'No'
+                                #default value shown
+                                values:["No","Yes"]
+                                size_hint_x:1
+                                size_hint_y:0.5
+                                pos_hint:{'center_x':.5, 'center_y':.5}
+                            BottomLeftFormLabel:
+                                text: ""
+                            BottomLeftFormLabel:
+                                text: ""
 
                 BoxLayout:
                     size_hint: 1,0.1
