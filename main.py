@@ -11835,16 +11835,23 @@ class SearchScreen(Screen):
                         self.customer_results(cust1)
 
                 else:  # Lookup by last name || mark
+                    # turn search into list
+                    full_name = self.search.text.split()
+                    last_name = full_name[0]
+                    first_name = full_name[1] if full_name[1] is not None else None
+                    data = {
+                        'last_name': '"%{}%"'.format(last_name),
+                        'ORDER_BY': 'last_name ASC',
+                        'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], 10)
+                    }
+                    if first_name is not None:
+                        data = {'last_name': '"%{}%"'.format(last_name),
+                                'first_name': '"%{}%"'.format(first_name),
+                                'ORDER_BY': 'last_name ASC',
+                                'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0],10)}
 
-                    data = {'last_name': '"%{}%"'.format(self.search.text)}
                     vars.ROW_CAP = len(customers.like(data))
                     vars.SEARCH_TEXT = self.search.text
-
-                    data = {
-                        'last_name': '"%{}%"'.format(self.search.text),
-                        'ORDER_BY': 'last_name ASC',
-                        'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], vars.ROW_SEARCH[1])
-                    }
 
                     cust1 = customers.like(data)
                     self.customer_results(cust1)
