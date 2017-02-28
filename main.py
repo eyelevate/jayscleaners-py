@@ -134,7 +134,7 @@ list_len = []
 printer_list = {}
 SYNC_POPUP = Popup()
 SCHEDULER = BackgroundScheduler()
-SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=10)
+SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=30)
 
 
 # handles multithreads for database sync
