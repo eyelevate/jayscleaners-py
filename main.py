@@ -11695,10 +11695,15 @@ class SearchScreen(Screen):
 
             self.due_date = None
             self.due_date_string = None
-        self.search.focus = True
+
 
         vars.SEARCH_RESULTS_STATUS = False
+
+        Clock.schedule_once(self.focus_input)
         SYNC_POPUP.dismiss()
+
+    def focus_input(self,*args, **kwargs):
+        self.search.focus = True
 
     def sync_db(self):
         run_sync = threading.Thread(target=SYNC.run_sync)
@@ -11709,6 +11714,7 @@ class SearchScreen(Screen):
             print('sync now finished')
             vars.SEARCH_RESULTS_STATUS = True if vars.CUSTOMER_ID else False
             self.reset()
+        self.search.focus = True
 
     def open_popup(self, *args, **kwargs):
         SYNC_POPUP.title = "Loading"
@@ -11809,7 +11815,7 @@ class SearchScreen(Screen):
                         }
                         inv = Invoice()
                         inv_1 = inv.where(data)
-                        print(inv_1)
+
                         if len(inv_1) > 0:
                             for invoice in inv_1:
                                 vars.INVOICE_ID = self.search.text
@@ -12045,11 +12051,12 @@ class SearchScreen(Screen):
         self.customer_results(customers)
         vars.INVOICE_ID = None
         users.close_connection()
+        Clock.schedule_once(self.focus_input)
 
     def customer_results(self, data):
         # Found customer via where, now display data to screen
         if len(data) == 1:
-
+            Clock.schedule_once(self.focus_input)
             for result in data:
                 vars.CUSTOMER_ID = result['user_id']
                 # last 10 setup
@@ -12133,7 +12140,9 @@ class SearchScreen(Screen):
             self.pickup_btn.disabled = False
             self.dropoff_btn.disabled = False
             # clear the search text input
+            self.search.focus = True
             self.search.text = ''
+
 
         elif len(data) > 1:
             # show results in new screen search results
@@ -12151,6 +12160,7 @@ class SearchScreen(Screen):
     def search_results(self, data):
         vars.SEARCH_RESULTS = data
         self.parent.current = 'search_results'
+        self.search.focus = True
 
         pass
 
