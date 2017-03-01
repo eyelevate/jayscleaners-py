@@ -135,7 +135,8 @@ list_len = []
 printer_list = {}
 SYNC_POPUP = Popup()
 SCHEDULER = BackgroundScheduler()
-SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=20, id="auto_sync")
+SCHEDULER.start()
+# SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=30)
 
 
 # handles multithreads for database sync
@@ -374,11 +375,11 @@ class MainScreen(Screen):
                                            'Please try again!!'))
 
             user.close_connection()
-            # SYNC_POPUP.open()
+            SYNC_POPUP.open()
 
             if db_sync_status:
-                t1 = Thread(target=self.db_sync,args="")
-                t1.start()
+                Clock.schedule_once(self.db_sync)
+
 
     def logout(self, *args, **kwargs):
         self.username.text = ''
@@ -397,10 +398,13 @@ class MainScreen(Screen):
     def db_sync(self, *args, **kwargs):
 
         # quick sync
-        print('starting initial sync this may take a few minutes')
-        SYNC.db_sync()
-        print('initializing auto-sync every 20 seconds')
-        SCHEDULER.start()
+
+        t1 = Thread(target=SYNC.db_sync, args="")
+        t1.start()
+        t1.join()
+        SYNC_POPUP.dismiss()
+        # print('initializing auto-sync every 20 seconds')
+        # SCHEDULER.start()
 
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
 
@@ -3414,7 +3418,6 @@ class EditInvoiceScreen(Screen):
         SCHEDULER.remove_all_jobs()
         # reset the inventory table
         self.customer_id_backup = vars.CUSTOMER_ID
-        print(self.customer_id_backup)
         self.inventory_panel.clear_widgets()
         self.get_inventory()
         self.summary_table.clear_widgets()
@@ -3941,7 +3944,7 @@ GridLayout:
             self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
             self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
             self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
-
+        print(self.total)
     def make_memo_color(self):
 
         self.item_row_selected(row=0)
@@ -11608,15 +11611,14 @@ class SearchScreen(Screen):
 
     def reset(self, *args, **kwargs):
         # Resume auto sync
-        print('Restarting Auto Sync')
-        SCHEDULER.remove_all_jobs()
-        SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=30)
-        # try:
-        #
-        #     print('Auto Sync Resumed')
-        # except SchedulerNotRunningError:
-        #
-        #     print('Auto Sync failed to launch starting again')
+        try:
+            SCHEDULER.remove_all_jobs()
+            SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=30)
+            print('Auto Sync Resumed')
+        except SchedulerNotRunningError:
+            SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=30)
+            SCHEDULER.start()
+            print('Auto Sync failed to launch starting again')
 
         vars.ROW_SEARCH = 0, 10
         vars.ROW_CAP = 0
