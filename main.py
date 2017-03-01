@@ -4887,10 +4887,10 @@ GridLayout:
                         new_invoice_item.inventory_id = inventory_id if inventory_id else None
                         new_invoice_item.quantity = iivalue['qty']
                         new_invoice_item.color = iivalue['color'] if iivalue['color'] else None
-                        new_invoice_item.memo = iivalue['memo'] if iivalue['memo'] else None
-                        new_invoice_item.pretax = pretax
-                        new_invoice_item.tax = tax
-                        new_invoice_item.total = total
+                        new_invoice_item.memo = str(iivalue['memo']) if iivalue['memo'] else None
+                        new_invoice_item.pretax = Decimal(pretax)
+                        new_invoice_item.tax = Decimal(tax)
+                        new_invoice_item.total = Decimal(total)
                         new_invoice_item.status = 1
                         if new_invoice_item.add():
                             print('new item added')
