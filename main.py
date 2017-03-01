@@ -2502,6 +2502,7 @@ GridLayout:
                             item = Factory.CalendarButton(disabled=True)
                         self.calendar_layout.add_widget(item)
 
+
     def prev_month(self, *args, **kwargs):
         if self.month == 1:
             self.month = 12
@@ -4684,7 +4685,7 @@ GridLayout:
         self.calendar_layout.add_widget(Builder.load_string(th6))
         self.calendar_layout.add_widget(Builder.load_string(th7))
         if year_dates[selected_month]:
-            for month in year_dates:
+            for month in year_dates[selected_month]:
                 for week in month:
                     for day in week:
                         if day[0] > 0:
@@ -4724,6 +4725,7 @@ GridLayout:
                         else:
                             item = Factory.CalendarButton(disabled=True)
                         self.calendar_layout.add_widget(item)
+
 
     def prev_month(self, *args, **kwargs):
         if self.month == 1:
@@ -4883,6 +4885,13 @@ GridLayout:
                         if new_invoice_item.add():
                             print('new item added')
                             # delete rows
+
+        # Invoice().put(where={'invoice_id': vars.INVOICE_ID},
+        #               data={'quantity': self.tags,
+        #                     'pretax': '%.2f' % self.subtotal,
+        #                     'tax': '%.2f' % self.tax,
+        #                     'total': '%.2f' % self.total,
+        #                     'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))})
 
         Invoice().put(where={'invoice_id': vars.INVOICE_ID},
                       data={'quantity': self.tags,
