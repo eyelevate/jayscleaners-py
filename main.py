@@ -3794,6 +3794,7 @@ GridLayout:
                             'qty': int(item_quantity),
                             'tags': int(item_tags)
                         }]
+        print(self.invoice_list)
         # update dictionary make sure that the most recently selected item is on top
         row = self.invoice_list[vars.ITEM_ID]
         del self.invoice_list[vars.ITEM_ID]
@@ -4811,6 +4812,7 @@ GridLayout:
         # determine the types of invoices we need to print
         self.now = datetime.datetime.now()
         # set the printer data
+        inv_save = Invoice()
 
         if self.deleted_rows:
             for invoice_items_id in self.deleted_rows:
@@ -4893,12 +4895,11 @@ GridLayout:
         #                     'total': '%.2f' % self.total,
         #                     'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))})
 
-        Invoice().put(where={'invoice_id': vars.INVOICE_ID},
+        inv_save.put(where={'invoice_id': vars.INVOICE_ID},
                       data={'quantity': self.tags,
                             'pretax': '%.2f' % self.subtotal,
                             'tax': '%.2f' % self.tax,
-                            'total': '%.2f' % self.total,
-                            'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))})
+                            'total': '%.2f' % self.total})
         time.sleep(1)
         run_sync = threading.Thread(target=SYNC.run_sync)
         try:
@@ -11607,12 +11608,15 @@ class SearchScreen(Screen):
 
     def reset(self, *args, **kwargs):
         # Resume auto sync
-        try:
-            SCHEDULER.resume()
-            print('Auto Sync Resumed')
-        except SchedulerNotRunningError:
-            SCHEDULER.start()
-            print('Auto Sync failed to launch starting again')
+        print('Restarting Auto Sync')
+        SCHEDULER.remove()
+        SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=20)
+        # try:
+        #
+        #     print('Auto Sync Resumed')
+        # except SchedulerNotRunningError:
+        #
+        #     print('Auto Sync failed to launch starting again')
 
         vars.ROW_SEARCH = 0, 10
         vars.ROW_CAP = 0
