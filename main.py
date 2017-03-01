@@ -375,9 +375,13 @@ class MainScreen(Screen):
                                            'Please try again!!'))
 
             user.close_connection()
-            SYNC_POPUP.open()
+
 
             if db_sync_status:
+                SYNC_POPUP.title = 'Syncing DB'
+                content = Builder.load_string(KV.popup_alert(msg="Obtaining data form the server. Please wait..."))
+                SYNC_POPUP.content = content
+                SYNC_POPUP.open()
                 Clock.schedule_once(self.db_sync)
 
 
