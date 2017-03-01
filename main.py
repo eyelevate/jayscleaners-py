@@ -3360,8 +3360,9 @@ GridLayout:
                     vars.BIXOLON.write('\n\n\n\n\n\n')
                     vars.BIXOLON.write('\x1b\x6d')
 
-        SYNC_POPUP.dismiss()
         vars.CUSTOMER_ID = self.customer_id_backup
+        time.sleep(1)
+        SYNC_POPUP.dismiss()
         self.set_result_status()
         self.print_popup.dismiss()
 
@@ -3801,7 +3802,6 @@ GridLayout:
                             'qty': int(item_quantity),
                             'tags': int(item_tags)
                         }]
-        print(self.invoice_list)
         # update dictionary make sure that the most recently selected item is on top
         row = self.invoice_list[vars.ITEM_ID]
         del self.invoice_list[vars.ITEM_ID]
@@ -3933,22 +3933,22 @@ GridLayout:
         self.discount = 0
         self.total = 0
         # calculate totals
+        tax_rate = Decimal(vars.TAX_RATE)
         if len(self.invoice_list):
             for item_key, item_values in self.invoice_list.items():
                 for item in item_values:
                     self.quantity += 1
                     self.tags += int(item['tags']) if item['tags'] else 1
-                    self.subtotal += float(item['item_price']) if item['item_price'] else 0
-            self.tax = self.subtotal * vars.TAX_RATE
+                    self.subtotal += Decimal(item['item_price']) if item['item_price'] else 0
+            self.tax = self.subtotal * tax_rate
             self.discount = 0
-            self.total = self.subtotal + self.tax - self.discount
+            self.total = Decimal(self.subtotal + self.tax - self.discount)
             self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
             self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
             self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
             self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
             self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
             self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
-        print(self.total)
     def make_memo_color(self):
 
         self.item_row_selected(row=0)
@@ -4820,7 +4820,7 @@ GridLayout:
         self.now = datetime.datetime.now()
         # set the printer data
         inv_save = Invoice()
-
+        tax_rate = Decimal(vars.TAX_RATE)
         if self.deleted_rows:
             for invoice_items_id in self.deleted_rows:
                 invoice_items = InvoiceItem()
@@ -4832,13 +4832,14 @@ GridLayout:
             invoice_items = InvoiceItem()
             print_invoice = {}
             print_invoice[vars.INVOICE_ID] = {}
+            
             for invoice_item_key, invoice_item_value in self.invoice_list.items():
                 colors = {}
                 for iivalue in invoice_item_value:
                     qty = iivalue['qty']
-                    pretax = float(iivalue['item_price']) if iivalue['item_price'] else 0
-                    tax = float('%.2f' % (pretax * vars.TAX_RATE))
-                    total = float('%.2f' % (pretax * (1 + vars.TAX_RATE)))
+                    pretax = Decimal(iivalue['item_price']) if iivalue['item_price'] else 0
+                    tax = Decimal((pretax * tax_rate))
+                    total = Decimal((pretax * (1 + tax_rate)))
                     item_id = iivalue['item_id']
                     inventory_id = InventoryItem().getInventoryId(item_id)
                     item_name = iivalue['item_name']
@@ -4895,18 +4896,12 @@ GridLayout:
                             print('new item added')
                             # delete rows
 
-        # Invoice().put(where={'invoice_id': vars.INVOICE_ID},
-        #               data={'quantity': self.tags,
-        #                     'pretax': '%.2f' % self.subtotal,
-        #                     'tax': '%.2f' % self.tax,
-        #                     'total': '%.2f' % self.total,
-        #                     'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))})
-
         inv_save.put(where={'invoice_id': vars.INVOICE_ID},
                       data={'quantity': self.tags,
                             'pretax': '%.2f' % self.subtotal,
                             'tax': '%.2f' % self.tax,
-                            'total': '%.2f' % self.total})
+                            'total': '%.2f' % self.total,
+                            'due_date':'{}'.format(str(self.due_date.strftime("%Y-%m-%d %H:%M:%S")))})
         time.sleep(1)
         run_sync = threading.Thread(target=SYNC.run_sync)
         try:
@@ -5381,7 +5376,7 @@ GridLayout:
         vars.CUSTOMER_ID = self.customer_id_backup
         self.set_result_status()
         self.print_popup.dismiss()
-        SYNC_POPUP.dismiss
+        SYNC_POPUP.dismiss()
 
 
 class EditCustomerScreen(Screen):
