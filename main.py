@@ -382,7 +382,7 @@ class MainScreen(Screen):
                 content = Builder.load_string(KV.popup_alert(msg="Obtaining data form the server. Please wait..."))
                 SYNC_POPUP.content = content
                 SYNC_POPUP.open()
-                Clock.schedule_once(self.db_sync)
+                Clock.schedule_once(self.db_sync,2)
 
 
     def logout(self, *args, **kwargs):
