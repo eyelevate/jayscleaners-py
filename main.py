@@ -1366,6 +1366,7 @@ class DropoffScreen(Screen):
         SYNC_POPUP.dismiss()
 
     def set_result_status(self):
+        vars.CUSTOMER_ID = self.customer_id_backup
         vars.SEARCH_RESULTS_STATUS = True
         self.summary_table.clear_widgets()
 
@@ -3591,6 +3592,8 @@ class EditInvoiceScreen(Screen):
         SYNC_POPUP.dismiss()
 
     def set_result_status(self):
+        vars.CUSTOMER_ID = self.customer_id_backup
+        vars.INVOICE_ID = self.invoice_id
         vars.SEARCH_RESULTS_STATUS = True
         self.summary_table.clear_widgets()
 
@@ -6750,7 +6753,7 @@ class HistoryScreen(Screen):
                                         orientation='horizontal')
             inner_content_2.add_widget(Button(markup=True,
                                               text='Cancel',
-                                              on_press=self.history_popup.dismiss))
+                                              on_release=self.history_popup.dismiss))
             inner_content_2.add_widget(Button(markup=True,
                                               text='[color=0FFF00]Confirm[/color]',
                                               on_press=self.delete_invoice))
@@ -6790,6 +6793,8 @@ class HistoryScreen(Screen):
                     del_ii = InvoiceItem()
                     del_ii.id = invoice_item['id']
                     del_ii.delete()
+                t1 = Thread(target=SYNC.db_sync, args="")
+                t1.start()
 
             msg = KV.popup_alert(msg="Successfully deleted invoice #{}!".format(vars.INVOICE_ID))
         else:
@@ -11920,7 +11925,8 @@ class SearchScreen(Screen):
 
     def create_invoice_row(self, row, *args, **kwargs):
         """ Creates invoice table row and displays it to screen """
-        check_invoice_id = int(vars.INVOICE_ID) if vars.INVOICE_ID else vars.INVOICE_ID
+        check_invoice_id = True if vars.INVOICE_ID == int(row['invoice_id']) else False
+        print('{} - {} - {}'.format(vars.INVOICE_ID,row['invoice_id'],check_invoice_id))
         invoice_id = row['invoice_id']
         company_id = row['company_id']
         company_name = 'R' if company_id is 1 else 'M'
@@ -11947,39 +11953,39 @@ class SearchScreen(Screen):
 
         invoice_status = row['status']
         if invoice_status is 5:  # state 5
-            text_color = [0, 0, 0, 1]
-            self.background_rgba = [0.826, 0.826, 0.826, 0.1]
-            self.background_color = [0.826, 0.826, 0.826, 1]
+            text_color = [0, 0, 0, 1] if not check_invoice_id else [0.898, 0.898, 0.898, 1]
+            self.background_rgba = [0.826, 0.826, 0.826, 0.1] if not check_invoice_id else [0.369, 0.369, 0.369, 0.1]
+            self.background_color = [0.826, 0.826, 0.826, 1] if not check_invoice_id else [0.369, 0.369, 0.369, 1]
             self.status = 5
 
         elif invoice_status is 4 or invoice_status is 3:  # state 4
-            text_color = [1, 0, 0, 1]
-            self.background_rgba = [1, 0.717, 0.717, 0.1]
-            self.background_color = [1, 0.717, 0.717, 1]
+            text_color = [1, 0, 0, 1] if check_invoice_id else [1, 0.8, 0.8, 1]
+            self.background_rgba = [1, 0.717, 0.717, 0.1] if not check_invoice_id else [1, 0, 0, 0.1]
+            self.background_color = [1, 0.717, 0.717, 1] if not check_invoice_id else [1, 0, 0, 1]
             self.status = 4
 
         elif invoice_status is 2:  # state 3
-            text_color = [0, 0.639, 0.149, 1]
-            self.background_rgba = [0.847, 0.968, 0.847, 0.1]
-            self.background_color = [0.847, 0.968, 0.847, 1]
+            text_color = [0, 0.639, 0.149, 1] if check_invoice_id else [0.847, 0.969, 0.847, 1]
+            self.background_rgba = [0.847, 0.968, 0.847, 0.1] if not check_invoice_id else [0, 0.64, 0.149, 0.1]
+            self.background_color = [0.847, 0.968, 0.847, 1] if not check_invoice_id else [0, 0.64, 0.149, 1]
             self.status = 3
 
         else:
             if due_strtotime < now_strtotime:  # overdue state 2
-                text_color = [0.059, 0.278, 1, 1]
-                self.background_rgba = [0.816, 0.847, 0.961, 0.1]
-                self.background_color = [0.816, 0.847, 0.961, 1]
+                text_color = [0.059, 0.278, 1, 1] if check_invoice_id else [0.8156, 0.847, 0.961, 1]
+                self.background_rgba = [0.816, 0.847, 0.961, 0.1] if not check_invoice_id else [0.059, 0.278, 1, 0.1]
+                self.background_color = [0.816, 0.847, 0.961, 1] if not check_invoice_id else [0.059, 0.278, 1, 1]
                 self.status = 2
 
             elif count_invoice_items == 0:  # #quick drop state 6
-                text_color = [0, 0, 0, 1]
-                self.background_rgba = [0.9960784314, 1, 0.7176470588, 0.1]
-                self.background_color = [0.9960784314, 1, 0.7176470588, 1]
+                text_color = [0, 0, 0, 1] if not check_invoice_id else [0, 0, 0, 1]
+                self.background_rgba = [0.9960784314, 1, 0.7176470588, 0.1] if not check_invoice_id else [0.98431373, 1, 0, 0.1]
+                self.background_color = [0.9960784314, 1, 0.7176470588, 1] if not check_invoice_id else [0.98431373, 1, 0, 1]
                 self.status = 6
             else:  # state 1
-                text_color = [0, 0, 0, 1]
-                self.background_rgba = [0.826, 0.826, 0.826, 0.1]
-                self.background_color = [0.826, 0.826, 0.826, 1]
+                text_color = [0, 0, 0, 1] if not check_invoice_id else [0.898, 0.898, 0.898, 1]
+                self.background_rgba = [0.826, 0.826, 0.826, 0.1] if not check_invoice_id else [0.369, 0.369, 0.369, 0.1]
+                self.background_color = [0.826, 0.826, 0.826, 1] if not check_invoice_id else [0.369, 0.369, 0.369, 1]
                 self.status = 1
         tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
                                  group="tr")
@@ -12010,14 +12016,20 @@ class SearchScreen(Screen):
                         color=text_color,
                         text='{}'.format(total))
         tr_1.ids.invoice_table_row_td.add_widget(label_6)
-
+        if check_invoice_id:
+            tr_1.state = 'down'
         self.invoice_table_body.add_widget(tr_1)
+
+
+
+
+
 
         return True
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
-        print('found customer = {} and invoice id = {}'.format(vars.CUSTOMER_ID, invoice_id))
         vars.INVOICE_ID = invoice_id
+        print('found customer = {} and invoice id = {}'.format(vars.CUSTOMER_ID, invoice_id))
         data = {
             'user_id': '"{}"'.format(vars.CUSTOMER_ID)
         }
@@ -12098,6 +12110,7 @@ class SearchScreen(Screen):
         Clock.schedule_once(self.focus_input)
 
     def customer_results(self, data):
+        vars.CUSTOMER_ID = None
         # Found customer via where, now display data to screen
         if len(data) == 1:
             Clock.schedule_once(self.focus_input)
@@ -12121,6 +12134,8 @@ class SearchScreen(Screen):
                 if len(invs) > 0:
                     for inv in invs:
                         self.create_invoice_row(inv)
+
+                Clock.schedule_once(partial(self.invoice_selected, vars.INVOICE_ID),1)
 
                 # get last drop data
                 data = {
