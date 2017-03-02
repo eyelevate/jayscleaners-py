@@ -1369,7 +1369,8 @@ class DropoffScreen(Screen):
         vars.CUSTOMER_ID = self.customer_id_backup
         vars.SEARCH_RESULTS_STATUS = True
         self.summary_table.clear_widgets()
-
+        vars.CUSTOMER_ID = self.customer_id_backup
+        
     def get_colors_main(self):
 
         colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
@@ -2631,7 +2632,6 @@ GridLayout:
                         # set invoice data to save
                         new_invoice = Invoice()
                         new_invoice.company_id = auth_user.company_id
-                        print('customer_id is {}'.format(self.customer_id_backup))
                         new_invoice.customer_id = self.customer_id_backup
                         new_invoice.quantity = save_totals[inventory_id]['quantity']
                         new_invoice.pretax = float('%.2f' % (save_totals[inventory_id]['subtotal']))
@@ -2770,7 +2770,7 @@ GridLayout:
             finally:
                 run_sync2.join()
                 SYNC_POPUP.dismiss()
-                vars.CUSTOMER_ID = self.customer_id_backup
+
                 self.set_result_status()
                 self.print_popup.dismiss()
                 t1 = Thread(target=self.print_function, args=[print_invoice,
