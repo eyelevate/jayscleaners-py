@@ -2769,15 +2769,16 @@ GridLayout:
                 run_sync2.start()
             finally:
                 run_sync2.join()
+                SYNC_POPUP.dismiss()
+                vars.CUSTOMER_ID = self.customer_id_backup
+                self.set_result_status()
+                self.print_popup.dismiss()
                 t1 = Thread(target=self.print_function, args=[print_invoice,
                                                               print_totals,
                                                               print_sync_invoice,
                                                               print_sync_totals])
                 t1.start()
-        SYNC_POPUP.dismiss()
-        vars.CUSTOMER_ID = self.customer_id_backup
-        self.set_result_status()
-        self.print_popup.dismiss()
+
 
     def print_function(self, print_invoice, print_totals, print_sync_invoice, print_sync_totals, *args, **kwargs):
         print('sync invoice items now finished')
