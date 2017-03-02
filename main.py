@@ -3410,12 +3410,14 @@ class EditInvoiceScreen(Screen):
     colors_table_main = ObjectProperty(None)
     customer_id_backup = None
     final_total = 0
+    invoice_id = None
 
     def reset(self):
         # Pause Schedule
         SCHEDULER.remove_all_jobs()
         # reset the inventory table
         self.customer_id_backup = vars.CUSTOMER_ID
+        self.invoice_id = vars.INVOICE_ID
         self.inventory_panel.clear_widgets()
         self.get_inventory()
         self.summary_table.clear_widgets()
@@ -3433,8 +3435,8 @@ class EditInvoiceScreen(Screen):
                                            turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
                                            turn_around_minutes)
 
-        total_tags = InvoiceItem().total_tags(vars.INVOICE_ID)
-        invoice_items = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
+        total_tags = InvoiceItem().total_tags(self.invoice_id)
+        invoice_items = InvoiceItem().where({'invoice_id': self.invoice_id})
         self.invoice_list = OrderedDict()
         self.invoice_list_copy = OrderedDict()
         customers = User().where({'user_id': self.customer_id_backup})
@@ -3518,7 +3520,7 @@ class EditInvoiceScreen(Screen):
                                 'deleted': False
                             }]
 
-        invoices = Invoice().where({'invoice_id': vars.INVOICE_ID})
+        invoices = Invoice().where({'invoice_id': self.invoice_id})
         if invoices:
             for invoice in invoices:
                 self.due_date = datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S")
@@ -4828,14 +4830,21 @@ GridLayout:
         if self.deleted_rows:
             for invoice_items_id in self.deleted_rows:
                 invoice_items = InvoiceItem()
-                invoice_items.id = invoice_items.get_id(invoice_items_id)
-                if invoice_items.delete():
-                    print('deleted row {}'.format(invoice_items.id))
+                deleted_item = invoice_items.where({'invoice_items_id':invoice_items_id})
+                if deleted_item:
+                    for inv_item in deleted_item:
+                        del_now_item = InvoiceItem()
+                        del_now_item.id = inv_item['id']
+                        if del_now_item.delete():
+                            print('deleted row {}'.format(inv_item['id']))
+                            self.create_summary_totals()
+                    t1 = Thread(target=SYNC.db_sync, args="")
+                    t1.start()
 
         if self.invoice_list:
             invoice_items = InvoiceItem()
             print_invoice = {}
-            print_invoice[vars.INVOICE_ID] = {}
+            print_invoice[self.invoice_id] = {}
 
             for invoice_item_key, invoice_item_value in self.invoice_list.items():
                 colors = {}
@@ -4855,16 +4864,16 @@ GridLayout:
                         colors[item_color] += 1
                     else:
                         colors[item_color] = 1
-                    if vars.INVOICE_ID in print_invoice:
-                        if item_id in print_invoice[vars.INVOICE_ID]:
-                            print_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_price
-                            print_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
-                            print_invoice[vars.INVOICE_ID][item_id]['colors'] = colors
+                    if self.invoice_id in print_invoice:
+                        if item_id in print_invoice[self.invoice_id]:
+                            print_invoice[self.invoice_id][item_id]['item_price'] += item_price
+                            print_invoice[self.invoice_id][item_id]['qty'] += 1
+                            print_invoice[self.invoice_id][item_id]['colors'] = colors
                             if item_memo:
-                                print_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
+                                print_invoice[self.invoice_id][item_id]['memos'].append(item_memo)
                         else:
 
-                            print_invoice[vars.INVOICE_ID][item_id] = {
+                            print_invoice[self.invoice_id][item_id] = {
                                 'item_id': item_id,
                                 'type': item_type,
                                 'name': item_name,
@@ -4887,12 +4896,12 @@ GridLayout:
                         new_invoice_item = InvoiceItem()
                         new_invoice_item.company_id = auth_user.company_id
                         new_invoice_item.customer_id = self.customer_id_backup
-                        new_invoice_item.invoice_id = vars.INVOICE_ID
+                        new_invoice_item.invoice_id = self.invoice_id
                         new_invoice_item.item_id = item_id
                         new_invoice_item.inventory_id = inventory_id
                         new_invoice_item.quantity = qty
-                        new_invoice_item.color = str(item_color) if item_color else 'None'
-                        new_invoice_item.memo = str(item_memo) if item_memo else 'None'
+                        new_invoice_item.color = str(item_color) if item_color else None
+                        new_invoice_item.memo = str(item_memo) if item_memo else None
                         new_invoice_item.pretax = pretax
                         new_invoice_item.tax = tax
                         new_invoice_item.total = total
@@ -5220,7 +5229,7 @@ GridLayout:
                 if print_invoice:  # if invoices synced
                     for invoice_id, item_id in print_invoice.items():
                         if isinstance(invoice_id, str):
-                            invoice_id = int(invoice_id)
+                            invoice_id = int(invoice_id) if invoice_id else 0
                         # start invoice
                         vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
                         vars.EPSON.write(
@@ -5379,9 +5388,9 @@ GridLayout:
 
 
     def update_invoice(self, *arkgs, **kwargs):
-
+        print('starting update on invoice - {}'.format(self.invoice_id))
         inv_save = Invoice()
-        invs = inv_save.where({'invoice_id':vars.INVOICE_ID})
+        invs = inv_save.where({'invoice_id':self.invoice_id})
         if invs:
             for inv in invs:
                 inv_save.id = inv['id']
@@ -5403,8 +5412,7 @@ GridLayout:
                 inv_save.total = '{0:.2f}'.format(float(self.total))
                 if inv_save.update():
                     print('updated invoice')
-                    self.customer_id_backup = inv['customer_id']
-                    vars.CUSTOMER_ID = inv['customer_id']
+                    vars.CUSTOMER_ID = self.customer_id_backup
                     vars.SEARCH_RESULTS_STATUS = True
 
 
