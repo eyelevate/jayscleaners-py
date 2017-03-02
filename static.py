@@ -65,6 +65,7 @@ class Static:
             return 'Sun'
 
     def us_dollar(self, amount):
+        dollar = amount
         try:
             dollar = '${:,.2f}'.format(amount)
         except TypeError:

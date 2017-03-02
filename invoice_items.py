@@ -55,7 +55,7 @@ class InvoiceItem:
                                   IntegerField(column='status').data_type(),
                                   TextField(column='deleted_at').data_type(),
                                   TextField(column='created_at').data_type(),
-                                  TextField(column='updated_at').data_type(),
+                                  TextField(column='updated_at').data_type()
                                   ])
 
         self.c.execute('''CREATE TABLE IF NOT EXISTS {t} ({ts})'''.format(t=table, ts=table_schema))
@@ -87,6 +87,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_items_id
 
         self.conn.commit()
         return True
+
 
     def put(self, where=False, data=False):
         unix = time.time()

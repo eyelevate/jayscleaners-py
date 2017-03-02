@@ -136,8 +136,6 @@ printer_list = {}
 SYNC_POPUP = Popup()
 SCHEDULER = BackgroundScheduler()
 SCHEDULER.start()
-# SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=30)
-
 
 # handles multithreads for database sync
 class MultiThread(threading.Thread):
@@ -376,14 +374,12 @@ class MainScreen(Screen):
 
             user.close_connection()
 
-
             if db_sync_status:
                 SYNC_POPUP.title = 'Syncing DB'
                 content = Builder.load_string(KV.popup_alert(msg="Obtaining data form the server. Please wait..."))
                 SYNC_POPUP.content = content
                 SYNC_POPUP.open()
-                Clock.schedule_once(self.db_sync,2)
-
+                Clock.schedule_once(self.db_sync, 2)
 
     def logout(self, *args, **kwargs):
         self.username.text = ''
@@ -413,7 +409,6 @@ class MainScreen(Screen):
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
 
         # self.update_label.text = 'Server updated at {}'.format()
-
 
     def print_setup_label(self, vendor_id, product_id):
         vendor_int = int(vendor_id, 16)
@@ -1367,7 +1362,6 @@ class DropoffScreen(Screen):
                 self.starch = vars.get_starch_by_code(customer['starch'])
         else:
             self.starch = vars.get_starch_by_code(None)
-
 
         SYNC_POPUP.dismiss()
 
@@ -2510,7 +2504,6 @@ GridLayout:
                             item = Factory.CalendarButton(disabled=True)
                         self.calendar_layout.add_widget(item)
 
-
     def prev_month(self, *args, **kwargs):
         if self.month == 1:
             self.month = 12
@@ -3367,7 +3360,6 @@ GridLayout:
         self.print_popup.dismiss()
 
 
-
 class EditInvoiceScreen(Screen):
     inv_qty_list = ['1']
     qty_clicks = 0
@@ -3417,6 +3409,7 @@ class EditInvoiceScreen(Screen):
     starch = None
     colors_table_main = ObjectProperty(None)
     customer_id_backup = None
+    final_total = 0
 
     def reset(self):
         # Pause Schedule
@@ -3427,6 +3420,7 @@ class EditInvoiceScreen(Screen):
         self.get_inventory()
         self.summary_table.clear_widgets()
         self.colors_table_main.clear_widgets()
+        self.final_total = 0
         store_hours = Company().get_store_hours(auth_user.company_id)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
@@ -3710,6 +3704,7 @@ GridLayout:
                 self.inventory_panel.add_widget(tph)
                 if idx == 1:
                     self.inventory_panel.switch_to(tph)
+
     def set_qty(self, qty):
 
         if qty is 'C':
@@ -3932,23 +3927,31 @@ GridLayout:
         self.tax = 0
         self.discount = 0
         self.total = 0
+
         # calculate totals
-        tax_rate = Decimal(vars.TAX_RATE)
+        tax_rate = float(vars.TAX_RATE)
         if len(self.invoice_list):
             for item_key, item_values in self.invoice_list.items():
                 for item in item_values:
                     self.quantity += 1
                     self.tags += int(item['tags']) if item['tags'] else 1
-                    self.subtotal += Decimal(item['item_price']) if item['item_price'] else 0
-            self.tax = self.subtotal * tax_rate
-            self.discount = 0
-            self.total = Decimal(self.subtotal + self.tax - self.discount)
+                    self.subtotal += float(item['item_price']) if item['item_price'] else 0
+
+            tax = float(float(self.subtotal) * float(tax_rate))
+            discount = 0
+            total = float(self.subtotal + tax)
+            self.subtotal = "{0:.2f}".format(self.subtotal)
+            self.tax = "{0:.2f}".format(tax)
+            self.total = "{0:.2f}".format(total)
+            self.final_total = "{0:.2f}".format(total)
+
             self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
             self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
             self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
-            self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
+            self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(tax))
             self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
-            self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
+            self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(total))
+
     def make_memo_color(self):
 
         self.item_row_selected(row=0)
@@ -4734,7 +4737,6 @@ GridLayout:
                             item = Factory.CalendarButton(disabled=True)
                         self.calendar_layout.add_widget(item)
 
-
     def prev_month(self, *args, **kwargs):
         if self.month == 1:
             self.month = 12
@@ -4816,11 +4818,13 @@ GridLayout:
         Clock.schedule_once(partial(self.finish_invoice, type))
 
     def finish_invoice(self, type, *args, **kwargs):
+
         # determine the types of invoices we need to print
+        self.create_summary_totals()
         self.now = datetime.datetime.now()
         # set the printer data
-        inv_save = Invoice()
-        tax_rate = Decimal(vars.TAX_RATE)
+        tax_rate = vars.TAX_RATE
+
         if self.deleted_rows:
             for invoice_items_id in self.deleted_rows:
                 invoice_items = InvoiceItem()
@@ -4832,14 +4836,14 @@ GridLayout:
             invoice_items = InvoiceItem()
             print_invoice = {}
             print_invoice[vars.INVOICE_ID] = {}
-            
+
             for invoice_item_key, invoice_item_value in self.invoice_list.items():
                 colors = {}
                 for iivalue in invoice_item_value:
                     qty = iivalue['qty']
-                    pretax = Decimal(iivalue['item_price']) if iivalue['item_price'] else 0
-                    tax = Decimal((pretax * tax_rate))
-                    total = Decimal((pretax * (1 + tax_rate)))
+                    pretax = "{0:.2f}".format(float(iivalue['item_price'])) if iivalue['item_price'] else 0
+                    tax = "{0:.2f}".format(float(iivalue['item_price']) * float(tax_rate))
+                    total = "{0:.2f}".format(float(iivalue['item_price']) * (1 + float(tax_rate)))
                     item_id = iivalue['item_id']
                     inventory_id = InventoryItem().getInventoryId(item_id)
                     item_name = iivalue['item_name']
@@ -4873,35 +4877,28 @@ GridLayout:
                         invoice_items.put(where={'invoice_items_id': iivalue['invoice_items_id']},
                                           data={'quantity': iivalue['qty'],
                                                 'color': iivalue['color'] if iivalue['color'] else None,
-                                                'memo': iivalue['memo'] if iivalue['memo'] else None,
+                                                'memo': item_memo if item_memo is not None else None,
                                                 'pretax': pretax,
                                                 'tax': tax,
                                                 'total': total})
                         print('invoice item updated')
                     else:
+                        print('Here...')
                         new_invoice_item = InvoiceItem()
                         new_invoice_item.company_id = auth_user.company_id
                         new_invoice_item.customer_id = self.customer_id_backup
                         new_invoice_item.invoice_id = vars.INVOICE_ID
-                        new_invoice_item.item_id = iivalue['item_id']
-                        new_invoice_item.inventory_id = inventory_id if inventory_id else None
-                        new_invoice_item.quantity = iivalue['qty']
-                        new_invoice_item.color = iivalue['color'] if iivalue['color'] else None
-                        new_invoice_item.memo = str(iivalue['memo']) if iivalue['memo'] else None
-                        new_invoice_item.pretax = Decimal(pretax)
-                        new_invoice_item.tax = Decimal(tax)
-                        new_invoice_item.total = Decimal(total)
+                        new_invoice_item.item_id = item_id
+                        new_invoice_item.inventory_id = inventory_id
+                        new_invoice_item.quantity = qty
+                        new_invoice_item.color = str(item_color) if item_color else 'None'
+                        new_invoice_item.memo = str(item_memo) if item_memo else 'None'
+                        new_invoice_item.pretax = pretax
+                        new_invoice_item.tax = tax
+                        new_invoice_item.total = total
                         new_invoice_item.status = 1
-                        if new_invoice_item.add():
-                            print('new item added')
-                            # delete rows
-
-        inv_save.put(where={'invoice_id': vars.INVOICE_ID},
-                      data={'quantity': self.tags,
-                            'pretax': '%.2f' % self.subtotal,
-                            'tax': '%.2f' % self.tax,
-                            'total': '%.2f' % self.total,
-                            'due_date':'{}'.format(str(self.due_date.strftime("%Y-%m-%d %H:%M:%S")))})
+                        new_invoice_item.add()
+            self.update_invoice()
         time.sleep(1)
         run_sync = threading.Thread(target=SYNC.run_sync)
         try:
@@ -5372,11 +5369,41 @@ GridLayout:
             sys.stdout.write('\a')
             sys.stdout.flush()
 
-
         vars.CUSTOMER_ID = self.customer_id_backup
         self.set_result_status()
+        time.sleep(1)
         self.print_popup.dismiss()
         SYNC_POPUP.dismiss()
+        popup.dismiss()
+
+    def update_invoice(self, *arkgs, **kwargs):
+
+        inv_save = Invoice()
+        invs = inv_save.where({'invoice_id':vars.INVOICE_ID})
+        if invs:
+            for inv in invs:
+                inv_save.id = inv['id']
+                inv_save.invoice_id = inv['invoice_id']
+                inv_save.company_id = inv['company_id']
+                inv_save.customer_id = inv['customer_id']
+                inv_save.quantity = self.tags
+                inv_save.pretax = '{0:.2f}'.format(float(self.subtotal))
+                inv_save.tax = '{0:.2f}'.format(float(self.tax))
+                inv_save.reward_id = inv['reward_id']
+                inv_save.discount_id = inv['discount_id']
+                inv_save.rack = inv['rack']
+                inv_save.rack_date = inv['rack_date']
+                inv_save.due_date = self.due_date
+                inv_save.memo = inv['memo']
+                inv_save.transaction_id = inv['transaction_id']
+                inv_save.schedule_id = inv['schedule_id']
+                inv_save.status = inv['status']
+                inv_save.total = '{0:.2f}'.format(float(self.total))
+                if inv_save.update():
+                    print('updated invoice')
+                    self.customer_id_backup = inv['customer_id']
+                    vars.CUSTOMER_ID = inv['customer_id']
+                    vars.SEARCH_RESULTS_STATUS = True
 
 
 class EditCustomerScreen(Screen):
@@ -5405,6 +5432,7 @@ class EditCustomerScreen(Screen):
     delete_customer_spinner = ObjectProperty(None)
     delete_customer = None
     popup = Popup()
+
     def reset(self):
         # Pause Schedule
         SCHEDULER.remove_all_jobs()
@@ -5459,7 +5487,7 @@ class EditCustomerScreen(Screen):
         self.is_delivery.active = False
         self.is_account.active = False
         self.delete_customer = False
-        #reset spinner values
+        # reset spinner values
         self.marks_table.clear_widgets()
 
     def load(self):
@@ -5595,18 +5623,16 @@ class EditCustomerScreen(Screen):
             self.shirt_preference = 4
         print(self.shirt_preference)
 
-    
     def select_delete_customer(self, *args, **kwargs):
         if self.delete_customer_spinner.text is 'Yes':
-
             self.popup.title = 'Are you sure?'
             content = BoxLayout(orientation="vertical")
             inner_layout_1 = BoxLayout(orientation="horizontal",
-                                       size_hint=(1,0.9))
+                                       size_hint=(1, 0.9))
             msg = Label(text="Are you sure you wish to delete this customer?")
             inner_layout_1.add_widget(msg)
             inner_layout_2 = BoxLayout(orientation="horizontal",
-                                       size_hint=(1,0.1))
+                                       size_hint=(1, 0.1))
             cancel = Button(text="cancel",
                             on_release=self.popup.dismiss)
             delete_btn = Button(markup=True,
@@ -5618,12 +5644,12 @@ class EditCustomerScreen(Screen):
             content.add_widget(inner_layout_2)
             self.popup.content = content
             self.popup.open()
-            
+
         pass
-    
+
     def delete_final(self, *args, **kwargs):
         customer = User()
-        customers = customer.where({'user_id':vars.CUSTOMER_ID})
+        customers = customer.where({'user_id': vars.CUSTOMER_ID})
         if customer:
             for cust in customers:
                 customer.id = cust['id']
@@ -5643,9 +5669,6 @@ class EditCustomerScreen(Screen):
                     popup.open()
                     # last 10 setup
                     vars.update_last_10()
-
-
-
 
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
@@ -6381,7 +6404,6 @@ class HistoryScreen(Screen):
 
         SYNC_POPUP.dismiss()
 
-
     def open_popup(self, *args, **kwargs):
         SYNC_POPUP.title = "Loading"
         content = KV.popup_alert("Please wait while the page is loading")
@@ -6437,29 +6459,29 @@ class HistoryScreen(Screen):
                     state = 1
 
         if state is 1:
-            text_color = [0.898,0.898,0.898,1] if selected else [0, 0, 0, 1]
-            background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
-            background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
+            text_color = [0.898, 0.898, 0.898, 1] if selected else [0, 0, 0, 1]
+            background_rgba = [0.369, 0.369, 0.369, 0.1] if selected else [0.826, 0.826, 0.826, 0.1]
+            background_color = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
         elif state is 2:
-            text_color = [0.8157,0.847,0.961,1] if selected else [0.059,0.278,1,1]
-            background_rgba = [0.059,0.278,1,0.1] if selected else [0.816, 0.847, 0.961, 0.1]
-            background_color = [0.059,0.278,1,1] if selected else [0.816, 0.847, 0.961, 1]
+            text_color = [0.8157, 0.847, 0.961, 1] if selected else [0.059, 0.278, 1, 1]
+            background_rgba = [0.059, 0.278, 1, 0.1] if selected else [0.816, 0.847, 0.961, 0.1]
+            background_color = [0.059, 0.278, 1, 1] if selected else [0.816, 0.847, 0.961, 1]
         elif state is 3:
-            text_color = [0.847,0.967,0.847,1] if selected else [0,0.639,0.149,1]
-            background_rgba = [0,0.64,0.149,0.1] if selected else [0.847,0.968,0.847,0.1]
-            background_color = [0,0.64,0.149,1] if selected else [0.847,0.968,0.847,1]
+            text_color = [0.847, 0.967, 0.847, 1] if selected else [0, 0.639, 0.149, 1]
+            background_rgba = [0, 0.64, 0.149, 0.1] if selected else [0.847, 0.968, 0.847, 0.1]
+            background_color = [0, 0.64, 0.149, 1] if selected else [0.847, 0.968, 0.847, 1]
         elif state is 4:
             text_color = [1, 0.8, 0.8, 1] if selected else [1, 0, 0, 1]
-            background_rgba = [1,0,0,0.1] if selected else [1, 0.717, 0.717, 0.1]
-            background_color = [1,0,0,1] if selected else [1, 0.717, 0.717, 1]
+            background_rgba = [1, 0, 0, 0.1] if selected else [1, 0.717, 0.717, 0.1]
+            background_color = [1, 0, 0, 1] if selected else [1, 0.717, 0.717, 1]
         elif state is 5:
-            text_color = [0.898,0.898,0.898,1] if selected else [0, 0, 0, 1]
-            background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
-            background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
+            text_color = [0.898, 0.898, 0.898, 1] if selected else [0, 0, 0, 1]
+            background_rgba = [0.369, 0.369, 0.369, 0.1] if selected else [0.826, 0.826, 0.826, 0.1]
+            background_color = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
         else:
             text_color = [0, 0, 0, 1] if selected else [0, 0, 0, 1]
-            background_rgba = [0.98431373,1,0,0.1] if selected else [0.9960784314,1,0.7176470588,1]
-            background_color = [0.98431373,1,0,1] if selected else [0.9960784314,1,0.7176470588, 1]
+            background_rgba = [0.98431373, 1, 0, 0.1] if selected else [0.9960784314, 1, 0.7176470588, 1]
+            background_color = [0.98431373, 1, 0, 1] if selected else [0.9960784314, 1, 0.7176470588, 1]
         tr = Factory.InvoiceTr(on_release=partial(self.select_invoice, invoice_id),
                                group="tr")
         tr.status = state
@@ -6503,7 +6525,7 @@ class HistoryScreen(Screen):
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
         # update db with current changes
-        t1 = Thread(target=SYNC.db_sync,args="")
+        t1 = Thread(target=SYNC.db_sync, args="")
         t1.start()
         t1.join()
         # vars.WORKLIST.append("Sync")
@@ -6575,7 +6597,7 @@ class HistoryScreen(Screen):
 
     def invoice_next(self):
         self.row_set += self.row_increment
-        self.down_btn.disabled = True if (self.row_set +10) > vars.ROW_CAP else False
+        self.down_btn.disabled = True if (self.row_set + 10) > vars.ROW_CAP else False
         # if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
         #     vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
         # else:
@@ -11710,13 +11732,12 @@ class SearchScreen(Screen):
             self.due_date = None
             self.due_date_string = None
 
-
         vars.SEARCH_RESULTS_STATUS = False
 
         Clock.schedule_once(self.focus_input)
         SYNC_POPUP.dismiss()
 
-    def focus_input(self,*args, **kwargs):
+    def focus_input(self, *args, **kwargs):
         self.search.focus = True
 
     def sync_db(self):
@@ -11871,7 +11892,7 @@ class SearchScreen(Screen):
                         data = {'last_name': '"%{}%"'.format(last_name),
                                 'first_name': '"%{}%"'.format(first_name),
                                 'ORDER_BY': 'last_name ASC',
-                                'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0],10)}
+                                'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], 10)}
 
                     vars.ROW_CAP = len(customers.like(data))
                     vars.SEARCH_TEXT = self.search.text
@@ -11885,7 +11906,6 @@ class SearchScreen(Screen):
                     KV.popup_alert('Search cannot be an empty value. Please try again.'))
                 popup.open()
         customers.close_connection()
-
 
     def create_invoice_row(self, row, *args, **kwargs):
         """ Creates invoice table row and displays it to screen """
@@ -11929,8 +11949,8 @@ class SearchScreen(Screen):
 
         elif invoice_status is 2:  # state 3
             text_color = [0, 0.639, 0.149, 1]
-            self.background_rgba = [0.847,0.968,0.847,0.1]
-            self.background_color = [0.847,0.968,0.847,1]
+            self.background_rgba = [0.847, 0.968, 0.847, 0.1]
+            self.background_color = [0.847, 0.968, 0.847, 1]
             self.status = 3
 
         else:
@@ -11942,8 +11962,8 @@ class SearchScreen(Screen):
 
             elif count_invoice_items == 0:  # #quick drop state 6
                 text_color = [0, 0, 0, 1]
-                self.background_rgba = [0.9960784314,1,0.7176470588,0.1]
-                self.background_color = [0.9960784314,1,0.7176470588,1]
+                self.background_rgba = [0.9960784314, 1, 0.7176470588, 0.1]
+                self.background_color = [0.9960784314, 1, 0.7176470588, 1]
                 self.status = 6
             else:  # state 1
                 text_color = [0, 0, 0, 1]
@@ -11982,11 +12002,10 @@ class SearchScreen(Screen):
 
         self.invoice_table_body.add_widget(tr_1)
 
-
         return True
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
-        print('found customer = {} and invoice id = {}'.format(vars.CUSTOMER_ID,invoice_id))
+        print('found customer = {} and invoice id = {}'.format(vars.CUSTOMER_ID, invoice_id))
         vars.INVOICE_ID = invoice_id
         data = {
             'user_id': '"{}"'.format(vars.CUSTOMER_ID)
@@ -12001,55 +12020,55 @@ class SearchScreen(Screen):
 
                 if child.status is 1:
                     text_color = [0.898, 0.898, 0.898, 1]
-                    child.background_color = [0.369,0.369,0.369,0.1]
-                    child.set_color = [0.369,0.369,0.369,1]
+                    child.background_color = [0.369, 0.369, 0.369, 0.1]
+                    child.set_color = [0.369, 0.369, 0.369, 1]
                 elif child.status is 2:
                     text_color = [0.8156, 0.847, 0.961, 1]
-                    child.background_color = [0.059,0.278,1,0.1]
-                    child.set_color = [0.059,0.278,1,1]
+                    child.background_color = [0.059, 0.278, 1, 0.1]
+                    child.set_color = [0.059, 0.278, 1, 1]
                 elif child.status is 3:
                     text_color = [0.847, 0.969, 0.847, 1]
-                    child.background_color = [0,0.64,0.149,0.1]
-                    child.set_color = [0,0.64,0.149,1]
+                    child.background_color = [0, 0.64, 0.149, 0.1]
+                    child.set_color = [0, 0.64, 0.149, 1]
                 elif child.status is 4:
                     text_color = [1, 0.8, 0.8, 1]
-                    child.background_color = [1,0,0,0.1]
-                    child.set_color = [1,0,0,1]
+                    child.background_color = [1, 0, 0, 0.1]
+                    child.set_color = [1, 0, 0, 1]
                 elif child.status is 5:
                     text_color = [0.898, 0.898, 0.898, 1]
                     child.background_color = [0.369, 0.369, 0.369, 0.1]
                     child.set_color = [0.369, 0.369, 0.369, 1]
                 else:
                     text_color = [0, 0, 0, 1]
-                    child.background_color = [0.98431373,1,0,0.1]
-                    child.set_color = [0.98431373,1,0,1]
+                    child.background_color = [0.98431373, 1, 0, 0.1]
+                    child.set_color = [0.98431373, 1, 0, 1]
 
 
             else:
                 if child.status is 1:
                     text_color = [0, 0, 0, 1]
                     child.background_color = [0.826, 0.826, 0.826, 0.1]
-                    child.set_color=[0.826, 0.826, 0.826, 1]
+                    child.set_color = [0.826, 0.826, 0.826, 1]
                 elif child.status is 2:
                     text_color = [0.059, 0.278, 1, 1]
-                    child.background_color=[0.816, 0.847, 0.961, 0.1]
-                    child.set_color=[0.816, 0.847, 0.961, 1]
+                    child.background_color = [0.816, 0.847, 0.961, 0.1]
+                    child.set_color = [0.816, 0.847, 0.961, 1]
                 elif child.status is 3:
                     text_color = [0, 0.639, 0.149, 1]
-                    child.background_color=[0.847,0.968,0.847,0.1]
-                    child.set_color=[0.847,0.968,0.847,1]
+                    child.background_color = [0.847, 0.968, 0.847, 0.1]
+                    child.set_color = [0.847, 0.968, 0.847, 1]
                 elif child.status is 4:
                     text_color = [1, 0, 0, 1]
-                    child.background_color=[1, 0.717, 0.717, 0.1]
-                    child.set_color=[1, 0.717, 0.717, 1]
+                    child.background_color = [1, 0.717, 0.717, 0.1]
+                    child.set_color = [1, 0.717, 0.717, 1]
                 elif child.status is 5:
                     text_color = [0, 0, 0, 1]
-                    child.background_color=[0.826, 0.826, 0.826, 0.1]
-                    child.set_color=[0.826, 0.826, 0.826, 1]
+                    child.background_color = [0.826, 0.826, 0.826, 0.1]
+                    child.set_color = [0.826, 0.826, 0.826, 1]
                 else:
                     text_color = [0, 0, 0, 1]
-                    child.background_color=[0.9960784314,1,0.7176470588,0.1]
-                    child.set_color=[0.9960784314,1,0.7176470588,1]
+                    child.background_color = [0.9960784314, 1, 0.7176470588, 0.1]
+                    child.set_color = [0.9960784314, 1, 0.7176470588, 1]
             for grandchild in child.children:
                 for ggc in grandchild.children:
                     ggc.color = text_color
