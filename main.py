@@ -3353,9 +3353,10 @@ GridLayout:
                     vars.BIXOLON.write('\n\n\n\n\n\n')
                     vars.BIXOLON.write('\x1b\x6d')
 
-        vars.CUSTOMER_ID = self.customer_id_backup
+
         time.sleep(1)
         SYNC_POPUP.dismiss()
+        vars.CUSTOMER_ID = self.customer_id_backup
         self.set_result_status()
         self.print_popup.dismiss()
 
