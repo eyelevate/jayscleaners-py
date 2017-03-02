@@ -5368,13 +5368,15 @@ GridLayout:
             popup.open()
             sys.stdout.write('\a')
             sys.stdout.flush()
+            time.sleep(2)
+            popup.dismiss()
 
         vars.CUSTOMER_ID = self.customer_id_backup
         self.set_result_status()
-        time.sleep(1)
+
         self.print_popup.dismiss()
         SYNC_POPUP.dismiss()
-        popup.dismiss()
+
 
     def update_invoice(self, *arkgs, **kwargs):
 
