@@ -2769,7 +2769,10 @@ GridLayout:
                 run_sync2.start()
             finally:
                 run_sync2.join()
-                t1 = Thread(target=self.print_function, args=[print_invoice,print_sync_invoice,print_sync_totals])
+                t1 = Thread(target=self.print_function, args=[print_invoice,
+                                                              print_totals,
+                                                              print_sync_invoice,
+                                                              print_sync_totals])
                 t1.start()
         SYNC_POPUP.dismiss()
         vars.CUSTOMER_ID = self.customer_id_backup
