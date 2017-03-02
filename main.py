@@ -6,6 +6,8 @@ import datetime
 import os
 import re
 from collections import OrderedDict
+#!/usr/local/bin/python3
+#!/usr/bin/env python3
 
 os.environ['TZ'] = 'US/Pacific'
 if platform.system() == 'Darwin':  # Mac
@@ -72,6 +74,7 @@ from escpos.exceptions import USBNotFoundError
 from escpos.exceptions import TextError
 import phonenumbers
 from threading import Thread
+import usb
 import usb.core
 import usb.util
 import webbrowser
@@ -1370,7 +1373,7 @@ class DropoffScreen(Screen):
         vars.SEARCH_RESULTS_STATUS = True
         self.summary_table.clear_widgets()
         vars.CUSTOMER_ID = self.customer_id_backup
-        
+
     def get_colors_main(self):
 
         colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
@@ -11722,6 +11725,7 @@ class SearchScreen(Screen):
             data = {'user_id': vars.CUSTOMER_ID}
             customers = User()
             results = customers.where(data)
+            print('Search results are set getting customer #{}'.format(vars.CUSTOMER_ID))
             self.customer_results(results)
 
         else:
