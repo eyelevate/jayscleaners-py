@@ -11727,8 +11727,8 @@ class SearchScreen(Screen):
             customers = User()
             results = customers.where(data)
             print('Search results are set getting customer #{}'.format(vars.CUSTOMER_ID))
-            self.customer_results(results)
-
+            # self.customer_results(results)
+            self.sync_db()
         else:
             vars.CUSTOMER_ID = None
             vars.INVOICE_ID = None
