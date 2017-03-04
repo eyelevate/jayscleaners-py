@@ -1369,10 +1369,9 @@ class DropoffScreen(Screen):
         SYNC_POPUP.dismiss()
 
     def set_result_status(self):
-        vars.CUSTOMER_ID = self.customer_id_backup
         vars.SEARCH_RESULTS_STATUS = True
         self.summary_table.clear_widgets()
-        vars.CUSTOMER_ID = self.customer_id_backup
+
 
     def get_colors_main(self):
 
@@ -2590,6 +2589,8 @@ GridLayout:
         Clock.schedule_once(partial(self.finish_invoice, type))
 
     def finish_invoice(self, type, *args, **kwargs):
+        vars.CUSTOMER_ID = self.customer_id_backup
+        self.set_result_status()
         self.now = datetime.datetime.now()
         # determine the types of invoices we need to print
         # set the printer data
@@ -2774,7 +2775,7 @@ GridLayout:
                 run_sync2.join()
                 SYNC_POPUP.dismiss()
 
-                self.set_result_status()
+
                 self.print_popup.dismiss()
                 t1 = Thread(target=self.print_function, args=[print_invoice,
                                                               print_totals,
@@ -12120,16 +12121,17 @@ class SearchScreen(Screen):
         self.customer_results(customers)
         vars.INVOICE_ID = None
         vars.CUSTOMER_ID = customer_id
+        vars.SEARCH_RESULTS_STATUS = True
         users.close_connection()
         Clock.schedule_once(self.focus_input)
 
     def customer_results(self, data):
-        vars.CUSTOMER_ID = None
         # Found customer via where, now display data to screen
         if len(data) == 1:
             Clock.schedule_once(self.focus_input)
             for result in data:
                 vars.CUSTOMER_ID = result['user_id']
+                vars.SEARCH_RESULTS_STATUS = True if vars.CUSTOMER_ID else False
                 # last 10 setup
                 vars.update_last_10()
                 # clear the current widget
@@ -12149,7 +12151,8 @@ class SearchScreen(Screen):
                     for inv in invs:
                         self.create_invoice_row(inv)
 
-                Clock.schedule_once(partial(self.invoice_selected, vars.INVOICE_ID),1)
+                Clock.schedule_once(partial(self.invoice_selected, vars.INVOICE_ID))
+
 
                 # get last drop data
                 data = {
@@ -12204,6 +12207,7 @@ class SearchScreen(Screen):
                 except AttributeError:
                     self.cust_important_memo.text = ''
                 custids.close_connection()
+
             # show the proper buttons
             self.history_btn.disabled = False
             self.edit_customer_btn.disabled = False
