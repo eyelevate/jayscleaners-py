@@ -11727,8 +11727,9 @@ class SearchScreen(Screen):
             customers = User()
             results = customers.where(data)
             print('Search results are set getting customer #{}'.format(vars.CUSTOMER_ID))
-            # self.customer_results(results)
-            self.sync_db()
+            Clock.schedule_once(self.customer_results,args=results)
+
+
         else:
             vars.CUSTOMER_ID = None
             vars.INVOICE_ID = None
@@ -11758,11 +11759,9 @@ class SearchScreen(Screen):
             self.search.text = ''
             # clear the inventory table
             self.invoice_table_body.clear_widgets()
-
             self.due_date = None
             self.due_date_string = None
-
-        vars.SEARCH_RESULTS_STATUS = False
+            vars.SEARCH_RESULTS_STATUS = False
 
         Clock.schedule_once(self.focus_input)
         SYNC_POPUP.dismiss()
@@ -12033,12 +12032,6 @@ class SearchScreen(Screen):
         if check_invoice_id:
             tr_1.state = 'down'
         self.invoice_table_body.add_widget(tr_1)
-
-
-
-
-
-
         return True
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
