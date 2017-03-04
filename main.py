@@ -11727,7 +11727,7 @@ class SearchScreen(Screen):
             customers = User()
             results = customers.where(data)
             print('Search results are set getting customer #{}'.format(vars.CUSTOMER_ID))
-            Clock.schedule_once(self.customer_results,args=results)
+            Clock.schedule_once(partial(self.customer_results,results))
 
 
         else:
@@ -12118,7 +12118,7 @@ class SearchScreen(Screen):
         users.close_connection()
         Clock.schedule_once(self.focus_input)
 
-    def customer_results(self, data):
+    def customer_results(self, data, *args, **kwargs):
         # Found customer via where, now display data to screen
         if len(data) == 1:
             Clock.schedule_once(self.focus_input)
