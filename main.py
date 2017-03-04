@@ -2777,14 +2777,15 @@ GridLayout:
 
 
                 self.print_popup.dismiss()
-                t1 = Thread(target=self.print_function, args=[print_invoice,
+                t1 = Thread(target=self.print_function, args=[type,
+                                                              print_invoice,
                                                               print_totals,
                                                               print_sync_invoice,
                                                               print_sync_totals])
                 t1.start()
 
 
-    def print_function(self, print_invoice, print_totals, print_sync_invoice, print_sync_totals, *args, **kwargs):
+    def print_function(self,type, print_invoice, print_totals, print_sync_invoice, print_sync_totals, *args, **kwargs):
         print('sync invoice items now finished')
         companies = Company()
         comps = companies.where({'company_id': auth_user.company_id}, set=True)
@@ -11727,7 +11728,7 @@ class SearchScreen(Screen):
             customers = User()
             results = customers.where(data)
             print('Search results are set getting customer #{}'.format(vars.CUSTOMER_ID))
-            Clock.schedule_once(partial(self.customer_results,results))
+            Clock.schedule_once(partial(self.customer_results,results),1)
 
 
         else:
