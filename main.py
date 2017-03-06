@@ -676,10 +676,10 @@ class MainScreen(Screen):
     #         print('Text error')
 
     def reports_page(self):
-        webbrowser.open("http://74.207.240.88/reports")
+        webbrowser.open("https://www.jayscleaners.com/reports")
 
     def delivery_page(self):
-        webbrowser.open("http://74.207.240.88/delivery/overview")
+        webbrowser.open("https://www.jayscleaners.com/delivery/overview")
 
 
 class ColorsScreen(Screen):
@@ -16376,7 +16376,7 @@ class SearchResultsScreen(Screen):
 
 class SettingsScreen(Screen):
     def accounts_page(self):
-        webbrowser.open("http://74.207.240.88/accounts")
+        webbrowser.open("https://www.jayscleaners.com/accounts")
 
     pass
 
