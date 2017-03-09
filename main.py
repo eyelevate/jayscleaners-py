@@ -406,7 +406,7 @@ class MainScreen(Screen):
 
         # quick sync
 
-        t1 = Thread(target=SYNC.db_sync, args="")
+        t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
         t1.start()
         t1.join()
         SYNC_POPUP.dismiss()
@@ -2772,7 +2772,7 @@ GridLayout:
                         if new_invoice_item.add():
                             print('saved invoice item')
             # set invoice_items data to save
-            run_sync2 = threading.Thread(target=SYNC.db_sync)
+            run_sync2 = threading.Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
             try:
                 run_sync2.start()
             finally:
@@ -4860,7 +4860,7 @@ GridLayout:
                         if del_now_item.delete():
                             print('deleted row {}'.format(inv_item['id']))
                             self.create_summary_totals()
-                    t1 = Thread(target=SYNC.db_sync, args="")
+                    t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
                     t1.start()
 
         if self.invoice_list:
@@ -5686,7 +5686,7 @@ class EditCustomerScreen(Screen):
             for cust in customers:
                 customer.id = cust['id']
                 if (customer.delete()):
-                    t1 = Thread(target=SYNC.db_sync, args="")
+                    t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
                     t1.start()
                     vars.SEARCH_RESULTS_STATUS = False
                     vars.ROW_CAP = 0
@@ -6557,7 +6557,7 @@ class HistoryScreen(Screen):
     def set_result_status(self):
         vars.SEARCH_RESULTS_STATUS = True
         # update db with current changes
-        t1 = Thread(target=SYNC.db_sync, args="")
+        t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
         t1.start()
         t1.join()
         # vars.WORKLIST.append("Sync")
@@ -6811,7 +6811,7 @@ class HistoryScreen(Screen):
                     del_ii = InvoiceItem()
                     del_ii.id = invoice_item['id']
                     del_ii.delete()
-                t1 = Thread(target=SYNC.db_sync, args="")
+                t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
                 t1.start()
 
             msg = KV.popup_alert(msg="Successfully deleted invoice #{}!".format(vars.INVOICE_ID))
@@ -11343,7 +11343,7 @@ class PrinterScreen(Screen):
         printer.status = 1
         if printer.add():
             # set invoice_items data to save
-            run_sync = threading.Thread(target=SYNC.db_sync)
+            run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
             try:
                 run_sync.start()
             finally:
@@ -11366,7 +11366,7 @@ class PrinterScreen(Screen):
                                                               'type': self.r6c2.text})
 
         # set invoice_items data to save
-        run_sync = threading.Thread(target=SYNC.db_sync)
+        run_sync = threading.Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
         try:
             run_sync.start()
         finally:
@@ -11668,10 +11668,10 @@ class SearchScreen(Screen):
         # Resume auto sync
         try:
             SCHEDULER.remove_all_jobs()
-            SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=30)
+            SCHEDULER.add_job(partial(SYNC.db_sync,vars.COMPANY_ID), 'interval', seconds=30)
             print('Auto Sync Resumed')
         except SchedulerNotRunningError:
-            SCHEDULER.add_job(SYNC.db_sync, 'interval', seconds=30)
+            SCHEDULER.add_job(partial(SYNC.db_sync,vars.COMPANY_ID), 'interval', seconds=30)
             SCHEDULER.start()
             print('Auto Sync failed to launch starting again')
 

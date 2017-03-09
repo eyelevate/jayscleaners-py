@@ -41,7 +41,9 @@ class Sync:
     company_id = None
     server_at = None
 
-    def db_sync(self):
+    def db_sync(self, company_id, *args, **kwargs):
+        self.company_id = company_id
+        print('syncing getting company_id = {}'.format(company_id))
         run_sync = Thread(target=self.run_sync)
         run_sync.start()
         run_sync.join()
