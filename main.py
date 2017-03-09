@@ -311,7 +311,9 @@ class MainScreen(Screen):
                     auth_user.user_id = user1['user_id']
                     auth_user.username = user1['username']
                     auth_user.company_id = user1['company_id']
+                    vars.COMPANY_ID = user1['company_id']
                     SYNC.company_id = user1['company_id']
+                    print('successfull server auth - company_id = {}'.format(vars.COMPANY_ID))
                 print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
                 if print_data:
                     for pr in print_data:
@@ -348,6 +350,8 @@ class MainScreen(Screen):
 
                     auth_user.username = user.username
                     auth_user.company_id = data['company_id']
+                    vars.COMPANY_ID = data['company_id']
+                    print('successfull db lookup company_id = {}'.format(vars.COMPANY_ID))
                     print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
                     if print_data:
                         for pr in print_data:

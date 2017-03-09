@@ -1,6 +1,7 @@
 
 class Static:
     CUSTOMER_ID = None
+    COMPANY_ID = None
     INVOICE_ID = False
     INVOICE_ITEMS_ID = None
     ITEM_ID = None
