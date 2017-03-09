@@ -392,7 +392,7 @@ class MainScreen(Screen):
         self.username.text = ''
         self.password.text = ''
         auth_user.username = None
-        auth_user.company_id = None
+        vars.COMPANY_ID = None
         self.login_button.text = "Login"
         self.login_button.bind(on_release=self.login)
         self.update_button.disabled = True
@@ -711,7 +711,7 @@ class ColorsScreen(Screen):
         self.colors_table.clear_widgets()
 
         colored = Colored()
-        colorings = colored.where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        colorings = colored.where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'ordered asc'})
 
         if colorings:
             for clr in colorings:
@@ -800,18 +800,18 @@ Button:
         self.reorder_end_id = color_id
         swap_order = {self.reorder_start_id: '', self.reorder_end_id: ''}
         coloreds = Colored()
-        start_colors = coloreds.where({'color_id': self.reorder_start_id, 'company_id': auth_user.company_id})
+        start_colors = coloreds.where({'color_id': self.reorder_start_id, 'company_id': vars.COMPANY_ID})
         if start_colors:
             for clr in start_colors:
                 swap_order[self.reorder_end_id] = clr['ordered']
 
-        end_colors = coloreds.where({'color_id': self.reorder_end_id, 'company_id': auth_user.company_id})
+        end_colors = coloreds.where({'color_id': self.reorder_end_id, 'company_id': vars.COMPANY_ID})
         if end_colors:
             for clr in end_colors:
                 swap_order[self.reorder_start_id] = clr['ordered']
         if swap_order:
             for key, index in swap_order.items():
-                coloreds.put(where={'color_id': key, 'company_id': auth_user.company_id},
+                coloreds.put(where={'color_id': key, 'company_id': vars.COMPANY_ID},
                              data={'ordered': index})
 
         self.reorder_end_id = False
@@ -852,7 +852,7 @@ Button:
 
     def popup_edit(self, *args, **kwargs):
         coloreds = Colored()
-        clrds = coloreds.where({'color_id': self.color_id, 'company_id': auth_user.company_id})
+        clrds = coloreds.where({'color_id': self.color_id, 'company_id': vars.COMPANY_ID})
         color_name = ''
         color_hex = ''
         if clrds:
@@ -898,13 +898,13 @@ Button:
 
         coloreds = Colored()
         # get new ordered number
-        new_orders = coloreds.where({'company_id': auth_user.company_id, 'ORDER_BY': 'id desc', 'LIMIT': 1})
+        new_orders = coloreds.where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'id desc', 'LIMIT': 1})
         new_order = 1
         if new_orders:
             for no in new_orders:
                 ordered = no['ordered']
                 new_order = ordered + 1
-        coloreds.company_id = auth_user.company_id
+        coloreds.company_id = vars.COMPANY_ID
         coloreds.color = self.color_hex
         coloreds.name = self.color_name.text
         coloreds.ordered = new_order
@@ -922,7 +922,7 @@ Button:
 
         coloreds = Colored()
         # get new ordered number
-        put = coloreds.put(where={'color_id': self.color_id, 'company_id': auth_user.company_id},
+        put = coloreds.put(where={'color_id': self.color_id, 'company_id': vars.COMPANY_ID},
                            data={'color': self.color_hex,
                                  'name': self.color_name.text})
 
@@ -990,7 +990,7 @@ Button:
 
     def delete_item(self, *args, **kwargs):
         coloreds = Colored()
-        deleted = coloreds.where({'company_id': auth_user.company_id,
+        deleted = coloreds.where({'company_id': vars.COMPANY_ID,
                                   'color_id': self.color_id})
         if deleted:
             for deleted_color in deleted:
