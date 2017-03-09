@@ -1032,7 +1032,7 @@ class CompanyScreen(Screen):
     def reset(self):
         # Pause Schedule
         SCHEDULER.remove_all_jobs()
-        companies = Company().where({'company_id': auth_user.company_id})
+        companies = Company().where({'company_id': vars.COMPANY_ID})
         if companies:
             for company in companies:
                 self.company_name.text = company['name'] if company['name'] else ''
@@ -1214,7 +1214,7 @@ class CompanyScreen(Screen):
     def update(self):
 
         companies = Company()
-        put = companies.put(where={'company_id': auth_user.company_id},
+        put = companies.put(where={'company_id': vars.COMPANY_ID},
                             data={'name': self.company_name.text,
                                   'phone': self.company_phone.text,
                                   'email': self.company_email.text,
@@ -1298,7 +1298,7 @@ class DropoffScreen(Screen):
         self.inventory_panel.clear_widgets()
         self.get_inventory()
         self.summary_table.clear_widgets()
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
         turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
@@ -1356,7 +1356,7 @@ class DropoffScreen(Screen):
         self.memo_list = []
         self.colors_table_main.clear_widgets()
         self.get_colors_main()
-        taxes = Tax().where({'company_id': auth_user.company_id, 'status': 1})
+        taxes = Tax().where({'company_id': vars.COMPANY_ID, 'status': 1})
         if taxes:
             for tax in taxes:
                 vars.TAX_RATE = tax['rate']
@@ -1379,7 +1379,7 @@ class DropoffScreen(Screen):
 
     def get_colors_main(self):
 
-        colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        colors = Colored().where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'ordered asc'})
         if colors:
             for color in colors:
                 color_btn = Button(markup=True,
@@ -1438,7 +1438,7 @@ class DropoffScreen(Screen):
         pass
 
     def get_inventory(self):
-        inventories = Inventory().where({'company_id': '{}'.format(auth_user.company_id)})
+        inventories = Inventory().where({'company_id': '{}'.format(vars.COMPANY_ID)})
         if inventories:
             idx = 0
             self.inventory_panel.clear_tabs()
@@ -1747,7 +1747,7 @@ GridLayout:
                                 row_force_default=True,
                                 row_default_height='60sp')
         color_grid.bind(minimum_height=color_grid.setter('height'))
-        colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        colors = Colored().where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'ordered asc'})
         if colors:
             for color in colors:
                 color_btn = Button(markup=True,
@@ -1770,7 +1770,7 @@ GridLayout:
         memo_grid_layout = Factory.GridLayoutForScrollView(row_default_height='50sp',
                                                            cols=4)
         mmos = Memo()
-        memos = mmos.where({'company_id': auth_user.company_id,
+        memos = mmos.where({'company_id': vars.COMPANY_ID,
                             'ORDER_BY': 'ordered asc'})
         if memos:
             for memo in memos:
@@ -2366,7 +2366,7 @@ GridLayout:
 
     def make_calendar(self):
 
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
         turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
@@ -2444,7 +2444,7 @@ GridLayout:
     def create_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today_date = datetime.datetime.today()
         today_string = today_date.strftime('%Y-%m-%d 00:00:00')
         check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
@@ -2541,7 +2541,7 @@ GridLayout:
         self.create_calendar_table()
 
     def select_due_date(self, selected_date, *args, **kwargs):
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
 
         dow = int(selected_date.strftime("%w"))
         turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
@@ -2600,13 +2600,13 @@ GridLayout:
         # set the printer data
         laundry_to_print = []
         printers = Printer()
-        thermal_printers = printers.get_printer_ids(auth_user.company_id, 1)
+        thermal_printers = printers.get_printer_ids(vars.COMPANY_ID, 1)
 
         # splt up invoice by inventory group
         save_invoice = {}
         save_totals = {}
         save_invoice_items = {}
-        inventories = Inventory().where({'company_id': auth_user.company_id})
+        inventories = Inventory().where({'company_id': vars.COMPANY_ID})
         if inventories:
             for inventory in inventories:
                 # iterate through the newly created invoice list and group each inventory id into one invoice
@@ -2639,7 +2639,7 @@ GridLayout:
 
                         # set invoice data to save
                         new_invoice = Invoice()
-                        new_invoice.company_id = auth_user.company_id
+                        new_invoice.company_id = vars.COMPANY_ID
                         new_invoice.customer_id = self.customer_id_backup
                         new_invoice.quantity = save_totals[inventory_id]['quantity']
                         new_invoice.pretax = float('%.2f' % (save_totals[inventory_id]['subtotal']))
@@ -2756,7 +2756,7 @@ GridLayout:
                         item_total = float('%.2f' % (item_price * (1 + vars.TAX_RATE)))
                         # set invoice data to save
                         new_invoice_item = InvoiceItem()
-                        new_invoice_item.company_id = auth_user.company_id
+                        new_invoice_item.company_id = vars.COMPANY_ID
                         new_invoice_item.customer_id = self.customer_id_backup
                         new_invoice_item.invoice_id = item['invoice_id']
                         new_invoice_item.item_id = item['item_id']
@@ -2792,7 +2792,7 @@ GridLayout:
     def print_function(self,type, print_invoice, print_totals, print_sync_invoice, print_sync_totals, *args, **kwargs):
         print('sync invoice items now finished')
         companies = Company()
-        comps = companies.where({'company_id': auth_user.company_id}, set=True)
+        comps = companies.where({'company_id': vars.COMPANY_ID}, set=True)
         pr = Printer()
         if comps:
             for company in comps:
@@ -3443,7 +3443,7 @@ class EditInvoiceScreen(Screen):
         self.summary_table.clear_widgets()
         self.colors_table_main.clear_widgets()
         self.final_total = 0
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
         turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
@@ -3598,7 +3598,7 @@ class EditInvoiceScreen(Screen):
         self.summary_table.add_widget(Builder.load_string(h4))
         self.get_inventory()
         self.get_colors_main()
-        taxes = Tax().where({'company_id': auth_user.company_id, 'status': 1})
+        taxes = Tax().where({'company_id': vars.COMPANY_ID, 'status': 1})
         if taxes:
             for tax in taxes:
                 vars.TAX_RATE = tax['rate']
@@ -3617,7 +3617,7 @@ class EditInvoiceScreen(Screen):
 
     def get_colors_main(self):
 
-        colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        colors = Colored().where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'ordered asc'})
         if colors:
             for color in colors:
                 color_btn = Button(markup=True,
@@ -3676,7 +3676,7 @@ class EditInvoiceScreen(Screen):
         pass
 
     def get_inventory(self):
-        inventories = Inventory().where({'company_id': '{}'.format(auth_user.company_id)})
+        inventories = Inventory().where({'company_id': '{}'.format(vars.COMPANY_ID)})
         if inventories:
             idx = 0
             self.inventory_panel.clear_tabs()
@@ -4001,7 +4001,7 @@ GridLayout:
                                     row_force_default=True,
                                     row_default_height='60sp')
             color_grid.bind(minimum_height=color_grid.setter('height'))
-            colors = Colored().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+            colors = Colored().where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'ordered asc'})
             if colors:
                 for color in colors:
                     color_btn = Button(markup=True,
@@ -4615,7 +4615,7 @@ GridLayout:
 
     def make_calendar(self):
 
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
         turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
@@ -4693,7 +4693,7 @@ GridLayout:
     def create_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today_date = datetime.datetime.today()
         today_string = today_date.strftime('%Y-%m-%d 00:00:00')
         check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
@@ -4790,7 +4790,7 @@ GridLayout:
         self.create_calendar_table()
 
     def select_due_date(self, selected_date, *args, **kwargs):
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
 
         dow = int(selected_date.strftime("%w"))
         turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
@@ -4916,7 +4916,7 @@ GridLayout:
                     else:
                         print('Here...')
                         new_invoice_item = InvoiceItem()
-                        new_invoice_item.company_id = auth_user.company_id
+                        new_invoice_item.company_id = vars.COMPANY_ID
                         new_invoice_item.customer_id = self.customer_id_backup
                         new_invoice_item.invoice_id = self.invoice_id
                         new_invoice_item.item_id = item_id
@@ -4941,7 +4941,7 @@ GridLayout:
         if vars.EPSON:
             pr = Printer()
             companies = Company()
-            comps = companies.where({'company_id': auth_user.company_id}, set=True)
+            comps = companies.where({'company_id': vars.COMPANY_ID}, set=True)
             if comps:
                 for company in comps:
                     companies.id = company['id']
@@ -5723,7 +5723,7 @@ class EditCustomerScreen(Screen):
             popup.open()
         else:
             # save the mark
-            marks.company_id = auth_user.company_id
+            marks.company_id = vars.COMPANY_ID
             marks.customer_id = vars.CUSTOMER_ID
             marks.mark = self.mark_text.text
             marks.status = 1
@@ -5924,7 +5924,7 @@ class EditCustomerScreen(Screen):
         if errors == 0:  # if no errors then save
             where = {'user_id': vars.CUSTOMER_ID}
             data = {
-                'company_id': auth_user.company_id,
+                'company_id': vars.COMPANY_ID,
                 'phone': Job.make_numeric(data=self.phone.text),
                 'last_name': Job.make_no_whitespace(data=self.last_name.text),
                 'first_name': Job.make_no_whitespace(data=self.first_name.text),
@@ -6049,7 +6049,7 @@ class EmployeesScreen(Screen):
         self.employees_table.add_widget(Builder.load_string(h7))
 
         users = User()
-        employees = users.where({'company_id': auth_user.company_id,
+        employees = users.where({'company_id': vars.COMPANY_ID,
                                  'role_id': {'<': 5}})
 
         if employees:
@@ -6235,7 +6235,7 @@ class EmployeesScreen(Screen):
 
         if errors == 0:
             users = User()
-            users.company_id = auth_user.company_id
+            users.company_id = vars.COMPANY_ID
             users.username = self.username.text
             users.first_name = self.first_name.text
             users.last_name = self.last_name.text
@@ -6972,7 +6972,7 @@ class HistoryScreen(Screen):
             if vars.EPSON:
                 pr = Printer()
                 companies = Company()
-                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+                comps = companies.where({'company_id': vars.COMPANY_ID}, set=True)
 
                 if comps:
                     for company in comps:
@@ -7811,7 +7811,7 @@ class InventoriesScreen(Screen):
         self.inventory_table.add_widget(Builder.load_string(h6))
         self.inventory_table.add_widget(Builder.load_string(h7))
 
-        inventories = Inventory().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        inventories = Inventory().where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'ordered asc'})
         if inventories:
             for inventory in inventories:
                 c1 = KV.sized_invoice_tr(1, inventory['id'], 0.1)
@@ -7838,7 +7838,7 @@ class InventoriesScreen(Screen):
 
     def inventory_move(self, pos, id, *args, **kwargs):
         orders = []
-        inventories = Inventory().where({'company_id': auth_user.company_id, 'ORDER_BY': 'ordered asc'})
+        inventories = Inventory().where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'ordered asc'})
         row_selected = False
         if inventories:
             idx = -1
@@ -7998,7 +7998,7 @@ class InventoriesScreen(Screen):
 
     def add_inventory(self, *args, **kwargs):
         inventories = Inventory()
-        inventories.company_id = auth_user.company_id
+        inventories.company_id = vars.COMPANY_ID
         inventories.name = self.inventory_name.text
         inventories.description = self.inventory_desc.text
         inventories.ordered = self.inventory_order.text
@@ -8058,7 +8058,7 @@ class InventoryItemsScreen(Screen):
         self.reorder_list = {}
 
     def get_inventory(self):
-        inventories = Inventory().where({'company_id': '{}'.format(auth_user.company_id),
+        inventories = Inventory().where({'company_id': '{}'.format(vars.COMPANY_ID),
                                          'ORDER_BY': 'ordered ASC'})
         if inventories:
             idx = 0
@@ -8118,7 +8118,7 @@ class InventoryItemsScreen(Screen):
                 inv_items = InventoryItem()
                 for list_id in self.reorder_list[self.inventory_id]:
                     row += 1
-                    inv_items.put(where={'company_id': auth_user.company_id,
+                    inv_items.put(where={'company_id': vars.COMPANY_ID,
                                          'item_id': list_id},
                                   data={'ordered': row})
             self.from_id = None
@@ -8156,7 +8156,7 @@ class InventoryItemsScreen(Screen):
 
         self.edit_popup.title = 'Edit Item'
         inventory_items = InventoryItem()
-        invitems = inventory_items.where({'company_id': auth_user.company_id,
+        invitems = inventory_items.where({'company_id': vars.COMPANY_ID,
                                           'item_id': self.item_id})
         if invitems:
             for item in invitems:
@@ -8258,7 +8258,7 @@ class InventoryItemsScreen(Screen):
         self.add_popup.dismiss()
 
         inventory_items = InventoryItem()
-        deleted = inventory_items.where({'company_id': auth_user.company_id,
+        deleted = inventory_items.where({'company_id': vars.COMPANY_ID,
                                          'item_id': self.item_id})
         if deleted:
             for deleted_items in deleted:
@@ -8282,7 +8282,7 @@ class InventoryItemsScreen(Screen):
 
     def add_item_popup(self):
         inventory_items = InventoryItem()
-        invitems = inventory_items.where({'company_id': auth_user.company_id,
+        invitems = inventory_items.where({'company_id': vars.COMPANY_ID,
                                           'inventory_id': self.inventory_id,
                                           'ORDER_BY': 'ordered desc',
                                           'LIMIT': 1})
@@ -8377,7 +8377,7 @@ class InventoryItemsScreen(Screen):
         img_name = img[-1]
         if errors == 0:
             inventory_items = InventoryItem()
-            inventory_items.company_id = auth_user.company_id
+            inventory_items.company_id = vars.COMPANY_ID
             inventory_items.inventory_id = self.inventory_id
             inventory_items.name = self.r1c2.text
             inventory_items.description = self.r2c2.text
@@ -8428,7 +8428,7 @@ class InventoryItemsScreen(Screen):
         img_name = img[-1]
         if errors == 0:
             inventory_items = InventoryItem()
-            put = inventory_items.put(where={'company_id': auth_user.company_id,
+            put = inventory_items.put(where={'company_id': vars.COMPANY_ID,
                                              'item_id': self.item_id},
                                       data={'name': self.r1c2.text,
                                             'description': self.r2c2.text,
@@ -8901,7 +8901,7 @@ class MemosScreen(Screen):
     def create_memo_table(self):
         self.memos_table.clear_widgets()
         mmos = Memo()
-        memos = mmos.where({'company_id': auth_user.company_id,
+        memos = mmos.where({'company_id': vars.COMPANY_ID,
                             'ORDER_BY': 'ordered asc'})
         if memos:
             for memo in memos:
@@ -9015,7 +9015,7 @@ class MemosScreen(Screen):
 
     def add_memo(self, *args, **kwargs):
         mmos = Memo()
-        search = mmos.where({'company_id': auth_user.company_id,
+        search = mmos.where({'company_id': vars.COMPANY_ID,
                              'ORDER_BY': 'ordered desc',
                              'LIMIT': 1})
         next_ordered = 1
@@ -9024,7 +9024,7 @@ class MemosScreen(Screen):
                 next_ordered = int(memo['ordered']) + 1
 
         if self.msg.text is not None:
-            mmos.company_id = auth_user.company_id
+            mmos.company_id = vars.COMPANY_ID
             mmos.memo = self.msg.text
             mmos.ordered = next_ordered
             mmos.status = 1
@@ -9347,7 +9347,7 @@ class NewCustomerScreen(Screen):
                 self.zipcode.hint_text_color = DEFAULT_COLOR
 
         if errors == 0:  # if no errors then save
-            customers.company_id = auth_user.company_id
+            customers.company_id = vars.COMPANY_ID
             customers.role_id = 5
             customers.phone = Job.make_numeric(data=self.phone.text)
             customers.last_name = Job.make_no_whitespace(data=self.last_name.text)
@@ -9408,7 +9408,7 @@ class NewCustomerScreen(Screen):
                         # create the customer mark
                         marks = Custid()
                         marks.customer_id = customers.user_id
-                        marks.company_id = auth_user.company_id
+                        marks.company_id = vars.COMPANY_ID
                         marks.mark = marks.create_customer_mark(last_name=customers.last_name,
                                                                 customer_id=str(customers.user_id),
                                                                 starch=customers.get_starch(customers.starch))
@@ -9580,13 +9580,13 @@ class PickupScreen(Screen):
         vars.PAYMENT_ID = None
         pro = Profile()
         profiles = pro.where({'user_id': vars.CUSTOMER_ID,
-                              'company_id': auth_user.company_id})
+                              'company_id': vars.COMPANY_ID})
         if profiles:
             for profile in profiles:
                 vars.PROFILE_ID = profile['profile_id']
 
             cards_db = Card()
-            self.cards = cards_db.collect(auth_user.company_id, vars.PROFILE_ID)
+            self.cards = cards_db.collect(vars.COMPANY_ID, vars.PROFILE_ID)
         else:
             self.cards = False
         self.select_card_location('1')
@@ -9613,7 +9613,7 @@ class PickupScreen(Screen):
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(h5))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(h6))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(h7))
-        discounts = Discount().where({'company_id': auth_user.company_id,
+        discounts = Discount().where({'company_id': vars.COMPANY_ID,
                                       'ORDER_BY': 'discount_id desc'})
         if discounts:
             for discount in discounts:
@@ -10621,7 +10621,7 @@ class PickupScreen(Screen):
                 if self.card_id == card['card_id']:
                     profile_id = card['profile_id']
                     payment_id = card['payment_id']
-                    result = Card().validate_card(auth_user.company_id, profile_id, payment_id)
+                    result = Card().validate_card(vars.COMPANY_ID, profile_id, payment_id)
                     self.card_box.ids.card_status.text = "Passed" if result['status'] else "Failed"
                     self.card_box.ids.card_message.text = result['message']
         else:
@@ -10639,7 +10639,7 @@ class PickupScreen(Screen):
     def finish_transaction(self, print, *args, **kwargs):
 
         transaction = Transaction()
-        transaction.company_id = auth_user.company_id
+        transaction.company_id = vars.COMPANY_ID
         transaction.customer_id = vars.CUSTOMER_ID
         transaction.schedule_id = None
         transaction.pretax = self.total_subtotal
@@ -10798,7 +10798,7 @@ class PickupScreen(Screen):
             if vars.EPSON:
                 pr = Printer()
                 companies = Company()
-                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+                comps = companies.where({'company_id': vars.COMPANY_ID}, set=True)
 
                 if comps:
                     for company in comps:
@@ -11114,7 +11114,7 @@ class PrinterScreen(Screen):
 
         # update saved printers
         printers = Printer()
-        prs = printers.where({'company_id': auth_user.company_id})
+        prs = printers.where({'company_id': vars.COMPANY_ID})
         if prs:
             idx = 0
             for printer in prs:
@@ -11333,7 +11333,7 @@ class PrinterScreen(Screen):
 
     def add_printer(self):
         printer = Printer()
-        printer.company_id = auth_user.company_id
+        printer.company_id = vars.COMPANY_ID
         printer.name = self.printer_name.text
         printer.model = self.printer_model_number.text
         printer.nick_name = self.printer_nick_name.text
@@ -12280,7 +12280,7 @@ class SearchScreen(Screen):
 
     def quick_popup(self, *args, **kwargs):
         # setup calendar default date
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
 
@@ -12324,7 +12324,7 @@ class SearchScreen(Screen):
 
     def make_calendar(self, *args, **kwargs):
 
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
         turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
@@ -12384,7 +12384,7 @@ class SearchScreen(Screen):
         self.calendar_layout = GridLayout(cols=7,
                                           rows=8,
                                           size_hint=(1, 0.9))
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today_date = datetime.datetime.today()
         today_string = today_date.strftime('%Y-%m-%d 00:00:00')
         check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
@@ -12409,7 +12409,7 @@ class SearchScreen(Screen):
     def create_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today_date = datetime.datetime.today()
         today_string = today_date.strftime('%Y-%m-%d 00:00:00')
         check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
@@ -12506,7 +12506,7 @@ class SearchScreen(Screen):
         self.create_calendar_table()
 
     def select_due_date(self, selected_date, *args, **kwargs):
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
 
         dow = int(selected_date.strftime("%w"))
         turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
@@ -12551,7 +12551,7 @@ class SearchScreen(Screen):
     def quick_print_store_copy(self, *args, **kwargs):
         # save the invoice
         invoices = Invoice()
-        invoices.company_id = auth_user.company_id
+        invoices.company_id = vars.COMPANY_ID
         invoices.quantity = self.quick_box.ids.quick_count.text
         invoices.pretax = 0
         invoices.tax = 0
@@ -12573,7 +12573,7 @@ class SearchScreen(Screen):
             if vars.EPSON:
                 pr = Printer()
                 companies = Company()
-                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+                comps = companies.where({'company_id': vars.COMPANY_ID}, set=True)
 
                 if comps:
                     for company in comps:
@@ -12720,7 +12720,7 @@ class SearchScreen(Screen):
     def quick_print_both(self, *args, **kwargs):
         # save the invoice
         invoices = Invoice()
-        invoices.company_id = auth_user.company_id
+        invoices.company_id = vars.COMPANY_ID
         invoices.quantity = self.quick_box.ids.quick_count.text
         invoices.pretax = 0
         invoices.tax = 0
@@ -12742,7 +12742,7 @@ class SearchScreen(Screen):
             if vars.EPSON:
                 pr = Printer()
                 companies = Company()
-                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+                comps = companies.where({'company_id': vars.COMPANY_ID}, set=True)
 
                 if comps:
                     for company in comps:
@@ -12950,7 +12950,7 @@ class SearchScreen(Screen):
             if vars.EPSON:
                 pr = Printer()
                 companies = Company()
-                comps = companies.where({'company_id': auth_user.company_id}, set=True)
+                comps = companies.where({'company_id': vars.COMPANY_ID}, set=True)
 
                 if comps:
                     for company in comps:
@@ -13341,7 +13341,7 @@ class SearchScreen(Screen):
         if vars.EPSON:
             pr = Printer()
             companies = Company()
-            comps = companies.where({'company_id': auth_user.company_id}, set=True)
+            comps = companies.where({'company_id': vars.COMPANY_ID}, set=True)
 
             if comps:
                 for company in comps:
@@ -14165,13 +14165,13 @@ A{c},20,1,1,1,1,N,"{tag}"
         vars.PAYMENT_ID = None
         pro = Profile()
         profiles = pro.where({'user_id': vars.CUSTOMER_ID,
-                              'company_id': auth_user.company_id})
+                              'company_id': vars.COMPANY_ID})
         if profiles:
             for profile in profiles:
                 vars.PROFILE_ID = profile['profile_id']
 
             cards_db = Card()
-            self.cards = cards_db.collect(auth_user.company_id, vars.PROFILE_ID)
+            self.cards = cards_db.collect(vars.COMPANY_ID, vars.PROFILE_ID)
         else:
             self.cards = False
         self.card_string = []
@@ -14362,7 +14362,7 @@ A{c},20,1,1,1,1,N,"{tag}"
 
     def get_dropoff_dates(self, *args, **kwargs):
         if self.address_id:
-            store_hours = Company().get_store_hours(auth_user.company_id)
+            store_hours = Company().get_store_hours(vars.COMPANY_ID)
             today = datetime.datetime.today()
             dow = int(datetime.datetime.today().strftime("%w"))
             turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
@@ -14453,7 +14453,7 @@ A{c},20,1,1,1,1,N,"{tag}"
 
     def get_pickup_dates(self, *args, **kwargs):
         if self.address_id:
-            store_hours = Company().get_store_hours(auth_user.company_id)
+            store_hours = Company().get_store_hours(vars.COMPANY_ID)
             today = datetime.datetime.today()
             dow = int(datetime.datetime.today().strftime("%w"))
             turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
@@ -14596,7 +14596,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         else:
             # create a new schedule instance
             schedules = Schedule()
-            schedules.company_id = auth_user.company_id
+            schedules.company_id = vars.COMPANY_ID
             schedules.customer_id = vars.CUSTOMER_ID
             schedules.card_id = self.card_id
             schedules.pickup_delivery_id = self.pickup_delivery_id
@@ -14915,13 +14915,13 @@ A{c},20,1,1,1,1,N,"{tag}"
                     self.main_popup.dismiss()
                     pro = Profile()
                     profiles = pro.where({'user_id': vars.CUSTOMER_ID,
-                                          'company_id': auth_user.company_id})
+                                          'company_id': vars.COMPANY_ID})
                     if profiles:
                         for profile in profiles:
                             vars.PROFILE_ID = profile['profile_id']
 
                         cards_db = Card()
-                        self.cards = cards_db.collect(auth_user.company_id, vars.PROFILE_ID)
+                        self.cards = cards_db.collect(vars.COMPANY_ID, vars.PROFILE_ID)
                     else:
                         self.cards = False
                     self.card_string = []
@@ -14999,7 +14999,7 @@ A{c},20,1,1,1,1,N,"{tag}"
 
     def add_new_address(self, *args, **kwargs):
         addresses = Address()
-        addresses.company_id = auth_user.company_id
+        addresses.company_id = vars.COMPANY_ID
         addresses.user_id = vars.CUSTOMER_ID
         addresses.name = self.name_input.text
         addresses.street = self.street_input.text
@@ -15043,7 +15043,7 @@ A{c},20,1,1,1,1,N,"{tag}"
     def create_dropoff_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         # schedule dates
         addresses = Address().where({'address_id': self.address_id})
         zipcode = False
@@ -15143,7 +15143,7 @@ A{c},20,1,1,1,1,N,"{tag}"
     def create_pickup_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(auth_user.company_id)
+        store_hours = Company().get_store_hours(vars.COMPANY_ID)
         # schedule dates
         addresses = Address().where({'address_id': self.address_id})
         zipcode = False
@@ -16393,7 +16393,7 @@ class TaxesScreen(Screen):
         SCHEDULER.remove_all_jobs()
         taxes = Tax()
         tax_rate = None
-        tax_data = taxes.where({'company_id': auth_user.company_id, 'ORDER_BY': 'id asc', 'LIMIT': 1})
+        tax_data = taxes.where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'id asc', 'LIMIT': 1})
         if tax_data:
             for tax in tax_data:
                 tax_rate = tax['rate']
@@ -16409,7 +16409,7 @@ class TaxesScreen(Screen):
             self.tax_rate_input.hint_text = ""
             self.tax_rate_input.hint_text_color = DEFAULT_COLOR
             taxes = Tax()
-            taxes.company_id = auth_user.company_id
+            taxes.company_id = vars.COMPANY_ID
             taxes.rate = tax_rate
             taxes.status = 1
             if taxes.add():
