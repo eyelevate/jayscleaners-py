@@ -2695,7 +2695,7 @@ GridLayout:
                                         }
 
             # save the invoices to the db and return the proper invoice_ids
-            run_sync = threading.Thread(target=SYNC.run_sync)
+            run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
             try:
                 run_sync.start()
             finally:
@@ -4931,7 +4931,7 @@ GridLayout:
                         new_invoice_item.add()
             self.update_invoice()
         time.sleep(1)
-        run_sync = threading.Thread(target=SYNC.run_sync)
+        run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
         try:
             run_sync.start()
         finally:
@@ -5967,7 +5967,7 @@ class EditCustomerScreen(Screen):
                 # where = {'customer_id': vars.CUSTOMER_ID}
                 # data = {'mark': updated_mark}
                 # marks.put(where=where, data=data)
-                run_sync = threading.Thread(target=SYNC.run_sync)
+                run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
                 try:
                     run_sync.start()
                 finally:
@@ -9377,8 +9377,8 @@ class NewCustomerScreen(Screen):
                 customers.city = Job.make_no_whitespace(data=self.city.text)
                 customers.zipcode = Job.make_no_whitespace(data=self.zipcode.text)
             if customers.add():
-                run_sync = threading.Thread(target=SYNC.run_sync)
-                run_sync_2 = threading.Thread(target=SYNC.run_sync)
+                run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
+                run_sync_2 = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
                 try:
                     run_sync.start()
                 finally:
@@ -10141,7 +10141,7 @@ class PickupScreen(Screen):
                     self.run_edit_task(grp)
 
             # save to server
-            run_sync = threading.Thread(target=SYNC.run_sync)
+            run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
             try:
                 run_sync.start()
             finally:
@@ -10713,7 +10713,7 @@ class PickupScreen(Screen):
             customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'credits': new_credits,
                                                                      'account_total': new_account_total})
 
-            run_sync = threading.Thread(target=SYNC.run_sync)
+            run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
             try:
                 run_sync.start()
             finally:
@@ -10726,7 +10726,7 @@ class PickupScreen(Screen):
                     for invoice_id in self.selected_invoices:
                         invoices.put(where={'invoice_id': invoice_id},
                                      data={'status': 5, 'transaction_id': transaction_id})
-                    run_sync_2 = threading.Thread(target=SYNC.run_sync)
+                    run_sync_2 = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
                     time.sleep(1)
                     try:
                         run_sync_2.start()
@@ -10763,7 +10763,7 @@ class PickupScreen(Screen):
                     customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'credits': new_credits})
 
                 # update to server
-                run_sync = threading.Thread(target=SYNC.run_sync)
+                run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
 
                 try:
                     run_sync.start()
@@ -10786,7 +10786,7 @@ class PickupScreen(Screen):
                                 invoices.put(where={'invoice_id': invoice_id},
                                              data={'status': 5, 'transaction_id': int(transaction_id)})
                             time.sleep(1)
-                            run_sync_2 = threading.Thread(target=SYNC.run_sync)
+                            run_sync_2 = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
                             try:
                                 run_sync_2.start()
                             finally:
@@ -11541,7 +11541,7 @@ class RackScreen(Screen):
                                    'status': 2})  # rack and update status
 
             # update db
-            run_sync = threading.Thread(target=SYNC.run_sync)
+            run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
             try:
                 run_sync.start()
             finally:
@@ -11775,7 +11775,7 @@ class SearchScreen(Screen):
         self.search.focus = True
 
     def sync_db(self):
-        run_sync = threading.Thread(target=SYNC.run_sync)
+        run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
         try:
             run_sync.start()
         finally:
@@ -12562,7 +12562,7 @@ class SearchScreen(Screen):
         invoices.memo = self.quick_box.ids.quick_invoice_memo.text
         if invoices.add():
             # save the invoices to the db and return the proper invoice_ids
-            run_sync = threading.Thread(target=SYNC.run_sync)
+            run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
             try:
                 run_sync.start()
             finally:
@@ -12731,7 +12731,7 @@ class SearchScreen(Screen):
         invoices.memo = self.quick_box.ids.quick_invoice_memo.text
         if invoices.add():
             # save the invoices to the db and return the proper invoice_ids
-            run_sync = threading.Thread(target=SYNC.run_sync)
+            run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
             try:
                 run_sync.start()
             finally:
@@ -14618,7 +14618,7 @@ A{c},20,1,1,1,1,N,"{tag}"
             if schedules.add():
                 self.delivery_popup.dismiss()
                 # sync db
-                run_sync = threading.Thread(target=SYNC.run_sync)
+                run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
                 try:
                     run_sync.start()
                 finally:
@@ -14907,7 +14907,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                 # Beep Sound
                 sys.stdout.write('\a')
                 sys.stdout.flush()
-                run_sync = threading.Thread(target=SYNC.run_sync)
+                run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
                 try:
                     run_sync.start()
                 finally:
@@ -15012,7 +15012,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         addresses.concierge_number = self.concierge_number_input.text
         addresses.status = 1
         if addresses.add():
-            run_sync = threading.Thread(target=SYNC.run_sync)
+            run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
             try:
                 run_sync.start()
             finally:
@@ -15640,7 +15640,7 @@ A{c},20,1,1,1,1,N,"{tag}"
             added_credits = float(self.credit_amount.text) if self.credit_amount.text else 0
             new_credits = old_credit + added_credits
             if customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'credits': new_credits}):
-                run_sync = threading.Thread(target=SYNC.run_sync)
+                run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
                 try:
                     run_sync.start()
                 finally:
@@ -15991,7 +15991,7 @@ A{c},20,1,1,1,1,N,"{tag}"
 
                 update = customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'account_total': new_account_total})
                 if update:
-                    run_sync = threading.Thread(target=SYNC.run_sync)
+                    run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
                     try:
                         run_sync.start()
                     finally:
@@ -16361,7 +16361,7 @@ class SearchResultsScreen(Screen):
 
     def customer_select_sync(self, customer_id, *args, **kwargs):
         # sync db
-        run_sync = threading.Thread(target=SYNC.run_sync)
+        run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
         try:
             run_sync.start()
         finally:
