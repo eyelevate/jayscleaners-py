@@ -111,6 +111,38 @@
                                 pos: self.pos
                                 size: self.size
                     Label:
+                        id: discount_label
+                        markup: True
+                        size_hint_x: 0.7
+                        text: '[ref=discount_set][color=FF0000][b]Discount[/b][/color][/ref]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'20sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: total_discount
+                        markup: True
+                        size_hint_x: 0.3
+                        text: '[color=FF0000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size: '17sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
                         markup: True
                         size_hint_x: 0.7
                         text: '[color=000000][b]Tax[/b][/color]'
@@ -203,38 +235,7 @@
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
-                    Label:
-                        id: discount_label
-                        markup: True
-                        size_hint_x: 0.7
-                        text: '[ref=discount_set][color=FF0000][b]Discount[/b][/color][/ref]'
-                        text_size: self.size
-                        halign: 'right'
-                        valign: 'middle'
-                        font_size:'20sp'
-                        padding_x: '20sp'
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    Label:
-                        id: total_discount
-                        markup: True
-                        size_hint_x: 0.3
-                        text: '[color=FF0000]$0.00[/color]'
-                        text_size: self.size
-                        halign: 'left'
-                        valign: 'middle'
-                        font_size: '17sp'
-                        padding_x: '20sp'
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
+
                     Label:
                         markup: True
                         size_hint_x: 0.7

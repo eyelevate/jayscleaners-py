@@ -1290,6 +1290,7 @@ class DropoffScreen(Screen):
     memo_list = []
     colors_table_main = ObjectProperty(None)
     customer_id_backup = None
+    discount_id = None
 
     def reset(self):
         # Pause Schedule
@@ -1336,6 +1337,7 @@ class DropoffScreen(Screen):
         self.discount = 0
         self.total = 0
         self.adjust_price = 0
+        self.discount_id = None
         self.customer_id_backup = vars.CUSTOMER_ID
         self.adjust_price_list = []
         vars.ITEM_ID = None
@@ -1705,6 +1707,9 @@ GridLayout:
         self.tax = 0
         self.discount = 0
         self.total = 0
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+
         # calculate totals
         if len(self.invoice_list):
             for item_key, item_values in self.invoice_list.items():
@@ -1712,9 +1717,24 @@ GridLayout:
                     self.quantity += 1
                     self.tags += int(item['tags']) if item['tags'] else 1
                     self.subtotal += float(item['item_price']) if item['item_price'] else 0
-            self.tax = self.subtotal * vars.TAX_RATE
-            self.discount = 0
-            self.total = self.subtotal + self.tax - self.discount
+                    # calculate discounts
+                    discounts = Discount().where({'company_id': vars.COMPANY_ID,
+                                                  'start_date': {'<=': '"{}"'.format(now)},
+                                                  'end_date': {'>=': '"{}"'.format(now)},
+                                                  'inventory_id':item['inventory_id']});
+                    if discounts:
+                        for discount in discounts:
+                            discount_rate = float(discount['rate'])
+                            discount_price = float(discount['discount'])
+                            self.discount_id = discount['discount_id']
+                            if discount_rate > 0:
+                                self.discount += (float(item['item_price'] * discount_rate))
+                            elif discount_rate is 0 and discount_price > 0:
+                                self.discount += (float(item['item_price']) - discount_price)
+                            else:
+                                self.discount += 0
+            self.tax = (self.subtotal - self.discount) * vars.TAX_RATE
+            self.total = (self.subtotal - self.discount) + self.tax
             self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
             self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
             self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
@@ -2643,6 +2663,8 @@ GridLayout:
                         new_invoice.customer_id = self.customer_id_backup
                         new_invoice.quantity = save_totals[inventory_id]['quantity']
                         new_invoice.pretax = float('%.2f' % (save_totals[inventory_id]['subtotal']))
+                        if self.discount_id is not None:
+                            new_invoice.discount_id = self.discount_id
                         new_invoice.tax = float('%.2f' % (tax_amount))
                         new_invoice.total = float('%.2f' % (total))
                         new_invoice.due_date = '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))
@@ -3431,6 +3453,7 @@ class EditInvoiceScreen(Screen):
     customer_id_backup = None
     final_total = 0
     invoice_id = None
+    discount_id = None
 
     def reset(self):
         # Pause Schedule
@@ -3443,6 +3466,7 @@ class EditInvoiceScreen(Screen):
         self.summary_table.clear_widgets()
         self.colors_table_main.clear_widgets()
         self.final_total = 0
+        self.discount_id = None
         store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
@@ -3951,6 +3975,8 @@ GridLayout:
         self.tax = 0
         self.discount = 0
         self.total = 0
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
         # calculate totals
         tax_rate = float(vars.TAX_RATE)
@@ -3960,21 +3986,40 @@ GridLayout:
                     self.quantity += 1
                     self.tags += int(item['tags']) if item['tags'] else 1
                     self.subtotal += float(item['item_price']) if item['item_price'] else 0
+                    # calculate discounts
+                    discounts = Discount().where({'company_id': vars.COMPANY_ID,
+                                                  'start_date': {'<=': '"{}"'.format(now)},
+                                                  'end_date': {'>=': '"{}"'.format(now)},
+                                                  'inventory_id': item['inventory_id']});
+                    if discounts:
+                        for discount in discounts:
+                            discount_rate = float(discount['rate'])
+                            discount_price = float(discount['discount'])
+                            self.discount_id = discount['discount_id']
+                            if discount_rate > 0:
+                                self.discount += (float(item['item_price'] * discount_rate))
+                            elif discount_rate is 0 and discount_price > 0:
+                                self.discount += (float(item['item_price'] - discount_price))
+                            else:
+                                self.discount += 0
 
             tax = float(float(self.subtotal) * float(tax_rate))
-            discount = 0
+
             total = float(self.subtotal + tax)
             self.subtotal = "{0:.2f}".format(self.subtotal)
             self.tax = "{0:.2f}".format(tax)
             self.total = "{0:.2f}".format(total)
             self.final_total = "{0:.2f}".format(total)
 
+            self.tax = (float(self.subtotal) - float(self.discount)) * float(tax_rate)
+            self.total = (float(self.subtotal) - float(self.discount)) + float(self.tax)
             self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
             self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
             self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
-            self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(tax))
+            self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
             self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
-            self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(total))
+            self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
+
 
     def make_memo_color(self):
 
@@ -5423,7 +5468,7 @@ GridLayout:
                 inv_save.pretax = '{0:.2f}'.format(float(self.subtotal))
                 inv_save.tax = '{0:.2f}'.format(float(self.tax))
                 inv_save.reward_id = inv['reward_id']
-                inv_save.discount_id = inv['discount_id']
+                inv_save.discount_id = self.discount_id if self.discount_id is not None else inv['discount_id']
                 inv_save.rack = inv['rack']
                 inv_save.rack_date = inv['rack_date']
                 inv_save.due_date = self.due_date
@@ -9797,6 +9842,8 @@ class PickupScreen(Screen):
                         quantity += invoice['quantity']
                         subtotal += invoice['pretax']
                         tax += invoice['tax']
+                        if invoice['discount_id'] is not None:
+                            self.discount_id = invoice['discount_id']
 
                 # get discounted totals
                 if self.discount_id:
@@ -9815,13 +9862,15 @@ class PickupScreen(Screen):
                                                                      'item_id': discount_item_id})
                             if invoice_items:
                                 for invoice_item in invoice_items:
-                                    discount_invoice_total += invoice_item['total']
+                                    discount_invoice_total += invoice_item['pretax']
                             if discount_type is 1:
                                 discount_rate = discount['rate']
-                                self.discount_total += float('%0.2f' % (discount_invoice_total * discount_rate))
+                                self.discount_total += float(discount_invoice_total) * float(discount_rate)
                             else:
                                 self.discount_total += float('%0.2f' % discount['price'])
-        self.discount_total = float(self.discount_total)
+        self.discount_total = float('%0.2f' % self.discount_total)
+        print('{} - {} - {}'.format(discount_invoice_total, discount_rate,self.discount_total))
+
         self.amount_tendered = total
         self.total_amount = total
         self.total_subtotal = subtotal
@@ -9830,7 +9879,7 @@ class PickupScreen(Screen):
         if self.credits or self.discount_total:
 
             self.total_due = 0 if self.credits >= self.total_amount else float("%0.2f" % (
-                self.total_amount - self.credits - self.discount_total))
+                self.total_amount - self.credits))
         else:
             self.total_due = float('%0.2f' % (self.total_amount))
 
