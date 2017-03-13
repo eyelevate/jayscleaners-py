@@ -5573,6 +5573,7 @@ class EditCustomerScreen(Screen):
         self.new_customer_panel.switch_to(header=self.tab_new_customer)
 
     def load(self):
+        self.reset()
         if vars.CUSTOMER_ID:
             customers = User()
             customers.user_id = vars.CUSTOMER_ID
