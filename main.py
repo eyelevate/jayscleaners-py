@@ -5509,6 +5509,8 @@ class EditCustomerScreen(Screen):
     delete_customer_spinner = ObjectProperty(None)
     delete_customer = None
     popup = Popup()
+    tab_new_customer = ObjectProperty(None)
+    new_customer_panel = ObjectProperty(None)
 
     def reset(self):
         # Pause Schedule
@@ -5566,6 +5568,9 @@ class EditCustomerScreen(Screen):
         self.delete_customer = False
         # reset spinner values
         self.marks_table.clear_widgets()
+        # back to main tab
+
+        self.new_customer_panel.switch_to(header=self.tab_new_customer)
 
     def load(self):
         if vars.CUSTOMER_ID:
