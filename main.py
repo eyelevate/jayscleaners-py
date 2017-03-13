@@ -9190,6 +9190,8 @@ class NewCustomerScreen(Screen):
     concierge_name = ObjectProperty(None)
     concierge_number = ObjectProperty(None)
     special_instructions = ObjectProperty(None)
+    new_customer_panel = ObjectProperty(None)
+    tab_new_customer = ObjectProperty(None)
 
     main_grid = ObjectProperty(None)
 
@@ -9271,6 +9273,9 @@ class NewCustomerScreen(Screen):
         self.main_grid.add_widget(self.shirts_preference)
         self.main_grid.add_widget(Label(text=" "))
         self.main_grid.add_widget(Label(text=" "))
+        # reset tab cursor
+        self.new_customer_panel.switch_to(self.tab_new_customer)
+        self.phone.focus = True
 
     def select_shirts_finish(self, *args, **kwargs):
         selected_value = self.shirts_finish.text
