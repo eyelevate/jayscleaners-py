@@ -9880,8 +9880,6 @@ class PickupScreen(Screen):
                             else:
                                 self.discount_total += float('%0.2f' % discount['price'])
         self.discount_total = float('%0.2f' % self.discount_total)
-        print('{} - {} - {}'.format(discount_invoice_total, discount_rate,self.discount_total))
-
         self.amount_tendered = total
         self.total_amount = total
         self.total_subtotal = subtotal
