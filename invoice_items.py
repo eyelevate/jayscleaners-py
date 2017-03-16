@@ -3,6 +3,9 @@ import time
 import sqlite3
 from model import *
 from inventory_items import InventoryItem
+import json
+import urllib
+from urllib import error, request, parse
 
 unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -362,6 +365,44 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_items_id,
             'Complete': 13
         }
         return list[location]
+
+    def get_tags(self, invoice_id):
+        # attempt to connect to server
+        url = 'http://www.jayscleaners.com/admins/api/invoice-items-data'
+        data = parse.urlencode({'id': invoice_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+
+            return data_1
+
+        except urllib.error.URLError as e:
+            return False
+
+        return False
+
+    def set_barcodes(self, invoice_id, company_id, data):
+        encoded_data = json.dumps(data)
+        if data:
+            # attempt to connect to server
+            url = 'http://www.jayscleaners.com/admins/api/set-barcode'
+            data = parse.urlencode({'invoice_id': invoice_id,
+                                    'company_id': company_id,
+                                    'data': encoded_data}).encode('utf-8')
+            req = request.Request(url=url, data=data)  # this will make the method "POS
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not 400:
+                return True
+
+        except urllib.error.URLError as e:
+            return False
+
+        return False
 
     def close_connection(self):
         self.c.close()

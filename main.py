@@ -11721,6 +11721,9 @@ class SearchScreen(Screen):
     background_color = None
     background_rgba = None
     status = None
+    barcode_layout = ObjectProperty(None)
+    barcode_save_data = None
+    barcode_input = ObjectProperty(None)
 
     def reset(self, *args, **kwargs):
         # Resume auto sync
@@ -11783,7 +11786,7 @@ class SearchScreen(Screen):
         self.background_color = None
         self.background_rgba = None
         self.status = None
-
+        self.barcode_save_data = {}
         if vars.SEARCH_RESULTS_STATUS:
             self.edit_invoice_btn.disabled = False if vars.INVOICE_ID is not None else True
             data = {'user_id': vars.CUSTOMER_ID}
@@ -13929,6 +13932,78 @@ class SearchScreen(Screen):
             # Beep Sound
             sys.stdout.write('\a')
             sys.stdout.flush()
+
+    def barcode_popup(self):
+        #reset data
+        self.barcode_save_data = {}
+
+        # Pause Schedule
+        SCHEDULER.remove_all_jobs()
+        if vars.INVOICE_ID is not None and vars.INVOICE_ID > 0:
+            self.main_popup.title = "Setup Barcode to Items"
+            layout = BoxLayout(orientation="vertical")
+
+            self.barcode_layout = Factory.ScrollGrid(size_hint=(1,0.8))
+            self.barcode_layout.ids.main_table.cols = 2
+            th1 = Factory.TagsGridHeaders(text="[color=#000000]Item[/color]")
+            th2 = Factory.TagsGridHeaders(text="[color=#000000]Barcode[/color]")
+            #create table headers
+            self.barcode_layout.ids.main_table.add_widget(th1)
+            self.barcode_layout.ids.main_table.add_widget(th2)
+            #create tbody rows
+            tags = InvoiceItem().get_tags(vars.INVOICE_ID)
+            if tags:
+                idx = 0
+                for tag in tags:
+                    idx += 1
+                    if tag['color'] is not None and tag['memo'] is not None:
+                        color_description = "{} - {}".format(tag['color'],tag['memo'])
+                    elif tag['color'] is not None and tag['memo'] is None:
+                        color_description = "{}".format(tag['color'])
+                    elif tag['color'] is None and tag['memo'] is not None:
+                        color_description = "{}".format(tag['memo'])
+                    else:
+                        color_description = ""
+                    item_description = "{} - {}".format(tag['id'],tag['item_name'])
+
+                    td1 = Factory.ReadOnlyLabel(text="{} : {}".format(item_description,color_description))
+                    self.barcode_layout.ids.main_table.add_widget(td1)
+                    barcode_input = TextForm(multiline= False,
+                                             write_tab=False,
+                                             text= '' if tag['barcode'] is '' else "{}".format(tag['barcode']))
+
+                    barcode_input.bind(on_text_validate=partial(self.update_barcode,tag['id']))
+                    if idx is 1:
+                        barcode_input.focus=True
+                    self.barcode_layout.ids.main_table.add_widget(barcode_input)
+            inner_layout_3 = BoxLayout(orientation="horizontal",
+                                       size_hint=(1,0.1))
+            cancel_button = Button(text="cancel",
+                                   on_release=self.main_popup.dismiss)
+            save_button = Button(text="save",
+                                 on_release=self.save_barcodes)
+            inner_layout_3.add_widget(cancel_button)
+            inner_layout_3.add_widget(save_button)
+
+            layout.add_widget(self.barcode_layout)
+            layout.add_widget(inner_layout_3)
+            self.main_popup.content = layout
+            self.main_popup.open()
+
+
+
+    def update_barcode(self, item_id, barcode, *args, **kwargs):
+        self.barcode_save_data[item_id] = barcode.text
+
+    def save_barcodes(self, *args, **kwargs):
+        # save
+        t1 = Thread(target=InvoiceItem().set_barcodes, args=[vars.INVOICE_ID,vars.COMPANY_ID,self.barcode_save_data])
+        t1.start()
+
+        self.main_popup.dismiss()
+        self.barcode_save_data = {}
+        vars.SEARCH_RESULTS_STATUS = True
+        self.reset()
 
     def label_popup(self):
         popup = Popup()
@@ -16651,6 +16726,22 @@ class UpdateScreen(Screen):
                     sys.stdout.flush()
 
         pass
+
+
+class TextForm(TextInput):
+
+    def __init__(self, **kwargs):
+        super(TextForm, self).__init__(**kwargs)
+        self.bind(on_text_validate=self.next_on_validate)
+
+    @staticmethod
+    def next_on_validate(instance):
+        """Change the focus when Enter is pressed.
+        """
+        next  = instance._get_focus_next('focus_next')
+        if next:
+            instance.focus = False
+            next.focus = True
 
 
 class ScreenManagement(ScreenManager):
