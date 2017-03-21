@@ -9776,7 +9776,12 @@ class PickupScreen(Screen):
         if invoice_data:
             for invoice in invoice_data:
                 invoice_id = invoice['invoice_id']
-                quantity = int(invoice['quantity'])
+                quantity = 1
+                try:
+                    quantity = int(invoice['quantity'])
+                except ValueError:
+                    quantity = int(round(invoice['quantity']))
+                    
                 subtotal = vars.us_dollar(invoice['pretax'])
                 tax = vars.us_dollar(invoice['tax'])
                 total = vars.us_dollar(invoice['total'])
