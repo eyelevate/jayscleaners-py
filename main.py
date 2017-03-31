@@ -2717,7 +2717,7 @@ GridLayout:
                                             'item_price': item_price,
                                             'qty': 1,
                                             'memos': [item_memo] if item_memo else [],
-                                            'colors': colors[item_id]
+                                            'colors': colors[item_id] if item_id in colors else []
                                         }
 
             # save the invoices to the db and return the proper invoice_ids
@@ -4959,7 +4959,7 @@ GridLayout:
                                 'item_price': item_price,
                                 'qty': 1,
                                 'memos': [item_memo] if item_memo else [],
-                                'colors': colors[item_id]
+                                'colors': colors[item_id] if item_id in colors else []
                             }
                     if 'invoice_items_id' in iivalue:
                         invoice_items.put(where={'invoice_items_id': iivalue['invoice_items_id']},
