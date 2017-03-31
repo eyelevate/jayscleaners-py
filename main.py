@@ -2705,7 +2705,10 @@ GridLayout:
                                     if item_id in print_invoice[last_insert_id]:
                                         print_invoice[last_insert_id][item_id]['item_price'] += item_price
                                         print_invoice[last_insert_id][item_id]['qty'] += 1
-                                        print_invoice[last_insert_id][item_id]['colors'] = colors[item_id]
+                                        if item_id in colors:
+                                            print_invoice[last_insert_id][item_id]['colors'] = colors[item_id]
+                                        else:
+                                            print_invoice[last_insert_id][item_id]['colors'] = []
                                         if item_memo:
                                             print_invoice[last_insert_id][item_id]['memos'].append(item_memo)
                                     else:
@@ -2766,7 +2769,10 @@ GridLayout:
                                         print_sync_invoice[new_invoice_id][item_id]['qty'] += 1
                                         if item_memo:
                                             print_sync_invoice[new_invoice_id][item_id]['memos'].append(item_memo)
-                                        print_sync_invoice[new_invoice_id][item_id]['colors'] = colors[item_id]
+                                        if item_id in colors:
+                                            print_sync_invoice[new_invoice_id][item_id]['colors'] = colors[item_id]
+                                        else:
+                                            print_sync_invoice[new_invoice_id][item_id]['colors'] = []
                                     else:
                                         print_sync_invoice[new_invoice_id][item_id] = {
                                             'item_id': item_id,
@@ -4947,7 +4953,10 @@ GridLayout:
                         if item_id in print_invoice[self.invoice_id]:
                             print_invoice[self.invoice_id][item_id]['item_price'] += item_price
                             print_invoice[self.invoice_id][item_id]['qty'] += 1
-                            print_invoice[self.invoice_id][item_id]['colors'] = colors[item_id]
+                            if item_id in colors:
+                                print_invoice[self.invoice_id][item_id]['colors'] = colors[item_id]
+                            else:
+                                print_invoice[self.invoice_id][item_id]['colors'] = []
                             if item_memo:
                                 print_invoice[self.invoice_id][item_id]['memos'].append(item_memo)
                         else:
@@ -7144,7 +7153,10 @@ class HistoryScreen(Screen):
                                 print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
                                 if item_memo:
                                     print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
-                                print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors[item_id]
+                                if item_id in colors:
+                                    print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors[item_id]
+                                else:
+                                    print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = []
                             else:
                                 print_sync_invoice[vars.INVOICE_ID][item_id] = {
                                     'item_id': item_id,
@@ -10982,7 +10994,10 @@ class PickupScreen(Screen):
                                         print_sync_invoice[invoice_id][item_id]['qty'] += 1
                                         if item_memo:
                                             print_sync_invoice[invoice_id][item_id]['memos'].append(item_memo)
-                                        print_sync_invoice[invoice_id][item_id]['colors'] = colors[item_id]
+                                        if item_id in colors:
+                                            print_sync_invoice[invoice_id][item_id]['colors'] = colors[item_id]
+                                        else:
+                                            print_sync_invoice[invoice_id][item_id]['colors'] = []
                                     else:
                                         print_sync_invoice[invoice_id][item_id] = {
                                             'item_id': item_id,
@@ -13150,7 +13165,11 @@ class SearchScreen(Screen):
                                 print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
                                 if item_memo:
                                     print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
-                                print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors[item_id]
+
+                                if item_id in colors:
+                                    print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = colors[item_id]
+                                else:
+                                    print_sync_invoice[vars.INVOICE_ID][item_id]['colors'] = []
                             else:
                                 print_sync_invoice[vars.INVOICE_ID][item_id] = {
                                     'item_id': item_id,
