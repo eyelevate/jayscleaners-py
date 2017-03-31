@@ -2696,7 +2696,7 @@ GridLayout:
                                 item_type = save_invoice_items[last_insert_id][idx]['type']
                                 item_color = save_invoice_items[last_insert_id][idx]['color']
                                 item_memo = save_invoice_items[last_insert_id][idx]['memo']
-                                if item_color in colors:
+                                if item_color in colors[item_id]:
                                     colors[item_id][item_color] += 1
                                 else:
                                     colors[item_id][item_color] = 1
@@ -2753,7 +2753,7 @@ GridLayout:
                                 item_type = items['type']
                                 item_color = items['color']
                                 item_memo = items['memo']
-                                if item_color in colors:
+                                if item_color in colors[item_id]:
                                     colors[item_id][item_color] += 1
                                 else:
                                     colors[item_id][item_color] = 1
@@ -4936,7 +4936,7 @@ GridLayout:
                     item_type = iivalue['type']
                     item_color = iivalue['color']
                     item_memo = iivalue['memo']
-                    if item_color in colors:
+                    if item_color in colors[item_id]:
                         colors[item_id][item_color] += 1
                     else:
                         colors[item_id][item_color] = 1
@@ -7128,7 +7128,7 @@ class HistoryScreen(Screen):
                             customers.starch)) if laundry else item_name
 
                         item_color = invoice_item['color']
-                        if item_color in colors:
+                        if item_color in colors[item_id]:
                             colors[item_id][item_color] += 1
                         else:
                             colors[item_id][item_color] = 1
@@ -10965,7 +10965,7 @@ class PickupScreen(Screen):
                                     customers.starch)) if laundry else item_name
 
                                 item_color = invoice_item['color']
-                                if item_color in colors:
+                                if item_color in colors[item_id]:
                                     colors[item_id][item_color] += 1
                                 else:
                                     colors[item_id][item_color] = 1
@@ -13132,7 +13132,7 @@ class SearchScreen(Screen):
                             customers.starch)) if laundry else item_name
 
                         item_color = invoice_item['color']
-                        if item_color in colors:
+                        if item_color in colors[item_id]:
                             colors[item_id][item_color] += 1
                         else:
                             colors[item_id][item_color] = 1
