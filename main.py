@@ -3077,13 +3077,13 @@ GridLayout:
                                     pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                 height=1, density=5, invert=False, smooth=False,
                                                 flip=False))
-                                vars.EPSON.write('      {}\n'.format('/ '.join(item_memo)))
+                                vars.EPSON.write('     {}\n'.format('/ '.join(item_memo)))
                             if len(item_color_string) > 0:
                                 vars.EPSON.write(
                                     pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                 height=1, density=5, invert=False, smooth=False,
                                                 flip=False))
-                                vars.EPSON.write('      {}\n'.format(', '.join(item_color_string)))
+                                vars.EPSON.write('     {}\n'.format(', '.join(item_color_string)))
 
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
@@ -3224,13 +3224,13 @@ GridLayout:
                                         pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                     height=1,
                                                     density=5, invert=False, smooth=False, flip=False))
-                                    vars.EPSON.write('      {}\n'.format('/ '.join(item_memo)))
+                                    vars.EPSON.write('     {}\n'.format('/ '.join(item_memo)))
                                 if len(item_color_string) > 0:
                                     vars.EPSON.write(
                                         pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                     height=1,
                                                     density=5, invert=False, smooth=False, flip=False))
-                                    vars.EPSON.write('      {}\n'.format(', '.join(item_color_string)))
+                                    vars.EPSON.write('     {}\n'.format(', '.join(item_color_string)))
 
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
@@ -5241,12 +5241,12 @@ GridLayout:
                                     vars.EPSON.write(
                                         pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                     density=5, invert=False, smooth=False, flip=False))
-                                    vars.EPSON.write('      {}\n'.format('/ '.join(item_memo)))
+                                    vars.EPSON.write('     {}\n'.format('/ '.join(item_memo)))
                                 if len(item_color_string) > 0:
                                     vars.EPSON.write(
                                         pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                     density=5, invert=False, smooth=False, flip=False))
-                                    vars.EPSON.write('      {}\n'.format(', '.join(item_color_string)))
+                                    vars.EPSON.write('     {}\n'.format(', '.join(item_color_string)))
 
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
@@ -5379,12 +5379,12 @@ GridLayout:
                                     vars.EPSON.write(
                                         pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                     density=5, invert=False, smooth=False, flip=False))
-                                    vars.EPSON.write('      {}\n'.format('/ '.join(item_memo)))
+                                    vars.EPSON.write('     {}\n'.format('/ '.join(item_memo)))
                                 if len(item_color_string) > 0:
                                     vars.EPSON.write(
                                         pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                     density=5, invert=False, smooth=False, flip=False))
-                                    vars.EPSON.write('      {}\n'.format(', '.join(item_color_string)))
+                                    vars.EPSON.write('     {}\n'.format(', '.join(item_color_string)))
 
                         vars.EPSON.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
@@ -7227,12 +7227,12 @@ class HistoryScreen(Screen):
                                 vars.EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                              height=1,
                                                              density=5, invert=False, smooth=False, flip=False))
-                                vars.EPSON.write('      {}\n'.format('/ '.join(item_memo)))
+                                vars.EPSON.write('     {}\n'.format('/ '.join(item_memo)))
                             if len(item_color_string) > 0:
                                 vars.EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                              height=1,
                                                              density=5, invert=False, smooth=False, flip=False))
-                                vars.EPSON.write('      {}\n'.format(', '.join(item_color_string)))
+                                vars.EPSON.write('     {}\n'.format(', '.join(item_color_string)))
 
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
@@ -7336,13 +7336,13 @@ class HistoryScreen(Screen):
                                             pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                         height=1,
                                                         density=5, invert=False, smooth=False, flip=False))
-                                        vars.EPSON.write('      {}\n'.format('/ '.join(item_memo)))
+                                        vars.EPSON.write('     {}\n'.format('/ '.join(item_memo)))
                                     if len(item_color_string) > 0:
                                         vars.EPSON.write(
                                             pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                         height=1,
                                                         density=5, invert=False, smooth=False, flip=False))
-                                        vars.EPSON.write('      {}\n'.format(', '.join(item_color_string)))
+                                        vars.EPSON.write('     {}\n'.format(', '.join(item_color_string)))
 
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
@@ -11062,12 +11062,12 @@ class PickupScreen(Screen):
                                     vars.EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                                  height=1,
                                                                  density=5, invert=False, smooth=False, flip=False))
-                                    vars.EPSON.write('      {}\n'.format('/ '.join(item_memo)))
+                                    vars.EPSON.write('     {}\n'.format('/ '.join(item_memo)))
                                 if len(item_color_string) > 0:
                                     vars.EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                                  height=1,
                                                                  density=5, invert=False, smooth=False, flip=False))
-                                    vars.EPSON.write('      {}\n'.format(', '.join(item_color_string)))
+                                    vars.EPSON.write('     {}\n'.format(', '.join(item_color_string)))
 
                     vars.EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                  density=1,
@@ -13235,12 +13235,12 @@ class SearchScreen(Screen):
                                 vars.EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                              height=1,
                                                              density=5, invert=False, smooth=False, flip=False))
-                                vars.EPSON.write('      {}\n'.format('/ '.join(item_memo)))
+                                vars.EPSON.write('     {}\n'.format('/ '.join(item_memo)))
                             if len(item_color_string) > 0:
                                 vars.EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                              height=1,
                                                              density=5, invert=False, smooth=False, flip=False))
-                                vars.EPSON.write('      {}\n'.format(', '.join(item_color_string)))
+                                vars.EPSON.write('     {}\n'.format(', '.join(item_color_string)))
 
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
@@ -13346,13 +13346,13 @@ class SearchScreen(Screen):
                                             pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                         height=1,
                                                         density=5, invert=False, smooth=False, flip=False))
-                                        vars.EPSON.write('      {}\n'.format('/ '.join(item_memo)))
+                                        vars.EPSON.write('     {}\n'.format('/ '.join(item_memo)))
                                     if len(item_color_string) > 0:
                                         vars.EPSON.write(
                                             pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                         height=1,
                                                         density=5, invert=False, smooth=False, flip=False))
-                                        vars.EPSON.write('      {}\n'.format(', '.join(item_color_string)))
+                                        vars.EPSON.write('     {}\n'.format(', '.join(item_color_string)))
 
                             vars.EPSON.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
