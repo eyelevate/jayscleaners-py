@@ -5960,11 +5960,11 @@ class EditCustomerScreen(Screen):
             self.first_name.hint_text = "Last Name"
             self.first_name.hint_text_color = DEFAULT_COLOR
 
-        if self.email.text and not Job.check_valid_email(self.email.text):
-            errors += 1
-            self.email.text = ''
-            self.email.hint_text = 'Not valid'
-            self.email.hint_text_color = ERROR_COLOR
+        # if self.email.text and not Job.check_valid_email(self.email.text):
+        #     errors += 1
+        #     self.email.text = ''
+        #     self.email.hint_text = 'Not valid'
+        #     self.email.hint_text_color = ERROR_COLOR
 
         # Check if delivery is active
         if self.is_delivery.active:
