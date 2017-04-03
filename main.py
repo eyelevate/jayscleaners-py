@@ -3113,11 +3113,10 @@ GridLayout:
                     vars.EPSON.write('    DISCOUNT:')
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
-                    string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['discount']))
+                    string_length = len(vars.us_dollar(self.discount))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     vars.EPSON.write('{}({})\n'.format(' ' * string_offset,
-                                                     vars.us_dollar(
-                                                         print_sync_totals[invoice_id]['discount'])))
+                                                     vars.us_dollar(self.discount)))
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     vars.EPSON.write('         TAX:')
                     string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['tax']))
@@ -3267,10 +3266,9 @@ GridLayout:
                                                      vars.us_dollar(print_totals[invoice_id]['subtotal'])))
                     vars.EPSON.write('    DISCOUNT:')
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
-                    string_length = len(vars.us_dollar(print_totals[invoice_id]['discount']))
+                    string_length = len(vars.us_dollar(self.discount))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    vars.EPSON.write('{}{}\n'.format(' ' * string_offset,
-                                                     vars.us_dollar(print_totals[invoice_id]['discount'])))
+                    vars.EPSON.write('{}{}\n'.format(' ' * string_offset,vars.us_dollar(self.discount)))
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     vars.EPSON.write('         TAX:')
                     string_length = len(vars.us_dollar(print_totals[invoice_id]['tax']))
