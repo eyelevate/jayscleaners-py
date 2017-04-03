@@ -262,38 +262,6 @@
                         halign: 'right'
                         valign: 'middle'
                         markup: True
-                        text: "[color=000000][b]Tax[/b][/color]"
-                        font_size:'15sp'
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    Label:
-                        id: summary_tax_label
-                        size_hint_y: None
-                        size_hint_x: 0.2
-                        text_size: self.size
-                        halign: 'left'
-                        valign: 'middle'
-                        markup: True
-                        text: "[color=000000]$0.00[/color]"
-                        font_size:'15sp'
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    Label:
-                        padding_x:20
-                        size_hint_y: None
-                        size_hint_x: 0.8
-                        text_size: self.size
-                        halign: 'right'
-                        valign: 'middle'
-                        markup: True
                         text: "[color=000000][b]Discount[/b][/color]"
                         font_size:'15sp'
                         canvas.before:
@@ -318,6 +286,39 @@
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
+                    Label:
+                        padding_x:20
+                        size_hint_y: None
+                        size_hint_x: 0.8
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000][b]Tax[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: summary_tax_label
+                        size_hint_y: None
+                        size_hint_x: 0.2
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000]$0.00[/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+
                     Label:
                         padding_x:20
                         size_hint_y: None
