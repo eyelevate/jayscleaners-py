@@ -2646,6 +2646,7 @@ GridLayout:
                             save_totals[inventory_id]['tags'] += iivalue['tags']
                             save_totals[inventory_id]['subtotal'] += iivalue['item_price']
                             save_totals[inventory_id]['discount'] += 0
+
         if save_invoice:
             print_sync_invoice = {}  # if synced to server
             print_sync_totals = {}
@@ -2653,9 +2654,29 @@ GridLayout:
             print_totals = {}
             for inventory_id, invoice_group in save_invoice.items():
                 if inventory_id in save_invoice:
+                    inventory_discount = 0
                     if len(save_invoice[inventory_id]) > 0:
-                        tax_amount = save_totals[inventory_id]['subtotal'] * vars.TAX_RATE
-                        total = save_totals[inventory_id]['subtotal'] * (1 + vars.TAX_RATE)
+                        # calculate discounts if any
+                        discounts = Discount().where({'company_id': vars.COMPANY_ID,
+                                                      'start_date': {'<=': '"{}"'.format(self.now)},
+                                                      'end_date': {'>=': '"{}"'.format(self.now)},
+                                                      'inventory_id': inventory_id});
+                        if discounts:
+                            for discount in discounts:
+                                discount_rate = float(discount['rate'])
+                                discount_price = float(discount['discount'])
+                                inventory_discount_id = discount['discount_id']
+                                if discount_rate > 0:
+                                    inventory_discount = (float(save_totals[inventory_id]['subtotal'] * discount_rate))
+                                elif discount_rate is 0 and discount_price > 0:
+                                    inventory_discount = (float(save_totals[inventory_id]['subtotal']) - discount_price)
+                                else:
+                                    inventory_discount = 0
+
+
+                        tax_amount = (save_totals[inventory_id]['subtotal'] - inventory_discount) * vars.TAX_RATE
+
+                        total = (save_totals[inventory_id]['subtotal'] - inventory_discount) + tax_amount
 
                         # set invoice data to save
                         new_invoice = Invoice()
@@ -2666,7 +2687,7 @@ GridLayout:
                         if self.discount_id is not None:
                             new_invoice.discount_id = self.discount_id
                         new_invoice.tax = float('%.2f' % (tax_amount))
-                        new_invoice.total = float('%.2f' % (self.total))
+                        new_invoice.total = float('%.2f' % (save_totals[inventory_id]['total']))
                         new_invoice.due_date = '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))
                         new_invoice.status = 1
                         # save to local db
@@ -2675,7 +2696,7 @@ GridLayout:
                             print_totals[last_insert_id] = {
                                 'quantity': new_invoice.quantity,
                                 'subtotal': new_invoice.pretax,
-                                'discount': self.discount,
+                                'discount': float('%.2f' % (inventory_discount)),
                                 'tax': new_invoice.tax,
                                 'total': new_invoice.total
                             }
@@ -2738,9 +2759,28 @@ GridLayout:
                             new_invoice_id = invoice['invoice_id']
                             idx = -1
                             colors = {}
+                            discount_id = invoice['discount_id']
+                            invoice_discount = 0
+                            if discount_id is not None:
+                                # calculate discounts if any
+                                discounts = Discount().where({'discount_id':discount_id});
+                                if discounts:
+                                    for discount in discounts:
+                                        discount_rate = float(discount['rate'])
+                                        discount_price = float(discount['discount'])
+                                        inventory_discount_id = discount['discount_id']
+                                        if discount_rate > 0:
+                                            invoice_discount = (
+                                            float(invoice['pretax'] * discount_rate))
+                                        elif discount_rate is 0 and discount_price > 0:
+                                            invoice_discount = (
+                                            float(invoice['pretax']) - discount_price)
+                                        else:
+                                            invoice_discount = 0
                             print_sync_totals[new_invoice_id] = {
                                 'quantity': invoice['quantity'],
                                 'subtotal': invoice['pretax'],
+                                'discount': vars.us_dollar(invoice_discount),
                                 'tax': invoice['tax'],
                                 'total': invoice['total']
                             }
@@ -3113,10 +3153,10 @@ GridLayout:
                     vars.EPSON.write('    DISCOUNT:')
                     vars.EPSON.write(
                         pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
-                    string_length = len(vars.us_dollar(self.discount))
+                    string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['discount']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     vars.EPSON.write('{}({})\n'.format(' ' * string_offset,
-                                                     vars.us_dollar(self.discount)))
+                                                     vars.us_dollar(print_sync_totals[invoice_id]['discount'])))
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     vars.EPSON.write('         TAX:')
                     string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['tax']))
@@ -3266,9 +3306,9 @@ GridLayout:
                                                      vars.us_dollar(print_totals[invoice_id]['subtotal'])))
                     vars.EPSON.write('    DISCOUNT:')
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
-                    string_length = len(vars.us_dollar(self.discount))
+                    string_length = len(vars.us_dollar(print_totals[invoice_id]['discount']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    vars.EPSON.write('{}{}\n'.format(' ' * string_offset,vars.us_dollar(self.discount)))
+                    vars.EPSON.write('{}{}\n'.format(' ' * string_offset,vars.us_dollar(print_totals[invoice_id]['discount'])))
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     vars.EPSON.write('         TAX:')
                     string_length = len(vars.us_dollar(print_totals[invoice_id]['tax']))
@@ -7116,13 +7156,24 @@ class HistoryScreen(Screen):
                         customers.remember_token = user['remember_token']
                 invoices = Invoice()
                 invs = invoices.where({'invoice_id': vars.INVOICE_ID})
+                invoice_discount_id = None
                 if invs:
                     for invoice in invs:
                         invoice_quantity = invoice['quantity']
+                        invoice_discount_id = invoice['discount_id']
                         invoice_subtotal = invoice['pretax']
                         invoice_tax = invoice['tax']
                         invoice_total = invoice['total']
                         invoice_due_date = datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S")
+
+                if invoice_discount_id is not None:
+                    discounts = Discount();
+                    discs = discounts.where({'discount_id',invoice_discount_id})
+                    if discs:
+                        for disc in discs:
+                            discount_rate = disc['rate']
+                            discount_price = disc['discount']
+
                 invoice_items = InvoiceItem()
                 inv_items = invoice_items.where({'invoice_id': vars.INVOICE_ID})
 
@@ -7392,6 +7443,11 @@ class HistoryScreen(Screen):
                             string_length = len(vars.us_dollar(invoice_subtotal))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                             vars.EPSON.write('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
+                            vars.EPSON.write('    DISCOUNT:')
+                            vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                            string_length = len(vars.us_dollar(invoice_subtotal))
+                            string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                            vars.EPSON.write('{}({})\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
                             vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                             vars.EPSON.write('         TAX:')
                             string_length = len(vars.us_dollar(invoice_tax))
