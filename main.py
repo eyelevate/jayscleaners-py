@@ -2687,7 +2687,7 @@ GridLayout:
                         if self.discount_id is not None:
                             new_invoice.discount_id = self.discount_id
                         new_invoice.tax = float('%.2f' % (tax_amount))
-                        new_invoice.total = float('%.2f' % (save_totals[inventory_id]['total']))
+                        new_invoice.total = float('%.2f' % (total))
                         new_invoice.due_date = '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))
                         new_invoice.status = 1
                         # save to local db
