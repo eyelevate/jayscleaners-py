@@ -16548,7 +16548,7 @@ class SettingsScreen(Screen):
 
     pass
 
-    def accounts_page(self):
+    def inventories_page(self):
         webbrowser.open("https://www.jayscleaners.com/inventories")
 
     pass
