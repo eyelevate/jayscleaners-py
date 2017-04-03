@@ -12181,27 +12181,27 @@ class SearchScreen(Screen):
         tr_1.background_color = self.background_rgba
         label_1 = Label(markup=True,
                         color=text_color,
-                        text="{}".format('{0:06d}'.format(invoice_id)))
+                        text="[b]{}[/b]".format('{0:06d}'.format(invoice_id)))
         tr_1.ids.invoice_table_row_td.add_widget(label_1)
         label_2 = Label(markup=True,
                         color=text_color,
-                        text='{}'.format(company_name))
+                        text='[b]{}[/b]'.format(company_name))
         tr_1.ids.invoice_table_row_td.add_widget(label_2)
         label_3 = Label(markup=True,
                         color=text_color,
-                        text='{}'.format(due_date))
+                        text='[b]{}[/b]'.format(due_date))
         tr_1.ids.invoice_table_row_td.add_widget(label_3)
         label_4 = Label(markup=True,
                         color=text_color,
-                        text='{}'.format(rack))
+                        text='[b]{}[/b]'.format(rack))
         tr_1.ids.invoice_table_row_td.add_widget(label_4)
         label_5 = Label(markup=True,
                         color=text_color,
-                        text='{}'.format(quantity))
+                        text='[b]{}[/b]'.format(quantity))
         tr_1.ids.invoice_table_row_td.add_widget(label_5)
         label_6 = Label(markup=True,
                         color=text_color,
-                        text='{}'.format(total))
+                        text='[b]{}[/b]'.format(total))
         tr_1.ids.invoice_table_row_td.add_widget(label_6)
         if check_invoice_id:
             tr_1.state = 'down'
