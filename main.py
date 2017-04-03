@@ -2666,7 +2666,7 @@ GridLayout:
                         if self.discount_id is not None:
                             new_invoice.discount_id = self.discount_id
                         new_invoice.tax = float('%.2f' % (tax_amount))
-                        new_invoice.total = float('%.2f' % (total))
+                        new_invoice.total = float('%.2f' % (self.total))
                         new_invoice.due_date = '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S"))
                         new_invoice.status = 1
                         # save to local db
@@ -2675,6 +2675,7 @@ GridLayout:
                             print_totals[last_insert_id] = {
                                 'quantity': new_invoice.quantity,
                                 'subtotal': new_invoice.pretax,
+                                'discount': self.discount,
                                 'tax': new_invoice.tax,
                                 'total': new_invoice.total
                             }
@@ -3109,6 +3110,14 @@ GridLayout:
                     vars.EPSON.write('{}{}\n'.format(' ' * string_offset,
                                                      vars.us_dollar(
                                                          print_sync_totals[invoice_id]['subtotal'])))
+                    vars.EPSON.write('    DISCOUNT:')
+                    vars.EPSON.write(
+                        pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['discount']))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    vars.EPSON.write('{}({})\n'.format(' ' * string_offset,
+                                                     vars.us_dollar(
+                                                         print_sync_totals[invoice_id]['discount'])))
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     vars.EPSON.write('         TAX:')
                     string_length = len(vars.us_dollar(print_sync_totals[invoice_id]['tax']))
@@ -3256,6 +3265,12 @@ GridLayout:
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     vars.EPSON.write('{}{}\n'.format(' ' * string_offset,
                                                      vars.us_dollar(print_totals[invoice_id]['subtotal'])))
+                    vars.EPSON.write('    DISCOUNT:')
+                    vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    string_length = len(vars.us_dollar(print_totals[invoice_id]['discount']))
+                    string_offset = 20 - string_length if 20 - string_length >= 0 else 1
+                    vars.EPSON.write('{}{}\n'.format(' ' * string_offset,
+                                                     vars.us_dollar(print_totals[invoice_id]['discount'])))
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     vars.EPSON.write('         TAX:')
                     string_length = len(vars.us_dollar(print_totals[invoice_id]['tax']))
