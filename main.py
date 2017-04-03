@@ -3408,9 +3408,9 @@ GridLayout:
                         vars.BIXOLON.write(id_id_string)
 
                         vars.BIXOLON.write('\n\n\n\x1b\x6d')
-                # FINAL CUT
-                vars.BIXOLON.write('\n\n\n\n\n\n')
-                vars.BIXOLON.write('\x1b\x6d')
+                    # FINAL CUT
+                    vars.BIXOLON.write('\n\n\n\n\n\n')
+                    vars.BIXOLON.write('\x1b\x6d')
 
 
 class EditInvoiceScreen(Screen):
