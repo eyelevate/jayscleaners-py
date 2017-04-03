@@ -150,6 +150,33 @@
                         readonly: True
                         padding: [5,5,5,5]
                         text: ''
+
+                    BottomLeftFormLabel:
+                        text: "Invoice Memo"
+
+                    CenterVerticalTextInput:
+                        id: customer_invoice_memo_ti
+                        hint_text: "Invoice Memo"
+                        font_size:'17sp'
+                        size_hint_y: None
+                        height: '72sp'
+                        multiline: True
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
+                    BottomLeftFormLabel:
+                        text: "Important Memo"
+
+                    CenterVerticalTextInput:
+                        id: customer_important_memo_ti
+                        hint_text: "Important Memo"
+                        font_size:'17sp'
+                        size_hint_y: None
+                        height: '72sp'
+                        multiline: True
+                        readonly: True
+                        padding: [5,5,5,5]
+                        text: ''
                     BottomLeftFormLabel:
                         text: "Last Drop"
 
@@ -205,32 +232,7 @@
                         font_size:sp(20)
                         on_release: root.add_store_credit_popup()
 
-                    BottomLeftFormLabel:
-                        text: "Invoice Memo"
 
-                    CenterVerticalTextInput:
-                        id: customer_invoice_memo_ti
-                        hint_text: "Invoice Memo"
-                        font_size:'17sp'
-                        size_hint_y: None
-                        height: '72sp'
-                        multiline: True
-                        readonly: True
-                        padding: [5,5,5,5]
-                        text: ''
-                    BottomLeftFormLabel:
-                        text: "Important Memo"
-
-                    CenterVerticalTextInput:
-                        id: customer_important_memo_ti
-                        hint_text: "Important Memo"
-                        font_size:'17sp'
-                        size_hint_y: None
-                        height: '72sp'
-                        multiline: True
-                        readonly: True
-                        padding: [5,5,5,5]
-                        text: ''
                     BottomLeftFormLabel:
                         text: "Delivery Scheduled"
 
