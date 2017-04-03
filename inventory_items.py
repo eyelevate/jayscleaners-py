@@ -339,6 +339,10 @@ WHERE id = ?'''.format(t=table), (self.item_id,
             inventories = Inventory().where({'inventory_id': inventory_id})
             if inventories:
                 for inventory in inventories:
-                    return inventory['laundry']
+                    company_id = inventory['company_id']
+                    if company_id is 2:
+                        return False
+                    else:
+                        return inventory['laundry']
         else:
             return False
