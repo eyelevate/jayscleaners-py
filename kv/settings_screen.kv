@@ -31,8 +31,9 @@
             text:'Printer'
             on_release: root.manager.current = 'printer'
         Button:
-            text:'Inventory'
-            on_release: root.manager.current = 'inventories'
+            text:'[color=#AED6F1]Inventory[/color]'
+            markup:True
+            on_release: root.inventories_page()
         Button:
             text:'Tax'
             on_release: root.manager.current = 'taxes'

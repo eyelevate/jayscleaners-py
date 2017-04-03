@@ -16548,6 +16548,11 @@ class SettingsScreen(Screen):
 
     pass
 
+    def accounts_page(self):
+        webbrowser.open("https://www.jayscleaners.com/inventories")
+
+    pass
+
 
 class TaxesScreen(Screen):
     tax_rate_input = ObjectProperty(None)
