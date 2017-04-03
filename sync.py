@@ -159,10 +159,10 @@ class Sync:
             to_upload['memos'] = memos_1
             to_upload_rows += len(to_upload['memos'])
 
-        printers_1 = Printer().where({'printer_id': None})
-        if printers_1:
-            to_upload['printers'] = printers_1
-            to_upload_rows += len(to_upload['printers'])
+        # printers_1 = Printer().where({'printer_id': None})
+        # if printers_1:
+        #     to_upload['printers'] = printers_1
+        #     to_upload_rows += len(to_upload['printers'])
 
         profiles_1 = Profile().where({'p_id': None})
         if profiles_1:
@@ -304,11 +304,11 @@ class Sync:
             to_update['memos'] = memos_2
             to_update_rows += len(to_update['memos'])
 
-        printers_2 = Printer().where({'printer_id': {'!=': '""'},
-                                      'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if printers_2:
-            to_update['printers'] = printers_2
-            to_update_rows += len(to_update['printers'])
+        # printers_2 = Printer().where({'printer_id': {'!=': '""'},
+        #                               'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
+        # if printers_2:
+        #     to_update['printers'] = printers_2
+        #     to_update_rows += len(to_update['printers'])
 
         profiles_2 = Profile().where({'p_id': {'!=': '""'},
                                       'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)

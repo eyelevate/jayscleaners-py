@@ -408,32 +408,32 @@ def sync_from_server(data):
                     memo.add()
             memo.close_connection()
 
-        if 'printers' in updates:
-            for printers in updates['printers']:
-                printer = Printer()
-                printer.printer_id = printers['id']
-                printer.company_id = printers['company_id']
-                printer.name = printers['name']
-                printer.model = printers['model']
-                printer.nick_name = printers['nick_name']
-                printer.type = printers['type']
-                printer.vendor_id = printers['vendor_id']
-                printer.product_id = printers['product_id']
-                printer.status = printers['status']
-                printer.deleted_at = printers['deleted_at']
-                printer.created_at = printers['created_at']
-                printer.updated_at = printers['updated_at']
-                count_printer = printer.where({'printer_id': printer.printer_id})
-                if len(count_printer) > 0 or printer.deleted_at:
-                    for data in count_printer:
-                        printer.id = data['id']
-                        if printer.deleted_at:
-                            printer.delete()
-                        else:
-                            printer.update()
-                else:
-                    printer.add()
-            printer.close_connection()
+        # if 'printers' in updates:
+        #     for printers in updates['printers']:
+        #         printer = Printer()
+        #         printer.printer_id = printers['id']
+        #         printer.company_id = printers['company_id']
+        #         printer.name = printers['name']
+        #         printer.model = printers['model']
+        #         printer.nick_name = printers['nick_name']
+        #         printer.type = printers['type']
+        #         printer.vendor_id = printers['vendor_id']
+        #         printer.product_id = printers['product_id']
+        #         printer.status = printers['status']
+        #         printer.deleted_at = printers['deleted_at']
+        #         printer.created_at = printers['created_at']
+        #         printer.updated_at = printers['updated_at']
+        #         count_printer = printer.where({'printer_id': printer.printer_id})
+        #         if len(count_printer) > 0 or printer.deleted_at:
+        #             for data in count_printer:
+        #                 printer.id = data['id']
+        #                 if printer.deleted_at:
+        #                     printer.delete()
+        #                 else:
+        #                     printer.update()
+        #         else:
+        #             printer.add()
+        #     printer.close_connection()
 
         if 'profiles' in updates:
             for profiles in updates['profiles']:
