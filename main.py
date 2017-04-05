@@ -12293,7 +12293,7 @@ class SearchScreen(Screen):
         data = {'user_id': customer_id}
         customers = users.where(data)
         self.customer_results(customers)
-        vars.INVOICE_ID = None
+        # vars.INVOICE_ID = None
         vars.CUSTOMER_ID = customer_id
         vars.SEARCH_RESULTS_STATUS = True
         users.close_connection()
