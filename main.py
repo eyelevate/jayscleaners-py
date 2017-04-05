@@ -11971,6 +11971,7 @@ class SearchScreen(Screen):
         popup = Popup()
         search_text = self.search.text
         customers = User()
+        vars.INVOICE_ID = None
         if "ID%" in search_text.upper():
             # search for id
             new_search_text = search_text.upper().replace("ID%", "")
@@ -12041,11 +12042,10 @@ class SearchScreen(Screen):
                 if len(where) == 1:
                     data = {'user_id': where[0]}
                     cust1 = customers.where(data)
-                    vars.INVOICE_ID = None
+
                     self.customer_results(cust1)
                 elif len(where) > 1:
                     cust1 = customers.or_search(where=where)
-                    vars.INVOICE_ID = None
                     self.customer_results(cust1)
 
                 elif Job.is_int(search_text):
@@ -12054,7 +12054,6 @@ class SearchScreen(Screen):
                         # First check to see if the number is exact
                         data = {'phone': '"%{}%"'.format(self.search.text)}
                         cust1 = customers.like(data)
-                        vars.INVOICE_ID = None
                         self.customer_results(cust1)
 
                     elif len(search_text) == 6:  # this is an invoice number
@@ -12071,9 +12070,9 @@ class SearchScreen(Screen):
                                 vars.CUSTOMER_ID = invoice['customer_id']
                                 data = {'user_id': '"{}"'.format(vars.CUSTOMER_ID)}
                                 cust1 = customers.where(data)
-                                self.invoice_selected(invoice_id=vars.INVOICE_ID)
-                                self.customer_results(cust1)
 
+                                self.customer_results(cust1)
+                                self.invoice_selected(invoice_id=vars.INVOICE_ID)
 
                         else:
                             popup.title = 'No such invoice'
@@ -12087,7 +12086,7 @@ class SearchScreen(Screen):
                     else:  # look for a customer id
                         data = {'user_id': self.search.text}
                         cust1 = customers.where(data)
-                        vars.INVOICE_ID = None
+
                         self.customer_results(cust1)
 
                 else:  # Lookup by last name || mark
@@ -12113,7 +12112,6 @@ class SearchScreen(Screen):
                     vars.SEARCH_TEXT = self.search.text
 
                     cust1 = customers.like(data)
-                    vars.INVOICE_ID = None
                     self.customer_results(cust1)
             else:
                 popup = Popup()
