@@ -146,7 +146,7 @@ def sync_from_server(data):
                 company.deleted_at = companies['deleted_at']
                 company.created_at = companies['created_at']
                 company.updated_at = companies['updated_at']
-                company.server_at = now
+                company.server_at = data['server_at']
                 count_company = company.where({'company_id': company.company_id})
                 if len(count_company) > 0 or company.deleted_at:
                     for data in count_company:
