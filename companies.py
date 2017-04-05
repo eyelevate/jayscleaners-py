@@ -302,9 +302,11 @@ updated_at = ?, server_at = ? WHERE id = ?'''.format(
         else:
             return False
 
-    def server_at_update(self, server_time):
-
-        sql = '''UPDATE {t} SET server_at = "{time}" where id > {id}'''.format(t=table,time=server_time,id='0')
+    def server_at_update(self):
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
+        sql = '''UPDATE {t} SET server_at = "{time}" where id > {id}'''.format(t=table,time=now,id='0')
 
         self.c.execute(sql)
         self.conn.commit()

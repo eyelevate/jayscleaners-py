@@ -393,11 +393,11 @@ class Sync:
                 update_database(data=data_1)
                 # update server_at in companies with most current timestamp
 
-
-                server_return_time = data_1['server_at']
+                # where = {'company_id': self.company_id}
                 dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                self.server_at = server_return_time
-                Company().server_at_update(server_return_time)
+                self.server_at = dt
+                # data = {'server_at': dt}
+                Company().server_at_update()
 
 
         except urllib.error.URLError as e:
