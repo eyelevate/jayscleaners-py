@@ -11807,6 +11807,7 @@ class SearchScreen(Screen):
     pickup_time_group = None
     special_instructions = None
     delivery_popup = Popup()
+    repopup = Popup()
     name_input = None
     street_input = None
     suite_input = None
@@ -12421,8 +12422,8 @@ class SearchScreen(Screen):
             return 'Not Set'
 
     def reprint_popup(self):
-        popup = Popup()
-        popup.title = 'Reprint Invoice #{}'.format(vars.INVOICE_ID)
+        self.repopup = Popup()
+        self.repopup.title = 'Reprint Invoice #{}'.format(vars.INVOICE_ID)
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.9))
@@ -12441,11 +12442,16 @@ class SearchScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='Cancel',
-                                         on_release=popup.dismiss))
+                                         on_release=self.close_reprint_popup))
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
-        popup.content = layout
-        popup.open()
+        self.repopup.content = layout
+        self.repopup.open()
+
+    def close_reprint_popup(self, *args, **kwargs):
+        self.repopup.dismiss()
+        vars.SEARCH_RESULTS_STATUS = True
+        self.reset()
 
     def quick_popup(self, *args, **kwargs):
         # setup calendar default date
