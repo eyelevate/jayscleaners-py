@@ -12128,6 +12128,8 @@ class SearchScreen(Screen):
             check_invoice_id = True if (int(vars.INVOICE_ID) - int(row['invoice_id']) == 0) else False
         except ValueError:
             pass
+        except TypeError:
+            pass
 
         print('{} - {} - {}'.format(vars.INVOICE_ID,row['invoice_id'],check_invoice_id))
         invoice_id = row['invoice_id']
