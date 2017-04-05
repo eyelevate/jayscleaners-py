@@ -3428,6 +3428,7 @@ GridLayout:
                 # FINAL CUT
                 vars.BIXOLON.write('\n\n\n\n\n\n')
                 vars.BIXOLON.write('\x1b\x6d')
+                vars.BIXOLON.write('\n')
             else:
                 laundry_count = len(laundry_to_print)
                 shirt_mark = Custid().getCustomerMark(self.customer_id_backup)
@@ -3464,6 +3465,7 @@ GridLayout:
                 # FINAL CUT
                 vars.BIXOLON.write('\n\n\n\n\n\n')
                 vars.BIXOLON.write('\x1b\x6d')
+                vars.BIXOLON.write('\n')
 
 
 class EditInvoiceScreen(Screen):
@@ -7717,6 +7719,7 @@ class HistoryScreen(Screen):
                 # FINAL CUT
                 vars.BIXOLON.write('\n\n\n\n\n\n')
                 vars.BIXOLON.write('\x1b\x6d')
+                vars.BIXOLON.write('\n')
 
             if len(laundry_to_print) > 0:
                 laundry_count = len(laundry_to_print)
@@ -7756,6 +7759,7 @@ class HistoryScreen(Screen):
                 # FINAL CUT
                 vars.BIXOLON.write('\n\n\n\n\n\n')
                 vars.BIXOLON.write('\x1b\x6d')
+                vars.BIXOLON.write('\n')
 
 
         else:
@@ -7875,6 +7879,7 @@ class HistoryScreen(Screen):
                 # FINAL CUT
                 vars.BIXOLON.write('\n\n\n\n\n\n')
                 vars.BIXOLON.write('\x1b\x6d')
+                vars.BIXOLON.write('\n')
 
             else:
                 laundry_count = len(laundry_to_print)
@@ -7914,6 +7919,7 @@ class HistoryScreen(Screen):
                 # FINAL CUT
                 vars.BIXOLON.write('\n\n\n\n\n\n')
                 vars.BIXOLON.write('\x1b\x6d')
+                vars.BIXOLON.write('\n')
 
         else:
             popup = Popup()
@@ -13993,7 +13999,6 @@ class SearchScreen(Screen):
                     # FINAL CUT
                     vars.BIXOLON.write('\n\n\n\n\n\n')
                     vars.BIXOLON.write('\x1b\x6d')
-
                 else:
 
                     laundry_count = len(laundry_to_print)
