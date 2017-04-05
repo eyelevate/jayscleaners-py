@@ -7166,7 +7166,7 @@ class HistoryScreen(Screen):
                         invoice_tax = invoice['tax']
                         invoice_total = invoice['total']
                         invoice_due_date = datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S")
-
+                discount_amount = 0
                 if invoice_discount_id is not None:
                     discounts = Discount();
                     discs = discounts.where({'discount_id',invoice_discount_id})
@@ -7174,7 +7174,13 @@ class HistoryScreen(Screen):
                         for disc in discs:
                             discount_rate = disc['rate']
                             discount_price = disc['discount']
+                            discount_type = disc['type']
+                            if discount_type is 1:
+                                discount_amount = (invoice_subtotal * discount_rate)
+                            else:
+                                discount_amount = invoice_subtotal - discount_price
 
+                discount_amount = vars.us_dollar(discount_amount)
                 invoice_items = InvoiceItem()
                 inv_items = invoice_items.where({'invoice_id': vars.INVOICE_ID})
 
@@ -7446,9 +7452,9 @@ class HistoryScreen(Screen):
                             vars.EPSON.write('{}{}\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
                             vars.EPSON.write('    DISCOUNT:')
                             vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
-                            string_length = len(vars.us_dollar(invoice_subtotal))
+                            string_length = len(vars.us_dollar(discount_amount))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            vars.EPSON.write('{}({})\n'.format(' ' * string_offset, vars.us_dollar(invoice_subtotal)))
+                            vars.EPSON.write('{}({})\n'.format(' ' * string_offset, vars.us_dollar(discount_amount)))
                             vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                             vars.EPSON.write('         TAX:')
                             string_length = len(vars.us_dollar(invoice_tax))
