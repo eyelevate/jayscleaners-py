@@ -11678,6 +11678,7 @@ class RackScreen(Screen):
             sys.stdout.flush()
 
         else:
+            formatted_rack = self.rack_number.text.replace("%R", "")
             if vars.EPSON:
                 pr = Printer()
                 vars.EPSON.write(
@@ -11687,12 +11688,11 @@ class RackScreen(Screen):
                     vars.EPSON.write('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
                         self.invoice_number.text,
                         self.edited_rack,
-                        self.rack_number.text))
+                        formatted_rack))
                     self.edited_rack = False
                 else:
-                    vars.EPSON.write('{} - {}\n'.format(self.invoice_number.text, self.rack_number.text))
+                    vars.EPSON.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
 
-            formatted_rack = self.rack_number.text.replace("%R", "")
             self.racks[self.invoice_number.text] = formatted_rack
             self.invoice_number.text = ''
             self.rack_number.text = ''
