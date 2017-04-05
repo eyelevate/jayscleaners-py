@@ -12123,7 +12123,7 @@ class SearchScreen(Screen):
 
     def create_invoice_row(self, row, *args, **kwargs):
         """ Creates invoice table row and displays it to screen """
-        check_invoice_id = True if vars.INVOICE_ID == int(row['invoice_id']) else False
+        check_invoice_id = True if (int(vars.INVOICE_ID) - int(row['invoice_id']) == 0) else False
         print('{} - {} - {}'.format(vars.INVOICE_ID,row['invoice_id'],check_invoice_id))
         invoice_id = row['invoice_id']
         company_id = row['company_id']
