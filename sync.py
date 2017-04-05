@@ -394,6 +394,7 @@ class Sync:
                 # update server_at in companies with most current timestamp
 
                 # where = {'company_id': self.company_id}
+
                 dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.server_at = dt
                 # data = {'server_at': dt}
