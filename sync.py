@@ -397,10 +397,7 @@ class Sync:
                 server_return_time = data_1['server_at']
                 dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.server_at = server_return_time
-                data = {'server_at': server_return_time}
-                where = {'company_id': self.company_id}
-                update_companies = Company();
-                update_companies.put(where,data)
+                Company().server_at_update(server_return_time)
 
 
         except urllib.error.URLError as e:
