@@ -13875,7 +13875,7 @@ class SearchScreen(Screen):
                     # FINAL CUT
                     vars.BIXOLON.write('\n\n\n\n\n\n')
                     vars.BIXOLON.write('\x1b\x6d')
-                vars.BIXOLON.write('\n\n\n\n\n\n')
+                vars.BIXOLON.write('\n\n')
 
         else:
             popup = Popup()
@@ -14035,7 +14035,7 @@ class SearchScreen(Screen):
                     # FINAL CUT
                     vars.BIXOLON.write('\n\n\n\n\n\n')
                     vars.BIXOLON.write('\x1b\x6d')
-                vars.BIXOLON.write('\n\n\n\n\n\n')
+                vars.BIXOLON.write('\n\n')
             else:
                 popup = Popup()
                 popup.title = 'Reprint Error'
