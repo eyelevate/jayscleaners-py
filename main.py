@@ -13796,8 +13796,8 @@ class SearchScreen(Screen):
 
                 laundry_to_print = []
                 if invoice_items:
-                    vars.BIXOLON.write('\x1b\x40')
-                    vars.BIXOLON.write('\x1b\x6d')
+                    # vars.BIXOLON.write('\x1b\x40')
+                    # vars.BIXOLON.write('\x1b\x6d')
                     for ii in invoice_items:
 
                         iitem_id = ii['item_id']
@@ -13836,8 +13836,8 @@ class SearchScreen(Screen):
                     vars.BIXOLON.write('\x1b\x6d')
 
                 if len(laundry_to_print) > 0:
-                    vars.BIXOLON.write('\x1b\x40')
-                    vars.BIXOLON.write('\x1b\x6d')
+                    # vars.BIXOLON.write('\x1b\x40')
+                    # vars.BIXOLON.write('\x1b\x6d')
                     laundry_count = len(laundry_to_print)
                     shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
                     name_text_offset = total_length - len(text_name) - len(text_name)
