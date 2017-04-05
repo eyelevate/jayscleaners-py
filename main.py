@@ -13792,87 +13792,90 @@ class SearchScreen(Screen):
 
             print('next step')
             invoice_items = InvoiceItem().where({'invoice_id': vars.INVOICE_ID})
-            vars.BIXOLON.write('\x1b\x40')
-            vars.BIXOLON.write('\x1b\x6d')
-            laundry_to_print = []
-            if invoice_items:
+            if vars.BIXOLON:
 
-                for ii in invoice_items:
+                laundry_to_print = []
+                if invoice_items:
+                    vars.BIXOLON.write('\x1b\x40')
+                    vars.BIXOLON.write('\x1b\x6d')
+                    for ii in invoice_items:
 
-                    iitem_id = ii['item_id']
-                    tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                    item_name = InventoryItem().getItemName(iitem_id)
-                    item_color = ii['color']
-                    invoice_item_id = ii['invoice_items_id']
-                    laundry_tag = InventoryItem().getLaundry(iitem_id)
-                    memo_string = ii['memo']
-                    if laundry_tag:
-                        laundry_to_print.append(invoice_item_id)
-                    else:
-                        for _ in range(tags_to_print):
+                        iitem_id = ii['item_id']
+                        tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                        item_name = InventoryItem().getItemName(iitem_id)
+                        item_color = ii['color']
+                        invoice_item_id = ii['invoice_items_id']
+                        laundry_tag = InventoryItem().getLaundry(iitem_id)
+                        memo_string = ii['memo']
+                        if laundry_tag:
+                            laundry_to_print.append(invoice_item_id)
+                        else:
+                            for _ in range(tags_to_print):
 
-                            vars.BIXOLON.write('\x1b!\x30')  # QUAD SIZE
-                            vars.BIXOLON.write('{}{}\n'.format(text_left, text_right))
-                            vars.BIXOLON.write('\x1b!\x00')
-                            vars.BIXOLON.write(name_number_string)
-                            vars.BIXOLON.write('\n')
-                            vars.BIXOLON.write('{0:06d}'.format(int(invoice_item_id)))
-                            vars.BIXOLON.write(' {} {}'.format(item_name, item_color))
-                            if memo_string:
-                                vars.BIXOLON.write('\n{}'.format(memo_string))
-                                memo_len = '\n\n\n' if len(
-                                    memo_string) <= 32 else '\n\n\n' + '\n' * int(
-                                    (len(memo_string)) / 32)
-                                vars.BIXOLON.write(memo_len)
-                                vars.BIXOLON.write('\x1b\x6d')
+                                vars.BIXOLON.write('\x1b!\x30')  # QUAD SIZE
+                                vars.BIXOLON.write('{}{}\n'.format(text_left, text_right))
+                                vars.BIXOLON.write('\x1b!\x00')
+                                vars.BIXOLON.write(name_number_string)
+                                vars.BIXOLON.write('\n')
+                                vars.BIXOLON.write('{0:06d}'.format(int(invoice_item_id)))
+                                vars.BIXOLON.write(' {} {}'.format(item_name, item_color))
+                                if memo_string:
+                                    vars.BIXOLON.write('\n{}'.format(memo_string))
+                                    memo_len = '\n\n\n' if len(
+                                        memo_string) <= 32 else '\n\n\n' + '\n' * int(
+                                        (len(memo_string)) / 32)
+                                    vars.BIXOLON.write(memo_len)
+                                    vars.BIXOLON.write('\x1b\x6d')
 
-                            else:
+                                else:
 
-                                vars.BIXOLON.write('\n\n\n')
-                                vars.BIXOLON.write('\x1b\x6d')
-                # FINAL CUT
+                                    vars.BIXOLON.write('\n\n\n')
+                                    vars.BIXOLON.write('\x1b\x6d')
+                    # FINAL CUT
+                    vars.BIXOLON.write('\n\n\n\n\n\n')
+                    vars.BIXOLON.write('\x1b\x6d')
+
+                if len(laundry_to_print) > 0:
+                    vars.BIXOLON.write('\x1b\x40')
+                    vars.BIXOLON.write('\x1b\x6d')
+                    laundry_count = len(laundry_to_print)
+                    shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                    name_text_offset = total_length - len(text_name) - len(text_name)
+                    shirt_mark_length = len(shirt_mark)
+                    mark_text_offset = 16 - (shirt_mark_length * 2)
+                    for i in range(0, laundry_count, 2):
+                        start = i
+                        end = i + 1
+
+                        invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
+
+                        id_offset = total_length - 12
+
+                        try:
+                            invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
+                            name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
+                            mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
+                            id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset, invoice_item_id_end)
+
+                        except IndexError:
+                            name_name_string = '{}'.format(text_name)
+                            mark_mark_string = '{}'.format(shirt_mark)
+                            id_id_string = '{}'.format(invoice_item_id_start)
+
+                        vars.BIXOLON.write('\x1b!\x30')  # QUAD SIZE
+                        vars.BIXOLON.write(mark_mark_string)
+                        vars.BIXOLON.write('\n')
+                        vars.BIXOLON.write('\x1b!\x00')
+                        vars.BIXOLON.write(name_name_string)
+                        vars.BIXOLON.write('\n')
+                        vars.BIXOLON.write(id_id_string)
+
+                        vars.BIXOLON.write('\n\n\n\x1b\x6d')
+
+                    # FINAL CUT
+                    vars.BIXOLON.write('\n\n\n\n\n\n')
+                    vars.BIXOLON.write('\x1b\x6d')
                 vars.BIXOLON.write('\n\n\n\n\n\n')
-                vars.BIXOLON.write('\x1b\x6d')
-
-            if len(laundry_to_print) > 0:
-                laundry_count = len(laundry_to_print)
-                shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
-                name_text_offset = total_length - len(text_name) - len(text_name)
-                shirt_mark_length = len(shirt_mark)
-                mark_text_offset = 16 - (shirt_mark_length * 2)
-                for i in range(0, laundry_count, 2):
-                    start = i
-                    end = i + 1
-
-                    invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
-
-                    id_offset = total_length - 12
-
-                    try:
-                        invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
-                        name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
-                        mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
-                        id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset, invoice_item_id_end)
-
-                    except IndexError:
-                        name_name_string = '{}'.format(text_name)
-                        mark_mark_string = '{}'.format(shirt_mark)
-                        id_id_string = '{}'.format(invoice_item_id_start)
-
-                    vars.BIXOLON.write('\x1b!\x30')  # QUAD SIZE
-                    vars.BIXOLON.write(mark_mark_string)
-                    vars.BIXOLON.write('\n')
-                    vars.BIXOLON.write('\x1b!\x00')
-                    vars.BIXOLON.write(name_name_string)
-                    vars.BIXOLON.write('\n')
-                    vars.BIXOLON.write(id_id_string)
-
-                    vars.BIXOLON.write('\n\n\n\x1b\x6d')
-
-                # FINAL CUT
-                vars.BIXOLON.write('\n\n\n\n\n\n')
-                vars.BIXOLON.write('\x1b\x6d')
-
 
         else:
             popup = Popup()
@@ -14032,6 +14035,7 @@ class SearchScreen(Screen):
                     # FINAL CUT
                     vars.BIXOLON.write('\n\n\n\n\n\n')
                     vars.BIXOLON.write('\x1b\x6d')
+                vars.BIXOLON.write('\n\n\n\n\n\n')
             else:
                 popup = Popup()
                 popup.title = 'Reprint Error'
