@@ -417,7 +417,7 @@ class MainScreen(Screen):
 
         # self.update_label.text = 'Server updated at {}'.format()
 
-    def sync_rackable_invoices(self):
+    def sync_rackable_invoices(self, *args, **kwargs):
         try:
             SCHEDULER.add_job(SYNC.sync_rackable_invoices, 'date', run_date=None, args=[vars.COMPANY_ID])
             print('(Rack check) - Syncing All invoices for the last two days')
