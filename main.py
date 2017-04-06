@@ -1633,7 +1633,8 @@ GridLayout:
                             else:
                                 colors[item_color] = 1
                         if item_memo:
-                            memo_string.append(item_memo)
+                            regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                            memo_string.append(regexed_memo)
                     if colors:
                         for color_name, color_amount in colors.items():
                             if color_name:
@@ -2100,7 +2101,8 @@ GridLayout:
                                         else:
                                             colors[item_color] = 1
                                     if item_memo:
-                                        memo_string.append(item_memo)
+                                        regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                                        memo_string.append(regexed_memo)
                                 if colors:
                                     for color_name, color_amount in colors.items():
                                         if color_name:
@@ -2854,7 +2856,7 @@ GridLayout:
                 run_sync2.start()
             finally:
                 run_sync2.join()
-                SYNC_POPUP.dismiss()
+
 
 
                 self.print_popup.dismiss()
@@ -2864,6 +2866,7 @@ GridLayout:
                                                               print_sync_invoice,
                                                               print_sync_totals])
                 t1.start()
+            SYNC_POPUP.dismiss()
 
 
     def print_function(self,type, print_invoice, print_totals, print_sync_invoice, print_sync_totals, *args, **kwargs):
@@ -2998,7 +3001,8 @@ GridLayout:
                                     else:
                                         colors[item_color] = 1
                                 if item_memo:
-                                    memo_string.append(item_memo)
+                                    regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                                    memo_string.append(regexed_memo)
                             if colors:
                                 for color_name, color_amount in colors.items():
                                     if color_name:
@@ -3364,6 +3368,7 @@ GridLayout:
             sys.stdout.flush()
             time.sleep(2)
             popup.dismiss()
+            SYNC_POPUP.dismiss()
             vars.CUSTOMER_ID = self.customer_id_backup
 
             # PRINT TAG
@@ -3958,7 +3963,8 @@ GridLayout:
                             else:
                                 colors[item_color] = 1
                         if item_memo:
-                            memo_string.append(item_memo)
+                            regexed_memo = item_memo.replace('"','(*INCH(es)')
+                            memo_string.append(regexed_memo)
                     if colors:
                         for color_name, color_amount in colors.items():
                             if color_name:
@@ -4432,7 +4438,8 @@ GridLayout:
                                     else:
                                         colors[item_color] = 1
                                 if item_memo:
-                                    memo_string.append(item_memo)
+                                    regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                                    memo_string.append(regexed_memo)
                             if colors:
                                 for color_name, color_amount in colors.items():
                                     if color_name:
@@ -5184,7 +5191,8 @@ GridLayout:
                                     else:
                                         colors[item_color] = 1
                                 if item_memo:
-                                    memo_string.append(item_memo)
+                                    regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                                    memo_string.append(regexed_memo)
                             if colors:
                                 for color_name, color_amount in colors.items():
                                     if color_name:
