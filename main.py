@@ -383,7 +383,7 @@ class MainScreen(Screen):
 
             if db_sync_status:
                 SYNC_POPUP.title = 'Syncing DB'
-                content = Builder.load_string(KV.popup_alert(msg="Obtaining data form the server. Please wait..."))
+                content = Builder.load_string(KV.popup_alert(msg="Obtaining data from the server. Please wait..."))
                 SYNC_POPUP.content = content
                 SYNC_POPUP.open()
                 Clock.schedule_once(self.db_sync, 2)
@@ -416,6 +416,15 @@ class MainScreen(Screen):
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
 
         # self.update_label.text = 'Server updated at {}'.format()
+
+    def sync_rackable_invoices(self):
+        try:
+            SCHEDULER.add_job(SYNC.sync_rackable_invoices, 'date', run_date=None, args=[vars.COMPANY_ID])
+            print('(Rack check) - Syncing All invoices for the last two days')
+        except SchedulerNotRunningError:
+            SCHEDULER.add_job(SYNC.sync_rackable_invoices, 'date', run_date=None, args=[vars.COMPANY_ID])
+            SCHEDULER.start()
+            print('Auto Sync not running, syncing customer data now.')
 
     def print_setup_label(self, vendor_id, product_id):
         vendor_int = int(vendor_id, 16)
@@ -477,10 +486,13 @@ class MainScreen(Screen):
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
                                on_release=self.main_popup.dismiss)
+        sync_2_button = Button(text='Sync 2 days',
+                               on_release=self.sync_rackable_invoices)
         run_sync_button = Button(text="Run",
                                  on_release=self.sync_db)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(run_sync_button)
+        inner_layout_2.add_widget(sync_2_button)
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         self.main_popup.content = layout
@@ -11572,19 +11584,9 @@ class RackScreen(Screen):
     marked_invoice_number = None
     edited_rack = False
 
-    def sync_rackable_invoices(self):
-        try:
-            SCHEDULER.add_job(SYNC.sync_rackable_invoices, 'date', run_date=None, args=[vars.COMPANY_ID])
-            print('(Rack check) - Syncing All invoices for the last two days')
-        except SchedulerNotRunningError:
-            SCHEDULER.add_job(SYNC.sync_rackable_invoices, 'date', run_date=None, args=[vars.COMPANY_ID])
-            SCHEDULER.start()
-            print('Auto Sync not running, syncing customer data now.')
-
     def reset(self):
         # Pause sync scheduler
         SCHEDULER.remove_all_jobs()
-        self.sync_rackable_invoices()
 
         self.racks = OrderedDict()
         self.rack_number.text = ''
