@@ -145,6 +145,30 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_items_id,
         self.conn.commit()
         return True
 
+    def update_special(self):
+
+        self.c.execute('''UPDATE {t} SET invoice_items_id = ?, invoice_id = ?, item_id = ?, inventory_id = ?,
+company_id = ?, customer_id = ?, quantity = ?, color = ?, memo = ?, pretax = ?, tax = ?, total = ?, status = ?,
+updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_items_id,
+                                                 self.invoice_id,
+                                                 self.item_id,
+                                                 self.inventory_id,
+                                                 self.company_id,
+                                                 self.customer_id,
+                                                 self.quantity,
+                                                 self.color,
+                                                 self.memo,
+                                                 self.pretax,
+                                                 self.tax,
+                                                 self.total,
+                                                 self.status,
+                                                 self.updated_at,
+                                                 self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
     def find(self):
 
         try:

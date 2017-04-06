@@ -151,6 +151,34 @@ schedule_id = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (se
         self.conn.commit()
         return True
 
+    def update_special(self):
+
+        self.c.execute('''UPDATE {t} SET invoice_id = ?, company_id = ?, customer_id = ?, quantity = ?, pretax = ?,
+tax = ?, reward_id = ?, discount_id = ?, total = ?, rack = ?, rack_date = ?, due_date = ?, memo = ?, transaction_id =?,
+schedule_id = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,
+                                                                              self.company_id,
+                                                                              self.customer_id,
+                                                                              self.quantity,
+                                                                              self.pretax,
+                                                                              self.tax,
+                                                                              self.reward_id,
+                                                                              self.discount_id,
+                                                                              self.total,
+                                                                              self.rack,
+                                                                              self.rack_date,
+                                                                              self.due_date,
+                                                                              self.memo,
+                                                                              self.transaction_id,
+                                                                              self.schedule_id,
+                                                                              self.status,
+                                                                              self.updated_at,
+                                                                              self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+
     def find(self):
 
         try:

@@ -1395,6 +1395,18 @@ class Sync:
                     invoice.created_at = invoices['created_at']
                     invoice.updated_at = invoices['updated_at']
 
+                    count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
+                    if len(count_invoice) > 0 or invoice.deleted_at:
+                        for data in count_invoice:
+                            invoice.id = data['id']
+                            if invoice.deleted_at:
+                                invoice.delete()
+                            else:
+                                invoice.update_special()
+                    else:
+                        invoice.add()
+                    invoice.close_connection()
+
                     # extra loop through invoice items to delete or check for data
                     if 'invoice_items' in invoices:
 
@@ -1426,19 +1438,10 @@ class Sync:
                                         if invoice_item.deleted_at:
                                             invoice_item.delete()
                                         else:
-                                            invoice_item.update()
+                                            invoice_item.update_special()
+                            invoice_item.close_connection()
 
-                    count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
-                    if len(count_invoice) > 0 or invoice.deleted_at:
-                        for data in count_invoice:
-                            invoice.id = data['id']
-                            if invoice.deleted_at:
-                                invoice.delete()
-                            else:
-                                invoice.update()
-                    else:
-                        invoice.add()
-                    invoice.close_connection()
+
 
 
 
