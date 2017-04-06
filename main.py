@@ -3435,7 +3435,7 @@ GridLayout:
                 name_text_offset = total_length - len(text_name) - len(text_name)
                 shirt_mark_length = len(shirt_mark)
                 mark_text_offset = 16 - (shirt_mark_length * 2)
-                if vars.COMPANY_ID is not 2: # hard code montlake store does not use this. REMOVE LATER TODO
+                if vars.COMPANY_ID is 1: # hard code montlake store does not use this. REMOVE LATER TODO
                     for i in range(0, laundry_count, 2):
                         start = i
                         end = i + 1
@@ -11841,8 +11841,14 @@ class SearchScreen(Screen):
     barcode_save_data = None
     barcode_input = ObjectProperty(None)
 
-    def reset(self, *args, **kwargs):
-        # Resume auto sync
+    def scheduler_stop(self):
+        try:
+            SCHEDULER.remove_all_jobs()
+            print('Auto Sync Stopped')
+        except SchedulerNotRunningError:
+            print('Auto Sync Already Stopped')
+
+    def scheduler_restart(self):
         try:
             SCHEDULER.remove_all_jobs()
             SCHEDULER.add_job(partial(SYNC.db_sync,vars.COMPANY_ID), 'interval', seconds=30)
@@ -11852,6 +11858,12 @@ class SearchScreen(Screen):
             SCHEDULER.start()
             print('Auto Sync failed to launch starting again')
 
+
+    def reset(self, *args, **kwargs):
+        # Resume auto sync
+        self.scheduler_restart()
+
+        # reset member variables
         vars.ROW_SEARCH = 0, 10
         vars.ROW_CAP = 0
         vars.SEARCH_TEXT = None
@@ -12300,6 +12312,17 @@ class SearchScreen(Screen):
         self.edit_invoice_btn.disabled = False
         customers.close_connection()
 
+    def customer_sync(self):
+        try:
+            SCHEDULER.remove_all_jobs()
+            SCHEDULER.add_job(SYNC.sync_customer, 'date', run_date=None, args=[vars.CUSTOMER_ID])
+
+            print('Syncing Customer Data 1st attempt')
+        except SchedulerNotRunningError:
+            SCHEDULER.add_job(SYNC.sync_customer, 'date', run_date=None, args=[vars.CUSTOMER_ID])
+            SCHEDULER.start()
+            print('Auto Sync not running, syncing customer data now.')
+
     def customer_select(self, customer_id):
         users = User()
         data = {'user_id': customer_id}
@@ -12312,12 +12335,18 @@ class SearchScreen(Screen):
         Clock.schedule_once(self.focus_input)
 
     def customer_results(self, data, *args, **kwargs):
+        # stop scheduler to get only customer data
+        self.scheduler_stop()
+
+
         # Found customer via where, now display data to screen
         if len(data) == 1:
             Clock.schedule_once(self.focus_input)
             for result in data:
                 vars.CUSTOMER_ID = result['user_id']
                 vars.SEARCH_RESULTS_STATUS = True if vars.CUSTOMER_ID else False
+                # start syncing in background
+                self.customer_sync()
                 # last 10 setup
                 vars.update_last_10()
                 # clear the current widget
@@ -12405,6 +12434,7 @@ class SearchScreen(Screen):
             # clear the search text input
             self.search.focus = True
             self.search.text = ''
+            self.scheduler_restart()
 
 
         elif len(data) > 1:

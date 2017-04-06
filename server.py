@@ -377,7 +377,7 @@ def sync_from_server(data):
 
                 # extra loop through invoice items to delete or check for data
                 if 'invoice_items' in invoices:
-                    
+
                     iitems = invoices['invoice_items']
                     if len(iitems) > 0:
                         for iitem in iitems:
