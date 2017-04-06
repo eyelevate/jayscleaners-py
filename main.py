@@ -12339,10 +12339,11 @@ class SearchScreen(Screen):
         try:
             SCHEDULER.remove_all_jobs()
             SCHEDULER.add_job(SYNC.sync_customer, 'date', run_date=None, args=[vars.CUSTOMER_ID])
-
+            SCHEDULER.add_job(partial(SYNC.db_sync, vars.COMPANY_ID), 'interval', seconds=30)
             print('Syncing Customer Data 1st attempt')
         except SchedulerNotRunningError:
             SCHEDULER.add_job(SYNC.sync_customer, 'date', run_date=None, args=[vars.CUSTOMER_ID])
+            SCHEDULER.add_job(partial(SYNC.db_sync, vars.COMPANY_ID), 'interval', seconds=30)
             SCHEDULER.start()
             print('Auto Sync not running, syncing customer data now.')
 
