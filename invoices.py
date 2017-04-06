@@ -125,7 +125,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_id
     def update(self):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-        self.updated_at = now
+
         self.c.execute('''UPDATE {t} SET invoice_id = ?, company_id = ?, customer_id = ?, quantity = ?, pretax = ?,
 tax = ?, reward_id = ?, discount_id = ?, total = ?, rack = ?, rack_date = ?, due_date = ?, memo = ?, transaction_id =?,
 schedule_id = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_id,

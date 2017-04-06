@@ -12454,7 +12454,6 @@ class SearchScreen(Screen):
         vars.SEARCH_RESULTS = data
         self.parent.current = 'search_results'
         self.search.focus = True
-
         pass
 
     def get_starch_by_id(self, starch):
