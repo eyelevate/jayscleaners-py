@@ -11572,9 +11572,20 @@ class RackScreen(Screen):
     marked_invoice_number = None
     edited_rack = False
 
+    def sync_rackable_invoices(self):
+        try:
+            SCHEDULER.add_job(SYNC.sync_rackable_invoices, 'date', run_date=None, args=[vars.COMPANY_ID])
+            print('(Rack check) - Syncing All invoices for the last two days')
+        except SchedulerNotRunningError:
+            SCHEDULER.add_job(SYNC.sync_rackable_invoices, 'date', run_date=None, args=[vars.COMPANY_ID])
+            SCHEDULER.start()
+            print('Auto Sync not running, syncing customer data now.')
+
     def reset(self):
         # Pause sync scheduler
         SCHEDULER.remove_all_jobs()
+        self.sync_rackable_invoices()
+
         self.racks = OrderedDict()
         self.rack_number.text = ''
         self.invoice_number.text = ''
