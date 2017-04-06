@@ -1633,7 +1633,7 @@ GridLayout:
                             else:
                                 colors[item_color] = 1
                         if item_memo:
-                            regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                            regexed_memo = item_memo.replace('"', '**Inch(es)')
                             memo_string.append(regexed_memo)
                     if colors:
                         for color_name, color_amount in colors.items():
@@ -2101,7 +2101,7 @@ GridLayout:
                                         else:
                                             colors[item_color] = 1
                                     if item_memo:
-                                        regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                                        regexed_memo = item_memo.replace('"', '**Inch(es)')
                                         memo_string.append(regexed_memo)
                                 if colors:
                                     for color_name, color_amount in colors.items():
@@ -3001,7 +3001,7 @@ GridLayout:
                                     else:
                                         colors[item_color] = 1
                                 if item_memo:
-                                    regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                                    regexed_memo = item_memo.replace('"', '**Inch(es)')
                                     memo_string.append(regexed_memo)
                             if colors:
                                 for color_name, color_amount in colors.items():
@@ -3963,7 +3963,7 @@ GridLayout:
                             else:
                                 colors[item_color] = 1
                         if item_memo:
-                            regexed_memo = item_memo.replace('"','(*INCH(es)')
+                            regexed_memo = item_memo.replace('"','**Inch(es)')
                             memo_string.append(regexed_memo)
                     if colors:
                         for color_name, color_amount in colors.items():
@@ -4438,7 +4438,7 @@ GridLayout:
                                     else:
                                         colors[item_color] = 1
                                 if item_memo:
-                                    regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                                    regexed_memo = item_memo.replace('"', '**Inch(es)')
                                     memo_string.append(regexed_memo)
                             if colors:
                                 for color_name, color_amount in colors.items():
@@ -5191,7 +5191,7 @@ GridLayout:
                                     else:
                                         colors[item_color] = 1
                                 if item_memo:
-                                    regexed_memo = item_memo.replace('"', '(*INCH(es)')
+                                    regexed_memo = item_memo.replace('"', '**Inch(es)')
                                     memo_string.append(regexed_memo)
                             if colors:
                                 for color_name, color_amount in colors.items():

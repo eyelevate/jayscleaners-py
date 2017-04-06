@@ -96,23 +96,23 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_items_id
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
-        sql = '''UPDATE {t} SET '''.format(t=table)
+        sql = """UPDATE {t} SET """.format(t=table)
         if len(data) > 0:
             for key, value in data.items():
                 if value is None:
-                    sql += '''{k} = NULL, '''.format(k=key, v=value)
+                    sql += """{k} = NULL, """.format(k=key, v=value)
                 else:
-                    sql += '''{k} = "{v}", '''.format(k=key, v=value)
-            sql += '''updated_at = "{v}" '''.format(v=self.updated_at)
-        sql += '''WHERE '''
+                    sql += """{k} = '{v}', """.format(k=key, v=value)
+            sql += """updated_at = '{v}' """.format(v=self.updated_at)
+        sql += """WHERE """
         idx = 0
         if len(where) > 0:
             for key, value in where.items():
                 idx += 1
                 if idx == len(where):
-                    sql += '''{k} = {v}'''.format(k=key, v=value)
+                    sql += """{k} = {v}""".format(k=key, v=value)
                 else:
-                    sql += '''{k} = {v} AND '''.format(k=key, v=value)
+                    sql += """{k} = {v} AND """.format(k=key, v=value)
 
         self.c.execute(sql)
         self.conn.commit()
