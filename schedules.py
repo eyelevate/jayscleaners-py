@@ -89,6 +89,30 @@ created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(schedule_id,company_id,customer_id, card_id,pickup_delivery_id,
+pickup_address,pickup_date,dropoff_delivery_id, dropoff_address, dropoff_date,special_instructions,type,token,status,
+created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.schedule_id,
+                                                                                    self.company_id,
+                                                                                    self.customer_id,
+                                                                                    self.card_id,
+                                                                                    self.pickup_delivery_id,
+                                                                                    self.pickup_address,
+                                                                                    self.pickup_date,
+                                                                                    self.dropoff_delivery_id,
+                                                                                    self.dropoff_address,
+                                                                                    self.dropoff_date,
+                                                                                    self.special_instructions,
+                                                                                    self.type,
+                                                                                    self.token,
+                                                                                    self.status,
+                                                                                    self.created_at,
+                                                                                    self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -117,6 +141,31 @@ created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET schedule_id = ?, company_id = ?, customer_id = ?, card_id = ?,
+pickup_delivery_id = ?, pickup_address = ?, pickup_date = ?, dropoff_delivery_id = ?, dropoff_address= ?,
+dropoff_date = ?, special_instructions = ?, type = ?, token = ?, status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.schedule_id,
+                                  self.company_id,
+                                  self.customer_id,
+                                  self.card_id,
+                                  self.pickup_delivery_id,
+                                  self.pickup_address,
+                                  self.pickup_date,
+                                  self.dropoff_delivery_id,
+                                  self.dropoff_address,
+                                  self.dropoff_date,
+                                  self.special_instructions,
+                                  self.type,
+                                  self.token,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET schedule_id = ?, company_id = ?, customer_id = ?, card_id = ?,
 pickup_delivery_id = ?, pickup_address = ?, pickup_date = ?, dropoff_delivery_id = ?, dropoff_address= ?,
 dropoff_date = ?, special_instructions = ?, type = ?, token = ?, status = ?, updated_at = ?

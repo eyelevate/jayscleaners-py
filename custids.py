@@ -64,6 +64,20 @@ VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.cust_id,
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(cust_id,customer_id,company_id,mark,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.cust_id,
+                                           self.customer_id,
+                                           self.company_id,
+                                           self.mark,
+                                           self.status,
+                                           self.created_at,
+                                           self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where = False, data = False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -92,6 +106,20 @@ VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.cust_id,
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET cust_id = ?, customer_id = ?, company_id = ?, mark = ?, status = ?,
+updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
+                                                 self.customer_id,
+                                                 self.company_id,
+                                                 self.mark,
+                                                 self.status,
+                                                 self.updated_at,
+                                                 self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET cust_id = ?, customer_id = ?, company_id = ?, mark = ?, status = ?,
 updated_at = ? WHERE id = ?'''.format(t=table), (self.cust_id,
                                                  self.customer_id,

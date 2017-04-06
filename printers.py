@@ -73,6 +73,24 @@ created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.p
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(printer_id,company_id,name,model,nick_name,vendor_id,product_id,type,status,
+created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.printer_id,
+                                                                          self.company_id,
+                                                                          self.name,
+                                                                          self.model,
+                                                                          self.nick_name,
+                                                                          self.vendor_id,
+                                                                          self.product_id,
+                                                                          self.type,
+                                                                          self.status,
+                                                                          self.created_at,
+                                                                          self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where = False, data = False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -104,6 +122,24 @@ created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.p
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET printer_id = ?, company_id = ?, name = ?, model = ?, nick_name = ?,
+vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.printer_id,
+                                                                                                    self.company_id,
+                                                                                                    self.name,
+                                                                                                    self.model,
+                                                                                                    self.nick_name,
+                                                                                                    self.vendor_id,
+                                                                                                    self.product_id,
+                                                                                                    self.type,
+                                                                                                    self.status,
+                                                                                                    self.updated_at,
+                                                                                                    self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET printer_id = ?, company_id = ?, name = ?, model = ?, nick_name = ?,
 vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.printer_id,
                                                                                                     self.company_id,

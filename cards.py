@@ -93,6 +93,30 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.card_id,
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(card_id,company_id,user_id,profile_id,payment_id,root_payment_id,street,suite,
+city,state,zipcode,exp_month, exp_year,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.card_id,
+                                                             self.company_id,
+                                                             self.user_id,
+                                                             self.profile_id,
+                                                             self.payment_id,
+                                                             self.root_payment_id,
+                                                             self.street,
+                                                             self.suite,
+                                                             self.city,
+                                                             self.state,
+                                                             self.zipcode,
+                                                             self.exp_month,
+                                                             self.exp_year,
+                                                             self.status,
+                                                             self.created_at,
+                                                             self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -121,6 +145,30 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.card_id,
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET card_id = ?, company_id = ?, user_id = ?, profile_id = ?, payment_id = ?,
+root_payment_id = ?, street = ?, suite = ?, city = ?, state = ?, zipcode = ?, exp_month = ?, exp_year = ?, status = ?,
+updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
+                                                 self.company_id,
+                                                 self.user_id,
+                                                 self.profile_id,
+                                                 self.payment_id,
+                                                 self.root_payment_id,
+                                                 self.street,
+                                                 self.suite,
+                                                 self.city,
+                                                 self.state,
+                                                 self.zipcode,
+                                                 self.exp_month,
+                                                 self.exp_year,
+                                                 self.status,
+                                                 self.updated_at,
+                                                 self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET card_id = ?, company_id = ?, user_id = ?, profile_id = ?, payment_id = ?,
 root_payment_id = ?, street = ?, suite = ?, city = ?, state = ?, zipcode = ?, exp_month = ?, exp_year = ?, status = ?,
 updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,

@@ -64,6 +64,22 @@ created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.credit_
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(credit_id,customer_id,employee_id,amount,reason,status,
+created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.credit_id,
+                                                                    self.customer_id,
+                                                                    self.employee_id,
+                                                                    self.amount,
+                                                                    self.reason,
+                                                                    self.status,
+                                                                    self.created_at,
+                                                                    self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
+
     def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -92,6 +108,22 @@ created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.credit_
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET credit_id = ?, customer_id = ?, employee_id = ?, amount = ?, reason = ?,
+status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.credit_id,
+                                  self.customer_id,
+                                  self.employee_id,
+                                  self.amount,
+                                  self.reason,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET credit_id = ?, customer_id = ?, employee_id = ?, amount = ?, reason = ?,
 status = ?, updated_at = ?
 WHERE id = ?'''.format(t=table), (self.credit_id,

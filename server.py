@@ -62,9 +62,9 @@ def sync_from_server(data):
                         if address.deleted_at:
                             address.delete()
                         else:
-                            address.update()
+                            address.update_special()
                 else:
-                    address.add()
+                    address.add_special()
             address.close_connection()
  
         if 'cards' in updates:
@@ -96,9 +96,9 @@ def sync_from_server(data):
                         if card.deleted_at:
                             card.delete()
                         else:
-                            card.update()
+                            card.update_special()
                 else:
-                    card.add()
+                    card.add_special()
             card.close_connection()
         
         if 'colors' in updates:
@@ -122,9 +122,9 @@ def sync_from_server(data):
                         if color.deleted_at:
                             color.delete()
                         else:
-                            color.update()
+                            color.update_special()
                 else:
-                    color.add()
+                    color.add_special()
             color.close_connection()
 
         if 'companies' in updates:
@@ -154,9 +154,9 @@ def sync_from_server(data):
                         if company.deleted_at:
                             company.delete()
                         else:
-                            company.update()
+                            company.update_special()
                 else:
-                    company.add()
+                    company.add_special()
             company.close_connection()
             
         if 'credits' in updates:
@@ -180,9 +180,9 @@ def sync_from_server(data):
                         if credit.deleted_at:
                             credit.delete()
                         else:
-                            credit.update()
+                            credit.update_special()
                 else:
-                    credit.add()
+                    credit.add_special()
             credit.close_connection()
         if 'custids' in updates:
             for custids in updates['custids']:
@@ -202,9 +202,9 @@ def sync_from_server(data):
                         if custid.deleted_at:
                             custid.delete()
                         else:
-                            custid.update()
+                            custid.update_special()
                 else:
-                    custid.add()
+                    custid.add_special()
             custid.close_connection()
 
         if 'deliveries' in updates:
@@ -230,9 +230,9 @@ def sync_from_server(data):
                         if delivery.deleted_at:
                             delivery.delete()
                         else:
-                            delivery.update()
+                            delivery.update_special()
                 else:
-                    delivery.add()
+                    delivery.add_special()
             delivery.close_connection()
 
         if 'discounts' in updates:
@@ -260,9 +260,9 @@ def sync_from_server(data):
                         if discount.deleted_at:
                             discount.delete()
                         else:
-                            discount.update()
+                            discount.update_special()
                 else:
-                    discount.add()
+                    discount.add_special()
             discount.close_connection()
 
         if 'inventories' in updates:
@@ -285,9 +285,9 @@ def sync_from_server(data):
                         if inventory.deleted_at:
                             inventory.delete()
                         else:
-                            inventory.update()
+                            inventory.update_special()
                 else:
-                    inventory.add()
+                    inventory.add_special()
             inventory.close_connection()
 
         if 'inventory_items' in updates:
@@ -314,9 +314,9 @@ def sync_from_server(data):
                         if inventory_item.deleted_at:
                             inventory_item.delete()
                         else:
-                            inventory_item.update()
+                            inventory_item.update_special()
                 else:
-                    inventory_item.add()
+                    inventory_item.add_special()
             inventory_item.close_connection()
 
         if 'invoice_items' in updates:
@@ -345,9 +345,9 @@ def sync_from_server(data):
                         if invoice_item.deleted_at:
                             invoice_item.delete()
                         else:
-                            invoice_item.update()
+                            invoice_item.update_special()
                 else:
-                    invoice_item.add()
+                    invoice_item.add_special()
             invoice_item.close_connection()
 
         if 'invoices' in updates:
@@ -373,7 +373,6 @@ def sync_from_server(data):
                 invoice.deleted_at = invoices['deleted_at']
                 invoice.created_at = invoices['created_at']
                 invoice.updated_at = invoices['updated_at']
-
 
                 # extra loop through invoice items to delete or check for data
                 if 'invoice_items' in invoices:
@@ -405,7 +404,7 @@ def sync_from_server(data):
                                     if invoice_item.deleted_at:
                                         invoice_item.delete()
                                     else:
-                                        invoice_item.update()
+                                        invoice_item.update_special()
 
                 count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
                 if len(count_invoice) > 0 or invoice.deleted_at:
@@ -414,9 +413,9 @@ def sync_from_server(data):
                         if invoice.deleted_at:
                             invoice.delete()
                         else:
-                            invoice.update()
+                            invoice.update_special()
                 else:
-                    invoice.add()
+                    invoice.add_special()
             invoice.close_connection()
 
         if 'memos' in updates:
@@ -437,9 +436,9 @@ def sync_from_server(data):
                         if memo.deleted_at:
                             memo.delete()
                         else:
-                            memo.update()
+                            memo.update_special()
                 else:
-                    memo.add()
+                    memo.add_special()
             memo.close_connection()
 
         # if 'printers' in updates:
@@ -464,9 +463,9 @@ def sync_from_server(data):
         #                 if printer.deleted_at:
         #                     printer.delete()
         #                 else:
-        #                     printer.update()
+        #                     printer.update_special()
         #         else:
-        #             printer.add()
+        #             printer.add_special()
         #     printer.close_connection()
 
         if 'profiles' in updates:
@@ -487,9 +486,9 @@ def sync_from_server(data):
                         if profile.deleted_at:
                             profile.delete()
                         else:
-                            profile.update()
+                            profile.update_special()
                 else:
-                    profile.add()
+                    profile.add_special()
             profile.close_connection()
 
 
@@ -519,9 +518,9 @@ def sync_from_server(data):
                         if reward_transaction.deleted_at:
                             reward_transaction.delete()
                         else:
-                            reward_transaction.update()
+                            reward_transaction.update_special()
                 else:
-                    reward_transaction.add()
+                    reward_transaction.add_special()
             reward_transaction.close_connection()
 
         if 'rewards' in updates:
@@ -543,9 +542,9 @@ def sync_from_server(data):
                         if reward.deleted_at:
                             reward.delete()
                         else:
-                            reward.update()
+                            reward.update_special()
                 else:
-                    reward.add()
+                    reward.add_special()
             reward.close_connection()
 
         if 'schedules' in updates:
@@ -575,9 +574,9 @@ def sync_from_server(data):
                         if schedule.deleted_at:
                             schedule.delete()
                         else:
-                            schedule.update()
+                            schedule.update_special()
                 else:
-                    schedule.add()
+                    schedule.add_special()
             schedule.close_connection()
 
         if 'taxes' in updates:
@@ -597,9 +596,9 @@ def sync_from_server(data):
                         if tax.deleted_at:
                             tax.delete()
                         else:
-                            tax.update()
+                            tax.update_special()
                 else:
-                    tax.add()
+                    tax.add_special()
             tax.close_connection()
 
         if 'transactions' in updates:
@@ -633,9 +632,9 @@ def sync_from_server(data):
                         if transaction.deleted_at:
                             transaction.delete()
                         else:
-                            transaction.update()
+                            transaction.update_special()
                 else:
-                    transaction.add()
+                    transaction.add_special()
             transaction.close_connection()
 
         if 'users' in updates:
@@ -684,9 +683,9 @@ def sync_from_server(data):
                         if user.deleted_at:
                             user.delete()
                         else:
-                            user.update()
+                            user.update_special()
                 else:
-                    user.add()
+                    user.add_special()
             user.close_connection()
 
 
@@ -710,9 +709,9 @@ def sync_from_server(data):
                         if zipcode.deleted_at:
                             zipcode.delete()
                         else:
-                            zipcode.update()
+                            zipcode.update_special()
                 else:
-                    zipcode.add()
+                    zipcode.add_special()
             zipcode.close_connection()
 
 def update_database(data):

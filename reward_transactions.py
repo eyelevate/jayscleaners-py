@@ -86,6 +86,29 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.reward_id,
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(reward_id,transaction_id,customer_id,employee_id,company_id,type,points,
+credited,reduced,running_total,reason,name,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.reward_id,
+                                                           self.transaction_id,
+                                                           self.customer_id,
+                                                           self.employee_id,
+                                                           self.company_id,
+                                                           self.type,
+                                                           self.points,
+                                                           self.credited,
+                                                           self.reduced,
+                                                           self.running_total,
+                                                           self.reason,
+                                                           self.name,
+                                                           self.status,
+                                                           self.created_at,
+                                                           self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where = False, data = False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -114,6 +137,29 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.reward_id,
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET reward_id = ?, transaction_id = ?, customer_id = ?, employee_id = ?,
+company_id = ?, type = ?, points = ?, credited = ?, reduced = ?, running_total = ?, reason = ?, name = ?, status = ?,
+updated_at = ? WHERE id = ?'''.format(t=table), (self.reward_id,
+                                                 self.transaction_id,
+                                                 self.customer_id,
+                                                 self.employee_id,
+                                                 self.company_id,
+                                                 self.type,
+                                                 self.points,
+                                                 self.credited,
+                                                 self.reduced,
+                                                 self.running_total,
+                                                 self.reason,
+                                                 self.name,
+                                                 self.status,
+                                                 self.updated_at,
+                                                 self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET reward_id = ?, transaction_id = ?, customer_id = ?, employee_id = ?,
 company_id = ?, type = ?, points = ?, credited = ?, reduced = ?, running_total = ?, reason = ?, name = ?, status = ?,
 updated_at = ? WHERE id = ?'''.format(t=table), (self.reward_id,

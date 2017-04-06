@@ -159,6 +159,54 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(user_id,company_id,username,first_name,last_name,street,suite,city,state,
+zipcode,email,phone,intercom,concierge_name,concierge_number,special_instructions,shirt_old,shirt,delivery,profile_id,
+payment_id,payment_status,token,api_token,reward_status,reward_points,account,account_total,credits,starch,
+important_memo,invoice_memo,password,role_id,remember_token,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table),
+                       (self.user_id,
+                        self.company_id,
+                        self.username,
+                        self.first_name,
+                        self.last_name,
+                        self.street,
+                        self.suite,
+                        self.city,
+                        self.state,
+                        self.zipcode,
+                        self.email,
+                        self.phone,
+                        self.intercom,
+                        self.concierge_name,
+                        self.concierge_number,
+                        self.special_instructions,
+                        self.shirt_old,
+                        self.shirt,
+                        self.delivery,
+                        self.profile_id,
+                        self.payment_id,
+                        self.payment_status,
+                        self.token,
+                        self.api_token,
+                        self.reward_status,
+                        self.reward_points,
+                        self.account,
+                        self.account_total,
+                        self.credits,
+                        self.starch,
+                        self.important_memo,
+                        self.invoice_memo,
+                        self.password,
+                        self.role_id,
+                        self.remember_token,
+                        self.created_at,
+                        self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -187,6 +235,54 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET user_id = ?, company_id = ?, username = ?, first_name = ?, last_name = ?,
+street = ?, suite = ?, city = ?, state = ?, zipcode = ?, email = ?, phone = ?, intercom = ?, concierge_name = ?,
+concierge_number = ?, special_instructions = ?, shirt_old = ?, shirt = ?, delivery = ?, profile_id = ?, payment_id = ?,
+payment_status = ?, token = ?, api_token = ?, reward_status = ?, reward_points = ?, account = ?, account_total = ?,
+credits = ?, starch = ?, important_memo = ?, invoice_memo = ?, password = ?, role_id = ?, remember_token = ?,
+updated_at = ? WHERE id = ?'''.format(t=table), (self.user_id,
+                                                 self.company_id,
+                                                 self.username,
+                                                 self.first_name,
+                                                 self.last_name,
+                                                 self.street,
+                                                 self.suite,
+                                                 self.city,
+                                                 self.state,
+                                                 self.zipcode,
+                                                 self.email,
+                                                 self.phone,
+                                                 self.intercom,
+                                                 self.concierge_name,
+                                                 self.concierge_number,
+                                                 self.special_instructions,
+                                                 self.shirt_old,
+                                                 self.shirt,
+                                                 self.delivery,
+                                                 self.profile_id,
+                                                 self.payment_id,
+                                                 self.payment_status,
+                                                 self.token,
+                                                 self.api_token,
+                                                 self.reward_status,
+                                                 self.reward_points,
+                                                 self.account,
+                                                 self.account_total,
+                                                 self.credits,
+                                                 self.starch,
+                                                 self.important_memo,
+                                                 self.invoice_memo,
+                                                 self.password,
+                                                 self.role_id,
+                                                 self.remember_token,
+                                                 self.updated_at,
+                                                 self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET user_id = ?, company_id = ?, username = ?, first_name = ?, last_name = ?,
 street = ?, suite = ?, city = ?, state = ?, zipcode = ?, email = ?, phone = ?, intercom = ?, concierge_name = ?,
 concierge_number = ?, special_instructions = ?, shirt_old = ?, shirt = ?, delivery = ?, profile_id = ?, payment_id = ?,

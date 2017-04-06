@@ -76,6 +76,25 @@ blackout,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)'''.format
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(delivery_id,company_id,route_name,day,delivery_limit,start_time,end_time,zipcode,
+blackout,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.delivery_id,
+                                                                                            self.company_id,
+                                                                                            self.route_name,
+                                                                                            self.day,
+                                                                                            self.delivery_limit,
+                                                                                            self.start_time,
+                                                                                            self.end_time,
+                                                                                            self.zipcode,
+                                                                                            self.blackout,
+                                                                                            self.status,
+                                                                                            self.created_at,
+                                                                                            self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where = False, data = False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -104,6 +123,26 @@ blackout,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)'''.format
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET delivery_id = ?, company_id = ?, route_name = ?, day = ?, delivery_limit = ?,
+start_time = ?, end_time = ?, zipcode = ?, blackout = ?, status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.delivery_id,
+                                  self.company_id,
+                                  self.route_name,
+                                  self.day,
+                                  self.delivery_limit,
+                                  self.start_time,
+                                  self.end_time,
+                                  self.zipcode,
+                                  self.blackout,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET delivery_id = ?, company_id = ?, route_name = ?, day = ?, delivery_limit = ?,
 start_time = ?, end_time = ?, zipcode = ?, blackout = ?, status = ?, updated_at = ?
 WHERE id = ?'''.format(t=table), (self.delivery_id,

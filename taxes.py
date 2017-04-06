@@ -60,6 +60,20 @@ VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.tax_id,
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(tax_id,company_id,rate,status,deleted_at,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.tax_id,
+                                           self.company_id,
+                                           self.rate,
+                                           self.status,
+                                           self.deleted_at,
+                                           self.created_at,
+                                           self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where = False, data = False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -89,6 +103,21 @@ VALUES(?,?,?,?,?,?,?)'''.format(t=table), (self.tax_id,
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
         self.created_at = now
+        self.c.execute('''UPDATE {t} SET tax_id = ?, company_id = ?, rate = ?, status = ?, deleted_at = ?,
+created_at = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.tax_id,
+                                                                 self.company_id,
+                                                                 self.rate,
+                                                                 self.status,
+                                                                 self.deleted_at,
+                                                                 self.created_at,
+                                                                 self.updated_at,
+                                                                 self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET tax_id = ?, company_id = ?, rate = ?, status = ?, deleted_at = ?,
 created_at = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.tax_id,
                                                                  self.company_id,

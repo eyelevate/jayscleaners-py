@@ -107,6 +107,37 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.tran
         self.conn.commit()
         return True
 
+    def add_special(self):
+
+        self.c.execute('''INSERT INTO {t}(trans_id,company_id,customer_id,schedule_id,pretax,tax,aftertax,
+credit,discount,total,invoices,account_paid,account_paid_on,type,last_four,tendered,transaction_id,status,deleted_at,
+created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.trans_id,
+                                                                       self.company_id,
+                                                                       self.customer_id,
+                                                                       self.schedule_id,
+                                                                       self.pretax,
+                                                                       self.tax,
+                                                                       self.aftertax,
+                                                                       self.credit,
+                                                                       self.discount,
+                                                                       self.total,
+                                                                       self.invoices,
+                                                                       self.account_paid,
+                                                                       self.account_paid_on,
+                                                                       self.type,
+                                                                       self.last_four,
+                                                                       self.tendered,
+                                                                       self.transaction_id,
+                                                                       self.status,
+                                                                       self.deleted_at,
+                                                                       self.created_at,
+                                                                       self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -135,6 +166,35 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.tran
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET trans_id = ?, company_id = ?, customer_id = ?, schedule_id = ?,
+pretax = ?, tax = ?, aftertax = ?,credit = ?, discount = ?, total = ?, invoices = ?, account_paid = ?,
+account_paid_on = ?, type = ?, last_four = ?, tendered = ?, transaction_id = ?, status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.trans_id,
+                                  self.company_id,
+                                  self.customer_id,
+                                  self.schedule_id,
+                                  self.pretax,
+                                  self.tax,
+                                  self.aftertax,
+                                  self.credit,
+                                  self.discount,
+                                  self.total,
+                                  self.invoices,
+                                  self.account_paid,
+                                  self.account_paid_on,
+                                  self.type,
+                                  self.last_four,
+                                  self.tendered,
+                                  self.transaction_id,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET trans_id = ?, company_id = ?, customer_id = ?, schedule_id = ?,
 pretax = ?, tax = ?, aftertax = ?,credit = ?, discount = ?, total = ?, invoices = ?, account_paid = ?,
 account_paid_on = ?, type = ?, last_four = ?, tendered = ?, transaction_id = ?, status = ?, updated_at = ?

@@ -94,6 +94,31 @@ class Company:
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}
+(company_id,name,street,suite,city,state,zip,email,phone,store_hours,turn_around,api_token,payment_gateway_id,payment_api_login,created_at,updated_at) VALUES
+(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.company_id,
+                                                       self.name,
+                                                       self.street,
+                                                       self.suite,
+                                                       self.city,
+                                                       self.state,
+                                                       self.zip,
+                                                       self.email,
+                                                       self.phone,
+                                                       self.store_hours,
+                                                       self.turn_around,
+                                                       self.api_token,
+                                                       self.payment_gateway_id,
+                                                       self.payment_api_login,
+                                                       self.created_at,
+                                                       self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
+
     def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -150,6 +175,34 @@ updated_at = ?, server_at = ? WHERE id = ?'''.format(
 
         self.conn.commit()
         return True
+
+    def update_special(self):
+        self.c.execute('''UPDATE {t} SET company_id = ?, name = ?, street = ?, suite = ?, city = ?, state = ?, zip = ?,
+email = ?, phone = ?, store_hours = ?, turn_around = ?, api_token = ?, payment_gateway_id = ?, payment_api_login = ?,
+updated_at = ?, server_at = ? WHERE id = ?'''.format(
+            t=table),
+            (self.company_id,
+             self.name,
+             self.street,
+             self.suite,
+             self.city,
+             self.state,
+             self.zip,
+             self.email,
+             self.phone,
+             self.store_hours,
+             self.turn_around,
+             self.api_token,
+             self.payment_gateway_id,
+             self.payment_api_login,
+             self.updated_at,
+             self.server_at,
+             self.id)
+        )
+
+        self.conn.commit()
+        return True
+
 
     def find(self):
         try:
@@ -302,11 +355,9 @@ updated_at = ?, server_at = ? WHERE id = ?'''.format(
         else:
             return False
 
-    def server_at_update(self):
-        unix = time.time()
-        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-        self.updated_at = now
-        sql = '''UPDATE {t} SET server_at = "{time}" where id > {id}'''.format(t=table,time=now,id='0')
+    def server_at_update(self, server_at):
+
+        sql = '''UPDATE {t} SET server_at = "{time}" where id > {id}'''.format(t=table,time=server_at,id='0')
 
         self.c.execute(sql)
         self.conn.commit()

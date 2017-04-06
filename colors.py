@@ -64,6 +64,21 @@ VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.color_id,
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(color_id,company_id,color,name,ordered,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.color_id,
+                                             self.company_id,
+                                             self.color,
+                                             self.name,
+                                             self.ordered,
+                                             self.status,
+                                             self.created_at,
+                                             self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where = False, data = False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -105,6 +120,22 @@ WHERE id = ?'''.format(t=table), (self.color_id,
 
         self.conn.commit()
         return True
+
+    def update_special(self):
+        self.c.execute('''UPDATE {t} SET color_id = ?, company_id = ?, color = ?,name = ?, ordered = ?, status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.color_id,
+                                  self.company_id,
+                                  self.color,
+                                  self.name,
+                                  self.ordered,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
 
     def find(self):
         try:

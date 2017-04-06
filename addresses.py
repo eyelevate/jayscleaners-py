@@ -83,6 +83,27 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.address_id,
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(address_id,user_id,name,street,suite,city,state,zipcode,primary_address,
+concierge_name, concierge_number,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.address_id,
+                                                         self.user_id,
+                                                         self.name,
+                                                         self.street,
+                                                         self.suite,
+                                                         self.city,
+                                                         self.state,
+                                                         self.zipcode,
+                                                         self.primary_address,
+                                                         self.concierge_name,
+                                                         self.concierge_number,
+                                                         self.status,
+                                                         self.created_at,
+                                                         self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
     def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -111,6 +132,27 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.address_id,
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
+        self.c.execute('''UPDATE {t} SET address_id = ?, user_id = ?, street = ?, suite = ?, city = ?, state = ?,
+zipcode = ?, primary_address = ?, concierge_name = ?, concierge_number = ?, status = ?, updated_at = ?
+WHERE id = ?'''.format(t=table), (self.address_id,
+                                  self.user_id,
+                                  self.street,
+                                  self.suite,
+                                  self.city,
+                                  self.state,
+                                  self.zipcode,
+                                  self.primary_address,
+                                  self.concierge_name,
+                                  self.concierge_number,
+                                  self.status,
+                                  self.updated_at,
+                                  self.id)
+                       )
+
+        self.conn.commit()
+        return True
+
+    def update_special(self):
         self.c.execute('''UPDATE {t} SET address_id = ?, user_id = ?, street = ?, suite = ?, city = ?, state = ?,
 zipcode = ?, primary_address = ?, concierge_name = ?, concierge_number = ?, status = ?, updated_at = ?
 WHERE id = ?'''.format(t=table), (self.address_id,
