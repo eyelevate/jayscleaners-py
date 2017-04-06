@@ -12336,8 +12336,6 @@ class SearchScreen(Screen):
 
     def customer_results(self, data, *args, **kwargs):
         # stop scheduler to get only customer data
-        self.scheduler_stop()
-
 
         # Found customer via where, now display data to screen
         if len(data) == 1:
@@ -12434,7 +12432,6 @@ class SearchScreen(Screen):
             # clear the search text input
             self.search.focus = True
             self.search.text = ''
-            self.scheduler_restart()
 
 
         elif len(data) > 1:
