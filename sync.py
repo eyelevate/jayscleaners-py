@@ -1439,6 +1439,8 @@ class Sync:
                                             invoice_item.delete()
                                         else:
                                             invoice_item.update_special()
+                                else:
+                                    invoice_item.add()
                             invoice_item.close_connection()
 
 
