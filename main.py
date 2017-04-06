@@ -1474,7 +1474,8 @@ GridLayout:
         text_size:self.size
         valign:'bottom'
         halign:'center'
-        on_press_down: root.parent.parent.parent.parent.parent.parent.set_item({item_id})
+        min_state_time: 0.010
+        on_release: root.parent.parent.parent.parent.parent.parent.set_item({item_id})
         background_rgba:(.7,.3,.5,1)
         Image:
             id: item_image
