@@ -95,6 +95,32 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_id
         self.conn.commit()
         return True
 
+    def add_special(self):
+        self.c.execute('''INSERT INTO {t}(invoice_id,company_id,customer_id,quantity,pretax,tax,reward_id,discount_id,
+total,rack,rack_date,due_date,memo,transaction_id,schedule_id,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_id,
+                                                                 self.company_id,
+                                                                 self.customer_id,
+                                                                 self.quantity,
+                                                                 self.pretax,
+                                                                 self.tax,
+                                                                 self.reward_id,
+                                                                 self.discount_id,
+                                                                 self.total,
+                                                                 self.rack,
+                                                                 self.rack_date,
+                                                                 self.due_date,
+                                                                 self.memo,
+                                                                 self.transaction_id,
+                                                                 self.schedule_id,
+                                                                 self.status,
+                                                                 self.created_at,
+                                                                 self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
+
     def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))

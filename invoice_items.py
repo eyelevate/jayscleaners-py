@@ -91,6 +91,29 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_items_id
         self.conn.commit()
         return True
 
+    def add_special(self):
+
+        self.c.execute('''INSERT INTO {t}(invoice_items_id,invoice_id,item_id,inventory_id,company_id,customer_id,
+quantity,color,memo, pretax,tax,total,status,created_at,updated_at)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.invoice_items_id,
+                                                           self.invoice_id,
+                                                           self.item_id,
+                                                           self.inventory_id,
+                                                           self.company_id,
+                                                           self.customer_id,
+                                                           self.quantity,
+                                                           self.color,
+                                                           self.memo,
+                                                           self.pretax,
+                                                           self.tax,
+                                                           self.total,
+                                                           self.status,
+                                                           self.created_at,
+                                                           self.updated_at)
+                       )
+
+        self.conn.commit()
+        return True
 
     def put(self, where=False, data=False):
         unix = time.time()

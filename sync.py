@@ -1493,7 +1493,7 @@ class Sync:
                             else:
                                 invoice.update_special()
                     else:
-                        invoice.add()
+                        invoice.add_special()
                     invoice.close_connection()
 
                     # extra loop through invoice items to delete or check for data
@@ -1529,7 +1529,7 @@ class Sync:
                                         else:
                                             invoice_item.update_special()
                                 else:
-                                    invoice_item.add()
+                                    invoice_item.add_special()
                             invoice_item.close_connection()
 
         except urllib.error.URLError as e:
@@ -1576,7 +1576,7 @@ class Sync:
                             if invoice.deleted_at:
                                 invoice.delete()
                     else:
-                        invoice.add()
+                        invoice.add_special()
                     invoice.close_connection()
 
                     # extra loop through invoice items to delete or check for data
@@ -1610,7 +1610,7 @@ class Sync:
                                         if invoice_item.deleted_at:
                                             invoice_item.delete()
                                 else:
-                                    invoice_item.add()
+                                    invoice_item.add_special()
                             invoice_item.close_connection()
 
         except urllib.error.URLError as e:
