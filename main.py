@@ -1385,8 +1385,9 @@ class DropoffScreen(Screen):
         if colors:
             for color in colors:
                 color_btn = Button(markup=True,
-                                   text='[b]{color_name}[/b]'.format(color_name=color['name']))
-                color_btn.bind(on_press=partial(self.color_selected_main, color['name']))
+                                   text='[b]{color_name}[/b]'.format(color_name=color['name']),
+                                   min_state_time=0.020)
+                color_btn.bind(on_release=partial(self.color_selected_main, color['name']))
                 color_btn.background_normal = ''
                 color_btn.background_color = vars.color_rgba(color['name'])
                 self.colors_table_main.add_widget(color_btn)
