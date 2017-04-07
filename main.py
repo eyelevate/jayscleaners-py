@@ -640,6 +640,12 @@ class MainScreen(Screen):
         max = 21
         self.set_pb_max(21)
         idx = 0
+        filename = 'db/jayscleaners.db'
+        try:
+            os.remove(filename)
+            SYNC.migrate()
+        except OSError:
+            pass
         for table in tables:
             idx += 1
 
@@ -666,50 +672,7 @@ class MainScreen(Screen):
                 end = int(count_data['data']['last_row'])
 
                 if int(end - start) > 0:  # reset table db and start pulling in new data from server
-                    if table is 'addresses':
-                        truncate_table = Address()
-                    elif table is 'cards':
-                        truncate_table = Card()
-                    elif table is 'colors':
-                        truncate_table = Colored()
-                    elif table is 'companies':
-                        truncate_table = Company()
-                    elif table is 'credits':
-                        truncate_table = Credit()
-                    elif table is 'custids':
-                        truncate_table = Custid()
-                    elif table is 'deliveries':
-                        truncate_table = Delivery()
-                    elif table is 'discounts':
-                        truncate_table = Discount()
-                    elif table is 'inventories':
-                        truncate_table = Inventory()
-                    elif table is 'inventory_items':
-                        truncate_table = InventoryItem()
-                    elif table is 'invoices':
-                        truncate_table = Invoice()
-                    elif table is 'invoice_items':
-                        truncate_table = InvoiceItem()
-                    elif table is 'memos':
-                        truncate_table = Memo()
-                    elif table is 'profiles':
-                        truncate_table = Profile()
-                    elif table is 'reward_transactions':
-                        truncate_table = RewardTransaction()
-                    elif table is 'rewards':
-                        truncate_table = Reward()
-                    elif table is 'schedules':
-                        truncate_table = Schedule()
-                    elif table is 'taxes':
-                        truncate_table = Tax()
-                    elif table is 'transactions':
-                        truncate_table = Transaction()
-                    elif table is 'users':
-                        truncate_table = User()
-                    else:
-                        # reset local db table
-                        truncate_table = Zipcode()
-                    truncate_table.truncate()
+
                     if end > 5000:
                         for num in range(start, end, 5000):
                             idx_start = num
@@ -717,9 +680,9 @@ class MainScreen(Screen):
                             print('Obtaining rows {} through {}'.format(idx_start, idx_end))
                             self.get_chunk(table,idx_start,idx_end, end)
 
-                        else:
-                            print('Obtaining rows {} through {}'.format(start, end))
-                            self.get_chunk(table,0,5000,end)
+                    else:
+                        print('Obtaining rows {} through {}'.format(start, end))
+                        self.get_chunk(table,0,5000,end)
                         return True
 
         except urllib.error.URLError as e:
