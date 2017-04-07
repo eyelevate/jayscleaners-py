@@ -571,7 +571,7 @@ class MainScreen(Screen):
         inner_layout_1.ids.main_table.add_widget(self.item_description)
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
-        cancel_button = Button(text="cancel",
+        cancel_button = Button(text="Done",
                                on_release=self.main_popup.dismiss)
         sync_2_button = Button(text='Sync 2 days',
                                on_release=self.sync_rackable_invoices)
@@ -606,12 +606,986 @@ class MainScreen(Screen):
     def sync_db(self, *args, **kwargs):
         # Pause Schedule
         SCHEDULER.remove_all_jobs()
-        sync = Sync()
 
-        t1 = Thread(target=sync.auto_update, args=())
+        t1 = Thread(target=self.auto_update, args=())
         t1.start()
         # t1.join()
         # print('all done')
+
+    
+    def auto_update(self,*args, **kwargs):
+        tables = [
+            'addresses',
+            'cards',
+            'colors',
+            'companies',
+            'credits',
+            'custids',
+            'deliveries',
+            'discounts',
+            'inventories',
+            'inventory_items',
+            'invoices',
+            'invoice_items',
+            'memos',
+            'profiles',
+            'reward_transactions',
+            'rewards',
+            'schedules',
+            'taxes',
+            'transactions',
+            'users',
+            'zipcodes'
+        ]
+        max = 21
+        self.set_pb_max(21)
+        idx = 0
+        for table in tables:
+            idx += 1
+
+            self.set_pb_desc('Syncing {} Table {} of {}'.format(table, str(idx), str(max)))
+            self.set_pb_value(idx)
+            check_finish = self.process_sync(table, idx)
+            if check_finish:
+                continue
+        
+        
+
+        print('Process Complete. Local database has been completely synced.')
+        Company().server_at_update()
+
+    def process_sync(self, table, idx, *args, **kwargs):
+
+        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
+        print('Syncing table - {} ({} / 21)'.format(table, idx))
+        try:
+            r = request.urlopen(url)
+            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if (count_data['status'] is 200):
+                start = int(count_data['data']['first_row'])
+                end = int(count_data['data']['last_row'])
+
+                if int(end - start) > 0:  # reset table db and start pulling in new data from server
+                    if table is 'addresses':
+                        truncate_table = Address()
+                    elif table is 'cards':
+                        truncate_table = Card()
+                    elif table is 'colors':
+                        truncate_table = Colored()
+                    elif table is 'companies':
+                        truncate_table = Company()
+                    elif table is 'credits':
+                        truncate_table = Credit()
+                    elif table is 'custids':
+                        truncate_table = Custid()
+                    elif table is 'deliveries':
+                        truncate_table = Delivery()
+                    elif table is 'discounts':
+                        truncate_table = Discount()
+                    elif table is 'inventories':
+                        truncate_table = Inventory()
+                    elif table is 'inventory_items':
+                        truncate_table = InventoryItem()
+                    elif table is 'invoices':
+                        truncate_table = Invoice()
+                    elif table is 'invoice_items':
+                        truncate_table = InvoiceItem()
+                    elif table is 'memos':
+                        truncate_table = Memo()
+                    elif table is 'profiles':
+                        truncate_table = Profile()
+                    elif table is 'reward_transactions':
+                        truncate_table = RewardTransaction()
+                    elif table is 'rewards':
+                        truncate_table = Reward()
+                    elif table is 'schedules':
+                        truncate_table = Schedule()
+                    elif table is 'taxes':
+                        truncate_table = Tax()
+                    elif table is 'transactions':
+                        truncate_table = Transaction()
+                    elif table is 'users':
+                        truncate_table = User()
+                    else:
+                        # reset local db table
+                        truncate_table = Zipcode()
+                    truncate_table.truncate()
+                    if end > 5000:
+                        for num in range(start, end, 5000):
+                            idx_start = num
+                            idx_end = num + 5000
+                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
+                            self.get_chunk(table,idx_start,idx_end, end)
+
+                        else:
+                            print('Obtaining rows {} through {}'.format(start, end))
+                            self.get_chunk(table,0,5000,end)
+                        return True
+
+        except urllib.error.URLError as e:
+            print(e)
+
+        return False
+
+    def get_chunk(self, table=False, start=False, end=False, last=False, *args, **kwargs):
+        company_id = 1
+        api_token = '2064535930-1'
+
+        url = 'http://www.jayscleaners.com/admins/api/chunk/{}/{}/{}/{}/{}'.format(
+            company_id,
+            api_token,
+            table,
+            start,
+            end
+        )
+        # print(url)
+        try:
+            r = request.urlopen(url)
+            data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+
+            if data['status'] is True:
+                # Save the local data
+                self.sync_from_server(data, start, end, last)
+
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+
+    def sync_from_server(self,data, start, end, last,*args, **kwargs):
+        # print('sync from server')
+        # start upload text
+        # print(data)
+        # print(data['rows_to_create'])
+        if int(data['rows_to_create']) > 0:
+            updates = data['updates']
+            if 'addresses' in updates:
+
+                table_len = len(updates['addresses'])
+                self.set_pb_items_max(last)
+                idx = start
+                for addresses in updates['addresses']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,str(last)))
+                    address = Address()
+                    address.address_id = addresses['id']
+                    address.user_id = addresses['user_id']
+                    address.name = addresses['name']
+                    address.street = addresses['street']
+                    address.suite = addresses['suite']
+                    address.city = addresses['city']
+                    address.state = addresses['state']
+                    address.zipcode = addresses['zipcode']
+                    address.primary_address = addresses['primary_address']
+                    address.concierge_name = addresses['concierge_name']
+                    address.concierge_number = addresses['concierge_number']
+                    address.status = addresses['status']
+                    address.deleted_at = addresses['deleted_at']
+                    address.created_at = addresses['created_at']
+                    address.updated_at = addresses['updated_at']
+                    # check to see if color_id already exists and update
+
+                    count_address = address.where({'address_id': address.address_id})
+                    if len(count_address) > 0 or address.deleted_at:
+                        for data in count_address:
+                            address.id = data['id']
+                            if address.deleted_at:
+                                address.delete()
+                            else:
+                                address.update_special()
+                    else:
+                        address.add_special()
+                address.close_connection()
+
+            if 'cards' in updates:
+                table_len = len(updates['cards'])
+                self.set_pb_items_max(last)
+                idx = start
+                for cards in updates['cards']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    card = Card()
+                    card.card_id = cards['id']
+                    card.company_id = cards['company_id']
+                    card.user_id = cards['user_id']
+                    card.profile_id = cards['profile_id']
+                    card.payment_id = cards['payment_id']
+                    card.root_payment_id = cards['root_payment_id']
+                    card.street = cards['street']
+                    card.suite = cards['suite']
+                    card.city = cards['city']
+                    card.state = cards['state']
+                    card.zipcode = cards['zipcode']
+                    card.exp_month = cards['exp_month']
+                    card.exp_year = cards['exp_year']
+                    card.status = cards['status']
+                    card.deleted_at = cards['deleted_at']
+                    card.created_at = cards['created_at']
+                    card.updated_at = cards['updated_at']
+                    # check to see if color_id already exists and update
+
+                    count_card = card.where({'card_id': card.card_id})
+                    if len(count_card) > 0 or card.deleted_at:
+                        for data in count_card:
+                            card.id = data['id']
+                            if card.deleted_at:
+                                card.delete()
+                            else:
+                                card.update_special()
+                    else:
+                        card.add_special()
+                card.close_connection()
+
+            if 'colors' in updates:
+                table_len = len(updates['colors'])
+                self.set_pb_items_max(last)
+                idx = start
+                for colors in updates['colors']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    color = Colored()
+                    color.color_id = colors['id']
+                    color.company_id = colors['company_id']
+                    color.color = colors['color']
+                    color.name = colors['name']
+                    color.ordered = colors['ordered']
+                    color.status = colors['status']
+                    color.deleted_at = colors['deleted_at']
+                    color.created_at = colors['created_at']
+                    color.updated_at = colors['updated_at']
+                    # check to see if color_id already exists and update
+
+                    count_color = color.where({'color_id': color.color_id})
+                    if len(count_color) > 0 or color.deleted_at:
+                        for data in count_color:
+                            color.id = data['id']
+                            if color.deleted_at:
+                                color.delete()
+                            else:
+                                color.update_special()
+                    else:
+                        color.add_special()
+                color.close_connection()
+
+            if 'companies' in updates:
+                table_len = len(updates['companies'])
+                self.set_pb_items_max(last)
+                idx = start
+                for companies in updates['companies']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    company = Company()
+                    company.company_id = companies['id']
+                    company.name = companies['name']
+                    company.street = companies['street']
+                    company.city = companies['city']
+                    company.state = companies['state']
+                    company.zip = companies['zip']
+                    company.email = companies['email']
+                    company.phone = companies['phone']
+                    company.store_hours = companies['store_hours']
+                    company.turn_around = companies['turn_around']
+                    company.api_token = companies['api_token']
+                    company.payment_gateway_id = companies['payment_gateway_id']
+                    company.payment_api_login = companies['payment_api_login']
+                    company.deleted_at = companies['deleted_at']
+                    company.created_at = companies['created_at']
+                    company.updated_at = companies['updated_at']
+                    count_company = company.where({'company_id': company.company_id})
+                    if len(count_company) > 0 or company.deleted_at:
+                        for data in count_company:
+                            company.id = data['id']
+                            if company.deleted_at:
+                                company.delete()
+                            else:
+                                company.update_special()
+                    else:
+                        company.add_special()
+                company.close_connection()
+
+            if 'credits' in updates:
+                table_len = len(updates['credits'])
+                self.set_pb_items_max(last)
+                idx = start
+                for credits in updates['credits']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    credit = Credit()
+                    credit.credit_id = credits['id']
+                    credit.employee_id = credits['employee_id']
+                    credit.customer_id = credits['customer_id']
+                    credit.amount = credits['amount']
+                    credit.reason = credits['reason']
+                    credit.status = credits['status']
+                    credit.deleted_at = credits['deleted_at']
+                    credit.created_at = credits['created_at']
+                    credit.updated_at = credits['updated_at']
+                    # check to see already exists and update
+
+                    count_credit = credit.where({'credit_id': credit.credit_id})
+                    if len(count_credit) > 0 or credit.deleted_at:
+                        for data in count_credit:
+                            credit.id = data['id']
+                            if credit.deleted_at:
+                                credit.delete()
+                            else:
+                                credit.update_special()
+                    else:
+                        credit.add_special()
+                credit.close_connection()
+            if 'custids' in updates:
+                table_len = len(updates['custids'])
+                self.set_pb_items_max(last)
+                idx = start
+                for custids in updates['custids']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    custid = Custid()
+                    custid.cust_id = custids['id']
+                    custid.customer_id = custids['customer_id']
+                    custid.company_id = custids['company_id']
+                    custid.mark = custids['mark']
+                    custid.status = custids['status']
+                    custid.deleted_at = custids['deleted_at']
+                    custid.created_at = custids['created_at']
+                    custid.updated_at = custids['updated_at']
+                    count_custid = custid.where({'cust_id': custids['id']})
+                    if len(count_custid) > 0 or custid.deleted_at:
+                        for data in count_custid:
+                            custid.id = data['id']
+                            if custid.deleted_at:
+                                custid.delete()
+                            else:
+                                custid.update_special()
+                    else:
+                        custid.add_special()
+                custid.close_connection()
+
+            if 'deliveries' in updates:
+                table_len = len(updates['deliveries'])
+                self.set_pb_items_max(last)
+                idx = start
+                for deliveries in updates['deliveries']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    delivery = Delivery()
+                    delivery.delivery_id = deliveries['id']
+                    delivery.company_id = deliveries['company_id']
+                    delivery.route_name = deliveries['route_name']
+                    delivery.day = deliveries['day']
+                    delivery.delivery_limit = deliveries['limit']
+                    delivery.start_time = deliveries['start_time']
+                    delivery.end_time = deliveries['end_time']
+                    delivery.zipcode = deliveries['zipcode']
+                    delivery.blackout = deliveries['blackout']
+                    delivery.status = deliveries['status']
+                    delivery.deleted_at = deliveries['deleted_at']
+                    delivery.created_at = deliveries['created_at']
+                    delivery.updated_at = deliveries['updated_at']
+                    count_delivery = delivery.where({'delivery_id': delivery.delivery_id})
+                    if len(count_delivery) > 0 or delivery.deleted_at:
+                        for data in count_delivery:
+                            delivery.id = data['id']
+                            if delivery.deleted_at:
+                                delivery.delete()
+                            else:
+                                delivery.update_special()
+                    else:
+                        delivery.add_special()
+                delivery.close_connection()
+
+            if 'discounts' in updates:
+                table_len = len(updates['discounts'])
+                self.set_pb_items_max(last)
+                idx = start
+                for discounts in updates['discounts']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    discount = Discount()
+                    discount.discount_id = discounts['id']
+                    discount.company_id = discounts['company_id']
+                    discount.inventory_id = discounts['inventory_id']
+                    discount.inventory_item_id = discounts['inventory_item_id']
+                    discount.name = discounts['name']
+                    discount.type = discounts['type']
+                    discount.discount = discounts['discount']
+                    discount.rate = discounts['rate']
+                    discount.end_time = discounts['end_time']
+                    discount.start_date = discounts['start_date']
+                    discount.end_date = discounts['end_date']
+                    discount.status = discounts['status']
+                    discount.deleted_at = discounts['deleted_at']
+                    discount.created_at = discounts['created_at']
+                    discount.updated_at = discounts['updated_at']
+                    count_discount = discount.where({'discount_id': discount.discount_id})
+                    if len(count_discount) > 0 or discount.deleted_at:
+                        for data in count_discount:
+                            discount.id = data['id']
+                            if discount.deleted_at:
+                                discount.delete()
+                            else:
+                                discount.update_special()
+                    else:
+                        discount.add_special()
+                discount.close_connection()
+
+            if 'inventories' in updates:
+                table_len = len(updates['inventories'])
+                self.set_pb_items_max(last)
+                idx = start
+                for inventories in updates['inventories']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    inventory = Inventory()
+                    inventory.inventory_id = inventories['id']
+                    inventory.company_id = inventories['company_id']
+                    inventory.name = inventories['name']
+                    inventory.description = inventories['description']
+                    inventory.ordered = inventories['ordered']
+                    inventory.laundry = inventories['laundry']
+                    inventory.status = inventories['status']
+                    inventory.deleted_at = inventories['deleted_at']
+                    inventory.create_at = inventories['created_at']
+                    inventory.updated_at = inventories['updated_at']
+                    count_inventory = inventory.where({'inventory_id': inventory.inventory_id})
+                    if len(count_inventory) > 0 or inventory.deleted_at:
+                        for data in count_inventory:
+                            inventory.id = data['id']
+                            if inventory.deleted_at:
+                                inventory.delete()
+                            else:
+                                inventory.update_special()
+                    else:
+                        inventory.add_special()
+                inventory.close_connection()
+
+            if 'inventory_items' in updates:
+                table_len = len(updates['inventory_items'])
+                self.set_pb_items_max(last)
+                idx = start
+                for inventory_items in updates['inventory_items']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    inventory_item = InventoryItem()
+                    inventory_item.item_id = inventory_items['id']
+                    inventory_item.inventory_id = inventory_items['inventory_id']
+                    inventory_item.company_id = inventory_items['company_id']
+                    inventory_item.name = inventory_items['name']
+                    inventory_item.description = inventory_items['description']
+                    inventory_item.tags = inventory_items['tags']
+                    inventory_item.quantity = inventory_items['quantity']
+                    inventory_item.ordered = inventory_items['ordered']
+                    inventory_item.price = inventory_items['price']
+                    inventory_item.image = inventory_items['image']
+                    inventory_item.status = inventory_items['status']
+                    inventory_item.deleted_at = inventory_items['deleted_at']
+                    inventory_item.created_at = inventory_items['created_at']
+                    inventory_item.updated_at = inventory_items['updated_at']
+                    count_inventory_item = inventory_item.where({'item_id': inventory_item.item_id})
+                    if len(count_inventory_item) > 0 or inventory_item.deleted_at:
+                        for data in count_inventory_item:
+                            inventory_item.id = data['id']
+                            if inventory_item.deleted_at:
+                                inventory_item.delete()
+                            else:
+                                inventory_item.update_special()
+                    else:
+                        inventory_item.add_special()
+                inventory_item.close_connection()
+
+            if 'invoice_items' in updates:
+                table_len = len(updates['invoice_items'])
+                self.set_pb_items_max(last)
+                idx = start
+                for invoice_items in updates['invoice_items']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    invoice_item = InvoiceItem()
+                    invoice_item.invoice_items_id = invoice_items['id']
+                    invoice_item.invoice_id = invoice_items['invoice_id']
+                    invoice_item.item_id = invoice_items['item_id']
+                    invoice_item.inventory_id = invoice_items['inventory_id']
+                    invoice_item.company_id = invoice_items['company_id']
+                    invoice_item.customer_id = invoice_items['customer_id']
+                    invoice_item.quantity = invoice_items['quantity']
+                    invoice_item.color = invoice_items['color']
+                    invoice_item.memo = invoice_items['memo']
+                    invoice_item.pretax = invoice_items['pretax']
+                    invoice_item.tax = invoice_items['tax']
+                    invoice_item.total = invoice_items['total']
+                    invoice_item.status = invoice_items['status']
+                    invoice_item.deleted_at = invoice_items['deleted_at']
+                    invoice_item.created_at = invoice_items['created_at']
+                    invoice_item.updated_at = invoice_items['updated_at']
+                    count_invoice_item = invoice_item.where({'invoice_items_id': invoice_item.invoice_items_id})
+                    if len(count_invoice_item) > 0 or invoice_item.deleted_at:
+                        for data in count_invoice_item:
+                            invoice_item.id = data['id']
+                            if invoice_item.deleted_at:
+                                invoice_item.delete()
+                            else:
+                                invoice_item.update_special()
+                    else:
+                        invoice_item.add_special()
+
+            if 'invoices' in updates:
+                table_len = len(updates['invoices'])
+                self.set_pb_items_max(last)
+                idx = start
+                for invoices in updates['invoices']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    invoice = Invoice()
+                    invoice.invoice_id = invoices['id']
+                    invoice.company_id = invoices['company_id']
+                    invoice.customer_id = invoices['customer_id']
+                    invoice.quantity = invoices['quantity']
+                    invoice.pretax = invoices['pretax']
+                    invoice.tax = invoices['tax']
+                    invoice.reward_id = invoices['reward_id']
+                    invoice.discount_id = invoices['discount_id']
+                    invoice.total = invoices['total']
+                    invoice.rack = invoices['rack']
+                    invoice.rack_date = invoices['rack_date']
+                    invoice.due_date = invoices['due_date']
+                    invoice.memo = invoices['memo']
+                    invoice.transaction_id = invoices['transaction_id']
+                    invoice.schedule_id = invoices['schedule_id']
+                    invoice.status = invoices['status']
+                    invoice.deleted_at = invoices['deleted_at']
+                    invoice.created_at = invoices['created_at']
+                    invoice.updated_at = invoices['updated_at']
+
+                    count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
+                    if len(count_invoice) > 0 or invoice.deleted_at:
+                        for data in count_invoice:
+                            invoice.id = data['id']
+                            if invoice.deleted_at:
+                                invoice.delete()
+                            else:
+                                invoice.update_special()
+                    else:
+                        invoice.add_special()
+
+            if 'memos' in updates:
+                table_len = len(updates['memos'])
+                self.set_pb_items_max(last)
+                idx = start
+                for memos in updates['memos']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    memo = Memo()
+                    memo.memo_id = memos['id']
+                    memo.company_id = memos['company_id']
+                    memo.memo = memos['memo']
+                    memo.ordered = memos['ordered']
+                    memo.status = memos['status']
+                    memo.deleted_at = memos['deleted_at']
+                    memo.created_at = memos['created_at']
+                    memo.updated_at = memos['updated_at']
+                    count_memo = memo.where({'memo_id': memo.memo_id})
+                    if len(count_memo) > 0 or memo.deleted_at:
+                        for data in count_memo:
+                            memo.id = data['id']
+                            if memo.deleted_at:
+                                memo.delete()
+                            else:
+                                memo.update_special()
+                    else:
+                        memo.add_special()
+                memo.close_connection()
+
+            if 'profiles' in updates:
+                table_len = len(updates['profiles'])
+                self.set_pb_items_max(last)
+                idx = start
+                for profiles in updates['profiles']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    profile = Profile()
+                    profile.p_id = profiles['id']
+                    profile.company_id = profiles['company_id']
+                    profile.user_id = profiles['user_id']
+                    profile.profile_id = profiles['profile_id']
+                    profile.status = profiles['status']
+                    profile.deleted_at = profiles['deleted_at']
+                    profile.created_at = profiles['created_at']
+                    profile.updated_at = profiles['updated_at']
+                    count_profile = profile.where({'p_id': profile.p_id})
+                    if len(count_profile) > 0 or profile.deleted_at:
+                        for data in count_profile:
+                            profile.id = data['id']
+                            if profile.deleted_at:
+                                profile.delete()
+                            else:
+                                profile.update_special()
+                    else:
+                        profile.add_special()
+                profile.close_connection()
+
+            if 'reward_transactions' in updates:
+                table_len = len(updates['reward_transactions'])
+                self.set_pb_items_max(last)
+                idx = start
+                for reward_transactions in updates['reward_transactions']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    reward_transaction = RewardTransaction()
+                    reward_transaction.reward_id = reward_transactions['reward_id']
+                    reward_transaction.transaction_id = reward_transactions['transaction_id']
+                    reward_transaction.customer_id = reward_transactions['customer_id']
+                    reward_transaction.employee_id = reward_transactions['employee_id']
+                    reward_transaction.company_id = reward_transactions['company_id']
+                    reward_transaction.type = reward_transactions['type']
+                    reward_transaction.points = reward_transactions['points']
+                    reward_transaction.credited = reward_transactions['credited']
+                    reward_transaction.reduced = reward_transactions['reduced']
+                    reward_transaction.running_total = reward_transactions['running_total']
+                    reward_transaction.reason = reward_transactions['reason']
+                    reward_transaction.name = reward_transactions['name']
+                    reward_transaction.status = reward_transactions['status']
+                    reward_transaction.deleted_at = reward_transactions['deleted_at']
+                    reward_transaction.created_at = reward_transactions['created_at']
+                    reward_transaction.updated_at = reward_transactions['updated_at']
+                    count_reward_transaction = reward_transaction.where({'reward_id': reward_transaction.reward_id})
+                    if len(count_reward_transaction) > 0 or reward_transaction.deleted_at:
+                        for data in count_reward_transaction:
+                            reward_transaction.id = data['id']
+                            if reward_transaction.deleted_at:
+                                reward_transaction.delete()
+                            else:
+                                reward_transaction.update_special()
+                    else:
+                        reward_transaction.add_special()
+                reward_transaction.close_connection()
+
+            if 'rewards' in updates:
+                table_len = len(updates['rewards'])
+                self.set_pb_items_max(last)
+                idx = start
+                for rewards in updates['rewards']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    reward = Reward()
+                    reward.reward_id = rewards['id']
+                    reward.company_id = rewards['company_id']
+                    reward.name = rewards['name']
+                    reward.points = rewards['points']
+                    reward.discount = rewards['discount']
+                    reward.status = rewards['status']
+                    reward.deleted_at = rewards['deleted_at']
+                    reward.created_at = rewards['created_at']
+                    reward.updated_at = rewards['updated_at']
+                    count_reward = reward.where({'reward_id': reward.reward_id})
+                    if len(count_reward) > 0 or reward.deleted_at:
+                        for data in count_reward:
+                            reward.id = data['id']
+                            if reward.deleted_at:
+                                reward.delete()
+                            else:
+                                reward.update_special()
+                    else:
+                        reward.add_special()
+                reward.close_connection()
+
+            if 'schedules' in updates:
+                table_len = len(updates['schedules'])
+                self.set_pb_items_max(last)
+                idx = start
+                for schedules in updates['schedules']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    schedule = Schedule()
+                    schedule.schedule_id = schedules['id']
+                    schedule.company_id = schedules['company_id']
+                    schedule.customer_id = schedules['customer_id']
+                    schedule.card_id = schedules['card_id']
+                    schedule.pickup_delivery_id = schedules['pickup_delivery_id']
+                    schedule.pickup_address = schedules['pickup_address']
+                    schedule.pickup_date = schedules['pickup_date']
+                    schedule.dropoff_delivery_id = schedules['dropoff_delivery_id']
+                    schedule.dropoff_address = schedules['dropoff_address']
+                    schedule.dropoff_date = schedules['dropoff_date']
+                    schedule.special_instructions = schedules['special_instructions']
+                    schedule.type = schedules['type']
+                    schedule.token = schedules['token']
+                    schedule.status = schedules['status']
+                    schedule.deleted_at = schedules['deleted_at']
+                    schedule.created_at = schedules['created_at']
+                    schedule.updated_at = schedules['updated_at']
+                    count_schedule = schedule.where({'schedule_id': schedule.schedule_id})
+                    if len(count_schedule) > 0 or schedule.deleted_at:
+                        for data in count_schedule:
+                            schedule.id = data['id']
+                            if schedule.deleted_at:
+                                schedule.delete()
+                            else:
+                                schedule.update_special()
+                    else:
+                        schedule.add_special()
+                schedule.close_connection()
+
+            if 'taxes' in updates:
+                table_len = len(updates['taxes'])
+                self.set_pb_items_max(last)
+                idx = start
+                for taxes in updates['taxes']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    tax = Tax()
+                    tax.tax_id = taxes['id']
+                    tax.company_id = taxes['company_id']
+                    tax.rate = taxes['rate']
+                    tax.status = taxes['status']
+                    tax.deleted_at = taxes['deleted_at']
+                    tax.created_at = taxes['created_at']
+                    tax.updated_at = taxes['updated_at']
+                    count_tax = tax.where({'tax_id': tax.tax_id})
+                    if len(count_tax) > 0 or tax.deleted_at:
+                        for data in count_tax:
+                            tax.id = data['id']
+                            if tax.deleted_at:
+                                tax.delete()
+                            else:
+                                tax.update_special()
+                    else:
+                        tax.add_special()
+                tax.close_connection()
+
+            if 'transactions' in updates:
+                table_len = len(updates['transactions'])
+                self.set_pb_items_max(last)
+                idx = start
+                for transactions in updates['transactions']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    transaction = Transaction()
+                    transaction.trans_id = transactions['id']
+                    transaction.company_id = transactions['company_id']
+                    transaction.customer_id = transactions['customer_id']
+                    transaction.schedule_id = transactions['schedule_id']
+                    transaction.pretax = transactions['pretax']
+                    transaction.tax = transactions['tax']
+                    transaction.aftertax = transactions['aftertax']
+                    transaction.credit = transactions['credit']
+                    transaction.discount = transactions['discount']
+                    transaction.total = transactions['total']
+                    transaction.invoices = transactions['invoices'] if transactions['invoices'] else None
+                    transaction.account_paid = transactions['account_paid']
+                    transaction.account_paid_on = transactions['account_paid_on']
+                    transaction.type = transactions['type']
+                    transaction.last_four = transactions['last_four']
+                    transaction.tendered = transactions['tendered']
+                    transaction.transaction_id = transactions['transaction_id']
+                    transaction.status = transactions['status']
+                    transaction.deleted_at = transactions['deleted_at']
+                    transaction.created_at = transactions['created_at']
+                    transaction.updated_at = transactions['updated_at']
+                    count_transaction = transaction.where({'trans_id': transaction.trans_id})
+                    if len(count_transaction) > 0 or transaction.deleted_at:
+                        for data in count_transaction:
+                            transaction.id = data['id']
+                            if transaction.deleted_at:
+                                transaction.delete()
+                            else:
+                                transaction.update_special()
+                    else:
+                        transaction.add_special()
+                transaction.close_connection()
+
+            if 'users' in updates:
+                table_len = len(updates['users'])
+                self.set_pb_items_max(last)
+                idx = start
+                for users in updates['users']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    user = User()
+                    user.user_id = users['id']
+                    user.company_id = users['company_id']
+                    user.username = users['username']
+                    user.first_name = users['first_name']
+                    user.last_name = users['last_name']
+                    user.street = users['street']
+                    user.suite = users['suite']
+                    user.city = users['city']
+                    user.state = users['state']
+                    user.zipcode = users['zipcode']
+                    user.email = users['email']
+                    user.phone = users['phone']
+                    user.intercom = users['intercom']
+                    user.concierge_name = users['concierge_name']
+                    user.concierge_number = users['concierge_number']
+                    user.special_instructions = users['special_instructions']
+                    user.shirt_old = users['shirt_old']
+                    user.shirt = users['shirt']
+                    user.delivery = users['delivery']
+                    user.profile_id = users['profile_id']
+                    user.payment_status = users['payment_status']
+                    user.payment_id = users['payment_id']
+                    user.token = users['token']
+                    user.api_token = users['api_token']
+                    user.reward_status = users['reward_status']
+                    user.reward_points = users['reward_points']
+                    user.account = users['account']
+                    user.account_total = users['account_total']
+                    user.credits = users['credits']
+                    user.starch = users['starch']
+                    user.important_memo = users['important_memo']
+                    user.invoice_memo = users['invoice_memo']
+                    user.role_id = users['role_id']
+                    user.deleted_at = users['deleted_at']
+                    user.created_at = users['created_at']
+                    user.updated_at = users['updated_at']
+                    count_user = user.where({'user_id': user.user_id})
+                    if len(count_user) > 0 or user.deleted_at:
+                        for data in count_user:
+                            user.id = data['id']
+                            if user.deleted_at:
+                                user.delete()
+                            else:
+                                user.update_special()
+                    else:
+                        user.add_special()
+                user.close_connection()
+
+            if 'zipcodes' in updates:
+                table_len = len(updates['zipcodes'])
+                self.set_pb_items_max(last)
+                idx = start
+                for zipcodes in updates['zipcodes']:
+                    idx += 1
+                    self.set_pb_items_value(idx)
+                    self.set_pb_items_desc('Syncing Row {} of {} out of {}'.format(idx,end,last))
+                    zipcode = Zipcode()
+                    zipcode.zipcode_id = zipcodes['id']
+                    zipcode.company_id = zipcodes['company_id']
+                    zipcode.delivery_id = zipcodes['delivery_id']
+                    zipcode.zipcode = zipcodes['zipcode']
+                    zipcode.status = zipcodes['status']
+                    zipcode.deleted_at = zipcodes['deleted_at']
+                    zipcode.created_at = zipcodes['created_at']
+                    zipcode.updated_at = zipcodes['updated_at']
+                    # check to see if color_id already exists and update
+
+                    count_zipcode = zipcode.where({'zipcode_id': zipcode.zipcode_id})
+                    if len(count_zipcode) > 0 or zipcode.deleted_at:
+                        for data in count_zipcode:
+                            zipcode.id = data['id']
+                            if zipcode.deleted_at:
+                                zipcode.delete()
+                            else:
+                                zipcode.update_special()
+                    else:
+                        zipcode.add_special()
+                zipcode.close_connection()
+    
+
+    def sync_customer(self, customer_id):
+        url = 'http://www.jayscleaners.com/admins/api/sync-customer'
+
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if len(data_1) > 0:
+                for invoices in data_1:
+                    invoice = Invoice()
+                    invoice.invoice_id = invoices['id']
+                    invoice.company_id = invoices['company_id']
+                    invoice.customer_id = invoices['customer_id']
+                    invoice.quantity = invoices['quantity']
+                    invoice.pretax = invoices['pretax']
+                    invoice.tax = invoices['tax']
+                    invoice.reward_id = invoices['reward_id']
+                    invoice.discount_id = invoices['discount_id']
+                    invoice.total = invoices['total']
+                    invoice.rack = invoices['rack']
+                    invoice.rack_date = invoices['rack_date']
+                    invoice.due_date = invoices['due_date']
+                    invoice.memo = invoices['memo']
+                    invoice.transaction_id = invoices['transaction_id']
+                    invoice.schedule_id = invoices['schedule_id']
+                    invoice.status = invoices['status']
+                    invoice.deleted_at = invoices['deleted_at']
+                    invoice.created_at = invoices['created_at']
+                    invoice.updated_at = invoices['updated_at']
+
+                    count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
+                    if len(count_invoice) > 0 or invoice.deleted_at:
+                        for data in count_invoice:
+                            invoice.id = data['id']
+                            if invoice.deleted_at:
+                                invoice.delete()
+                            else:
+                                invoice.update_special()
+                    else:
+                        invoice.add()
+                    invoice.close_connection()
+
+                    # extra loop through invoice items to delete or check for data
+                    if 'invoice_items' in invoices:
+
+                        iitems = invoices['invoice_items']
+                        if len(iitems) > 0:
+                            for iitem in iitems:
+                                invoice_item = InvoiceItem()
+                                invoice_item.invoice_items_id = iitem['id']
+                                invoice_item.invoice_id = iitem['invoice_id']
+                                invoice_item.item_id = iitem['item_id']
+                                invoice_item.inventory_id = iitem['inventory_id']
+                                invoice_item.company_id = iitem['company_id']
+                                invoice_item.customer_id = iitem['customer_id']
+                                invoice_item.quantity = iitem['quantity']
+                                invoice_item.color = iitem['color']
+                                invoice_item.memo = iitem['memo']
+                                invoice_item.pretax = iitem['pretax']
+                                invoice_item.tax = iitem['tax']
+                                invoice_item.total = iitem['total']
+                                invoice_item.status = iitem['status']
+                                invoice_item.deleted_at = iitem['deleted_at']
+                                invoice_item.created_at = iitem['created_at']
+                                invoice_item.updated_at = iitem['updated_at']
+                                count_invoice_item = invoice_item.where(
+                                    {'invoice_items_id': invoice_item.invoice_items_id})
+                                if len(count_invoice_item) > 0 or invoice_item.deleted_at:
+                                    for data in count_invoice_item:
+                                        invoice_item.id = data['id']
+                                        if invoice_item.deleted_at:
+                                            invoice_item.delete()
+                                        else:
+                                            invoice_item.update_special()
+                                else:
+                                    invoice_item.add()
+                            invoice_item.close_connection()
+
+        except urllib.error.URLError as e:
+            print('Error sending post data: {}'.format(e.reason))
+
+
 
     def test_sys(self):
         Sync().migrate()
@@ -11777,6 +12751,9 @@ class RackScreen(Screen):
         self.update_rack_table()
 
     def set_rack_number(self):
+        invoices = Invoice()
+        now = datetime.datetime.now()
+        rack_date = datetime.datetime.strftime(now, "%Y-%m-%d %H:%M:%S")
         if not self.invoice_number.text:
             popup = Popup()
             popup.title = 'Error: Rack process error'
@@ -11805,7 +12782,10 @@ class RackScreen(Screen):
                     self.edited_rack = False
                 else:
                     vars.EPSON.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
-
+            invoices.put(where={'invoice_id': self.invoice_number.text},
+                         data={'rack': formatted_rack,
+                               'rack_date': rack_date,
+                               'status': 2})  # rack and update status
             self.racks[self.invoice_number.text] = formatted_rack
             self.invoice_number.text = ''
             self.rack_number.text = ''
@@ -11815,16 +12795,14 @@ class RackScreen(Screen):
         self.invoice_number.focus = True
 
     def save_racks(self):
-        now = datetime.datetime.now()
-        rack_date = datetime.datetime.strftime(now, "%Y-%m-%d %H:%M:%S")
         # save rows
         if self.racks:
-            invoices = Invoice()
-            for invoice_id, rack in self.racks.items():
-                invoices.put(where={'invoice_id': invoice_id},
-                             data={'rack': rack,
-                                   'rack_date': rack_date,
-                                   'status': 2})  # rack and update status
+            # invoices = Invoice()
+            # for invoice_id, rack in self.racks.items():
+            #     invoices.put(where={'invoice_id': invoice_id},
+            #                  data={'rack': rack,
+            #                        'rack_date': rack_date,
+            #                        'status': 2})  # rack and update status
 
             # update db
             run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])

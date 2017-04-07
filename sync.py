@@ -398,7 +398,7 @@ class Sync:
                 dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.server_at = dt
                 # data = {'server_at': dt}
-                Company().server_at_update(saved_server_time)
+                Company().server_at_update_special(saved_server_time)
 
 
         except urllib.error.URLError as e:
@@ -545,7 +545,7 @@ class Sync:
                     dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     self.server_at = dt
                     data = {'server_at': dt}
-                    Company().server_at_update(where, data)
+                    Company().server_at_update_special(dt)
 
             except urllib.error.URLError as e:
                 print('This is a chunk error: {}'.format(e.reason))
@@ -1442,10 +1442,6 @@ class Sync:
                                 else:
                                     invoice_item.add()
                             invoice_item.close_connection()
-
-
-
-
 
         except urllib.error.URLError as e:
             print('Error sending post data: {}'.format(e.reason))
