@@ -12727,17 +12727,25 @@ class RackScreen(Screen):
             sys.stdout.write('\a')
             sys.stdout.flush()
         elif not found_invoices:
-            popup = Popup()
-            popup.title = 'Error: Rack process error'
-            popup.size_hint = None, None
-            popup.size = 800, 600
-            body = KV.popup_alert(
-                msg='No such invoice number.')
-            popup.content = Builder.load_string(body)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            # check to see if invoice is in server or on local
+            check_current = invoices.where({'invoice_id': self.invoice_number.text})
+            if not check_current:
+                t1 = Thread(SYNC.sync_rackable_invoice(self.invoice_number.text))
+                t1.start()
+                t1.join()
+            check_current = invoices.where({'invoice_id': self.invoice_number.text})
+            if not check_current:
+                popup = Popup()
+                popup.title = 'Error: Rack process error'
+                popup.size_hint = None, None
+                popup.size = 800, 600
+                body = KV.popup_alert(
+                    msg='No such invoice number.')
+                popup.content = Builder.load_string(body)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
         elif self.invoice_number.text in self.racks:
             self.edited_rack = self.racks[self.invoice_number.text]
             self.racks[self.invoice_number.text] = False
@@ -12783,12 +12791,7 @@ class RackScreen(Screen):
                 else:
                     vars.EPSON.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
 
-            # check to see if invoice is in server or on local
-            check_current = invoices.where({'invoice_id': self.invoice_number.text})
-            if not check_current:
-                t1 = Thread(SYNC.sync_rackable_invoice(self.invoice_number.text))
-                t1.start()
-                t1.join()
+
             invoices.put(where={'invoice_id': self.invoice_number.text},
                          data={'rack': formatted_rack,
                                'rack_date': rack_date,
