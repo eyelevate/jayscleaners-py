@@ -592,7 +592,7 @@ class MainScreen(Screen):
         self.pb_table.value = int(value)
 
     def set_pb_max(self, value, *args, **kwargs):
-        self.pb_table.bind(max=int(value))
+        self.pb_table.max=int(value)
 
     def set_pb_items_desc(self, description, *args, **kwargs):
         self.item_description.text = description
@@ -601,7 +601,7 @@ class MainScreen(Screen):
         self.pb_items.value = int(value)
 
     def set_pb_items_max(self, value, *args, **kwargs):
-        self.pb_items.bind(max=int(value))
+        self.pb_items.max = int(value)
 
     def sync_db(self, *args, **kwargs):
         # Pause Schedule
