@@ -12782,10 +12782,18 @@ class RackScreen(Screen):
                     self.edited_rack = False
                 else:
                     vars.EPSON.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
+
+            # check to see if invoice is in server or on local
+            check_current = invoices.where({'invoice_id': self.invoice_number.text})
+            if not check_current:
+                t1 = Thread(SYNC.sync_rackable_invoice(self.invoice_number.text))
+                t1.start()
+                t1.join()
             invoices.put(where={'invoice_id': self.invoice_number.text},
                          data={'rack': formatted_rack,
                                'rack_date': rack_date,
                                'status': 2})  # rack and update status
+
             self.racks[self.invoice_number.text] = formatted_rack
             self.invoice_number.text = ''
             self.rack_number.text = ''
