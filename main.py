@@ -13447,7 +13447,9 @@ class SearchScreen(Screen):
                 vars.CUSTOMER_ID = result['user_id']
                 vars.SEARCH_RESULTS_STATUS = True if vars.CUSTOMER_ID else False
                 # start syncing in background
-                self.customer_sync()
+                t1 = Thread(target=self.customer_sync, args=())
+                t1.start()
+                t1.join()
                 # last 10 setup
                 vars.update_last_10()
                 # clear the current widget
@@ -13535,6 +13537,8 @@ class SearchScreen(Screen):
             # clear the search text input
             self.search.focus = True
             self.search.text = ''
+
+
 
 
         elif len(data) > 1:
