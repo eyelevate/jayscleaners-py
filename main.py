@@ -418,13 +418,8 @@ class MainScreen(Screen):
         # self.update_label.text = 'Server updated at {}'.format()
 
     def sync_rackable_invoices(self, *args, **kwargs):
-        try:
-            SCHEDULER.add_job(self.do_rackable_invoices, 'date', run_date=None)
-            print('(Rack check) - Syncing All invoices for the last two days')
-        except SchedulerNotRunningError:
-            SCHEDULER.add_job(self.do_rackable_invoices, 'date', run_date=None)
-            SCHEDULER.start()
-            print('Auto Sync not running, syncing customer data now.')
+        t1 = Thread(target=self.do_rackable_invoices)
+        t1.start()
 
     def do_rackable_invoices(self):
         url = 'http://www.jayscleaners.com/admins/api/sync-rackable-invoices'
