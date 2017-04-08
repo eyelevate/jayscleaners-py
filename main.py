@@ -4565,6 +4565,7 @@ class EditInvoiceScreen(Screen):
     final_total = 0
     invoice_id = None
     discount_id = None
+    memo_list = []
 
     def reset(self):
         # Pause Schedule
@@ -4578,6 +4579,7 @@ class EditInvoiceScreen(Screen):
         self.colors_table_main.clear_widgets()
         self.final_total = 0
         self.discount_id = None
+        self.memo_list = []
         store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
@@ -5247,6 +5249,13 @@ GridLayout:
         self.memo_color_popup.content = layout
         # show layout
         self.memo_color_popup.open()
+
+    def append_memo(self, msg, *args, **kwargs):
+        if not self.memo_list:
+            self.memo_list = [msg]
+        else:
+            self.memo_list.append(msg)
+        self.memo_text_input.text = ', '.join(self.memo_list)
 
     def make_items_table(self):
         self.items_grid.clear_widgets()
