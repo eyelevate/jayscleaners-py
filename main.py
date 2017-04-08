@@ -5136,105 +5136,117 @@ GridLayout:
     def make_memo_color(self):
 
         self.item_row_selected(row=0)
-        if vars.ITEM_ID:
-            # make popup
-            self.memo_color_popup.title = "Add Memo / Color"
 
-            layout = BoxLayout(orientation='vertical',
-                               pos_hint={'top': 1},
-                               size_hint=(1, 1))
+        # make popup
+        self.memo_color_popup.title = "Add Memo / Color"
 
-            inner_layout_1 = BoxLayout(orientation='horizontal',
-                                       size_hint=(1, 0.9))
-            memo_color_layout = BoxLayout(orientation='vertical',
-                                          size_hint=(0.5, 1))
-            color_layout = ScrollView(size_hint=(1, 0.4))
-            color_title = Label(markup=True,
-                                text='[b]Select A Color[/b]',
-                                size_hint=(1, 0.1))
-            memo_color_layout.add_widget(color_title)
-            color_grid = GridLayout(size_hint_y=None,
-                                    cols=5,
-                                    row_force_default=True,
-                                    row_default_height='60sp')
-            color_grid.bind(minimum_height=color_grid.setter('height'))
-            colors = Colored().where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'ordered asc'})
-            if colors:
-                for color in colors:
-                    color_btn = Button(markup=True,
-                                       text='[b]{color_name}[/b]'.format(color_name=color['name']),
-                                       on_release=partial(self.color_selected, color['name']))
-                    color_btn.text_size = color_btn.size
-                    color_btn.font_size = '12sp'
-                    color_btn.valign = 'bottom'
-                    color_btn.halign = 'center'
-                    color_btn.background_normal = ''
-                    color_btn.background_color = vars.color_rgba(color['name'])
-                    color_grid.add_widget(color_btn)
-            color_layout.add_widget(color_grid)
-            # memo section
-            memo_layout = BoxLayout(orientation='vertical',
-                                    size_hint=(1, 0.5))
-            memo_title = Label(markup=True,
-                               pos_hint={'top': 1},
-                               text='[b]Create Memo[/b]',
-                               size_hint=(1, 0.1))
-            memo_inner_layout = BoxLayout(orientation='horizontal',
-                                          size_hint=(1, 0.4))
-            memo_layout.add_widget(memo_title)
-            memo_text_input = TextInput(text='',
-                                        size_hint=(0.9, 1),
-                                        multiline=True)
-            try:
-                memo_inner_layout.add_widget(memo_text_input)
-            except WidgetException:
-                memo_inner_layout.remove_widget(memo_text_input)
-                memo_inner_layout.add_widget(memo_text_input)
-            self.memo_text_input = memo_text_input
-            memo_add_button = Button(text='Add',
-                                     size_hint=(0.1, 1),
-                                     on_press=self.add_memo)
-            memo_inner_layout.add_widget(memo_add_button)
-            memo_layout.add_widget(memo_inner_layout)
-            memo_color_layout.add_widget(color_layout)
-            memo_color_layout.add_widget(memo_layout)
-            # make items side
-            self.items_layout = ScrollView(size_hint=(0.5, 1),
-                                           pos_hint={'top': 1})
-            self.items_grid = GridLayout(size_hint_y=None,
-                                         cols=5,
-                                         row_force_default=True,
-                                         row_default_height='60sp')
-            self.make_items_table()
-            self.items_layout.add_widget(self.items_grid)
+        layout = BoxLayout(orientation='vertical',
+                           pos_hint={'top': 1},
+                           size_hint=(1, 1))
 
-            inner_layout_1.add_widget(memo_color_layout)
-            inner_layout_1.add_widget(self.items_layout)
-            inner_layout_2 = BoxLayout(orientation='horizontal',
-                                       size_hint=(1, 0.1))
-            cancel_button = Button(markup=True,
-                                   text="Cancel",
-                                   on_press=self.memo_color_popup.dismiss)
-            save_button = Button(markup=True,
-                                 text="[color=00f900][b]Save[/b][/color]",
-                                 on_press=self.save_memo_color,
-                                 on_release=self.memo_color_popup.dismiss)
+        inner_layout_1 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.9))
+        memo_color_layout = BoxLayout(orientation='vertical',
+                                      size_hint=(0.5, 1))
+        color_layout = ScrollView(size_hint=(1, 0.4))
+        color_title = Label(markup=True,
+                            text='[b]Select A Color[/b]',
+                            size_hint=(1, 0.1))
+        memo_color_layout.add_widget(color_title)
+        color_grid = GridLayout(size_hint_y=None,
+                                cols=5,
+                                row_force_default=True,
+                                row_default_height='60sp')
+        color_grid.bind(minimum_height=color_grid.setter('height'))
+        colors = Colored().where({'company_id': vars.COMPANY_ID, 'ORDER_BY': 'ordered asc'})
+        if colors:
+            for color in colors:
+                color_btn = Button(markup=True,
+                                   text='[b]{color_name}[/b]'.format(color_name=color['name']),
+                                   on_release=partial(self.color_selected, color['name']))
+                color_btn.text_size = color_btn.size
+                color_btn.font_size = '12sp'
+                color_btn.valign = 'bottom'
+                color_btn.halign = 'center'
+                color_btn.background_normal = ''
+                color_btn.background_color = vars.color_rgba(color['name'])
+                color_grid.add_widget(color_btn)
+        color_layout.add_widget(color_grid)
+        # memo section
+        memo_layout = BoxLayout(orientation='vertical',
+                                size_hint=(1, 0.5))
+        memo_inner_layout_1 = BoxLayout(orientation='vertical',
+                                        size_hint=(1, 0.8))
+        memo_scroll_view = ScrollView()
+        memo_grid_layout = Factory.GridLayoutForScrollView(row_default_height='50sp',
+                                                           cols=4)
+        mmos = Memo()
+        memos = mmos.where({'company_id': vars.COMPANY_ID,
+                            'ORDER_BY': 'ordered asc'})
+        if memos:
+            for memo in memos:
+                btn_memo = Factory.LongButton(text=str(memo['memo']),
+                                              on_release=partial(self.append_memo, memo['memo']))
+                memo_grid_layout.add_widget(btn_memo)
 
-            inner_layout_2.add_widget(cancel_button)
-            inner_layout_2.add_widget(save_button)
-            layout.add_widget(inner_layout_1)
-            layout.add_widget(inner_layout_2)
-            self.memo_color_popup.content = layout
-            # show layout
-            self.memo_color_popup.open()
-        else:
-            popup = Popup()
-            popup.title = 'Selection Error'
-            content = KV.popup_alert('Please select an item before attempting an edit.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+        memo_scroll_view.add_widget(memo_grid_layout)
+
+        memo_inner_layout_2 = BoxLayout(orientation='horizontal',
+                                        size_hint=(1, 0.2))
+        memo_title = Label(markup=True,
+                           pos_hint={'top': 1},
+                           text='[b]Create Memo[/b]',
+                           size_hint=(1, 0.1))
+        memo_text_input = Factory.CenterVerticalTextInput(text='',
+                                                          size_hint=(0.7, 1),
+                                                          multiline=False)
+        memo_inner_layout_1.add_widget(memo_title)
+        memo_inner_layout_1.add_widget(memo_scroll_view)
+
+        try:
+            memo_inner_layout_2.add_widget(memo_text_input)
+        except WidgetException:
+            memo_inner_layout_2.remove_widget(memo_text_input)
+            memo_inner_layout_2.add_widget(memo_text_input)
+        memo_layout.add_widget(memo_inner_layout_1)
+        memo_layout.add_widget(memo_inner_layout_2)
+        self.memo_text_input = memo_text_input
+        memo_add_button = Button(text='Add',
+                                 size_hint=(0.3, 1),
+                                 on_press=self.add_memo)
+        memo_inner_layout_2.add_widget(memo_add_button)
+
+        memo_color_layout.add_widget(color_layout)
+        memo_color_layout.add_widget(memo_layout)
+        # make items side
+        self.items_layout = ScrollView(size_hint=(0.5, 1),
+                                       pos_hint={'top': 1})
+        self.items_grid = GridLayout(size_hint_y=None,
+                                     cols=5,
+                                     row_force_default=True,
+                                     row_default_height='60sp')
+        self.make_items_table()
+        self.items_layout.add_widget(self.items_grid)
+
+        inner_layout_1.add_widget(memo_color_layout)
+        inner_layout_1.add_widget(self.items_layout)
+        inner_layout_2 = BoxLayout(orientation='horizontal',
+                                   size_hint=(1, 0.1))
+        cancel_button = Button(markup=True,
+                               text="Cancel",
+                               on_press=self.memo_color_popup.dismiss)
+        save_button = Button(markup=True,
+                             text="[color=00f900][b]Save[/b][/color]",
+                             on_press=self.save_memo_color,
+                             on_release=self.memo_color_popup.dismiss)
+
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(save_button)
+        layout.add_widget(inner_layout_1)
+        layout.add_widget(inner_layout_2)
+        self.memo_color_popup.content = layout
+        # show layout
+        self.memo_color_popup.open()
 
     def make_items_table(self):
         self.items_grid.clear_widgets()
