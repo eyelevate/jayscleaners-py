@@ -5060,7 +5060,11 @@ GridLayout:
 
     def remove_item_row(self, item_id, *args, **kwargs):
         vars.ITEM_ID = item_id
+
         if vars.ITEM_ID in self.invoice_list:
+            # delete from local db
+            invoice_items = InvoiceItem()
+            invoice_items.delete_item(item_id)
             idx = -1
             for row in self.invoice_list[vars.ITEM_ID]:
                 idx += 1

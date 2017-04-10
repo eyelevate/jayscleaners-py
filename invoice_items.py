@@ -348,6 +348,25 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_items_id,
         else:
             return False
 
+    def delete_item(self,item_id):
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.updated_at = now
+
+        if self.id:
+
+            self.c.execute("""UPDATE {table} SET deleted_at = ?, updated_at = ? WHERE invoice_items_id = ?""".format(table=table),
+                           (self.updated_at,
+                            self.updated_at,
+                            item_id)
+                           )
+
+            self.conn.commit()
+
+            return True
+        else:
+            return False
+
     def truncate(self):
 
         self.c.execute("""DELETE FROM {t}""".format(t=table))
