@@ -5072,6 +5072,7 @@ GridLayout:
                 if 'invoice_items_id' in row:
                     self.invoice_list[vars.ITEM_ID][idx]['delete'] = True
                     self.deleted_rows.append(row['invoice_items_id'])
+                    
                     # delete from local db
                     invoice_items = InvoiceItem()
                     invoice_items.delete_item(row['invoice_items_id'])

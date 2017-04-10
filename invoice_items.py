@@ -353,7 +353,7 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.invoice_items_id,
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
 
-        if self.id:
+        if item_id:
 
             self.c.execute("""UPDATE {table} SET deleted_at = ?, updated_at = ? WHERE invoice_items_id = ?""".format(table=table),
                            (self.updated_at,
