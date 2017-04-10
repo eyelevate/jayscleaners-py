@@ -5070,12 +5070,15 @@ GridLayout:
             for row in self.invoice_list[vars.ITEM_ID]:
                 idx += 1
                 if 'invoice_items_id' in row:
+                    print('found rows to delete deleting #{}'.format(row['invoice_items_id']))
                     self.invoice_list[vars.ITEM_ID][idx]['delete'] = True
                     self.deleted_rows.append(row['invoice_items_id'])
-                    
+
                     # delete from local db
                     invoice_items = InvoiceItem()
                     invoice_items.delete_item(row['invoice_items_id'])
+            t1 = Thread(target=SYNC.db_sync,args=())
+            t1.start()
 
             del self.invoice_list[vars.ITEM_ID]
         if vars.ITEM_ID in self.invoice_list_copy:
@@ -6036,20 +6039,6 @@ GridLayout:
         self.now = datetime.datetime.now()
         # set the printer data
         tax_rate = vars.TAX_RATE
-
-        if self.deleted_rows:
-            for invoice_items_id in self.deleted_rows:
-                invoice_items = InvoiceItem()
-                deleted_item = invoice_items.where({'invoice_items_id':invoice_items_id})
-                if deleted_item:
-                    for inv_item in deleted_item:
-                        del_now_item = InvoiceItem()
-                        del_now_item.id = inv_item['id']
-                        if del_now_item.delete():
-                            print('deleted row {}'.format(inv_item['id']))
-                            self.create_summary_totals()
-                    t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
-                    t1.start()
 
         if self.invoice_list:
             invoice_items = InvoiceItem()
