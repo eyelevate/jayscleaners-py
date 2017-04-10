@@ -5794,10 +5794,10 @@ GridLayout:
                 if item_row['invoice_items_id'] is invoice_items_id:
                     print('reached it. deleting now')
                     self.invoice_list[vars.ITEM_ID][row]['delete'] = True
-                    self.deleted_rows.append(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
+                    self.deleted_rows.append(item_row['invoice_items_id'])
                     invoice_items = InvoiceItem()
-                    invoice_items.delete_item(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
-                    t1 = Thread(target=SYNC.db_sync, args=(vars.COMPANY_ID))
+                    invoice_items.delete_item(item_row['invoice_items_id'])
+                    t1 = Thread(target=SYNC.db_sync, args=(str(vars.COMPANY_ID)))
                     t1.start()
 
 
