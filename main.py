@@ -4566,6 +4566,7 @@ class EditInvoiceScreen(Screen):
     invoice_id = None
     discount_id = None
     memo_list = []
+    invoice_items_id = None
 
     def reset(self):
         # Pause Schedule
@@ -4579,6 +4580,7 @@ class EditInvoiceScreen(Screen):
         self.colors_table_main.clear_widgets()
         self.final_total = 0
         self.discount_id = None
+        self.invoice_items_id = None
         self.memo_list = []
         store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
@@ -4892,6 +4894,7 @@ GridLayout:
         self.inv_qty = int(inv_str)
 
     def set_item(self, item_id):
+
         vars.ITEM_ID = item_id
         items = InventoryItem().where({'item_id': item_id})
         if items:
@@ -5062,15 +5065,16 @@ GridLayout:
         vars.ITEM_ID = item_id
 
         if vars.ITEM_ID in self.invoice_list:
-            # delete from local db
-            invoice_items = InvoiceItem()
-            invoice_items.delete_item(item_id)
+
             idx = -1
             for row in self.invoice_list[vars.ITEM_ID]:
                 idx += 1
                 if 'invoice_items_id' in row:
                     self.invoice_list[vars.ITEM_ID][idx]['delete'] = True
                     self.deleted_rows.append(row['invoice_items_id'])
+                    # delete from local db
+                    invoice_items = InvoiceItem()
+                    invoice_items.delete_item(row['invoice_items_id'])
 
             del self.invoice_list[vars.ITEM_ID]
         if vars.ITEM_ID in self.invoice_list_copy:
