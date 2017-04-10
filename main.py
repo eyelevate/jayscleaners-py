@@ -5063,11 +5063,12 @@ GridLayout:
 
     def remove_item_row(self, item_id, *args, **kwargs):
         vars.ITEM_ID = item_id
-
+        print('test0')
         if vars.ITEM_ID in self.invoice_list:
-
+            print('text1')
             idx = -1
             for row in self.invoice_list[vars.ITEM_ID]:
+                print('test2')
                 idx += 1
                 if 'invoice_items_id' in row:
                     print('found rows to delete deleting #{}'.format(row['invoice_items_id']))
