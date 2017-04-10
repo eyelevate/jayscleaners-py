@@ -5789,18 +5789,16 @@ GridLayout:
         print('deleting item row #{}'.format(row))
         if vars.ITEM_ID in self.invoice_list:
             print('test1')
-            for item_row in self.invoice_list[vars.ITEM_ID]:
-                print('rows = {} - {}'.format(row,item_row))
-                if item_row is row:
-                    print('test2')
-                    if 'invoice_items_id' in self.invoice_list[vars.ITEM_ID][item_row]:
-                        print('reached it. deleting now')
-                        self.invoice_list[vars.ITEM_ID][row]['delete'] = True
-                        self.deleted_rows.append(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
-                        invoice_items = InvoiceItem()
-                        invoice_items.delete_item(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
-                        t1 = Thread(target=SYNC.db_sync, args=())
-                        t1.start()
+            if row in self.invoice_list[vars.ITEM_ID]:
+                print('test2')
+                if 'invoice_items_id' in self.invoice_list[vars.ITEM_ID][row]:
+                    print('reached it. deleting now')
+                    self.invoice_list[vars.ITEM_ID][row]['delete'] = True
+                    self.deleted_rows.append(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
+                    invoice_items = InvoiceItem()
+                    invoice_items.delete_item(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
+                    t1 = Thread(target=SYNC.db_sync, args=())
+                    t1.start()
 
         print(self.deleted_rows)
         del self.invoice_list[vars.ITEM_ID][row]
