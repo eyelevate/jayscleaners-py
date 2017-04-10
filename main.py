@@ -5786,11 +5786,19 @@ GridLayout:
             self.create_summary_totals()
 
     def item_row_delete_selected(self, row, *args, **kwargs):
+        print('deleting item row #{}'.format(row))
         if vars.ITEM_ID in self.invoice_list:
+            print('test1')
             if row in self.invoice_list[vars.ITEM_ID]:
+                print('test2')
                 if 'invoice_items_id' in self.invoice_list[vars.ITEM_ID][row]:
+                    print('reached it. deleting now')
                     self.invoice_list[vars.ITEM_ID][row]['delete'] = True
                     self.deleted_rows.append(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
+                    invoice_items = InvoiceItem()
+                    invoice_items.delete_item(self.invoice_list[vars.ITEM_ID][row]['invoice_items_id'])
+                    t1 = Thread(target=SYNC.db_sync,args=())
+                    t1.start()
         print(self.deleted_rows)
         del self.invoice_list[vars.ITEM_ID][row]
         del self.invoice_list_copy[vars.ITEM_ID][row]
