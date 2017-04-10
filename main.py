@@ -4474,7 +4474,7 @@ GridLayout:
                 # FINAL CUT
                 vars.BIXOLON.write('\n\n\n\n\n\n')
                 vars.BIXOLON.write('\x1b\x6d')
-                vars.BIXOLON.write('\n')
+
             else:
                 laundry_count = len(laundry_to_print)
                 shirt_mark = Custid().getCustomerMark(self.customer_id_backup)
