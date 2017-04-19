@@ -67,15 +67,17 @@ updated_at) VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.company_id,
         return True
 
     def add_special(self):
-        self.c.execute('''INSERT INTO {t}(company_id,name,description,ordered,laundry,status,created_at,
-updated_at) VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.company_id,
-                                                         self.name,
-                                                         self.description,
-                                                         self.ordered,
-                                                         self.laundry,
-                                                         self.status,
-                                                         self.created_at,
-                                                         self.updated_at)
+        self.c.execute('''INSERT INTO {t}(inventory_id,company_id,name,description,ordered,laundry,status,created_at,
+updated_at) VALUES(?,?,?,?,?,?,?,?,?)'''.format(t=table), (
+            self.inventory_id,
+            self.company_id,
+            self.name,
+            self.description,
+            self.ordered,
+            self.laundry,
+            self.status,
+            self.created_at,
+            self.updated_at)
                        )
 
         self.conn.commit()
@@ -111,14 +113,14 @@ updated_at) VALUES(?,?,?,?,?,?,?,?)'''.format(t=table), (self.company_id,
         self.updated_at = now
         self.c.execute('''UPDATE {t} SET inventory_id = ?, company_id = ?, name = ?, description = ?, ordered = ?,
 laundry = ?, status = ?, updated_at = ? WHERE id = ?'''.format(t=table), (self.inventory_id,
-                                                                            self.company_id,
-                                                                            self.name,
-                                                                            self.description,
-                                                                            self.ordered,
-                                                                            self.laundry,
-                                                                            self.status,
-                                                                            self.updated_at,
-                                                                            self.id)
+                                                                          self.company_id,
+                                                                          self.name,
+                                                                          self.description,
+                                                                          self.ordered,
+                                                                          self.laundry,
+                                                                          self.status,
+                                                                          self.updated_at,
+                                                                          self.id)
                        )
 
         self.conn.commit()

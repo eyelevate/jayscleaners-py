@@ -1016,7 +1016,7 @@ class MainScreen(Screen):
                     inventory.laundry = inventories['laundry']
                     inventory.status = inventories['status']
                     inventory.deleted_at = inventories['deleted_at']
-                    inventory.create_at = inventories['created_at']
+                    inventory.created_at = inventories['created_at']
                     inventory.updated_at = inventories['updated_at']
                     count_inventory = inventory.where({'inventory_id': inventory.inventory_id})
                     if len(count_inventory) > 0 or inventory.deleted_at:
@@ -11728,8 +11728,9 @@ class PickupScreen(Screen):
 
     def send_to_db(self):
         # save to server
-        vars.WORKLIST.append("Sync")
-        threads_start()
+        t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
+        t1.start()
+        t1.join()
 
     def cash_tendered(self, amount):
         if len(self.selected_invoices) > 0:
@@ -11960,27 +11961,24 @@ class PickupScreen(Screen):
             customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'credits': new_credits,
                                                                      'account_total': new_account_total})
 
-            run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
-            try:
-                run_sync.start()
-            finally:
-                run_sync.join()
-                time.sleep(3)
+            # sync first round
+            t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
+            t1.start()
+            t1.join()
+            time.sleep(2)
 
-                # save transaction_id to Transaction and each invoice
-                if self.selected_invoices:
-                    invoices = Invoice()
-                    for invoice_id in self.selected_invoices:
-                        invoices.put(where={'invoice_id': invoice_id},
-                                     data={'status': 5, 'transaction_id': transaction_id})
-                    run_sync_2 = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
-                    time.sleep(1)
-                    try:
-                        run_sync_2.start()
-                    finally:
-                        run_sync_2.join()
-                        self.set_result_status()
-                        self.finish_popup.dismiss()
+            # save transaction_id to Transaction and each invoice
+            if self.selected_invoices:
+                invoices = Invoice()
+                for invoice_id in self.selected_invoices:
+                    invoices.put(where={'invoice_id': invoice_id},
+                                 data={'status': 5, 'transaction_id': transaction_id})
+                time.sleep(1)
+                t2 = Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
+                t2.start()
+                t2.join()
+                self.set_result_status()
+                self.finish_popup.dismiss()
 
         elif type is 5 and len(checks) is 0:
             transaction.status = 3
@@ -11998,6 +11996,7 @@ class PickupScreen(Screen):
 
         if standard_save:
             if transaction.add():
+
                 # update any discounts or credits
                 if self.credits:
                     old_credits = 0
@@ -12010,36 +12009,31 @@ class PickupScreen(Screen):
                     customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'credits': new_credits})
 
                 # update to server
-                run_sync = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
-
-                try:
-                    run_sync.start()
-
-                finally:
-                    run_sync.join()
-                    # last transaction _id
-                    time.sleep(3)
-                    transaction_id = 0
-                    last_transaction = transaction.where({'id': {'>': 0}, 'ORDER_BY': 'id desc', 'LIMIT': 1})
-                    if last_transaction:
-                        for trans in last_transaction:
-                            transaction_id = trans['trans_id']
-                    if transaction_id > 0:
-
-                        # save transaction_id to Transaction and each invoice
-                        if self.selected_invoices:
-                            invoices = Invoice()
-                            for invoice_id in self.selected_invoices:
-                                invoices.put(where={'invoice_id': invoice_id},
-                                             data={'status': 5, 'transaction_id': int(transaction_id)})
-                            time.sleep(1)
-                            run_sync_2 = threading.Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
-                            try:
-                                run_sync_2.start()
-                            finally:
-                                run_sync_2.join()
-                                self.set_result_status()
-                                self.finish_popup.dismiss()
+                t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
+                t1.start()
+                t1.join()
+                time.sleep(2)
+                transaction_id = 0
+                last_transaction = transaction.where({'id': {'>': 0},
+                                                      'ORDER_BY': 'id desc',
+                                                      'customer_id':vars.CUSTOMER_ID,
+                                                      'LIMIT': 1})
+                if last_transaction:
+                    for trans in last_transaction:
+                        transaction_id = trans['trans_id']
+                if transaction_id > 0:
+                    # save transaction_id to Transaction and each invoice
+                    if self.selected_invoices:
+                        invoices = Invoice()
+                        for invoice_id in self.selected_invoices:
+                            invoices.put(where={'invoice_id': invoice_id},
+                                         data={'status': 5, 'transaction_id': int(transaction_id)})
+                        time.sleep(1)
+                        t2 = Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
+                        t2.start()
+                        t2.join()
+                        self.set_result_status()
+                        self.finish_popup.dismiss()
 
         if print == 1:  # customer copy of invoice and finish
             if vars.EPSON:
