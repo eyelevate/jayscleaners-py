@@ -11928,7 +11928,7 @@ class PickupScreen(Screen):
         if type is 5 and len(checks) > 0:
             transaction_id = None
             for ca in checks:
-                transaction_id = ca['transaction_id']
+                transaction_id = ca['trans_id']
                 old_subtotal = ca['pretax']
                 old_tax = ca['tax']
                 old_aftertax = ca['aftertax']
@@ -11965,14 +11965,20 @@ class PickupScreen(Screen):
             t1 = Thread(target=SYNC.db_sync, args=[vars.COMPANY_ID])
             t1.start()
             t1.join()
-            time.sleep(2)
+            time.sleep(1)
 
             # save transaction_id to Transaction and each invoice
             if self.selected_invoices:
                 invoices = Invoice()
+                account_trans_id = None
+                if transaction_id > 0:
+                    account_trans_id = transaction_id
+                else:
+                    for ca in checks:
+                        account_trans_id = ca['trans_id']
                 for invoice_id in self.selected_invoices:
                     invoices.put(where={'invoice_id': invoice_id},
-                                 data={'status': 5, 'transaction_id': transaction_id})
+                                 data={'status': 5, 'transaction_id': int(account_trans_id)})
                 time.sleep(1)
                 t2 = Thread(target=SYNC.db_sync,args=[vars.COMPANY_ID])
                 t2.start()
@@ -12310,6 +12316,7 @@ class PickupScreen(Screen):
                 # Beep Sound
                 sys.stdout.write('\a')
                 sys.stdout.flush()
+
         self.status_popup.dismiss()
 
     def set_result_status(self):
