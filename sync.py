@@ -411,7 +411,7 @@ class Sync:
             if data_1['status'] is False:
                 return False
             else:
-                return True
+                return data_1['data']
 
         except urllib.error.URLError as e:
             print(e.reason)  # could not save this time around because no internet, move on
