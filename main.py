@@ -9685,7 +9685,7 @@ class PickupScreen(Screen):
             self.payment_panel.switch_to(header=self.credit_card_header)
             self.payment_type = 'cc'
 
-        self.total_credit.text = '[color=0AAC00]{}[/color]'.format('${:,.2f}'.format(self.credits))
+        self.total_credit.text = '[color=0AAC00]{}[/color]'.format('${:,.2f}'.format(Decimal(self.credits)))
         self.selected_invoices = []
         # setup invoice table
         self.invoice_table.clear_widgets()
