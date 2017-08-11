@@ -12224,7 +12224,7 @@ class SearchScreen(Screen):
 
                 # display data
                 self.cust_info_label.text = 'Customer Info: [color=FF0000]Account[/color]' if result[
-                    'account'] is not True else 'Customer Info:'
+                    'account'] is '1' or result['account'] is True or result['account'] is 1 else 'Customer Info:'
                 self.cust_mark_label.text = custid_string
                 self.customer_id_ti.text = str(vars.CUSTOMER_ID) if vars.CUSTOMER_ID else ''
                 self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
