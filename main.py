@@ -10965,8 +10965,8 @@ class PickupScreen(Screen):
                     custs = SYNC.customers_grab(vars.CUSTOMER_ID)
                     if custs:
                         for customer in custs:
-                            old_credits = customer['credits']
-                    new_credits = float("%0.2f" % (old_credits - credits_spent))
+                            old_credits = Decimal(customer['credits'])
+                    new_credits = float("%0.2f" % (old_credits - Decimal(credits_spent)))
                     update_customer_credits = SYNC.update_customer_credits(vars.CUSTOMER_ID,new_credits)
                     if update_customer_credits is not False:
                         print('customer credit has been updated')
