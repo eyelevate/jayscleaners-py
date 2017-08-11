@@ -10853,7 +10853,7 @@ class PickupScreen(Screen):
         checks = SYNC.check_account(vars.CUSTOMER_ID)
         print('checking transaction account - {}'.format(checks))
         standard_save = False
-        if type is 5 and checks is False:
+        if type is 5 and checks is not False:
             print('account customer')
             transaction_id = None
             for ca in checks:
@@ -10923,7 +10923,7 @@ class PickupScreen(Screen):
                 self.set_result_status()
                 self.finish_popup.dismiss()
 
-        elif type is 5 and checks is not False:
+        elif type is 5 and checks is False:
             transaction.status = 3
             standard_save = True
             customers = User()
