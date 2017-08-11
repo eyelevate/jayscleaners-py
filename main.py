@@ -9674,7 +9674,7 @@ class PickupScreen(Screen):
         if customers:
             for customer in customers:
                 self.credits = customer['credits'] if customer['credits'] is not None else 0
-                account_status = customer['account']
+                account_status = bool(int(customer['account']))
 
         if account_status:
             self.payment_panel.switch_to(header=self.payment_account_header)
