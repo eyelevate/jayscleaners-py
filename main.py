@@ -2922,7 +2922,7 @@ GridLayout:
                                         'memos': [item_memo] if item_memo else [],
                                         'colors': {item_color: 1}
                                     }
-
+            print(save_invoice_items)
             if len(save_invoice_items) > 0:
                 for iitems_id in save_invoice_items:
                     for item in save_invoice_items[iitems_id]:
@@ -16126,8 +16126,6 @@ A{c},20,1,1,1,1,N,"{tag}"
                         previous_account_total = cust['account_total']
 
                 new_account_total = '%.2f' % (Decimal(previous_account_total) - Decimal(self.total_input.text))
-
-                update = customers.put(where={'user_id': vars.CUSTOMER_ID}, data={'account_total': new_account_total})
                 update = SYNC.pay_account_customer(vars.CUSTOMER_ID,new_account_total)
                 if update is not False:
 
