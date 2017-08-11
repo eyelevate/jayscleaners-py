@@ -5186,7 +5186,7 @@ GridLayout:
             comps = SYNC.company_grab(vars.COMPANY_ID)
             if comps:
                 companies.id = comps['id']
-                companies.company_id = comps['company_id']
+                companies.company_id = comps['id']
                 companies.name = comps['name']
                 companies.street = comps['street']
                 companies.city = comps['city']
