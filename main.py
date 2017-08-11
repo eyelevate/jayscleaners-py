@@ -2922,10 +2922,12 @@ GridLayout:
                                         'memos': [item_memo] if item_memo else [],
                                         'colors': {item_color: 1}
                                     }
-            print(save_invoice_items)
+
             if len(save_invoice_items) > 0:
-                for iitems_id in save_invoice_items:
-                    for item in save_invoice_items[iitems_id]:
+                for key, value in save_invoice_items.items():
+
+                    for item in value:
+
                         item_price = float(item['item_price']) if item['item_price'] else 0
                         item_tax = float('%.2f' % (Decimal(item_price) * Decimal(vars.TAX_RATE)))
                         item_total = float('%.2f' % (Decimal(item_price) * (1 + Decimal(vars.TAX_RATE))))
