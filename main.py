@@ -3271,7 +3271,7 @@ GridLayout:
                         # get customer mark
 
                         marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
-                        if marks:
+                        if marks is not False:
                             m_list = []
                             for mark in marks:
                                 m_list.append(mark['mark'])
@@ -3426,7 +3426,7 @@ GridLayout:
                     if item_type == 'L':
                         # get customer mark
                         marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
-                        if marks:
+                        if marks is not False:
                             m_list = []
                             for mark in marks:
                                 m_list.append(mark['mark'])
@@ -5477,7 +5477,7 @@ GridLayout:
                             # get customer mark
                             marks = Custid()
                             marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
-                            if marks:
+                            if marks is not False:
                                 m_list = []
                                 for mark in marks:
                                     m_list.append(mark['mark'])
@@ -7499,7 +7499,7 @@ class HistoryScreen(Screen):
                                 # get customer mark
                                 marks = Custid()
                                 marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
-                                if marks:
+                                if marks is not False:
                                     m_list = []
                                     for mark in marks:
                                         m_list.append(mark['mark'])
@@ -13357,8 +13357,8 @@ class SearchScreen(Screen):
                                 vars.EPSON.write('{}\n'.format(customers.invoice_memo))
                             if item_type == 'L':
                                 # get customer mark
-
-                                if marks:
+                                marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
+                                if marks is not False:
                                     m_list = []
                                     for mark in marks:
                                         m_list.append(mark['mark'])
