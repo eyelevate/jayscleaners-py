@@ -5124,7 +5124,7 @@ GridLayout:
                             colors[item_id][item_color] = 1
                     if self.invoice_id in print_invoice:
                         if item_id in print_invoice[self.invoice_id]:
-                            print_invoice[self.invoice_id][item_id]['item_price'] += item_price
+                            print_invoice[self.invoice_id][item_id]['item_price'] += Decimal(item_price)
                             print_invoice[self.invoice_id][item_id]['qty'] += 1
                             if item_id in colors:
                                 print_invoice[self.invoice_id][item_id]['colors'] = colors[item_id]
@@ -5299,7 +5299,7 @@ GridLayout:
                                 item_type = item['type']
                                 item_color = item['color']
                                 item_memo = item['memo']
-                                item_price += item['item_price'] if item['item_price'] else 0
+                                item_price += Decimal(item['item_price']) if item['item_price'] else 0
                                 if item['color']:
                                     if item_color in colors:
                                         colors[item_color] += 1
@@ -5394,7 +5394,7 @@ GridLayout:
                         if invoice_id in print_invoice:
                             for item_id, invoice_item in print_invoice[invoice_id].items():
                                 item_name = invoice_item['name']
-                                item_price = invoice_item['item_price']
+                                item_price = Decimal(invoice_item['item_price'])
                                 item_qty = invoice_item['qty']
                                 item_color_string = []
                                 item_memo = invoice_item['memos']
@@ -5538,7 +5538,7 @@ GridLayout:
                         if invoice_id in print_invoice:
                             for item_id, invoice_item in print_invoice[invoice_id].items():
                                 item_name = invoice_item['name']
-                                item_price = invoice_item['item_price']
+                                item_price = Decimal(invoice_item['item_price'])
                                 item_qty = invoice_item['qty']
                                 item_color_string = []
                                 item_memo = invoice_item['memos']
