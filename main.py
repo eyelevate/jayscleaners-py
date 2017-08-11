@@ -2854,7 +2854,7 @@ GridLayout:
             if len(save_invoice_items) > 0:
                 for id in save_invoice_items:
                     invoices = SYNC.invoice_grab_id(id)
-                    if invoices:
+                    if invoices is not False:
                         new_invoice_id = invoices['id']
                         idx = -1
                         colors = {}
@@ -2883,13 +2883,13 @@ GridLayout:
                             'total': invoices['total']
                         }
                         print_sync_invoice[new_invoice_id] = {}
-                        for items in save_invoice_items[id]:
+                        for items in save_invoice_items[new_invoice_id]:
                             item_id = items['item_id']
                             colors[item_id] = {}
-                        for items in save_invoice_items[id]:
+                        for items in save_invoice_items[new_invoice_id]:
                             idx += 1
-                            save_invoice_items[id][idx]['invoice_id'] = new_invoice_id
-                            save_invoice_items[id][idx]['status'] = 1
+                            save_invoice_items[new_invoice_id][idx]['invoice_id'] = new_invoice_id
+                            save_invoice_items[new_invoice_id][idx]['status'] = 1
                             item_id = items['item_id']
                             item_name = items['item_name']
                             item_price = items['item_price']
@@ -9670,7 +9670,7 @@ class PickupScreen(Screen):
         self.credits = 0
         self.credits_spent = 0
         account_status = False
-        
+
         customers = SYNC.customers_grab(vars.CUSTOMER_ID)
         if customers:
             for customer in customers:
