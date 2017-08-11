@@ -1225,6 +1225,46 @@ class Sync:
             print(e.reason)  # could not save this time around because no internet, move on
             return False
 
+    def customers_row_cap(self, query, *args, **kwargs):
+        list = query.split()
+        print(list)
+        url = 'http://www.jayscleaners.com/admins/api/customers-row-cap'
+        # attempt to connect to server
+        data = parse.urlencode({'list': json.dumps(list)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return 0
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def customers_search_results(self, query, start, *args, **kwargs):
+        list = query.split()
+        print(list)
+        url = 'http://www.jayscleaners.com/admins/api/customers-search-results'
+        # attempt to connect to server
+        data = parse.urlencode({'list': json.dumps(list),'start':start}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+
+
     def check_account(self, customer_id, *args, **kwargs):
 
         url = 'http://www.jayscleaners.com/admins/api/check-account'

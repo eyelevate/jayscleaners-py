@@ -212,7 +212,7 @@ class MainScreen(Screen):
     reports_button = ObjectProperty(None)
     delivery_button = ObjectProperty(None)
     dropoff_button = ObjectProperty(None)
-    update_button = ObjectProperty(None)
+    # update_button = ObjectProperty(None)
     username = ObjectProperty(None)
     password = ObjectProperty(None)
     login_popup = ObjectProperty(None)
@@ -303,12 +303,12 @@ class MainScreen(Screen):
             if u1:  # found user register variables, sync data, and show links
                 self.login_button.text = "Logout"
                 self.login_button.bind(on_release=self.logout)
-                self.update_button.disabled = False
+                # self.update_button.disabled = False
                 self.settings_button.disabled = False
                 self.reports_button.disabled = False
                 self.dropoff_button.disabled = False
                 self.delivery_button.disabled = False
-                self.item_search_button.disabled = False
+                # self.item_search_button.disabled = False
                 for user1 in u1:
                     auth_user.id = user1['id']
                     auth_user.user_id = user1['user_id']
@@ -344,12 +344,12 @@ class MainScreen(Screen):
                 if data['status']:
                     self.login_button.text = "Logout"
                     self.login_button.bind(on_release=self.logout)
-                    self.update_button.disabled = False
+                    # self.update_button.disabled = False
                     self.settings_button.disabled = False
                     self.reports_button.disabled = False
                     self.dropoff_button.disabled = False
                     self.delivery_button.disabled = False
-                    self.item_search_button.disabled = False
+                    # self.item_search_button.disabled = False
 
                     auth_user.username = user.username
                     auth_user.company_id = data['company_id']
@@ -399,12 +399,12 @@ class MainScreen(Screen):
         vars.COMPANY_ID = None
         self.login_button.text = "Login"
         self.login_button.bind(on_release=self.login)
-        self.update_button.disabled = True
+        # self.update_button.disabled = True
         self.settings_button.disabled = True
         self.reports_button.disabled = True
         self.dropoff_button.disabled = True
         self.delivery_button.disabled = True
-        self.item_search_button.disabled = True
+        # self.item_search_button.disabled = True
 
     def db_sync(self, *args, **kwargs):
 
@@ -5768,8 +5768,7 @@ class EditCustomerScreen(Screen):
 
             customers = User()
             customers.user_id = vars.CUSTOMER_ID
-            addresses = Address().where({'user_id': vars.CUSTOMER_ID,
-                                         'primary_address': 1})
+
             # data = {'user_id': vars.CUSTOMER_ID}
             # customer = customers.where(data)
             customer = SYNC.customers_grab(vars.CUSTOMER_ID)
@@ -5839,7 +5838,7 @@ class EditCustomerScreen(Screen):
 
                     self.update_marks_table()
 
-                    if cust['account'] is 1:
+                    if int(cust['account']) is 1:
                         self.is_account.active = True
                         self.street.text = cust['street'] if cust['street'] else ''
                         self.street.hint_text = 'Street Address'
@@ -5909,10 +5908,10 @@ class EditCustomerScreen(Screen):
             inner_layout_2 = BoxLayout(orientation="horizontal",
                                        size_hint=(1, 0.1))
             cancel = Button(text="cancel",
-                            on_release=self.popup.dismiss)
+                            on_press=self.popup.dismiss)
             delete_btn = Button(markup=True,
                                 text="[color=FF0000]Delete[/color]",
-                                on_release=self.delete_final)
+                                on_press=self.delete_final)
             inner_layout_2.add_widget(cancel)
             inner_layout_2.add_widget(delete_btn)
             content.add_widget(inner_layout_1)
@@ -6314,10 +6313,10 @@ class EmployeesScreen(Screen):
         inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
                                    orientation='horizontal')
         inner_layout_2.add_widget(Button(text='cancel',
-                                         on_release=self.employee_popup.dismiss))
+                                         on_press=self.employee_popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=00ff00][b]add[/b][/color]',
-                                         on_release=self.add_employee))
+                                         on_press=self.add_employee))
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         self.employee_popup.content = layout
@@ -6372,10 +6371,10 @@ class EmployeesScreen(Screen):
         inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
                                    orientation='horizontal')
         inner_layout_2.add_widget(Button(text='cancel',
-                                         on_release=self.employee_popup.dismiss))
+                                         on_press=self.employee_popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=00ff00][b]edit[/b][/color]',
-                                         on_release=self.edit_employee))
+                                         on_press=self.edit_employee))
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         self.employee_popup.content = layout
@@ -6542,10 +6541,10 @@ class EmployeesScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='cancel',
-                                         on_release=popup.dismiss))
+                                         on_press=popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=00ff00][b]Delete[/b][/color]',
-                                         on_release=self.delete_employee))
+                                         on_press=self.delete_employee))
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         popup.content = layout
@@ -6710,7 +6709,7 @@ class HistoryScreen(Screen):
             text_color = [0, 0, 0, 1] if selected else [0, 0, 0, 1]
             background_rgba = [0.98431373, 1, 0, 0.1] if selected else [0.9960784314, 1, 0.7176470588, 1]
             background_color = [0.98431373, 1, 0, 1] if selected else [0.9960784314, 1, 0.7176470588, 1]
-        tr = Factory.InvoiceTr(on_release=partial(self.select_invoice, invoice_id),
+        tr = Factory.InvoiceTr(on_press=partial(self.select_invoice, invoice_id),
                                group="tr")
         tr.status = state
         tr.set_color = background_color
@@ -6950,7 +6949,7 @@ class HistoryScreen(Screen):
                                         orientation='horizontal')
             inner_content_2.add_widget(Button(markup=True,
                                               text='Cancel',
-                                              on_release=self.history_popup.dismiss))
+                                              on_press=self.history_popup.dismiss))
             inner_content_2.add_widget(Button(markup=True,
                                               text='[color=0FFF00]Confirm[/color]',
                                               on_press=self.delete_invoice))
@@ -7107,17 +7106,17 @@ class HistoryScreen(Screen):
                                    size_hint=(1, 0.9))
         inner_layout_1.add_widget(Button(markup=True,
                                          text='Store Copy',
-                                         on_release=partial(self.reprint_invoice, 1)))
+                                         on_press=partial(self.reprint_invoice, 1)))
         inner_layout_1.add_widget(Button(markup=True,
                                          text='Customer Copy',
-                                         on_release=partial(self.reprint_invoice, 2)))
+                                         on_press=partial(self.reprint_invoice, 2)))
         inner_layout_1.add_widget(Button(markup=True,
                                          text='Tags',
-                                         on_release=self.reprint_tags))
+                                         on_press=self.reprint_tags))
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='Cancel',
-                                         on_release=popup.dismiss))
+                                         on_press=popup.dismiss))
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         popup.content = layout
@@ -7551,15 +7550,15 @@ class HistoryScreen(Screen):
                         item_color = ii['color']
                         item_memo = ii['memo']
                         trtd1 = Button(text=str(invoice_items_id),
-                                       on_release=partial(self.select_tag, invoice_items_id))
+                                       on_press=partial(self.select_tag, invoice_items_id))
                         trtd2 = Button(text=str(item_name),
-                                       on_release=partial(self.select_tag, invoice_items_id))
+                                       on_press=partial(self.select_tag, invoice_items_id))
                         trtd3 = Button(text=str(item_color),
-                                       on_release=partial(self.select_tag, invoice_items_id))
+                                       on_press=partial(self.select_tag, invoice_items_id))
                         trtd4 = Button(text=str(item_memo),
-                                       on_release=partial(self.select_tag, invoice_items_id))
+                                       on_press=partial(self.select_tag, invoice_items_id))
                         trtd5 = Button(text=str(tags_to_print),
-                                       on_release=partial(self.select_tag, invoice_items_id))
+                                       on_press=partial(self.select_tag, invoice_items_id))
                         self.tags_grid.ids.tags_table.add_widget(trtd1)
                         self.tags_grid.ids.tags_table.add_widget(trtd2)
                         self.tags_grid.ids.tags_table.add_widget(trtd3)
@@ -7569,13 +7568,13 @@ class HistoryScreen(Screen):
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="Cancel",
-                               on_release=popup.dismiss)
+                               on_press=popup.dismiss)
         print_all_button = Button(text="Print All",
-                                  on_press=popup.dismiss,
-                                  on_release=self.print_all_tags)
+                                  on_release=popup.dismiss,
+                                  on_press=self.print_all_tags)
         print_selected_button = Button(text="Print Selected",
-                                       on_press=popup.dismiss,
-                                       on_release=self.print_selected_tags)
+                                       on_release=popup.dismiss,
+                                       on_press=self.print_selected_tags)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(print_all_button)
         inner_layout_2.add_widget(print_selected_button)
@@ -7618,26 +7617,26 @@ class HistoryScreen(Screen):
                         item_memo = ii['memo']
                         if invoice_items_id in self.selected_tags_list:
                             trtd1 = Factory.TagsSelectedButton(text=str(invoice_items_id),
-                                                               on_release=partial(self.select_tag, invoice_items_id))
+                                                               on_press=partial(self.select_tag, invoice_items_id))
                             trtd2 = Factory.TagsSelectedButton(text=str(item_name),
-                                                               on_release=partial(self.select_tag, invoice_items_id))
+                                                               on_press=partial(self.select_tag, invoice_items_id))
                             trtd3 = Factory.TagsSelectedButton(text=str(item_color),
-                                                               on_release=partial(self.select_tag, invoice_items_id))
+                                                               on_press=partial(self.select_tag, invoice_items_id))
                             trtd4 = Factory.TagsSelectedButton(text=str(item_memo),
-                                                               on_release=partial(self.select_tag, invoice_items_id))
+                                                               on_press=partial(self.select_tag, invoice_items_id))
                             trtd5 = Factory.TagsSelectedButton(text=str(tags_to_print),
-                                                               on_release=partial(self.select_tag, invoice_items_id))
+                                                               on_press=partial(self.select_tag, invoice_items_id))
                         else:
                             trtd1 = Button(text=str(invoice_items_id),
-                                           on_release=partial(self.select_tag, invoice_items_id))
+                                           on_press=partial(self.select_tag, invoice_items_id))
                             trtd2 = Button(text=str(item_name),
-                                           on_release=partial(self.select_tag, invoice_items_id))
+                                           on_press=partial(self.select_tag, invoice_items_id))
                             trtd3 = Button(text=str(item_color),
-                                           on_release=partial(self.select_tag, invoice_items_id))
+                                           on_press=partial(self.select_tag, invoice_items_id))
                             trtd4 = Button(text=str(item_memo),
-                                           on_release=partial(self.select_tag, invoice_items_id))
+                                           on_press=partial(self.select_tag, invoice_items_id))
                             trtd5 = Button(text=str(tags_to_print),
-                                           on_release=partial(self.select_tag, invoice_items_id))
+                                           on_press=partial(self.select_tag, invoice_items_id))
                         self.tags_grid.ids.tags_table.add_widget(trtd1)
                         self.tags_grid.ids.tags_table.add_widget(trtd2)
                         self.tags_grid.ids.tags_table.add_widget(trtd3)
@@ -7998,11 +7997,11 @@ class InventoriesScreen(Screen):
                 c4 = KV.sized_invoice_tr(1, 'True' if inventory['laundry'] else 'False', 0.1)
                 c5 = Button(text="Edit",
                             size_hint_x=0.1,
-                            on_release=partial(self.edit_invoice_popup, inventory['id']))
+                            on_press=partial(self.edit_invoice_popup, inventory['id']))
                 c6 = Factory.CenterGlyphUpButton(size_hint_x=0.1,
-                                                 on_release=partial(self.inventory_move, 'up', inventory['id']))
+                                                 on_press=partial(self.inventory_move, 'up', inventory['id']))
                 c7 = Factory.CenterGlyphDownButton(size_hint_x=0.1,
-                                                   on_release=partial(self.inventory_move, 'down', inventory['id']))
+                                                   on_press=partial(self.inventory_move, 'down', inventory['id']))
                 self.inventory_table.add_widget(Builder.load_string(c1))
                 self.inventory_table.add_widget(Builder.load_string(c2))
                 self.inventory_table.add_widget(Builder.load_string(c3))
@@ -8101,10 +8100,10 @@ class InventoriesScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='Cancel',
-                                         on_release=self.edit_popup.dismiss))
+                                         on_press=self.edit_popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=0AAC00][b]Save[/b][/color]',
-                                         on_release=self.edit_inventory))
+                                         on_press=self.edit_inventory))
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         self.edit_popup.content = layout
@@ -8162,10 +8161,10 @@ class InventoriesScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='Cancel',
-                                         on_release=self.add_popup.dismiss))
+                                         on_press=self.add_popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=0AAC00][b]Add[/b][/color]',
-                                         on_release=self.add_inventory))
+                                         on_press=self.add_inventory))
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         self.add_popup.content = layout
@@ -8249,7 +8248,7 @@ class InventoryItemsScreen(Screen):
                 iitems = InventoryItem()
                 inventory_items = inventory['inventory_items']
                 tph = TabbedPanelHeader(text='{}'.format(inventory_name),
-                                        on_release=partial(self.set_inventory, inventory_id))
+                                        on_press=partial(self.set_inventory, inventory_id))
                 layout = ScrollView()
                 content = Factory.GridLayoutForScrollView()
 
@@ -8262,12 +8261,12 @@ class InventoryItemsScreen(Screen):
                         if self.item_id is item_id:
                             items_button = Factory.ItemsFromButton(text='[b]{}[/b]\n[i]{}[/i]'.format(item['name'],
                                                                                                       item_price),
-                                                                   on_release=partial(self.set_item, item_id))
+                                                                   on_press=partial(self.set_item, item_id))
                             self.from_id = self.item_id
                         else:
                             items_button = Factory.ItemsButton(text='[b]{}[/b]\n[i]{}[/i]'.format(item['name'],
                                                                                                   item_price),
-                                                               on_release=partial(self.set_item, item_id))
+                                                               on_press=partial(self.set_item, item_id))
                         content.add_widget(items_button)
                 layout.add_widget(content)
                 tph.content = layout
@@ -8308,15 +8307,15 @@ class InventoryItemsScreen(Screen):
             inner_layout_1 = BoxLayout(orientation='horizontal',
                                        size_hint=(1, 0.6))
             inner_layout_1.add_widget(Button(text='Reorder',
-                                             on_release=self.reorder_item))
+                                             on_press=self.reorder_item))
             inner_layout_1.add_widget(Button(text='Edit',
-                                             on_release=self.edit_show))
+                                             on_press=self.edit_show))
             inner_layout_1.add_widget(Button(text='Delete',
-                                             on_release=self.delete_confirm))
+                                             on_press=self.delete_confirm))
             inner_layout_2 = BoxLayout(orientation='horizontal',
                                        size_hint=(1, 0.3))
             inner_layout_2.add_widget(Button(text='Cancel',
-                                             on_release=self.add_popup.dismiss))
+                                             on_press=self.add_popup.dismiss))
             layout.add_widget(inner_layout_1)
             layout.add_widget(inner_layout_2)
             self.add_popup.content = layout
@@ -8399,10 +8398,10 @@ class InventoryItemsScreen(Screen):
                                    orientation='horizontal')
         cancel_button = Button(markup=True,
                                text='Cancel',
-                               on_release=self.edit_popup.dismiss)
+                               on_press=self.edit_popup.dismiss)
         add_button = Button(markup=True,
                             text='[color=0AAC00][b]Edit[/b][/color]',
-                            on_release=self.edit_item)
+                            on_press=self.edit_item)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(add_button)
         layout.add_widget(inner_layout_1)
@@ -8422,7 +8421,7 @@ class InventoryItemsScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.3))
         inner_layout_2.add_widget(Button(text='Cancel',
-                                         on_release=popup.dismiss))
+                                         on_press=popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=FF0000][b]Delete[/b][/color]',
                                          on_press=self.delete_item,
@@ -8524,10 +8523,10 @@ class InventoryItemsScreen(Screen):
                                    orientation='horizontal')
         cancel_button = Button(markup=True,
                                text='Cancel',
-                               on_release=self.add_popup.dismiss)
+                               on_press=self.add_popup.dismiss)
         add_button = Button(markup=True,
                             text='[color=0AAC00][b]Add[/b][/color]',
-                            on_release=self.add_item)
+                            on_press=self.add_item)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(add_button)
         layout.add_widget(inner_layout_1)
@@ -9105,7 +9104,7 @@ class MemosScreen(Screen):
                                                    background_color=(0, 0.64, 0.149, 1))
                 elif self.reorder_start_id != None and self.reorder_start_id != m_id:
                     memo_item = Factory.LongButton(text='{}'.format(memo_msg),
-                                                   on_release=partial(self.set_reorder_end_id, m_id))
+                                                   on_press=partial(self.set_reorder_end_id, m_id))
 
                 self.memos_table.add_widget(memo_item)
 
@@ -9128,7 +9127,7 @@ class MemosScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='cancel',
-                                         on_release=popup.dismiss))
+                                         on_press=popup.dismiss))
         content.add_widget(inner_layout_1)
         content.add_widget(inner_layout_2)
         popup.content = content
@@ -9189,10 +9188,10 @@ class MemosScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='cancel',
-                                         on_release=self.popup_memo.dismiss))
+                                         on_press=self.popup_memo.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=00ff00][b]Add[/b][/color]',
-                                         on_release=self.add_memo))
+                                         on_press=self.add_memo))
         content.add_widget(inner_layout_1)
         content.add_widget(inner_layout_2)
         self.popup_memo.content = content
@@ -9235,7 +9234,7 @@ class MemosScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='cancel',
-                                         on_release=popup.dismiss))
+                                         on_press=popup.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=00ff00][b]cancel[/b][/color]',
                                          on_press=popup.dismiss,
@@ -9273,10 +9272,10 @@ class MemosScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='cancel',
-                                         on_release=self.popup_memo.dismiss))
+                                         on_press=self.popup_memo.dismiss))
         inner_layout_2.add_widget(Button(markup=True,
                                          text='[color=00ff00][b]Edit[/b][/color]',
-                                         on_release=self.edit_memo))
+                                         on_press=self.edit_memo))
         content.add_widget(inner_layout_1)
         content.add_widget(inner_layout_2)
         self.popup_memo.content = content
@@ -9467,7 +9466,6 @@ class NewCustomerScreen(Screen):
             # check if the phone number already exists
             phone = Job.make_numeric(data=self.phone.text)
             users = SYNC.customers_grab(phone)
-            print(users)
             check_customers = True if len(users) > 0 else False
 
             if check_customers:
@@ -9820,20 +9818,20 @@ class PickupScreen(Screen):
                     end_button = Factory.TagsSelectedButton(text=str(end_formatted))
                 else:
                     id_button = Button(text=str(discount_id),
-                                       on_release=partial(self.select_discount, discount_id))
+                                       on_press=partial(self.select_discount, discount_id))
 
                     name_button = Button(text=str(discount['name']),
-                                         on_release=partial(self.select_discount, discount_id))
+                                         on_press=partial(self.select_discount, discount_id))
                     type_button = Button(text=str(type),
-                                         on_release=partial(self.select_discount, discount_id))
+                                         on_press=partial(self.select_discount, discount_id))
                     discount_button = Button(text=str(discount_display),
-                                             on_release=partial(self.select_discount, discount_id))
+                                             on_press=partial(self.select_discount, discount_id))
                     group_button = Button(text=str(group),
-                                          on_release=partial(self.select_discount, discount_id))
+                                          on_press=partial(self.select_discount, discount_id))
                     start_button = Button(text=str(start_formatted),
-                                          on_release=partial(self.select_discount, discount_id))
+                                          on_press=partial(self.select_discount, discount_id))
                     end_button = Button(text=str(end_formatted),
-                                        on_release=partial(self.select_discount, discount_id))
+                                        on_press=partial(self.select_discount, discount_id))
 
                 inner_layout_1.ids.main_table.add_widget(id_button)
                 inner_layout_1.ids.main_table.add_widget(name_button)
@@ -9846,7 +9844,7 @@ class PickupScreen(Screen):
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=self.main_popup.dismiss)
+                               on_press=self.main_popup.dismiss)
 
         inner_layout_2.add_widget(cancel_button)
 
@@ -10110,8 +10108,8 @@ class PickupScreen(Screen):
             # make the update and add buttons and send it to screen
             credit_card_action_box = BoxLayout(orientation="horizontal",
                                                size_hint=(1, 0.5))
-            credit_card_action_box.add_widget(Button(text="Update", on_release=self.update_card))
-            credit_card_action_box.add_widget(Button(text="Add", on_release=self.add_card_popup))
+            credit_card_action_box.add_widget(Button(text="Update", on_press=self.update_card))
+            credit_card_action_box.add_widget(Button(text="Add", on_press=self.add_card_popup))
             inner_layout_1.add_widget(credit_card_action_box)
             self.credit_card_data_layout.add_widget(inner_layout_1)
 
@@ -10194,9 +10192,9 @@ class PickupScreen(Screen):
                         inner_layout_2 = BoxLayout(orientation='horizontal',
                                                    size_hint=(1, 0.1))
                         cancel_button = Button(text="cancel",
-                                               on_release=self.finish_popup.dismiss)
+                                               on_press=self.finish_popup.dismiss)
                         save_button = Button(text="save",
-                                             on_release=self.edit_card)
+                                             on_press=self.edit_card)
                         inner_layout_2.add_widget(cancel_button)
                         inner_layout_2.add_widget(save_button)
                         base_layout.add_widget(inner_layout_1)
@@ -10405,9 +10403,9 @@ class PickupScreen(Screen):
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=self.finish_popup.dismiss)
+                               on_press=self.finish_popup.dismiss)
         save_button = Button(text="save",
-                             on_release=self.add_card)
+                             on_press=self.add_card)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(save_button)
         base_layout.add_widget(inner_layout_1)
@@ -10700,7 +10698,7 @@ class PickupScreen(Screen):
                 validate_inner_layout_1 = BoxLayout(orientation="horizontal",
                                                     size_hint=(1, 0.8))
                 self.card_box = Factory.ValidateBox()
-                self.card_box.ids.validate_button.bind(on_release=self.validate_card)
+                self.card_box.ids.validate_button.bind(on_press=self.validate_card)
                 # get card information
                 if self.cards:
                     for card in self.cards:
@@ -10784,7 +10782,7 @@ class PickupScreen(Screen):
         inner_layout_2.add_widget(Button(markup=True,
                                          font_size='20sp',
                                          text='[color=FF0000]Cancel[/color]',
-                                         on_release=self.finish_popup.dismiss))
+                                         on_press=self.finish_popup.dismiss))
 
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
@@ -11326,17 +11324,17 @@ class PrinterScreen(Screen):
                               size_hint_x=0.1,
                               size_hint_y=None,
                               text='[color=ffffff]{}[/color]'.format(idx),
-                              on_release=partial(self.edit_printer_popup, printer_id))
+                              on_press=partial(self.edit_printer_popup, printer_id))
                 col2 = Button(markup=True,
                               size_hint_x=0.7,
                               size_hint_y=None,
                               text='[color=ffffff]{}[/color]'.format(printer['name']),
-                              on_release=partial(self.edit_printer_popup, printer_id))
+                              on_press=partial(self.edit_printer_popup, printer_id))
                 col3 = Button(markup=True,
                               size_hint_x=0.2,
                               size_hint_y=None,
                               text='[color=ffffff]{}[/color]'.format(printer['type']),
-                              on_release=partial(self.edit_printer_popup, printer_id))
+                              on_press=partial(self.edit_printer_popup, printer_id))
                 self.printer_table.add_widget(col1)
                 self.printer_table.add_widget(col2)
                 self.printer_table.add_widget(col3)
@@ -11392,10 +11390,10 @@ class PrinterScreen(Screen):
                                    size_hint=(1, 0.1))
         cancel_button = Button(markup=True,
                                text="Cancel",
-                               on_release=self.edit_popup.dismiss)
+                               on_press=self.edit_popup.dismiss)
         edit_button = Button(markup=True,
                              text="Edit",
-                             on_release=self.validate_edit)
+                             on_press=self.validate_edit)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(edit_button)
         layout.add_widget(inner_layout_1)
@@ -12075,7 +12073,7 @@ class SearchScreen(Screen):
                                                                                                 0.1]
                 self.background_color = [0.826, 0.826, 0.826, 1] if not check_invoice_id else [0.369, 0.369, 0.369, 1]
                 self.status = 1
-        tr_1 = Factory.InvoiceTr(on_release=partial(self.invoice_selected, invoice_id),
+        tr_1 = Factory.InvoiceTr(on_press=partial(self.invoice_selected, invoice_id),
                                  group="tr")
         tr_1.status = self.status
         tr_1.set_color = self.background_color
@@ -12111,10 +12109,7 @@ class SearchScreen(Screen):
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
         vars.INVOICE_ID = invoice_id
-        print('found customer = {} and invoice id = {}'.format(vars.CUSTOMER_ID, invoice_id))
-        data = {
-            'user_id': '"{}"'.format(vars.CUSTOMER_ID)
-        }
+
         customers = User()
         cust1 = SYNC.customers_grab(vars.CUSTOMER_ID)
         # self.customer_results(cust1)
@@ -12213,7 +12208,7 @@ class SearchScreen(Screen):
                 # clear the current widget
                 self.invoice_table_body.clear_widgets()
 
-                if len(self.get_invoices) > 0:
+                if self.get_invoices is not False:
                     for inv in self.get_invoices:
                         self.create_invoice_row(inv)
 
@@ -12222,15 +12217,14 @@ class SearchScreen(Screen):
 
                 # get the custid data
                 custids = Custid()
-                print(result)
                 custid_string = ''
                 if 'custids' in result:
                     cids = result['custids']
                     custid_string = custids.make_string(cids)
 
                 # display data
-                self.cust_info_label.text = 'Customer Info: [color=FF0000]Account[/color]' if result[
-                    'account'] else 'Customer Info:'
+                self.cust_info_label.text = 'Customer Info: [color=FF0000]Account[/color]' if int(result[
+                    'account']) is 1  else 'Customer Info:'
                 self.cust_mark_label.text = custid_string
                 self.customer_id_ti.text = str(vars.CUSTOMER_ID) if vars.CUSTOMER_ID else ''
                 self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
@@ -12268,7 +12262,7 @@ class SearchScreen(Screen):
 
         elif len(data) > 1:
             # show results in new screen search results
-            self.search_results(data)
+            self.search_results()
         else:
 
             popup = Popup()
@@ -12279,12 +12273,23 @@ class SearchScreen(Screen):
             popup.content = Builder.load_string(content)
             popup.open()
 
-    def search_results(self, data):
-        vars.SEARCH_RESULTS = data
-        self.parent.current = 'search_results'
-        self.search.focus = True
+    def search_results(self):
+        vars.SEARCH_TEXT = self.search.text
+        vars.SEARCH_RESULTS = SYNC.customers_search_results(vars.SEARCH_TEXT, 0)
+        if vars.SEARCH_RESULTS is not False:
 
-        pass
+            self.parent.current = 'search_results'
+            self.search.focus = True
+
+        else:
+
+            popup = Popup()
+            popup.title = 'Search Results'
+            popup.size_hint = None, None
+            popup.size = 800, 600
+            content = KV.popup_alert(msg="No customers found! Please try again!")
+            popup.content = Builder.load_string(content)
+            popup.open()
 
     def get_starch_by_id(self, starch):
         if starch == 1:
@@ -12306,20 +12311,20 @@ class SearchScreen(Screen):
                                    size_hint=(1, 0.9))
         inner_layout_1.add_widget(Button(markup=True,
                                          text="Print Card",
-                                         on_release=self.print_card))
+                                         on_press=self.print_card))
         inner_layout_1.add_widget(Button(markup=True,
                                          text='Store Copy',
-                                         on_release=partial(self.reprint_invoice, 1)))
+                                         on_press=partial(self.reprint_invoice, 1)))
         inner_layout_1.add_widget(Button(markup=True,
                                          text='Customer Copy',
-                                         on_release=partial(self.reprint_invoice, 2)))
+                                         on_press=partial(self.reprint_invoice, 2)))
         inner_layout_1.add_widget(Button(markup=True,
                                          text='Tags',
-                                         on_release=self.reprint_tags))
+                                         on_press=self.reprint_tags))
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(text='Cancel',
-                                         on_release=self.close_reprint_popup))
+                                         on_press=self.close_reprint_popup))
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         self.repopup.content = layout
@@ -12355,15 +12360,15 @@ class SearchScreen(Screen):
         self.quick_box = Factory.QuickBox()
         # add due date
         self.quick_box.ids.quick_due_date.text = self.due_date_string
-        self.quick_box.ids.quick_due_date.bind(on_release=self.make_calendar)
+        self.quick_box.ids.quick_due_date.bind(on_press=self.make_calendar)
         inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
                                    orientation="horizontal")
         cancel_button = Button(text="Cancel",
                                markup=True,
-                               on_release=self.main_popup.dismiss)
+                               on_press=self.main_popup.dismiss)
         print_button = Button(text="Print",
                               markup=True,
-                              on_release=self.quick_print)
+                              on_press=self.quick_print)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(print_button)
         base_layout.add_widget(self.quick_box)
@@ -12401,31 +12406,31 @@ class SearchScreen(Screen):
         prev_month = Button(markup=True,
                             text="<",
                             font_size="30sp",
-                            on_release=self.prev_month)
+                            on_press=self.prev_month)
         next_month = Button(markup=True,
                             text=">",
                             font_size="30sp",
-                            on_release=self.next_month)
+                            on_press=self.next_month)
         select_month = Factory.SelectMonth()
         self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
-                                   on_release=select_month.open)
+                                   on_press=select_month.open)
         for index in range(12):
             month_options = Button(text='{}'.format(vars.month_by_number(index)),
                                    size_hint_y=None,
                                    height=40,
-                                   on_release=partial(self.select_calendar_month, index))
+                                   on_press=partial(self.select_calendar_month, index))
             select_month.add_widget(month_options)
 
         select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
         select_year = Factory.SelectMonth()
 
         self.year_button = Button(text="{}".format(self.year),
-                                  on_release=select_year.open)
+                                  on_press=select_year.open)
         for index in range(10):
             year_options = Button(text='{}'.format(int(self.year) + index),
                                   size_hint_y=None,
                                   height=40,
-                                  on_release=partial(self.select_calendar_year, index))
+                                  on_press=partial(self.select_calendar_year, index))
             select_year.add_widget(year_options)
 
         select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
@@ -12451,7 +12456,7 @@ class SearchScreen(Screen):
                                    orientation='horizontal')
         inner_layout_2.add_widget(Button(markup=True,
                                          text="Okay",
-                                         on_release=popup.dismiss))
+                                         on_press=popup.dismiss))
 
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
@@ -12507,21 +12512,21 @@ class SearchScreen(Screen):
                                     item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
                                                                   background_color=(0, 0.50196078, 0.50196078, 1),
                                                                   background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
+                                                                  on_press=partial(self.select_due_date, today_base))
                                 elif check_date == check_due_date:
                                     item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
                                                                   background_color=(
                                                                       0.2156862, 0.9921568, 0.98823529, 1),
                                                                   background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
+                                                                  on_press=partial(self.select_due_date, today_base))
                                 elif check_today < check_date < check_due_date:
                                     item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
                                                                   background_color=(0.878431372549020, 1, 1, 1),
                                                                   background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
+                                                                  on_press=partial(self.select_due_date, today_base))
                                 else:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  on_release=partial(self.select_due_date, today_base))
+                                                                  on_press=partial(self.select_due_date, today_base))
                             else:  # store is closed
                                 item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                               disabled=True)
@@ -12592,7 +12597,7 @@ class SearchScreen(Screen):
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.3))
         cancel = Button(text="cancel",
-                        on_release=popup.dismiss)
+                        on_press=popup.dismiss)
         inner_layout_2.add_widget(cancel)
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
@@ -13487,15 +13492,15 @@ class SearchScreen(Screen):
                     item_color = ii['color']
                     item_memo = ii['memo']
                     trtd1 = Button(text=str(invoice_items_id),
-                                   on_release=partial(self.select_tag, invoice_items_id))
+                                   on_press=partial(self.select_tag, invoice_items_id))
                     trtd2 = Button(text=str(item_name),
-                                   on_release=partial(self.select_tag, invoice_items_id))
+                                   on_press=partial(self.select_tag, invoice_items_id))
                     trtd3 = Button(text=str(item_color),
-                                   on_release=partial(self.select_tag, invoice_items_id))
+                                   on_press=partial(self.select_tag, invoice_items_id))
                     trtd4 = Button(text=str(item_memo),
-                                   on_release=partial(self.select_tag, invoice_items_id))
+                                   on_press=partial(self.select_tag, invoice_items_id))
                     trtd5 = Button(text=str(tags_to_print),
-                                   on_release=partial(self.select_tag, invoice_items_id))
+                                   on_press=partial(self.select_tag, invoice_items_id))
                     self.tags_grid.ids.tags_table.add_widget(trtd1)
                     self.tags_grid.ids.tags_table.add_widget(trtd2)
                     self.tags_grid.ids.tags_table.add_widget(trtd3)
@@ -13505,7 +13510,7 @@ class SearchScreen(Screen):
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="Cancel",
-                               on_release=popup.dismiss)
+                               on_press=popup.dismiss)
         print_all_button = Button(text="Print All",
                                   on_press=popup.dismiss,
                                   on_release=self.print_all_tags)
@@ -13551,26 +13556,26 @@ class SearchScreen(Screen):
             item_memo = invitems['memo']
             if invoice_items_id in self.selected_tags_list:
                 trtd1 = Factory.TagsSelectedButton(text=str(invoice_items_id),
-                                                   on_release=partial(self.select_tag, invoice_items_id))
+                                                   on_press=partial(self.select_tag, invoice_items_id))
                 trtd2 = Factory.TagsSelectedButton(text=str(item_name),
-                                                   on_release=partial(self.select_tag, invoice_items_id))
+                                                   on_press=partial(self.select_tag, invoice_items_id))
                 trtd3 = Factory.TagsSelectedButton(text=str(item_color),
-                                                   on_release=partial(self.select_tag, invoice_items_id))
+                                                   on_press=partial(self.select_tag, invoice_items_id))
                 trtd4 = Factory.TagsSelectedButton(text=str(item_memo),
-                                                   on_release=partial(self.select_tag, invoice_items_id))
+                                                   on_press=partial(self.select_tag, invoice_items_id))
                 trtd5 = Factory.TagsSelectedButton(text=str(tags_to_print),
-                                                   on_release=partial(self.select_tag, invoice_items_id))
+                                                   on_press=partial(self.select_tag, invoice_items_id))
             else:
                 trtd1 = Button(text=str(invoice_items_id),
-                               on_release=partial(self.select_tag, invoice_items_id))
+                               on_press=partial(self.select_tag, invoice_items_id))
                 trtd2 = Button(text=str(item_name),
-                               on_release=partial(self.select_tag, invoice_items_id))
+                               on_press=partial(self.select_tag, invoice_items_id))
                 trtd3 = Button(text=str(item_color),
-                               on_release=partial(self.select_tag, invoice_items_id))
+                               on_press=partial(self.select_tag, invoice_items_id))
                 trtd4 = Button(text=str(item_memo),
-                               on_release=partial(self.select_tag, invoice_items_id))
+                               on_press=partial(self.select_tag, invoice_items_id))
                 trtd5 = Button(text=str(tags_to_print),
-                               on_release=partial(self.select_tag, invoice_items_id))
+                               on_press=partial(self.select_tag, invoice_items_id))
             self.tags_grid.ids.tags_table.add_widget(trtd1)
             self.tags_grid.ids.tags_table.add_widget(trtd2)
             self.tags_grid.ids.tags_table.add_widget(trtd3)
@@ -13732,7 +13737,7 @@ class SearchScreen(Screen):
         pass
 
     def print_selected_tags(self, *args, **kwargs):
-        print(self.selected_tags_list)
+
         if self.selected_tags_list:
             customers = User()
             custs = SYNC.customers_grab(vars.CUSTOMER_ID)
@@ -13795,7 +13800,7 @@ class SearchScreen(Screen):
             if vars.BIXOLON:
                 vars.BIXOLON.write('\x1b\x40')
                 vars.BIXOLON.write('\x1b\x6d')
-                print('next step')
+
 
                 for item_id in self.selected_tags_list:
                     inv_items = SYNC.invoice_item_grab(item_id)
@@ -13941,9 +13946,9 @@ class SearchScreen(Screen):
             inner_layout_3 = BoxLayout(orientation="horizontal",
                                        size_hint=(1, 0.1))
             cancel_button = Button(text="cancel",
-                                   on_release=self.main_popup.dismiss)
+                                   on_press=self.main_popup.dismiss)
             save_button = Button(text="save",
-                                 on_release=self.save_barcodes)
+                                 on_press=self.save_barcodes)
             inner_layout_3.add_widget(cancel_button)
             inner_layout_3.add_widget(save_button)
 
@@ -13982,9 +13987,9 @@ class SearchScreen(Screen):
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=popup.dismiss)
+                               on_press=popup.dismiss)
         print_button = Button(text="Print",
-                              on_release=self.print_label)
+                              on_press=self.print_label)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(print_button)
         layout.add_widget(inner_layout_1)
@@ -14093,37 +14098,37 @@ A{c},20,1,1,1,1,N,"{tag}"
                                      cols=4,
                                      size_hint=(0.7, 1))
         btn_9 = Button(text="9",
-                       on_release=partial(self.calc_button, '9'))
+                       on_press=partial(self.calc_button, '9'))
         btn_8 = Button(text="8",
-                       on_release=partial(self.calc_button, '8'))
+                       on_press=partial(self.calc_button, '8'))
         btn_7 = Button(text="7",
-                       on_release=partial(self.calc_button, '7'))
+                       on_press=partial(self.calc_button, '7'))
         btn_6 = Button(text="6",
-                       on_release=partial(self.calc_button, '6'))
+                       on_press=partial(self.calc_button, '6'))
         btn_5 = Button(text="5",
-                       on_release=partial(self.calc_button, '5'))
+                       on_press=partial(self.calc_button, '5'))
         btn_4 = Button(text="4",
-                       on_release=partial(self.calc_button, '4'))
+                       on_press=partial(self.calc_button, '4'))
         btn_3 = Button(text="3",
-                       on_release=partial(self.calc_button, '3'))
+                       on_press=partial(self.calc_button, '3'))
         btn_2 = Button(text="2",
-                       on_release=partial(self.calc_button, '2'))
+                       on_press=partial(self.calc_button, '2'))
         btn_1 = Button(text="1",
-                       on_release=partial(self.calc_button, '1'))
+                       on_press=partial(self.calc_button, '1'))
         btn_0 = Button(text="0",
-                       on_release=partial(self.calc_button, '0'))
+                       on_press=partial(self.calc_button, '0'))
         btn_00 = Button(text="00",
-                        on_release=partial(self.calc_button, '00'))
+                        on_press=partial(self.calc_button, '00'))
         btn_dot = Button(text=".",
-                         on_release=partial(self.calc_button, '.'))
+                         on_press=partial(self.calc_button, '.'))
         btn_add = Button(text="+",
-                         on_release=partial(self.calc_button, '+'))
+                         on_press=partial(self.calc_button, '+'))
         btn_subtract = Button(text="-",
-                              on_release=partial(self.calc_button, '-'))
+                              on_press=partial(self.calc_button, '-'))
         btn_multiply = Button(text="*",
-                              on_release=partial(self.calc_button, '*'))
+                              on_press=partial(self.calc_button, '*'))
         btn_divide = Button(text="/",
-                            on_release=partial(self.calc_button, '/'))
+                            on_press=partial(self.calc_button, '/'))
         control_buttons.add_widget(btn_7)
         control_buttons.add_widget(btn_8)
         control_buttons.add_widget(btn_9)
@@ -14152,13 +14157,13 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="Cancel",
-                               on_release=popup.dismiss)
+                               on_press=popup.dismiss)
         clear_button = Button(markup=True,
                               text="[color=#FF0000]C[/color]",
-                              on_release=self.calc_clear)
+                              on_press=self.calc_clear)
         equals_button = Button(markup=True,
                                text="[color=#e5e5e5][b]=[/b][/color]",
-                               on_release=self.calc_equals)
+                               on_press=self.calc_equals)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(clear_button)
         inner_layout_2.add_widget(equals_button)
@@ -14193,7 +14198,7 @@ A{c},20,1,1,1,1,N,"{tag}"
             self.display_input.text = total_base
 
         total_calculation = ' '.join(self.calc_history)
-        print(total_calculation)
+
         pass
 
     def calc_equals(self, *args, **kwargs):
@@ -14322,7 +14327,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         pickup_date_label = Factory.BottomLeftFormLabel(text="[b](3a)[/b] Pickup Delivery Date",
                                                         markup=True)
         self.pickup_date_btn = Button(text="Set Pickup Date",
-                                      on_release=self.get_pickup_dates,
+                                      on_press=self.get_pickup_dates,
                                       disabled=True)
         inner_layout_1.ids.delivery_table.add_widget(pickup_date_label)
         inner_layout_1.ids.delivery_table.add_widget(self.pickup_date_btn)
@@ -14352,7 +14357,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         dropoff_date_label = Factory.BottomLeftFormLabel(text="[b](4a)[/b] Dropoff Delivery Date",
                                                          markup=True)
         self.dropoff_date_btn = Button(text="Set Dropoff Date",
-                                       on_release=self.get_dropoff_dates,
+                                       on_press=self.get_dropoff_dates,
                                        disabled=True)
         inner_layout_1.ids.delivery_table.add_widget(dropoff_date_label)
         inner_layout_1.ids.delivery_table.add_widget(self.dropoff_date_btn)
@@ -14383,16 +14388,16 @@ A{c},20,1,1,1,1,N,"{tag}"
                                    size_hint=(1, 0.1))
         cancel_button = Button(markup=True,
                                text="Cancel",
-                               on_release=self.delivery_popup.dismiss)
+                               on_press=self.delivery_popup.dismiss)
         add_card_button = Button(markup=True,
                                  text="Add Card",
-                                 on_release=self.add_card_setup)
+                                 on_press=self.add_card_setup)
         add_address_button = Button(markup=True,
                                     text="Add Address",
-                                    on_release=self.add_address_setup)
+                                    on_press=self.add_address_setup)
         setup_button = Button(markup=True,
                               text="Set Delivery",
-                              on_release=self.set_delivery)
+                              on_press=self.set_delivery)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(add_card_button)
         inner_layout_2.add_widget(add_address_button)
@@ -14412,7 +14417,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                                                     card['exp_year'])
                 if check_string == card_string:
                     self.card_id = card['card_id']
-                    print(self.card_id)
+
         pass
 
     def select_address(self, *args, **kwargs):
@@ -14481,31 +14486,31 @@ A{c},20,1,1,1,1,N,"{tag}"
             prev_month = Button(markup=True,
                                 text="<",
                                 font_size="30sp",
-                                on_release=self.prev_dropoff_month)
+                                on_press=self.prev_dropoff_month)
             next_month = Button(markup=True,
                                 text=">",
                                 font_size="30sp",
-                                on_release=self.next_dropoff_month)
+                                on_press=self.next_dropoff_month)
             select_month = Factory.SelectMonth()
             self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
-                                       on_release=select_month.open)
+                                       on_press=select_month.open)
             for index in range(12):
                 month_options = Button(text='{}'.format(vars.month_by_number(index)),
                                        size_hint_y=None,
                                        height=40,
-                                       on_release=partial(self.select_dropoff_calendar_month, index))
+                                       on_press=partial(self.select_dropoff_calendar_month, index))
                 select_month.add_widget(month_options)
 
             select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
             select_year = Factory.SelectMonth()
 
             self.year_button = Button(text="{}".format(self.year),
-                                      on_release=select_year.open)
+                                      on_press=select_year.open)
             for index in range(10):
                 year_options = Button(text='{}'.format(int(self.year) + index),
                                       size_hint_y=None,
                                       height=40,
-                                      on_release=partial(self.select_dropoff_calendar_year, index))
+                                      on_press=partial(self.select_dropoff_calendar_year, index))
                 select_year.add_widget(year_options)
 
             select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
@@ -14527,7 +14532,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                                        orientation='horizontal')
             inner_layout_2.add_widget(Button(markup=True,
                                              text="Okay",
-                                             on_release=self.main_popup.dismiss))
+                                             on_press=self.main_popup.dismiss))
 
             layout.add_widget(inner_layout_1)
             layout.add_widget(inner_layout_2)
@@ -14572,31 +14577,31 @@ A{c},20,1,1,1,1,N,"{tag}"
             prev_month = Button(markup=True,
                                 text="<",
                                 font_size="30sp",
-                                on_release=self.prev_pickup_month)
+                                on_press=self.prev_pickup_month)
             next_month = Button(markup=True,
                                 text=">",
                                 font_size="30sp",
-                                on_release=self.next_pickup_month)
+                                on_press=self.next_pickup_month)
             select_month = Factory.SelectMonth()
             self.month_button = Button(text='{}'.format(vars.month_by_number(self.month)),
-                                       on_release=select_month.open)
+                                       on_press=select_month.open)
             for index in range(12):
                 month_options = Button(text='{}'.format(vars.month_by_number(index)),
                                        size_hint_y=None,
                                        height=40,
-                                       on_release=partial(self.select_pickup_calendar_month, index))
+                                       on_press=partial(self.select_pickup_calendar_month, index))
                 select_month.add_widget(month_options)
 
             select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
             select_year = Factory.SelectMonth()
 
             self.year_button = Button(text="{}".format(self.year),
-                                      on_release=select_year.open)
+                                      on_press=select_year.open)
             for index in range(10):
                 year_options = Button(text='{}'.format(int(self.year) + index),
                                       size_hint_y=None,
                                       height=40,
-                                      on_release=partial(self.select_pickup_calendar_year, index))
+                                      on_press=partial(self.select_pickup_calendar_year, index))
                 select_year.add_widget(year_options)
 
             select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
@@ -14618,7 +14623,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                                        orientation='horizontal')
             inner_layout_2.add_widget(Button(markup=True,
                                              text="Okay",
-                                             on_release=self.main_popup.dismiss))
+                                             on_press=self.main_popup.dismiss))
 
             layout.add_widget(inner_layout_1)
             layout.add_widget(inner_layout_2)
@@ -14774,10 +14779,10 @@ A{c},20,1,1,1,1,N,"{tag}"
                                    size_hint=(1, 0.1))
         cancel_button = Button(markup=True,
                                text="Cancel",
-                               on_release=self.main_popup.dismiss)
+                               on_press=self.main_popup.dismiss)
         add_button = Button(markup=True,
                             text="Add",
-                            on_release=self.add_new_card)
+                            on_press=self.add_new_card)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(add_button)
         layout.add_widget(inner_layout_1)
@@ -15105,10 +15110,10 @@ A{c},20,1,1,1,1,N,"{tag}"
                                    size_hint=(1, 0.1))
         cancel_button = Button(markup=True,
                                text="Cancel",
-                               on_release=self.main_popup.dismiss)
+                               on_press=self.main_popup.dismiss)
         add_button = Button(markup=True,
                             text="Add",
-                            on_release=self.add_new_address)
+                            on_press=self.add_new_address)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(add_button)
         layout.add_widget(inner_layout_1)
@@ -15258,7 +15263,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                                                                   background_normal='')
                                 elif today_day in dow and check_date_string not in blackout_dates:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  on_release=partial(self.select_dropoff_date,
+                                                                  on_press=partial(self.select_dropoff_date,
                                                                                      today_base, dow[today_day]))
                                 else:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
@@ -15353,7 +15358,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                                                                   background_normal='')
                                 elif today_day in dow and check_date_string not in blackout_dates:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  on_release=partial(self.select_pickup_date,
+                                                                  on_press=partial(self.select_pickup_date,
                                                                                      today_base, dow[today_day]))
                                 else:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
@@ -15538,21 +15543,21 @@ A{c},20,1,1,1,1,N,"{tag}"
                 status_formatted = Schedule().getStatus(status)
 
                 pickup_date_label = Factory.TopLeftFormButton(text=pickup_date_formatted,
-                                                              on_release=partial(self.view_delivery, schedule['id']))
+                                                              on_press=partial(self.view_delivery, schedule['id']))
                 dropoff_date_label = Factory.TopLeftFormButton(text=dropoff_date_formatted,
-                                                               on_release=partial(self.view_delivery, schedule['id']))
+                                                               on_press=partial(self.view_delivery, schedule['id']))
                 pickup_time_label = Factory.TopLeftFormButton(text=pickup_time_string,
-                                                              on_release=partial(self.view_delivery, schedule['id']))
+                                                              on_press=partial(self.view_delivery, schedule['id']))
                 dropoff_time_label = Factory.TopLeftFormButton(text=dropoff_time_string,
-                                                               on_release=partial(self.view_delivery, schedule['id']))
+                                                               on_press=partial(self.view_delivery, schedule['id']))
                 # address_label = Factory.TopLeftFormButton(text=address_string)
                 # special_instructions_label = Factory.TopLeftFormButton(text=special_instructions)
                 # concierge_name_label = Factory.TopLeftFormButton(text=concierge_name)
                 # concierge_number_label = Factory.TopLeftFormButton(text=concierge_number)
                 status_label = Factory.TopLeftFormButton(text=status_formatted,
-                                                         on_release=partial(self.view_delivery, schedule['id']))
+                                                         on_press=partial(self.view_delivery, schedule['id']))
                 inner_layout_1.ids.main_table.add_widget(Button(text=str(schedule['schedule_id']),
-                                                                on_release=partial(self.view_delivery, schedule['id'])))
+                                                                on_press=partial(self.view_delivery, schedule['id'])))
                 inner_layout_1.ids.main_table.add_widget(pickup_date_label)
                 inner_layout_1.ids.main_table.add_widget(pickup_time_label)
                 inner_layout_1.ids.main_table.add_widget(dropoff_date_label)
@@ -15560,7 +15565,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                 inner_layout_1.ids.main_table.add_widget(status_label)
 
         cancel_button = Button(text='cancel',
-                               on_release=self.main_popup.dismiss)
+                               on_press=self.main_popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
 
         layout.add_widget(inner_layout_1)
@@ -15699,7 +15704,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=popup.dismiss)
+                               on_press=popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
@@ -15728,9 +15733,9 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         cancel_button = Button(text='cancel',
-                               on_release=self.main_popup.dismiss)
+                               on_press=self.main_popup.dismiss)
         save_button = Button(text='Add Credit',
-                             on_release=self.add_credit)
+                             on_press=self.add_credit)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(save_button)
         layout.add_widget(inner_layout_1)
@@ -15842,7 +15847,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=self.main_popup.dismiss)
+                               on_press=self.main_popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
@@ -15859,9 +15864,9 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=self.main_popup.dismiss)
+                               on_press=self.main_popup.dismiss)
         payment_button = Button(text="payment options",
-                                on_release=self.payment_options_popup)
+                                on_press=self.payment_options_popup)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(payment_button)
         layout.add_widget(self.inner_layout_1)
@@ -15889,7 +15894,7 @@ A{c},20,1,1,1,1,N,"{tag}"
             for tran in trans:
                 billing_period_format = datetime.datetime.strptime(tran['created_at'], "%Y-%m-%d %H:%M:%S")
                 billing_period = billing_period_format.strftime("%b %Y")
-                due_amount = str('$%.2f' % (tran['total']))
+                due_amount = str('$%.2f' % (Decimal(tran['total'])))
                 account_paid_format = tran['account_paid'] if tran['account_paid'] else False
                 account_paid = str('$%.2f' % (account_paid_format)) if account_paid_format else 'Not Paid'
                 if tran['status'] is 1:
@@ -15906,32 +15911,32 @@ A{c},20,1,1,1,1,N,"{tag}"
                 else:
                     account_paid_on = 'Not Paid'
 
-                if tran['trans_id'] in self.selected_account_tr:
-                    tr1 = Factory.TagsSelectedButton(text=str(tran['trans_id']),
-                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
+                if tran['id'] in self.selected_account_tr:
+                    tr1 = Factory.TagsSelectedButton(text=str(tran['id']),
+                                                     on_press=partial(self.select_account_tr, tran['id']))
                     tr2 = Factory.TagsSelectedButton(text=str(billing_period),
-                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_press=partial(self.select_account_tr, tran['id']))
                     tr3 = Factory.TagsSelectedButton(text=due_amount,
-                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_press=partial(self.select_account_tr, tran['id']))
                     tr4 = Factory.TagsSelectedButton(text=str(account_paid),
-                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_press=partial(self.select_account_tr, tran['id']))
                     tr5 = Factory.TagsSelectedButton(text=str(account_paid_on),
-                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_press=partial(self.select_account_tr, tran['id']))
                     tr6 = Factory.TagsSelectedButton(text=str(status),
-                                                     on_release=partial(self.select_account_tr, tran['trans_id']))
+                                                     on_press=partial(self.select_account_tr, tran['id']))
                 else:
-                    tr1 = Button(text=str(tran['trans_id']),
-                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                    tr1 = Button(text=str(tran['id']),
+                                 on_press=partial(self.select_account_tr, tran['id']))
                     tr2 = Button(text=str(billing_period),
-                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                 on_press=partial(self.select_account_tr, tran['id']))
                     tr3 = Button(text=due_amount,
-                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                 on_press=partial(self.select_account_tr, tran['id']))
                     tr4 = Button(text=str(account_paid),
-                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                 on_press=partial(self.select_account_tr, tran['id']))
                     tr5 = Button(text=str(account_paid_on),
-                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                 on_press=partial(self.select_account_tr, tran['id']))
                     tr6 = Button(text=str(status),
-                                 on_release=partial(self.select_account_tr, tran['trans_id']))
+                                 on_press=partial(self.select_account_tr, tran['id']))
                 self.inner_layout_1.ids.main_table.add_widget(tr1)
                 self.inner_layout_1.ids.main_table.add_widget(tr2)
                 self.inner_layout_1.ids.main_table.add_widget(tr3)
@@ -15953,25 +15958,24 @@ A{c},20,1,1,1,1,N,"{tag}"
         due = 0
         if len(self.selected_account_tr) > 0:
             for transaction_id in self.selected_account_tr:
-                transactions = Transaction().where({'trans_id': transaction_id})
-                if transactions:
-                    for transaction in transactions:
-                        subtotal += transaction['pretax']
-                        tax += transaction['tax']
-                        aftertax += transaction['aftertax']
-                        credits += transaction['credit']
-                        discounts += transaction['discount']
-                        due += transaction['total']
+                transaction = SYNC.transaction_grab(transaction_id)
+                if transaction is not False:
+                    subtotal += float(transaction['pretax'])
+                    tax += float(transaction['tax'])
+                    aftertax += float(transaction['aftertax'])
+                    credits += float(transaction['credit'])
+                    discounts += float(transaction['discount'])
+                    due += float(transaction['total'])
 
         # compare with customer data account running balance total check to see if customer overpaid from last trans
         customers = SYNC.customers_grab(vars.CUSTOMER_ID)
         account_running_balance = 0
         if customers:
             for customer in customers:
-                account_running_balance = customer['account_total']
+                account_running_balance = Decimal(customer['account_total']) if Decimal(customer['account_total']) > 0 else 0
 
-        if account_running_balance < due:
-            due = account_running_balance
+        if float(account_running_balance) < float(due):
+            due = Decimal(account_running_balance)
 
         subtotal_label = Factory.BottomLeftFormLabel(text="Subtotal")
         subtotal_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (subtotal)),
@@ -16028,9 +16032,9 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=self.payment_popup.dismiss)
+                               on_press=self.payment_popup.dismiss)
         pay_button = Button(text="Finish",
-                            on_release=self.finish_account_payment)
+                            on_press=self.finish_account_payment)
         inner_layout_2.add_widget(cancel_button)
         inner_layout_2.add_widget(pay_button)
         layout.add_widget(inner_layout_1)
@@ -16189,30 +16193,30 @@ A{c},20,1,1,1,1,N,"{tag}"
 
                 if tran['id'] in self.selected_account_tr:
                     tr1 = Factory.TagsSelectedButton(text=str(tran['id']),
-                                                     on_release=partial(self.show_invoice_details, tran['id']))
+                                                     on_press=partial(self.show_invoice_details, tran['id']))
                     tr2 = Factory.TagsSelectedButton(text=str(billing_period),
-                                                     on_release=partial(self.show_invoice_details, tran['id']))
+                                                     on_press=partial(self.show_invoice_details, tran['id']))
                     tr3 = Factory.TagsSelectedButton(text=due_amount,
-                                                     on_release=partial(self.show_invoice_details, tran['id']))
+                                                     on_press=partial(self.show_invoice_details, tran['id']))
                     tr4 = Factory.TagsSelectedButton(text=str(account_paid),
-                                                     on_release=partial(self.show_invoice_details, tran['id']))
+                                                     on_press=partial(self.show_invoice_details, tran['id']))
                     tr5 = Factory.TagsSelectedButton(text=str(account_paid_on),
-                                                     on_release=partial(self.show_invoice_details, tran['id']))
+                                                     on_press=partial(self.show_invoice_details, tran['id']))
                     tr6 = Factory.TagsSelectedButton(text=str(status),
-                                                     on_release=partial(self.show_invoice_details, tran['id']))
+                                                     on_press=partial(self.show_invoice_details, tran['id']))
                 else:
                     tr1 = Button(text=str(tran['id']),
-                                 on_release=partial(self.show_invoice_details, tran['id']))
+                                 on_press=partial(self.show_invoice_details, tran['id']))
                     tr2 = Button(text=str(billing_period),
-                                 on_release=partial(self.show_invoice_details, tran['id']))
+                                 on_press=partial(self.show_invoice_details, tran['id']))
                     tr3 = Button(text=due_amount,
-                                 on_release=partial(self.show_invoice_details, tran['id']))
+                                 on_press=partial(self.show_invoice_details, tran['id']))
                     tr4 = Button(text=str(account_paid),
-                                 on_release=partial(self.show_invoice_details, tran['id']))
+                                 on_press=partial(self.show_invoice_details, tran['id']))
                     tr5 = Button(text=str(account_paid_on),
-                                 on_release=partial(self.show_invoice_details, tran['id']))
+                                 on_press=partial(self.show_invoice_details, tran['id']))
                     tr6 = Button(text=str(status),
-                                 on_release=partial(self.show_invoice_details, tran['id']))
+                                 on_press=partial(self.show_invoice_details, tran['id']))
                 inner_layout_1.ids.main_table.add_widget(tr1)
                 inner_layout_1.ids.main_table.add_widget(tr2)
                 inner_layout_1.ids.main_table.add_widget(tr3)
@@ -16223,7 +16227,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=self.main_popup.dismiss)
+                               on_press=self.main_popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
@@ -16261,19 +16265,19 @@ A{c},20,1,1,1,1,N,"{tag}"
                 drop_date = drop_date_format.strftime('%m/%d/%y')
                 due_date = due_date_format.strftime('%m/%d/%y')
                 td1 = Button(text=str(invoice['id']),
-                             on_release=partial(self.account_view_items, invoice['id']))
+                             on_press=partial(self.account_view_items, invoice['id']))
                 td2 = Factory.TopLeftFormButton(text=str(drop_date),
-                                                on_release=partial(self.account_view_items, invoice['id']))
+                                                on_press=partial(self.account_view_items, invoice['id']))
                 td3 = Factory.TopLeftFormButton(text=str(due_date),
-                                                on_release=partial(self.account_view_items, invoice['id']))
+                                                on_press=partial(self.account_view_items, invoice['id']))
                 td4 = Button(text=str(invoice['quantity']),
-                             on_release=partial(self.account_view_items, invoice['id']))
+                             on_press=partial(self.account_view_items, invoice['id']))
                 td5 = Button(text=str('$%.2f' % Decimal(invoice['pretax'])),
-                             on_release=partial(self.account_view_items, invoice['id']))
+                             on_press=partial(self.account_view_items, invoice['id']))
                 td6 = Button(text=str('$%.2f' % Decimal(invoice['tax'])),
-                             on_release=partial(self.account_view_items, invoice['id']))
+                             on_press=partial(self.account_view_items, invoice['id']))
                 td7 = Button(text=str('$%.2f' % Decimal(invoice['total'])),
-                             on_release=partial(self.account_view_items, invoice['id']))
+                             on_press=partial(self.account_view_items, invoice['id']))
                 inner_layout_1.ids.main_table.add_widget(td1)
                 inner_layout_1.ids.main_table.add_widget(td2)
                 inner_layout_1.ids.main_table.add_widget(td3)
@@ -16285,7 +16289,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=popup.dismiss)
+                               on_press=popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
@@ -16342,7 +16346,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
         cancel_button = Button(text="cancel",
-                               on_release=popup.dismiss)
+                               on_press=popup.dismiss)
         inner_layout_2.add_widget(cancel_button)
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
@@ -16358,9 +16362,14 @@ class SearchResultsScreen(Screen):
     search_results_footer = ObjectProperty(None)
     search_results_label = ObjectProperty(None)
 
+
+
     def get_results(self):
         # Pause Schedule
-        # SCHEDULER.remove_all_jobs()
+        print(vars.SEARCH_TEXT)
+        vars.ROW_CAP = SYNC.customers_row_cap(vars.SEARCH_TEXT)
+
+
         self.search_results_table.clear_widgets()
         self.search_results_footer.clear_widgets()
         self.search_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
@@ -16383,7 +16392,7 @@ class SearchResultsScreen(Screen):
 
         # create Tbody TR
         even_odd = 0
-        if len(vars.SEARCH_RESULTS) > 0:
+        if vars.SEARCH_RESULTS is not False:
             for cust in vars.SEARCH_RESULTS:
                 even_odd += 1
                 first_name = cust['first_name']
@@ -16426,7 +16435,7 @@ class SearchResultsScreen(Screen):
         self.search_results_footer.add_widget(Builder.load_string(fc_cancel))
         self.search_results_footer.add_widget(Builder.load_string(fc_up))
         self.search_results_footer.add_widget(Builder.load_string(fc_down))
-        vars.SEARCH_RESULTS = []
+        vars.SEARCH_RESULTS = False
 
     def open_popup(self, *args, **kwargs):
         SYNC_POPUP.title = "Loading"
@@ -16435,17 +16444,13 @@ class SearchResultsScreen(Screen):
         SYNC_POPUP.open()
 
     def next(self):
+        vars.ROW_CAP = SYNC.customers_row_cap(vars.SEARCH_TEXT)
         if vars.ROW_SEARCH[1] + 10 >= vars.ROW_CAP:
             vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
         else:
             vars.ROW_SEARCH = vars.ROW_SEARCH[1] + 1, vars.ROW_SEARCH[1] + 10
-        data = {
-            'last_name': '"%{}%"'.format(vars.SEARCH_TEXT),
-            'ORDER_BY': 'last_name ASC',
-            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], 10)
-        }
-        customers = User()
-        cust1 = customers.like(data)
+
+        cust1 = SYNC.customers_search_results(vars.SEARCH_TEXT,vars.ROW_SEARCH[0])
         vars.SEARCH_RESULTS = cust1
         self.search_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
             vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
@@ -16462,13 +16467,8 @@ class SearchResultsScreen(Screen):
             vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
         )
 
-        data = {
-            'last_name': '"%{}%"'.format(vars.SEARCH_TEXT),
-            'ORDER_BY': 'last_name ASC',
-            'LIMIT': '{},{}'.format(vars.ROW_SEARCH[0], 10)
-        }
-        customers = User()
-        cust1 = customers.like(data)
+
+        cust1 = SYNC.customers_search_results(vars.SEARCH_TEXT,vars.ROW_SEARCH[0])
         vars.SEARCH_RESULTS = cust1
         self.search_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
             vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
