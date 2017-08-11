@@ -10928,11 +10928,12 @@ class PickupScreen(Screen):
             standard_save = True
             customers = User()
             custs = SYNC.customer_grab(vars.CUSTOMER_ID)
+            old_account_total = 0
             if custs is not False:
                 for customer in custs:
                     if customer['account_total'] is None or customer['account_total'] is '' or customer['account_total'] is False:
                         old_account_total = customer['account_total'] if customer['account_total'] else 0
-                    else:
+
                         
             new_account_total = float("%0.2f" % (float(old_account_total) + float(self.total_due)))
             customer_account_total_update = SYNC.update_customer_account_total(vars.CUSTOMER_ID,new_account_total)
