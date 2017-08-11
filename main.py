@@ -5113,7 +5113,7 @@ GridLayout:
                     item_id = iivalue['item_id']
                     inventory_id = InventoryItem().getInventoryId(item_id)
                     item_name = iivalue['item_name']
-                    item_price = iivalue['item_price']
+                    item_price = Decimal(iivalue['item_price'])
                     item_type = iivalue['type']
                     item_color = iivalue['color']
                     item_memo = iivalue['memo']
@@ -5124,7 +5124,7 @@ GridLayout:
                             colors[item_id][item_color] = 1
                     if self.invoice_id in print_invoice:
                         if item_id in print_invoice[self.invoice_id]:
-                            print_invoice[self.invoice_id][item_id]['item_price'] += Decimal(item_price)
+                            print_invoice[self.invoice_id][item_id]['item_price'] += item_price
                             print_invoice[self.invoice_id][item_id]['qty'] += 1
                             if item_id in colors:
                                 print_invoice[self.invoice_id][item_id]['colors'] = colors[item_id]
