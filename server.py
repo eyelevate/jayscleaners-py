@@ -319,104 +319,104 @@ def sync_from_server(data):
                     inventory_item.add_special()
             inventory_item.close_connection()
 
-        if 'invoice_items' in updates:
-            for invoice_items in updates['invoice_items']:
-                invoice_item = InvoiceItem()
-                invoice_item.invoice_items_id = invoice_items['id']
-                invoice_item.invoice_id = invoice_items['invoice_id']
-                invoice_item.item_id = invoice_items['item_id']
-                invoice_item.inventory_id = invoice_items['inventory_id']
-                invoice_item.company_id = invoice_items['company_id']
-                invoice_item.customer_id = invoice_items['customer_id']
-                invoice_item.quantity = invoice_items['quantity']
-                invoice_item.color = invoice_items['color']
-                invoice_item.memo = invoice_items['memo']
-                invoice_item.pretax = invoice_items['pretax']
-                invoice_item.tax = invoice_items['tax']
-                invoice_item.total = invoice_items['total']
-                invoice_item.status = invoice_items['status']
-                invoice_item.deleted_at = invoice_items['deleted_at']
-                invoice_item.created_at = invoice_items['created_at']
-                invoice_item.updated_at = invoice_items['updated_at']
-                count_invoice_item = invoice_item.where({'invoice_items_id': invoice_item.invoice_items_id})
-                if len(count_invoice_item) > 0 or invoice_item.deleted_at:
-                    for data in count_invoice_item:
-                        invoice_item.id = data['id']
-                        if invoice_item.deleted_at:
-                            invoice_item.delete()
-                        else:
-                            invoice_item.update_special()
-                else:
-                    invoice_item.add_special()
-            invoice_item.close_connection()
-
-        if 'invoices' in updates:
-
-            for invoices in updates['invoices']:
-                invoice = Invoice()
-                invoice.invoice_id = invoices['id']
-                invoice.company_id = invoices['company_id']
-                invoice.customer_id = invoices['customer_id']
-                invoice.quantity = invoices['quantity']
-                invoice.pretax = invoices['pretax']
-                invoice.tax = invoices['tax']
-                invoice.reward_id = invoices['reward_id']
-                invoice.discount_id = invoices['discount_id']
-                invoice.total = invoices['total']
-                invoice.rack = invoices['rack']
-                invoice.rack_date = invoices['rack_date']
-                invoice.due_date = invoices['due_date']
-                invoice.memo = invoices['memo']
-                invoice.transaction_id = invoices['transaction_id']
-                invoice.schedule_id = invoices['schedule_id']
-                invoice.status = invoices['status']
-                invoice.deleted_at = invoices['deleted_at']
-                invoice.created_at = invoices['created_at']
-                invoice.updated_at = invoices['updated_at']
-
-                # extra loop through invoice items to delete or check for data
-                if 'invoice_items' in invoices:
-
-                    iitems = invoices['invoice_items']
-                    if len(iitems) > 0:
-                        for iitem in iitems:
-                            invoice_item = InvoiceItem()
-                            invoice_item.invoice_items_id = iitem['id']
-                            invoice_item.invoice_id = iitem['invoice_id']
-                            invoice_item.item_id = iitem['item_id']
-                            invoice_item.inventory_id = iitem['inventory_id']
-                            invoice_item.company_id = iitem['company_id']
-                            invoice_item.customer_id = iitem['customer_id']
-                            invoice_item.quantity = iitem['quantity']
-                            invoice_item.color = iitem['color']
-                            invoice_item.memo = iitem['memo']
-                            invoice_item.pretax = iitem['pretax']
-                            invoice_item.tax = iitem['tax']
-                            invoice_item.total = iitem['total']
-                            invoice_item.status = iitem['status']
-                            invoice_item.deleted_at = iitem['deleted_at']
-                            invoice_item.created_at = iitem['created_at']
-                            invoice_item.updated_at = iitem['updated_at']
-                            count_invoice_item = invoice_item.where({'invoice_items_id': invoice_item.invoice_items_id})
-                            if len(count_invoice_item) > 0 or invoice_item.deleted_at:
-                                for data in count_invoice_item:
-                                    invoice_item.id = data['id']
-                                    if invoice_item.deleted_at:
-                                        invoice_item.delete()
-                                    else:
-                                        invoice_item.update_special()
-
-                count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
-                if len(count_invoice) > 0 or invoice.deleted_at:
-                    for data in count_invoice:
-                        invoice.id = data['id']
-                        if invoice.deleted_at:
-                            invoice.delete()
-                        else:
-                            invoice.update_special()
-                else:
-                    invoice.add_special()
-            invoice.close_connection()
+        # if 'invoice_items' in updates:
+        #     for invoice_items in updates['invoice_items']:
+        #         invoice_item = InvoiceItem()
+        #         invoice_item.invoice_items_id = invoice_items['id']
+        #         invoice_item.invoice_id = invoice_items['invoice_id']
+        #         invoice_item.item_id = invoice_items['item_id']
+        #         invoice_item.inventory_id = invoice_items['inventory_id']
+        #         invoice_item.company_id = invoice_items['company_id']
+        #         invoice_item.customer_id = invoice_items['customer_id']
+        #         invoice_item.quantity = invoice_items['quantity']
+        #         invoice_item.color = invoice_items['color']
+        #         invoice_item.memo = invoice_items['memo']
+        #         invoice_item.pretax = invoice_items['pretax']
+        #         invoice_item.tax = invoice_items['tax']
+        #         invoice_item.total = invoice_items['total']
+        #         invoice_item.status = invoice_items['status']
+        #         invoice_item.deleted_at = invoice_items['deleted_at']
+        #         invoice_item.created_at = invoice_items['created_at']
+        #         invoice_item.updated_at = invoice_items['updated_at']
+        #         count_invoice_item = invoice_item.where({'invoice_items_id': invoice_item.invoice_items_id})
+        #         if len(count_invoice_item) > 0 or invoice_item.deleted_at:
+        #             for data in count_invoice_item:
+        #                 invoice_item.id = data['id']
+        #                 if invoice_item.deleted_at:
+        #                     invoice_item.delete()
+        #                 else:
+        #                     invoice_item.update_special()
+        #         else:
+        #             invoice_item.add_special()
+        #     invoice_item.close_connection()
+        #
+        # if 'invoices' in updates:
+        #
+        #     for invoices in updates['invoices']:
+        #         invoice = Invoice()
+        #         invoice.invoice_id = invoices['id']
+        #         invoice.company_id = invoices['company_id']
+        #         invoice.customer_id = invoices['customer_id']
+        #         invoice.quantity = invoices['quantity']
+        #         invoice.pretax = invoices['pretax']
+        #         invoice.tax = invoices['tax']
+        #         invoice.reward_id = invoices['reward_id']
+        #         invoice.discount_id = invoices['discount_id']
+        #         invoice.total = invoices['total']
+        #         invoice.rack = invoices['rack']
+        #         invoice.rack_date = invoices['rack_date']
+        #         invoice.due_date = invoices['due_date']
+        #         invoice.memo = invoices['memo']
+        #         invoice.transaction_id = invoices['transaction_id']
+        #         invoice.schedule_id = invoices['schedule_id']
+        #         invoice.status = invoices['status']
+        #         invoice.deleted_at = invoices['deleted_at']
+        #         invoice.created_at = invoices['created_at']
+        #         invoice.updated_at = invoices['updated_at']
+        #
+        #         # extra loop through invoice items to delete or check for data
+        #         if 'invoice_items' in invoices:
+        #
+        #             iitems = invoices['invoice_items']
+        #             if len(iitems) > 0:
+        #                 for iitem in iitems:
+        #                     invoice_item = InvoiceItem()
+        #                     invoice_item.invoice_items_id = iitem['id']
+        #                     invoice_item.invoice_id = iitem['invoice_id']
+        #                     invoice_item.item_id = iitem['item_id']
+        #                     invoice_item.inventory_id = iitem['inventory_id']
+        #                     invoice_item.company_id = iitem['company_id']
+        #                     invoice_item.customer_id = iitem['customer_id']
+        #                     invoice_item.quantity = iitem['quantity']
+        #                     invoice_item.color = iitem['color']
+        #                     invoice_item.memo = iitem['memo']
+        #                     invoice_item.pretax = iitem['pretax']
+        #                     invoice_item.tax = iitem['tax']
+        #                     invoice_item.total = iitem['total']
+        #                     invoice_item.status = iitem['status']
+        #                     invoice_item.deleted_at = iitem['deleted_at']
+        #                     invoice_item.created_at = iitem['created_at']
+        #                     invoice_item.updated_at = iitem['updated_at']
+        #                     count_invoice_item = invoice_item.where({'invoice_items_id': invoice_item.invoice_items_id})
+        #                     if len(count_invoice_item) > 0 or invoice_item.deleted_at:
+        #                         for data in count_invoice_item:
+        #                             invoice_item.id = data['id']
+        #                             if invoice_item.deleted_at:
+        #                                 invoice_item.delete()
+        #                             else:
+        #                                 invoice_item.update_special()
+        #
+        #         count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
+        #         if len(count_invoice) > 0 or invoice.deleted_at:
+        #             for data in count_invoice:
+        #                 invoice.id = data['id']
+        #                 if invoice.deleted_at:
+        #                     invoice.delete()
+        #                 else:
+        #                     invoice.update_special()
+        #         else:
+        #             invoice.add_special()
+        #     invoice.close_connection()
 
         if 'memos' in updates:
             for memos in updates['memos']:
@@ -687,7 +687,6 @@ def sync_from_server(data):
                 else:
                     user.add_special()
             user.close_connection()
-
 
         if 'zipcodes' in updates:
             for zipcodes in updates['zipcodes']:

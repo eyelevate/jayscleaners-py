@@ -40,8 +40,9 @@
             size_hint_y: 3
             Button:
                 id: settings_button
-                on_release: app.root.current = "settings"
-                text: "Settings"
+                on_release: root.settings_page()
+                markup:True
+                text: "[color=#AED6F1]Settings[/color]"
                 disabled: True
                 font_size:'20sp'
 

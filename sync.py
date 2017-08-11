@@ -39,15 +39,1245 @@ DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
 
 class Sync:
     company_id = None
+    customer_id = None
     server_at = None
+
+    #Address
+    def address_grab(self, address_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/address-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'address_id': address_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def create_address(self, address, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/create-address'
+        # attempt to connect to server
+        data = parse.urlencode({'address': address}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Card
+    def card_grab(self, card_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/card-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'card_id': card_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def card_grab_root(self, root_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/card-grab-root'
+        # attempt to connect to server
+        data = parse.urlencode({'root_id': root_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def update_card(self, card_id, cards, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/inventories-by-company'
+        # attempt to connect to server
+        data = parse.urlencode({'card_id': card_id,'cards':json.dumps(cards)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def create_card(self, cards, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/create-card'
+        # attempt to connect to server
+        data = parse.urlencode({'cards': json.dumps(cards)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Color
+    def colors_query(self, company_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/colors-query'
+        # attempt to connect to server
+        data = parse.urlencode({'company_id': company_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Company
+    def company_grab(self,company_id,*args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/company-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'company_id': company_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is 0:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Credit
+    def create_credit(self, credits, *args, **kwargs):
+
+        url = 'http://www.jayscleaners.com/admins/api/create-credit'
+        # attempt to connect to server
+        data = parse.urlencode({'credits': json.dumps(credits)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def edit_credit(self, customer_id, credit, *args, **kwargs):
+
+        url = 'http://www.jayscleaners.com/admins/api/edit-credit'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id,'credits':credit}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def credit_query(self, customer_id, *args, **kwargs):
+
+        url = 'http://www.jayscleaners.com/admins/api/credit-query'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Custid
+    def check_mark(self,mark, *args, **kwargs):
+
+        url = 'http://www.jayscleaners.com/admins/api/check-mark'
+        # attempt to connect to server
+        data = parse.urlencode({'mark': mark}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is 0:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def create_mark(self,mark, company_id, customer_id,*args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/create-mark'
+        # attempt to connect to server
+        data = parse.urlencode({'mark': mark,'company_id':company_id,'customer_id':customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def delete_mark(self, mark, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/delete-mark'
+        # attempt to connect to server
+        data = parse.urlencode({'mark': mark}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def marks_query(self, customer_id, status, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/marks-query'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id, 'status': status}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+    #delivery
+    def delivery_grab(self, delivery_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/delivery-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'delivery_id': delivery_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Discount
+    def discount_grab(self, discount_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/discount-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'discount_id': discount_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def discount_grab_by_company(self, company_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/discount-grab-by-company'
+        # attempt to connect to server
+        data = parse.urlencode({'comapny_id': company_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def discount_query(self,company_id, start_date, end_date,inventory_id,*args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/discount-query'
+        # attempt to connect to server
+        data = parse.urlencode({
+            'company_id': company_id,
+            'start_date': start_date,
+            'end_date': end_date,
+            'inventory_id': inventory_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Invoice
+    def create_invoice(self, invoice, items, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/create-invoice'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice': json.dumps(invoice),'items':json.dumps(items)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+
+            if data_1['status'] is 0:
+                return False
+            else:
+                return data_1['invoice']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def edit_invoice(self, invoice_id, invoice, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/edit-invoice'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice': json.dumps(invoice),'invoice_id':invoice_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+
+            if data_1['status'] is False:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def invoices_grab(self, customer_id, *args, **kwargs):
+        self.customer_id = customer_id
+        url = 'http://www.jayscleaners.com/admins/api/sync-customer'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+
+    def invoices_grab_count(self, customer_id, *args, **kwargs):
+        self.customer_id = customer_id
+        url = 'http://www.jayscleaners.com/admins/api/invoice-grab-count'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            return data_1
+
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return 0
+
+
+    def invoices_grab_pickup(self, customer_id, *args, **kwargs):
+        self.customer_id = customer_id
+        url = 'http://www.jayscleaners.com/admins/api/invoice-grab-pickup'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def invoice_grab_id(self, invoice_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/invoice-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice_id': invoice_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def invoice_grab_id_with_trashed(self, invoice_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/invoice-grab-with-trashed'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice_id': invoice_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def invoice_query_transaction_id(self, transaction_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/invoice-query-transaction-id'
+        # attempt to connect to server
+        data = parse.urlencode({'transaction_id': transaction_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def invoice_search_history(self, customer_id, start, end, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/invoice-search-history'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id,'start':start,'end':end}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def remove_invoice_by_transaction(self, invoice_id, status, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/remove-invoice-by-transaction'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice_id': invoice_id, 'status': status}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def update_invoice_pickup(self, invoice_id, invoice, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/update-invoice-pickup'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice_id': invoice_id, 'invoice': json.dumps(invoice)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def restore_invoice(self, invoice_id, status, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/restore-invoice'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice_id': invoice_id, 'status': status}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def rack_invoice(self,invoice_id,rack,rack_date,*args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/rack-invoice'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice_id':invoice_id,'rack': rack,'rack_date': rack_date}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            print(data_1)
+            if data_1['status'] is 0:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def delete_invoice(self, invoice_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/delete-invoice'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice_id': invoice_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            print(data_1)
+            if data_1['status'] is False:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #InvoiceItem
+    def create_invoice_item(self, items, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/create-invoice-item'
+        # attempt to connect to server
+        data = parse.urlencode({'items':json.dumps(items)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            print(data_1)
+            if data_1['status'] is 0:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def invoice_item_discount_find(self, invoice_id, inventory_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/invoice-item-discount-find'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice_id': invoice_id, 'inventory_id': inventory_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def invoice_item_discount_find_item_id(self, invoice_id, item_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/invoice-item-discount-find-item-id'
+        # attempt to connect to server
+        data = parse.urlencode({'invoice_id': invoice_id, 'item_id': item_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+
+    def invoice_item_grab(self, item_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/invoice-item-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'item_id': item_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is 0:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def edit_invoice_item(self, invoice_item_id, invoice_items, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/edit-invoice-item'
+        # attempt to connect to server
+        data = parse.urlencode(
+            {'invoice_item_id': invoice_item_id, 'invoice_items': json.dumps(invoice_items)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def delete_invoice_items(self, rows, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/delete-invoice-items'
+        # attempt to connect to server
+        data = parse.urlencode({'rows': json.dumps(rows)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Inventory
+    def inventory_grab(self, inventory_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/inventory-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'inventory_id': inventory_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is 0:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def inventories_by_company(self, company_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/inventories-by-company'
+        # attempt to connect to server
+        data = parse.urlencode({'company_id': company_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #InventoryItem
+    def inventory_items_grab(self, item_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/item-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'item_id': item_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is 0:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def delete_inventory_item(self, item_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/delete-inventory-item'
+        # attempt to connect to server
+        data = parse.urlencode({'item_id': item_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Memo
+    def memos_query(self, company_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/memos-query'
+        # attempt to connect to server
+        data = parse.urlencode({'company_id': company_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Profile
+    def create_profile(self, profile, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/create-card'
+        # attempt to connect to server
+        data = parse.urlencode({'profile':json.dumps(profile)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def profiles_query(self, company_id, customer_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/profiles-query'
+        # attempt to connect to server
+        data = parse.urlencode({'company_id': company_id, 'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Schedule
+    def create_schedule(self, schedule, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/create-schedule'
+        # attempt to connect to server
+        data = parse.urlencode({'schedule': json.dumps(schedule)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def schedule_query(self, query, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/schedule-query'
+        # attempt to connect to server
+        data = parse.urlencode({'query': query}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def schedule_grab(self, id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/schedule-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'id': id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+    #Tax
+    def taxes_query(self, company_id, status, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/taxes-query'
+        # attempt to connect to server
+        data = parse.urlencode({'company_id': company_id,'status': status}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Transaction
+    def create_transaction(self, customer_id, transaction, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/create-transaction'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id,'transaction':json.dumps(transaction)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def update_transaction(self, customer_id, transaction, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/update-transaction'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id,'transaction':json.dumps(transaction)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def last_transaction_grab(self, customer_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/last-transaction-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def transaction_grab(self, transaction_id, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/transaction-grab'
+        # attempt to connect to server
+        data = parse.urlencode({'transaction_id': transaction_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def transaction_query(self, customer_id, *args, **kwargs):
+        print(customer_id)
+        url = 'http://www.jayscleaners.com/admins/api/transaction-query'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def pay_account(self, transaction_id, trans, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/pay-account'
+        # attempt to connect to server
+        data = parse.urlencode({'transaction_id': transaction_id,'trans':json.dumps(trans)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def pay_account_customer(self, customer_id, balance, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/pay-account-customer'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id, 'balance': json.dumps(balance)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Users
+    def update_customer_pickup(self, customer_id, customer, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/update-customer-pickup'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id,'customer':json.dumps(customer)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def update_customer_account_total(self, customer_id, account_total, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/update-customer-account-total'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id,'account_total':account_total}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def update_customer_credits(self, customer_id, credits, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/update-customer-credits'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id,'credits':credits}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def customer_delete(self, customer_id, *args, **kwargs):
+        self.customer_id = customer_id
+        url = 'http://www.jayscleaners.com/admins/api/delete-customer'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def customer_add(self, users, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/add-customer'
+        # attempt to connect to server
+        data = parse.urlencode({'users': json.dumps(users)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+
+    def customer_edit(self, customer_id,users, *args, **kwargs):
+        self.customer_id = customer_id
+        url = 'http://www.jayscleaners.com/admins/api/edit-customer'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id,'users':json.dumps(users)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is 0:
+                return False
+            else:
+                return True
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def customers_grab(self, query, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/sc/{}'.format(query)
+        # attempt to connect to server
+        # data = parse.urlencode({'query': query}).encode('utf-8')
+        # req = request.Request(url=url, data=data)  # this will make the method "POST"
+        # r = request.urlopen(req)
+        # data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+        try:
+            r = request.urlopen(url)
+            # r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+
+            return data_1
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def check_account(self, customer_id, *args, **kwargs):
+
+        url = 'http://www.jayscleaners.com/admins/api/check-account'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+
+
+    #Zipcode
+    def zipcode_query(self, zipcode, *args, **kwargs):
+
+        url = 'http://www.jayscleaners.com/admins/api/zipcode-query'
+        # attempt to connect to server
+        data = parse.urlencode({'zipcode': zipcode}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is False:
+                return False
+            else:
+                return data_1['data']
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    #Last
+
+
+
 
     def db_sync(self, company_id, *args, **kwargs):
         self.company_id = company_id
-        print('syncing getting company_id = {}'.format(company_id))
+
         run_sync = Thread(target=self.run_sync)
         run_sync.start()
         run_sync.join()
-        print('Sync finished')
+
 
     def run_sync(self, *args, **kwargs):
         # self.migrate()
@@ -76,297 +1306,16 @@ class Sync:
         to_upload = {}
         to_upload_rows = 0
 
-        addresses_1 = Address().where({'address_id': None})
-        if addresses_1:
-            to_upload['addresses'] = addresses_1
-            to_upload_rows += len(to_upload['addresses'])
-
-        cards_1 = Card().where({'card_id': None})
-        if cards_1:
-            to_upload['cards'] = cards_1
-            to_upload_rows += len(to_upload['cards'])
-
-        colors_1 = Colored().where({'color_id': None})
-        if colors_1:
-            to_upload['colors'] = colors_1
-            to_upload_rows += len(to_upload['colors'])
 
         companies_1 = Company().where({'company_id': None})
         if companies_1:
             to_upload['companies'] = companies_1
             to_upload_rows += len(to_upload['companies'])
 
-        credits_1 = Credit().where({'credit_id': None})
-        print(credits_1)
-        if credits_1:
-            to_upload['credits'] = credits_1
-            to_upload_rows += len(to_upload['credits'])
-
-        custids_1 = Custid().where({'cust_id': None})
-        if custids_1:
-            to_upload['custids'] = custids_1
-            to_upload_rows += len(to_upload['custids'])
-
-        deliveries_1 = Delivery().where({'delivery_id': None})
-        if deliveries_1:
-            to_upload['deliveries'] = deliveries_1
-            to_upload_rows += len(to_upload['deliveries'])
-
-        discounts_1 = Discount().where({'discount_id': None})
-        if discounts_1:
-            to_upload['discounts'] = discounts_1
-            to_upload_rows += len(to_upload['discounts'])
-
-        invoices_1 = Invoice().where({'invoice_id': None})
-        if invoices_1:
-            idx = -1
-            for invoice in invoices_1:
-                idx += 1
-                try:
-                    invoices_1[idx]['due_date'] = int(
-                        datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S").timestamp())
-                except TypeError:
-                    invoices_1[idx]['due_date'] = None
-                except ValueError:
-                    invoices_1[idx]['due_date'] = None
-                try:
-                    invoices_1[idx]['rack_date'] = int(
-                        datetime.datetime.strptime(invoice['rack_date'], "%Y-%m-%d %H:%M:%S").timestamp())
-                except TypeError:
-                    invoices_1[idx]['rack_date'] = None
-                except ValueError:
-                    invoices_1[idx]['rack_date'] = None
-            to_upload['invoices'] = invoices_1
-            to_upload_rows += len(to_upload['invoices'])
-
-        invoice_items_1 = InvoiceItem().where({'invoice_items_id': None})
-        if invoice_items_1:
-            to_upload['invoice_items'] = invoice_items_1
-            to_upload_rows += len(to_upload['invoice_items']) if to_upload['invoice_items'] else 0
-
-        inventories_1 = Inventory().where({'inventory_id': None})
-        if inventories_1:
-            to_upload['inventories'] = inventories_1
-            to_upload_rows += len(to_upload['inventories'])
-
-        inventory_items_1 = InventoryItem().where({'item_id': None})
-        if inventory_items_1:
-            to_upload['inventory_items'] = inventory_items_1
-            to_upload_rows += len(to_upload['inventory_items'])
-
-        memos_1 = Memo().where({'memo_id': None})
-        if memos_1:
-            to_upload['memos'] = memos_1
-            to_upload_rows += len(to_upload['memos'])
-
-        # printers_1 = Printer().where({'printer_id': None})
-        # if printers_1:
-        #     to_upload['printers'] = printers_1
-        #     to_upload_rows += len(to_upload['printers'])
-
-        profiles_1 = Profile().where({'p_id': None})
-        if profiles_1:
-            to_upload['profiles'] = profiles_1
-            to_upload_rows += len(to_upload['profiles'])
-
-        reward_transactions_1 = RewardTransaction().where({'reward_id': None})
-        if reward_transactions_1:
-            to_upload['reward_transactions'] = reward_transactions_1
-            to_upload_rows += len(to_upload['reward_transactions'])
-
-        rewards_1 = Reward().where({'reward_id': None})
-        if rewards_1:
-            to_upload['rewards'] = rewards_1
-            to_upload_rows += len(to_upload['rewards'])
-
-        schedules_1 = Schedule().where({'schedule_id': None})
-        if schedules_1:
-            to_upload['schedules'] = schedules_1
-            to_upload_rows += len(to_upload['schedules'])
-
-        taxes_1 = Tax().where({'tax_id': None})
-        if taxes_1:
-            to_upload['taxes'] = taxes_1
-            to_upload_rows += len(to_upload['taxes'])
-
-        transactions_1 = Transaction().where({'trans_id': None})
-        if transactions_1:
-            to_upload['transactions'] = transactions_1
-            to_upload_rows += len(to_upload['transactions'])
-
-        users_1 = User().where({'user_id': None})
-        if users_1:
-            to_upload['users'] = users_1
-            to_upload_rows += len(to_upload['users'])
-
-        zipcodes_1 = Zipcode().where({'zipcode_id': None})
-        if zipcodes_1:
-            to_upload['zipcodes'] = users_1
-            to_upload_rows += len(to_upload['zipcodes'])
         # # update columns
         to_update = {}
         to_update_rows = 0
 
-        addresses_2 = Address().where({'address_id': {'!=': '""'},
-                                       'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if addresses_2:
-            to_update['addresses'] = addresses_2
-            to_update_rows += len(to_update['addresses'])
-
-        cards_2 = Card().where({'card_id': {'!=': '""'},
-                                'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if cards_2:
-            to_update['cards'] = cards_2
-            to_update_rows += len(to_update['cards'])
-
-        colors_2 = Colored().where({'color_id': {'!=': '""'},
-                                    'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if colors_2:
-            to_update['colors'] = colors_2
-            to_update_rows += len(to_update['colors'])
-
-        companies_2 = Company().where({'company_id': {'!=': '""'},
-                                       'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if companies_2:
-            to_update['companies'] = companies_2
-            to_update_rows += len(to_update['companies'])
-
-        credits_2 = Credit().where({'credit_id': {'!=': '""'},
-                                    'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if credits_2:
-            to_update['credits'] = credits_2
-            to_update_rows += len(to_update['credits'])
-
-        custids_2 = Custid().where({'cust_id': {'!=': '""'},
-                                    'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if custids_2:
-            to_update['custids'] = custids_2
-            to_update_rows += len(to_update['custids'])
-
-        deliveries_2 = Delivery().where({'delivery_id': {'!=': '""'},
-                                         'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if deliveries_2:
-            to_update['deliveries'] = deliveries_2
-            to_update_rows += len(to_update['deliveries'])
-
-        discounts_2 = Discount().where({'discount_id': {'!=': '""'},
-                                        'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if discounts_2:
-            to_update['discounts'] = discounts_2
-            to_update_rows += len(to_update['discounts'])
-
-        invoices_2 = Invoice().where({'invoice_id': {'!=': '""'},
-                                      'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if invoices_2:
-            idx = -1
-            for invoice in invoices_2:
-                idx += 1
-                try:
-                    invoices_2[idx]['due_date'] = int(
-                        datetime.datetime.strptime(invoice['due_date'], "%Y-%m-%d %H:%M:%S").timestamp())
-                except TypeError:
-                    invoices_2[idx]['due_date'] = None
-                except ValueError:
-                    invoices_2[idx]['due_date'] = None
-                try:
-                    invoices_2[idx]['rack_date'] = int(
-                        datetime.datetime.strptime(invoice['rack_date'], "%Y-%m-%d %H:%M:%S").timestamp())
-                except TypeError:
-                    invoices_2[idx]['rack_date'] = None
-                except ValueError:
-                    invoices_2[idx]['rack_date'] = None
-                except OverflowError:
-                    invoices_2[idx]['rack_date'] = None
-            to_update['invoices'] = invoices_2
-            to_update_rows += len(to_update['invoices'])
-
-        invoice_items_2 = InvoiceItem().where({'invoice_items_id': {'!=': '""'},
-                                               'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if invoice_items_2:
-            to_update['invoice_items'] = invoice_items_2
-            to_update_rows += len(to_update['invoice_items']) if to_update['invoice_items'] else 0
-
-        inventories_2 = Inventory().where({'inventory_id': {'!=': '""'},
-                                           'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if inventories_2:
-            to_update['inventories'] = inventories_2
-            to_update_rows += len(to_update['inventories'])
-
-        inventory_items_2 = InventoryItem().where({'item_id': {'!=': '""'},
-                                                   'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if inventory_items_2:
-            to_update['inventory_items'] = inventory_items_2
-            to_update_rows += len(to_update['inventory_items'])
-
-        memos_2 = Memo().where({'memo_id': {'!=': '""'},
-                                'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if memos_2:
-            to_update['memos'] = memos_2
-            to_update_rows += len(to_update['memos'])
-
-        # printers_2 = Printer().where({'printer_id': {'!=': '""'},
-        #                               'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        # if printers_2:
-        #     to_update['printers'] = printers_2
-        #     to_update_rows += len(to_update['printers'])
-
-        profiles_2 = Profile().where({'p_id': {'!=': '""'},
-                                      'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if profiles_2:
-            to_update['profiles'] = profiles_2
-            to_update_rows += len(to_update['profiles'])
-
-        reward_transactions_2 = RewardTransaction().where({'reward_id': {'!=': '""'},
-                                                           'updated_at': {'>': '"{}"'.format(server_at)}},
-                                                          deleted_at=False)
-        if reward_transactions_2:
-            to_update['reward_transactions'] = reward_transactions_2
-            to_update_rows += len(to_update['reward_transactions'])
-
-        rewards_2 = Reward().where({'reward_id': {'!=': '""'},
-                                    'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if rewards_2:
-            to_update['rewards'] = rewards_2
-            to_update_rows += len(to_update['rewards'])
-
-        schedules_2 = Schedule().where({'schedule_id': {'!=': '""'},
-                                        'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if schedules_2:
-            to_update['schedules'] = schedules_2
-            to_update_rows += len(to_update['schedules'])
-
-        taxes_2 = Tax().where({'tax_id': {'!=': '""'},
-                               'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if taxes_2:
-            to_update['taxes'] = taxes_2
-            to_update_rows += len(to_update['taxes'])
-
-        transactions_2 = Transaction().where({'trans_id': {'!=': '""'},
-                                              'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if transactions_2:
-            to_update['transactions'] = transactions_2
-            to_update_rows += len(to_update['transactions'])
-
-        users_2 = User().where({'user_id': {'!=': '""'},
-                                'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if users_2:
-            to_update['users'] = users_2
-            to_update_rows += len(to_update['users'])
-
-        zipcodes_2 = Zipcode().where({'zipcode_id': {'!=': '""'},
-                                      'updated_at': {'>': '"{}"'.format(server_at)}}, deleted_at=False)
-        if zipcodes_2:
-            to_update['zipcodes'] = zipcodes_2
-            to_update_rows += len(to_update['zipcodes'])
-
-        error_find = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
-            cid=company.id,
-            api=company.api_token,
-            servat=company.server_at,
-            upload=json.dumps(to_upload).replace(" ", "__"),
-            update=json.dumps(to_update).replace(" ", "__")
-        )
-        print(error_find)
         url = 'http://www.jayscleaners.com/admins/api/update'
 
         # attempt to connect to server
@@ -403,131 +1352,7 @@ class Sync:
 
         except urllib.error.URLError as e:
             print(e.reason)  # could not save this time around because no internet, move on
-            # if e.reason == 'Forbidden' or e.reason == 'Request-URI Too Long':  # url is too long try breaking it down into smaller chunks then send
-            #     print('Request was too large for server, sending again in chunks.')
-            #     try:
-            #         # break up url into smaller chunks
-            #         upload_string = json.dumps(to_upload).replace(" ", "__")
-            #         update_string = json.dumps(to_update).replace(" ", "__")
-            #
-            #         # first check the length of update
-            #         url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
-            #             cid=company.id,
-            #             api=company.api_token,
-            #             servat=company.server_at,
-            #             upload=upload_string,
-            #             update='{}'
-            #         )
-            #         # upload Chunk
-            #         if len(url) <= 2000:
-            #             print('sending upload chunk in whole')
-            #             run_page = Thread(target=partial(self.send_chunk, url))
-            #             run_page.start()
-            #         else:
-            #             print('starting upload in chunks')
-            #             if to_upload:
-            #                 chunk_up_list = {}
-            #                 for table, table_rows in to_upload.items():
-            #                     chunk_up_list[table] = {0: []}
-            #                     idx = 0
-            #                     chunk_up_count = 0
-            #
-            #                     if table_rows:
-            #                         for row in table_rows:
-            #                             row_string = json.dumps(row).replace(" ", "__")
-            #                             chunk_up_count += len(str(row_string))
-            #
-            #                             if chunk_up_count <= 2000:
-            #                                 chunk_up_list[table][idx].append(row)
-            #                             else:
-            #                                 chunk_up_count = 0
-            #                                 idx += 1
-            #                                 chunk_up_list[table][idx] = [row]
-            #             if chunk_up_list:
-            #                 to_upload_chunk = {}
-            #                 for table, rows in chunk_up_list.items():
-            #                     if rows:
-            #                         for row in rows:
-            #                             to_upload_chunk[table] = chunk_up_list[table][row]
-            #                             url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
-            #                                 cid=company.id,
-            #                                 api=company.api_token,
-            #                                 servat=company.server_at,
-            #                                 upload=json.dumps(to_upload_chunk).replace(" ", "__"),
-            #                                 update='{}'
-            #                             )
-            #                             run_page = Thread(target=partial(self.send_chunk, url))
-            #                             run_page.start()
-            #                             run_page.join()
-            #                             print('sent update #{}'.format(row))
-            #
-            #             # Update chunk
-            #             url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
-            #                 cid=company.id,
-            #                 api=company.api_token,
-            #                 servat=company.server_at,
-            #                 upload='{}',
-            #                 update=json.dumps(to_update).replace(" ", "__")
-            #             )
-            #             if len(update_string) <= 2000:
-            #                 print('sending update chunk in whole')
-            #                 run_page = Thread(target=partial(self.send_chunk, url))
-            #                 run_page.start()
-            #             else:
-            #                 if to_update:
-            #                     chunk_upd_list = {}
-            #                     for table, table_rows in to_update.items():
-            #                         chunk_upd_list[table] = {0: []}
-            #                         idx = 0
-            #                         chunk_upd_count = 0
-            #
-            #                         if table_rows:
-            #                             for row in table_rows:
-            #                                 row_string = json.dumps(row).replace(" ", "__")
-            #                                 chunk_upd_count += len(str(row_string))
-            #                                 print(chunk_upd_count)
-            #
-            #                                 if chunk_upd_count <= 2000:
-            #                                     chunk_upd_list[table][idx].append(row)
-            #                                 else:
-            #                                     chunk_upd_count = 0
-            #                                     idx += 1
-            #                                     chunk_upd_list[table][idx] = [row]
-            #                 if chunk_upd_list:
-            #                     to_update_chunk = {}
-            #                     for table, rows in chunk_upd_list.items():
-            #
-            #                         if rows:
-            #                             for row in rows:
-            #                                 to_update_chunk[table] = chunk_upd_list[table][row]
-            #                                 url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
-            #                                     cid=company.id,
-            #                                     api=company.api_token,
-            #                                     servat=company.server_at,
-            #                                     upload='{}',
-            #                                     update=json.dumps(to_update_chunk).replace(" ", "__")
-            #                                 )
-            #                                 run_page = Thread(target=partial(self.send_chunk, url))
-            #                                 run_page.start()
-            #                                 run_page.join()
-            #                                 print('sent update #{}'.format(row))
-            #
-            #     except urllib.error.URLError as e:
-            #         print(e.reason)
-            # if e.reason == 'Not Found':  # we found a / in the string replace it with a OR
-            #     upload = json.dumps(to_upload).replace(" ", "__").replace("/", "OR")
-            #     update = json.dumps(to_update).replace(" ", "__").replace("/", "OR")
-            #     url = 'http://www.jayscleaners.com/admins/api/update/{cid}/{api}/{servat}/up={upload}/upd={update}'.format(
-            #         cid=company.id,
-            #         api=company.api_token,
-            #         servat=company.server_at,
-            #         upload=upload,
-            #         update=update
-            #     )
-            #     run_page = Thread(target=partial(self.send_chunk, url))
-            #     run_page.start()
-            #     run_page.join()
-            #     print('Improper url formed, found a / in the json. replacing with OR and resending')
+
 
     def send_chunk(self, url=False):
         if url:
@@ -668,1027 +1493,4 @@ class Sync:
             return authenticated
 
     def auto_update(selfs):
-        sync = Sync()
-        # # addresses
-        # table = 'addresses'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table,1))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #             # reset local db table
-        #             addresses = Address()
-        #             addresses.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(start, end))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # cards
-        # table = 'cards'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 2))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #             msg = 'Deleting current db table = {} on local db'.format(table)
-        #             # reset local db table
-        #             cards = Card()
-        #             cards.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(start, end))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # colors
-        # table = 'colors'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 3))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #             # reset local db table
-        #             colors = Colored()
-        #             colors.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(start, end))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # companies
-        # table = 'companies'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 4))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #             # reset local db table
-        #             companies = Company()
-        #             companies.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(start, end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(start, end))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # credits
-        # table = 'credits'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 5))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #             # reset local db table
-        #             credits = Credit()
-        #             credits.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(start, end))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # custids
-        table = 'custids'
-        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        print('Syncing table - {} ({} / 21)'.format(table, 6))
-        try:
-            r = request.urlopen(url)
-            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if (count_data['status'] is 200):
-                start = int(count_data['data']['first_row'])
-                end = int(count_data['data']['last_row'])
-                if int(end - start) > 0:  # reset table db and start pulling in new data from server
-
-                    # reset local db table
-                    custids = Custid()
-                    custids.truncate()
-                    if end > 5000:
-                        for num in range(start, end, 5000):
-
-                            idx_start = num
-                            idx_end = num + 5000
-                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-                            t1.start()
-                            t1.join()
-                    else:
-                        print('Obtaining rows {} through {}'.format(start, end))
-                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-                        t1.start()
-                        t1.join()
-        except urllib.error.URLError as e:
-            print(e)
-        #
-        # # deliveries
-        # table = 'deliveries'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 7))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             deliveries= Delivery()
-        #             deliveries.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        #
-        # # discounts
-        # table = 'discounts'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 8))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             discounts= Discount()
-        #             discounts.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-
-        # # inventories
-        # table = 'inventories'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 9))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             inventories = Inventory()
-        #             inventories.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # inventory Items
-        # table = 'inventory_items'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 10))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             inventory_items = InventoryItem()
-        #             inventory_items.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # invoice
-        # table = 'invoices'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 11))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             invoices= Invoice()
-        #             invoices.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        #
-        # # Invoice Items
-        # table = 'invoice_items'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 12))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             invoice_items= InvoiceItem()
-        #             invoice_items.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        #
-        # # memos
-        # table = 'memos'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 13))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             memos= Memo()
-        #             memos.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        #
-        # # printers
-        # table = 'printers'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 14))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             printers= Printer()
-        #             printers.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # profiles
-        # table = 'profiles'
-        # url = 'http://ja/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 15))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             profiles= Profile()
-        #             profiles.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # discounts
-        # table = 'reward_transactions'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 16))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             rt= RewardTransaction()
-        #             rt.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # rewards
-        # table = 'rewards'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 17))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             rewards= Reward()
-        #             rewards.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # schedules
-        # table = 'schedules'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 18))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             schedules= Schedule()
-        #             schedules.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # transactions
-        # table = 'transactions'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 19))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             tr= Transaction()
-        #             tr.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-        #
-        # # users
-        table = 'users'
-        url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        print('Syncing table - {} ({} / 21)'.format(table, 20))
-        try:
-            r = request.urlopen(url)
-            count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if (count_data['status'] is 200):
-                start = int(count_data['data']['first_row'])
-                end = int(count_data['data']['last_row'])
-
-                if int(end - start) > 0:  # reset table db and start pulling in new data from server
-
-                    # reset local db table
-                    users= User()
-                    users.truncate()
-                    if end > 5000:
-                        for num in range(start, end, 5000):
-                            idx_start = num
-                            idx_end = num + 5000
-                            print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-                            t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-                            t1.start()
-                            t1.join()
-
-
-                    else:
-                        print('Obtaining rows {} through {}'.format(0, 5000))
-                        t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-                        t1.start()
-                        t1.join()
-        except urllib.error.URLError as e:
-            print(e)
-        #
-        # # zipcodes
-        # table = 'zipcodes'
-        # url = 'http://www.jayscleaners.com/admins/api/auto/{}'.format(table)
-        # print('Syncing table - {} ({} / 21)'.format(table, 21))
-        # try:
-        #     r = request.urlopen(url)
-        #     count_data = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-        #     if (count_data['status'] is 200):
-        #         start = int(count_data['data']['first_row'])
-        #         end = int(count_data['data']['last_row'])
-        #
-        #         if int(end - start) > 0:  # reset table db and start pulling in new data from server
-        #
-        #             # reset local db table
-        #             zipcodes= Zipcode()
-        #             zipcodes.truncate()
-        #             if end > 5000:
-        #                 for num in range(start, end, 5000):
-        #                     idx_start = num
-        #                     idx_end = num + 5000
-        #                     print('Obtaining rows {} through {}'.format(idx_start, idx_end))
-        #                     t1 = Thread(target=sync.get_chunk(table=table, start=idx_start, end=idx_end))
-        #                     t1.start()
-        #                     t1.join()
-        #
-        #
-        #             else:
-        #                 print('Obtaining rows {} through {}'.format(0, 5000))
-        #                 t1 = Thread(target=sync.get_chunk(table=table, start=0, end=5000))
-        #                 t1.start()
-        #                 t1.join()
-        # except urllib.error.URLError as e:
-        #     print(e)
-
-        print('Process Complete. Local database has been completely synced.')
-        Company().server_at_update()
-
-    def sync_customer(self, customer_id):
-        url = 'http://www.jayscleaners.com/admins/api/sync-customer'
-
-        # attempt to connect to server
-        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if len(data_1) > 0:
-                for invoices in data_1:
-                    invoice = Invoice()
-                    invoice.invoice_id = invoices['id']
-                    invoice.company_id = invoices['company_id']
-                    invoice.customer_id = invoices['customer_id']
-                    invoice.quantity = invoices['quantity']
-                    invoice.pretax = invoices['pretax']
-                    invoice.tax = invoices['tax']
-                    invoice.reward_id = invoices['reward_id']
-                    invoice.discount_id = invoices['discount_id']
-                    invoice.total = invoices['total']
-                    invoice.rack = invoices['rack']
-                    invoice.rack_date = invoices['rack_date']
-                    invoice.due_date = invoices['due_date']
-                    invoice.memo = invoices['memo']
-                    invoice.transaction_id = invoices['transaction_id']
-                    invoice.schedule_id = invoices['schedule_id']
-                    invoice.status = invoices['status']
-                    invoice.deleted_at = invoices['deleted_at']
-                    invoice.created_at = invoices['created_at']
-                    invoice.updated_at = invoices['updated_at']
-
-                    count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
-                    if len(count_invoice) > 0 or invoice.deleted_at:
-                        for data in count_invoice:
-                            invoice.id = data['id']
-                            if invoice.deleted_at:
-                                invoice.delete()
-                            else:
-                                invoice.update_special()
-                    else:
-                        invoice.add()
-                    invoice.close_connection()
-
-                    # extra loop through invoice items to delete or check for data
-                    if 'invoice_items' in invoices:
-
-                        iitems = invoices['invoice_items']
-                        if len(iitems) > 0:
-                            for iitem in iitems:
-                                invoice_item = InvoiceItem()
-                                invoice_item.invoice_items_id = iitem['id']
-                                invoice_item.invoice_id = iitem['invoice_id']
-                                invoice_item.item_id = iitem['item_id']
-                                invoice_item.inventory_id = iitem['inventory_id']
-                                invoice_item.company_id = iitem['company_id']
-                                invoice_item.customer_id = iitem['customer_id']
-                                invoice_item.quantity = iitem['quantity']
-                                invoice_item.color = iitem['color']
-                                invoice_item.memo = iitem['memo']
-                                invoice_item.pretax = iitem['pretax']
-                                invoice_item.tax = iitem['tax']
-                                invoice_item.total = iitem['total']
-                                invoice_item.status = iitem['status']
-                                invoice_item.deleted_at = iitem['deleted_at']
-                                invoice_item.created_at = iitem['created_at']
-                                invoice_item.updated_at = iitem['updated_at']
-                                count_invoice_item = invoice_item.where(
-                                    {'invoice_items_id': invoice_item.invoice_items_id})
-                                if len(count_invoice_item) > 0 or invoice_item.deleted_at:
-                                    for data in count_invoice_item:
-                                        invoice_item.id = data['id']
-                                        if invoice_item.deleted_at:
-                                            invoice_item.delete()
-                                        else:
-                                            invoice_item.update_special()
-                                else:
-                                    invoice_item.add()
-                            invoice_item.close_connection()
-
-        except urllib.error.URLError as e:
-            print('Error sending post data: {}'.format(e.reason))
-
-    def sync_customer(self, customer_id):
-        url = 'http://www.jayscleaners.com/admins/api/sync-customer'
-
-        # attempt to connect to server
-        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if len(data_1) > 0:
-                for invoices in data_1:
-                    invoice = Invoice()
-                    invoice.invoice_id = invoices['id']
-                    invoice.company_id = invoices['company_id']
-                    invoice.customer_id = invoices['customer_id']
-                    invoice.quantity = invoices['quantity']
-                    invoice.pretax = invoices['pretax']
-                    invoice.tax = invoices['tax']
-                    invoice.reward_id = invoices['reward_id']
-                    invoice.discount_id = invoices['discount_id']
-                    invoice.total = invoices['total']
-                    invoice.rack = invoices['rack']
-                    invoice.rack_date = invoices['rack_date']
-                    invoice.due_date = invoices['due_date']
-                    invoice.memo = invoices['memo']
-                    invoice.transaction_id = invoices['transaction_id']
-                    invoice.schedule_id = invoices['schedule_id']
-                    invoice.status = invoices['status']
-                    invoice.deleted_at = invoices['deleted_at']
-                    invoice.created_at = invoices['created_at']
-                    invoice.updated_at = invoices['updated_at']
-
-                    count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
-                    if len(count_invoice) > 0 or invoice.deleted_at:
-                        for data in count_invoice:
-                            invoice.id = data['id']
-                            if invoice.deleted_at:
-                                invoice.delete()
-                            else:
-                                invoice.update_special()
-                    else:
-                        invoice.add_special()
-                    invoice.close_connection()
-
-                    # extra loop through invoice items to delete or check for data
-                    if 'invoice_items' in invoices:
-
-                        iitems = invoices['invoice_items']
-                        if len(iitems) > 0:
-                            for iitem in iitems:
-                                invoice_item = InvoiceItem()
-                                invoice_item.invoice_items_id = iitem['id']
-                                invoice_item.invoice_id = iitem['invoice_id']
-                                invoice_item.item_id = iitem['item_id']
-                                invoice_item.inventory_id = iitem['inventory_id']
-                                invoice_item.company_id = iitem['company_id']
-                                invoice_item.customer_id = iitem['customer_id']
-                                invoice_item.quantity = iitem['quantity']
-                                invoice_item.color = iitem['color']
-                                invoice_item.memo = iitem['memo']
-                                invoice_item.pretax = iitem['pretax']
-                                invoice_item.tax = iitem['tax']
-                                invoice_item.total = iitem['total']
-                                invoice_item.status = iitem['status']
-                                invoice_item.deleted_at = iitem['deleted_at']
-                                invoice_item.created_at = iitem['created_at']
-                                invoice_item.updated_at = iitem['updated_at']
-                                count_invoice_item = invoice_item.where(
-                                    {'invoice_items_id': invoice_item.invoice_items_id})
-                                if len(count_invoice_item) > 0 or invoice_item.deleted_at:
-                                    for data in count_invoice_item:
-                                        invoice_item.id = data['id']
-                                        if invoice_item.deleted_at:
-                                            invoice_item.delete()
-                                        else:
-                                            invoice_item.update_special()
-                                else:
-                                    invoice_item.add_special()
-                            invoice_item.close_connection()
-
-        except urllib.error.URLError as e:
-            print('Error sending post data: {}'.format(e.reason))
-
-    def sync_rackable_invoices(self, company_id):
-        url = 'http://www.jayscleaners.com/admins/api/sync-rackable-invoices'
-
-        # attempt to connect to server
-        data = parse.urlencode({'company_id': company_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if len(data_1) > 0:
-                for invoices in data_1:
-                    invoice = Invoice()
-                    invoice.invoice_id = invoices['id']
-                    invoice.company_id = invoices['company_id']
-                    invoice.customer_id = invoices['customer_id']
-                    invoice.quantity = invoices['quantity']
-                    invoice.pretax = invoices['pretax']
-                    invoice.tax = invoices['tax']
-                    invoice.reward_id = invoices['reward_id']
-                    invoice.discount_id = invoices['discount_id']
-                    invoice.total = invoices['total']
-                    invoice.rack = invoices['rack']
-                    invoice.rack_date = invoices['rack_date']
-                    invoice.due_date = invoices['due_date']
-                    invoice.memo = invoices['memo']
-                    invoice.transaction_id = invoices['transaction_id']
-                    invoice.schedule_id = invoices['schedule_id']
-                    invoice.status = invoices['status']
-                    invoice.deleted_at = invoices['deleted_at']
-                    invoice.created_at = invoices['created_at']
-                    invoice.updated_at = invoices['updated_at']
-
-                    count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
-                    if len(count_invoice) > 0 or invoice.deleted_at:
-                        for data in count_invoice:
-                            invoice.id = data['id']
-                            if invoice.deleted_at:
-                                invoice.delete()
-                    else:
-                        invoice.add_special()
-                    invoice.close_connection()
-
-                    # extra loop through invoice items to delete or check for data
-                    if 'invoice_items' in invoices:
-
-                        iitems = invoices['invoice_items']
-                        if len(iitems) > 0:
-                            for iitem in iitems:
-                                invoice_item = InvoiceItem()
-                                invoice_item.invoice_items_id = iitem['id']
-                                invoice_item.invoice_id = iitem['invoice_id']
-                                invoice_item.item_id = iitem['item_id']
-                                invoice_item.inventory_id = iitem['inventory_id']
-                                invoice_item.company_id = iitem['company_id']
-                                invoice_item.customer_id = iitem['customer_id']
-                                invoice_item.quantity = iitem['quantity']
-                                invoice_item.color = iitem['color']
-                                invoice_item.memo = iitem['memo']
-                                invoice_item.pretax = iitem['pretax']
-                                invoice_item.tax = iitem['tax']
-                                invoice_item.total = iitem['total']
-                                invoice_item.status = iitem['status']
-                                invoice_item.deleted_at = iitem['deleted_at']
-                                invoice_item.created_at = iitem['created_at']
-                                invoice_item.updated_at = iitem['updated_at']
-                                count_invoice_item = invoice_item.where(
-                                    {'invoice_items_id': invoice_item.invoice_items_id})
-                                if len(count_invoice_item) > 0 or invoice_item.deleted_at:
-                                    for data in count_invoice_item:
-                                        invoice_item.id = data['id']
-                                        if invoice_item.deleted_at:
-                                            invoice_item.delete()
-                                else:
-                                    invoice_item.add_special()
-                            invoice_item.close_connection()
-
-        except urllib.error.URLError as e:
-            print('Error sending post data: {}'.format(e.reason))
-
-    def sync_rackable_invoice(self, invoice_id):
-        url = 'http://www.jayscleaners.com/admins/api/sync-rackable-invoice'
-
-        # attempt to connect to server
-        data = parse.urlencode({'invoice_id': invoice_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if len(data_1) > 0:
-                for invoices in data_1:
-                    invoice = Invoice()
-                    invoice.invoice_id = invoices['id']
-                    invoice.company_id = invoices['company_id']
-                    invoice.customer_id = invoices['customer_id']
-                    invoice.quantity = invoices['quantity']
-                    invoice.pretax = invoices['pretax']
-                    invoice.tax = invoices['tax']
-                    invoice.reward_id = invoices['reward_id']
-                    invoice.discount_id = invoices['discount_id']
-                    invoice.total = invoices['total']
-                    invoice.rack = invoices['rack']
-                    invoice.rack_date = invoices['rack_date']
-                    invoice.due_date = invoices['due_date']
-                    invoice.memo = invoices['memo']
-                    invoice.transaction_id = invoices['transaction_id']
-                    invoice.schedule_id = invoices['schedule_id']
-                    invoice.status = invoices['status']
-                    invoice.deleted_at = invoices['deleted_at']
-                    invoice.created_at = invoices['created_at']
-                    invoice.updated_at = invoices['updated_at']
-
-                    count_invoice = invoice.where({'invoice_id': invoice.invoice_id})
-                    if len(count_invoice) > 0 or invoice.deleted_at:
-                        for data in count_invoice:
-                            invoice.id = data['id']
-                            if invoice.deleted_at:
-                                invoice.delete()
-                    else:
-                        invoice.add_special()
-                    invoice.close_connection()
-
-                    # extra loop through invoice items to delete or check for data
-                    if 'invoice_items' in invoices:
-
-                        iitems = invoices['invoice_items']
-                        if len(iitems) > 0:
-                            for iitem in iitems:
-                                invoice_item = InvoiceItem()
-                                invoice_item.invoice_items_id = iitem['id']
-                                invoice_item.invoice_id = iitem['invoice_id']
-                                invoice_item.item_id = iitem['item_id']
-                                invoice_item.inventory_id = iitem['inventory_id']
-                                invoice_item.company_id = iitem['company_id']
-                                invoice_item.customer_id = iitem['customer_id']
-                                invoice_item.quantity = iitem['quantity']
-                                invoice_item.color = iitem['color']
-                                invoice_item.memo = iitem['memo']
-                                invoice_item.pretax = iitem['pretax']
-                                invoice_item.tax = iitem['tax']
-                                invoice_item.total = iitem['total']
-                                invoice_item.status = iitem['status']
-                                invoice_item.deleted_at = iitem['deleted_at']
-                                invoice_item.created_at = iitem['created_at']
-                                invoice_item.updated_at = iitem['updated_at']
-                                count_invoice_item = invoice_item.where(
-                                    {'invoice_items_id': invoice_item.invoice_items_id})
-                                if len(count_invoice_item) > 0 or invoice_item.deleted_at:
-                                    for data in count_invoice_item:
-                                        invoice_item.id = data['id']
-                                        if invoice_item.deleted_at:
-                                            invoice_item.delete()
-                                else:
-                                    invoice_item.add_special()
-                            invoice_item.close_connection()
-
-        except urllib.error.URLError as e:
-            print('Error sending post data: {}'.format(e.reason))
+        pass
