@@ -10918,7 +10918,7 @@ class PickupScreen(Screen):
                 self.set_result_status()
                 self.finish_popup.dismiss()
 
-        elif type is 5 and len(checks) is 0:
+        elif type is 5 and checks is not False:
             transaction.status = 3
             standard_save = True
             customers = User()
