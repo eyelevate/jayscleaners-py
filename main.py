@@ -11074,8 +11074,8 @@ class PickupScreen(Screen):
 
                                 invs = SYNC.inventory_grab(inventory_id)
                                 if invs:
-                                    inventory_init = inventories['name'][:1].capitalize()
-                                    laundry = inventories['laundry']
+                                    inventory_init = invs['name'][:1].capitalize()
+                                    laundry = invs['laundry']
                                 else:
                                     inventory_init = ''
                                     laundry = 0
