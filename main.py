@@ -5230,7 +5230,7 @@ GridLayout:
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    customers.remember_token = user['remember_token']
+                    
 
             if type is 'none':
                 self.set_result_status()
@@ -7174,7 +7174,7 @@ class HistoryScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        customers.remember_token = user['remember_token']
+                        
                 invoices = Invoice()
                 invoice = SYNC.invoice_grab_id(vars.INVOICE_ID)
                 invoice_discount_id = None
@@ -7683,7 +7683,7 @@ class HistoryScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    customers.remember_token = user['remember_token']
+                    
             invoice_id_str = str(vars.INVOICE_ID)
             invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
             due_date = 'SUN'
@@ -7836,7 +7836,7 @@ class HistoryScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    customers.remember_token = user['remember_token']
+                    
             invoice_id_str = str(vars.INVOICE_ID)
             invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
             due_date = 'SUN'
@@ -11041,7 +11041,7 @@ class PickupScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        customers.remember_token = user['remember_token']
+                        
                 if self.selected_invoices:
                     # invoices = Invoice()
                     print_sync_invoice = {}
@@ -12223,8 +12223,8 @@ class SearchScreen(Screen):
                     custid_string = custids.make_string(cids)
 
                 # display data
-                self.cust_info_label.text = 'Customer Info: [color=FF0000]Account[/color]' if int(result[
-                    'account']) is 1  else 'Customer Info:'
+                self.cust_info_label.text = 'Customer Info: [color=FF0000]Account[/color]' if result[
+                    'account'] is not True else 'Customer Info:'
                 self.cust_mark_label.text = custid_string
                 self.customer_id_ti.text = str(vars.CUSTOMER_ID) if vars.CUSTOMER_ID else ''
                 self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
@@ -12674,7 +12674,7 @@ class SearchScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        customers.remember_token = user['remember_token']
+                        
                 vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
                 vars.EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                              invert=False, smooth=False, flip=False))
@@ -12834,7 +12834,7 @@ class SearchScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        customers.remember_token = user['remember_token']
+                        
                 vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
                 vars.EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                              invert=False, smooth=False, flip=False))
@@ -13038,7 +13038,7 @@ class SearchScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        customers.remember_token = user['remember_token']
+                        
                         marks = user['custids']
                 invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
                 if invs:
@@ -13423,7 +13423,7 @@ class SearchScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    customers.remember_token = user['remember_token']
+                    
 
             now = datetime.datetime.now()
             vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
@@ -13622,7 +13622,7 @@ class SearchScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    customers.remember_token = user['remember_token']
+                    
             invoice_id_str = str(vars.INVOICE_ID)
             invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
             due_date = 'SUN'
@@ -13775,7 +13775,7 @@ class SearchScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    customers.remember_token = user['remember_token']
+                    
             invoice_id_str = str(vars.INVOICE_ID)
             invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
             due_date = 'SUN'
