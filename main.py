@@ -16106,11 +16106,11 @@ A{c},20,1,1,1,1,N,"{tag}"
                 tran = SYNC.transaction_grab(transaction_id)
                 previous_total = 0
                 if tran is not False:
-                    previous_total = Decimal(tran['total'])
+                    previous_total = tran['total']
                 account_paid_on = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
                 data = {'tendered': self.tendered_input.text,
-                        'account_paid': previous_total,
+                        'account_paid': str(previous_total),
                         'account_paid_on': account_paid_on,
                         'status': 1,
                         'type': self.payment_type}
