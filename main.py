@@ -10927,7 +10927,7 @@ class PickupScreen(Screen):
             transaction.status = 3
             standard_save = True
             customers = User()
-            custs = SYNC.customer_grab(vars.CUSTOMER_ID)
+            custs = SYNC.customers_grab(vars.CUSTOMER_ID)
             old_account_total = 0
             if custs is not False:
                 for customer in custs:
