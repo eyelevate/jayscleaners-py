@@ -9670,13 +9670,15 @@ class PickupScreen(Screen):
         self.credits = 0
         self.credits_spent = 0
         account_status = False
-        customers = User().where({'user_id': vars.CUSTOMER_ID})
+        
+        customers = SYNC.customers_grab(vars.CUSTOMER_ID)
         if customers:
             for customer in customers:
                 self.credits = customer['credits'] if customer['credits'] is not None else 0
                 account_status = True if customer['account'] is '1' or customer['account'] is True or customer['account'] is 1 else False
-
-        if account_status:
+        print(account_status)
+        if account_status is not False:
+            print('in here')
             self.payment_panel.switch_to(header=self.payment_account_header)
             self.payment_type = 'ac'
         else:
