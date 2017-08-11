@@ -408,10 +408,10 @@ class Sync:
             r = request.urlopen(req)
             data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
 
-            if data_1['status'] is 0:
+            if data_1['status'] is False:
                 return False
             else:
-                return data_1['invoice']
+                return True
 
         except urllib.error.URLError as e:
             print(e.reason)  # could not save this time around because no internet, move on
