@@ -10840,7 +10840,7 @@ class PickupScreen(Screen):
         transaction.last_four = last_four
         transaction.tendered = self.amount_tendered
         if self.credits:
-            credits_spent = self.total_amount if (self.credits - self.total_amount) >= 0 else self.credits
+            credits_spent = self.total_amount if (Decimal(self.credits) - Decimal(self.total_amount)) >= 0 else Decimal(self.credits)
             self.credits_spent = credits_spent
             transaction.credit = credits_spent
         else:
