@@ -10853,16 +10853,17 @@ class PickupScreen(Screen):
         checks = SYNC.check_account(vars.CUSTOMER_ID)
         print('checking transaction account - {}'.format(checks))
         standard_save = False
-        if type is 5 and checks is not False:
+        if type is 5 and checks is False:
+            print('account customer')
             transaction_id = None
             for ca in checks:
                 transaction_id = ca['id']
-                old_subtotal = ca['pretax']
-                old_tax = ca['tax']
-                old_aftertax = ca['aftertax']
-                old_credit = ca['credit']
-                old_discount = ca['discount']
-                old_total = ca['total']
+                old_subtotal = Decimal(ca['pretax'])
+                old_tax = Decimal(ca['tax'])
+                old_aftertax = Decimal(ca['aftertax'])
+                old_credit = Decimal(ca['credit'])
+                old_discount = Decimal(ca['discount'])
+                old_total = Decimal(ca['total'])
                 new_subtotal = old_subtotal + self.total_subtotal
                 new_tax = old_tax + self.total_tax
                 new_aftertax = old_aftertax + self.total_amount
@@ -10883,12 +10884,14 @@ class PickupScreen(Screen):
             # update any credited amount
 
             old_credits = 0
-
+            old_account_total = 0
             custs = SYNC.customers_grab(vars.CUSTOMER_ID)
             if custs is not False:
                 for customer in custs:
-                    old_credits = customer['credits'] if customer['credits'] is not None else 0
-                    old_account_total = customer['account_total']
+                    if customer['credits'] is not None:
+                        old_credits = customer['credits'] if customer['credits'] is not None else 0
+                    if customer['account_total'] is not None:
+                        old_account_total = Decimal(customer['account_total'])
             new_credits = float("%0.2f" % (old_credits - credits_spent))
             new_account_total = float("%0.2f" % (old_account_total + self.total_due))
             data = {
@@ -10927,7 +10930,10 @@ class PickupScreen(Screen):
             custs = SYNC.customer_grab(vars.CUSTOMER_ID)
             if custs is not False:
                 for customer in custs:
-                    old_account_total = customer['account_total'] if customer['account_total'] else 0
+                    if customer['account_total'] is None or customer['account_total'] is '' or customer['account_total'] is False:
+                        old_account_total = customer['account_total'] if customer['account_total'] else 0
+                    else:
+                        
             new_account_total = float("%0.2f" % (float(old_account_total) + float(self.total_due)))
             customer_account_total_update = SYNC.update_customer_account_total(vars.CUSTOMER_ID,new_account_total)
             if customer_account_total_update is not False:
@@ -10935,7 +10941,7 @@ class PickupScreen(Screen):
         else:
             transaction.status = 1
             standard_save = True
-
+        print('transaction status should be 3 - {}'.format(transaction.status))
         if standard_save:
             print('this is a standard save attempting to save data')
             data = {
