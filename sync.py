@@ -1068,7 +1068,7 @@ class Sync:
             r = request.urlopen(req)
             data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             if data_1['status'] is not False:
-                return data_1['data']
+                return True
             else:
                 return False
 
