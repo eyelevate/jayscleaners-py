@@ -5838,7 +5838,7 @@ class EditCustomerScreen(Screen):
 
                     self.update_marks_table()
 
-                    if int(cust['account']) is 1:
+                    if cust['account'] is True or cust['account'] is '1' or cust['account'] is 1:
                         self.is_account.active = True
                         self.street.text = cust['street'] if cust['street'] else ''
                         self.street.hint_text = 'Street Address'
