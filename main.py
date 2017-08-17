@@ -2904,7 +2904,7 @@ GridLayout:
                             if new_invoice_id in print_sync_invoice:
                                 if item_id in print_sync_invoice[new_invoice_id]:
 
-                                    print_sync_invoice[new_invoice_id][item_id]['item_price'] += item_price
+                                    print_sync_invoice[new_invoice_id][item_id]['item_price'] += Decimal(item_price)
                                     print_sync_invoice[new_invoice_id][item_id]['qty'] += 1
                                     if item_memo:
                                         print_sync_invoice[new_invoice_id][item_id]['memos'].append(item_memo)
@@ -2928,7 +2928,7 @@ GridLayout:
 
                     for item in value:
 
-                        item_price = float(item['item_price']) if item['item_price'] else 0
+                        item_price = Decimal(item['item_price']) if item['item_price'] else 0
                         item_tax = float('%.2f' % (Decimal(item_price) * Decimal(vars.TAX_RATE)))
                         item_total = float('%.2f' % (Decimal(item_price) * (1 + Decimal(vars.TAX_RATE))))
                         # set invoice data to save
@@ -11995,6 +11995,7 @@ class SearchScreen(Screen):
         vars.INVOICE_ID = None
 
         if len(self.search.text) > 0:
+
             users = SYNC.customers_grab(self.search.text)
 
             self.customer_results(users)
@@ -12205,6 +12206,8 @@ class SearchScreen(Screen):
 
         # Found customer via where, now display data to screen
         if len(data) == 1:
+            if len(self.search.text) == 6:
+                vars.INVOICE_ID = self.search.text
             Clock.schedule_once(self.focus_input)
             for result in data:
 
@@ -13103,7 +13106,7 @@ class SearchScreen(Screen):
                             item_subtotal = invoice_item['pretax']
                             if vars.INVOICE_ID in print_sync_invoice:
                                 if item_id in print_sync_invoice[vars.INVOICE_ID]:
-                                    print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_subtotal
+                                    print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += Decimal(item_subtotal)
                                     print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
                                     if item_memo:
                                         print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
