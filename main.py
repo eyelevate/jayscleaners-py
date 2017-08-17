@@ -2941,9 +2941,9 @@ GridLayout:
                             'quantity': item['qty'],
                             'color': item['color'],
                             'memo': item['memo'],
-                            'pretax': item_price,
-                            'tax': item_tax,
-                            'total': item_total,
+                            'pretax': str(item_price),
+                            'tax': str(item_tax),
+                            'total': str(item_total),
                             'status': item['status']
                         }
                         save_invoice_items = SYNC.create_invoice_item(data)
