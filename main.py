@@ -7239,10 +7239,10 @@ class HistoryScreen(Screen):
                             else:
                                 colors[item_id][item_color] = 1
                         item_memo = invoice_item['memo']
-                        item_subtotal = invoice_item['pretax']
+                        item_subtotal = Decimal(invoice_item['pretax'])
                         if vars.INVOICE_ID in print_sync_invoice:
                             if item_id in print_sync_invoice[vars.INVOICE_ID]:
-                                print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += Decimal(item_subtotal)
+                                print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_subtotal
                                 print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
                                 if item_memo:
                                     print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
@@ -7255,7 +7255,7 @@ class HistoryScreen(Screen):
                                     'item_id': item_id,
                                     'type': inventory_init,
                                     'name': display_name,
-                                    'item_price': Decimal(item_subtotal),
+                                    'item_price': item_subtotal,
                                     'qty': 1,
                                     'memos': [item_memo] if item_memo else [],
                                     'colors': {item_color: 1}
@@ -13103,10 +13103,10 @@ class SearchScreen(Screen):
                                 else:
                                     colors[item_id][item_color] = 1
                             item_memo = invoice_item['memo']
-                            item_subtotal = invoice_item['pretax']
+                            item_subtotal = Decimal(invoice_item['pretax'])
                             if vars.INVOICE_ID in print_sync_invoice:
                                 if item_id in print_sync_invoice[vars.INVOICE_ID]:
-                                    print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += Decimal(item_subtotal)
+                                    print_sync_invoice[vars.INVOICE_ID][item_id]['item_price'] += item_subtotal
                                     print_sync_invoice[vars.INVOICE_ID][item_id]['qty'] += 1
                                     if item_memo:
                                         print_sync_invoice[vars.INVOICE_ID][item_id]['memos'].append(item_memo)
@@ -13120,7 +13120,7 @@ class SearchScreen(Screen):
                                         'item_id': item_id,
                                         'type': inventory_init,
                                         'name': display_name,
-                                        'item_price': Decimal(item_subtotal),
+                                        'item_price': item_subtotal,
                                         'qty': 1,
                                         'memos': [item_memo] if item_memo else [],
                                         'colors': {item_color: 1}
