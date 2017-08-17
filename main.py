@@ -2892,7 +2892,7 @@ GridLayout:
                             save_invoice_items[new_invoice_id][idx]['status'] = 1
                             item_id = items['item_id']
                             item_name = items['item_name']
-                            item_price = items['item_price']
+                            item_price = Decimal(items['item_price'])
                             item_type = items['type']
                             item_color = items['color']
                             item_memo = items['memo']
@@ -2904,7 +2904,7 @@ GridLayout:
                             if new_invoice_id in print_sync_invoice:
                                 if item_id in print_sync_invoice[new_invoice_id]:
 
-                                    print_sync_invoice[new_invoice_id][item_id]['item_price'] += Decimal(item_price)
+                                    print_sync_invoice[new_invoice_id][item_id]['item_price'] +=item_price
                                     print_sync_invoice[new_invoice_id][item_id]['qty'] += 1
                                     if item_memo:
                                         print_sync_invoice[new_invoice_id][item_id]['memos'].append(item_memo)
