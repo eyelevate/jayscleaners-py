@@ -3523,6 +3523,10 @@ GridLayout:
             else:
                 laundry_count = len(laundry_to_print)
                 shirt_mark = Custid().getCustomerMark(self.customer_id_backup)
+                marks = SYNC.marks_query(self.customer_id_backup,1);
+                if marks is not False:
+                    for mark in marks:
+                        shirt_mark = mark['mark']
                 name_text_offset = total_length - len(text_name) - len(text_name)
                 shirt_mark_length = len(shirt_mark)
                 mark_text_offset = 16 - (shirt_mark_length * 2)
@@ -7752,6 +7756,10 @@ class HistoryScreen(Screen):
             if len(laundry_to_print) > 0:
                 laundry_count = len(laundry_to_print)
                 shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                marks = SYNC.marks_query(vars.CUSTOMER_ID)
+                if marks is not False:
+                    for mark in marks:
+                        shirt_mark = mark['mark']
                 name_text_offset = total_length - len(text_name) - len(text_name)
                 shirt_mark_length = len(shirt_mark)
                 mark_text_offset = 16 - (shirt_mark_length * 2)
@@ -7907,6 +7915,10 @@ class HistoryScreen(Screen):
             else:
                 laundry_count = len(laundry_to_print)
                 shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                marks = SYNC.marks_query(vars.CUSTOMER_ID)
+                if marks is not False:
+                    for mark in marks:
+                        shirt_mark = mark['mark']
                 name_text_offset = total_length - len(text_name) - len(text_name)
                 shirt_mark_length = len(shirt_mark)
                 mark_text_offset = 16 - (shirt_mark_length * 2)
@@ -13675,6 +13687,10 @@ class SearchScreen(Screen):
                     # vars.BIXOLON.write('\x1b\x6d')
                     laundry_count = len(laundry_to_print)
                     shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                    marks = SYNC.marks_query(vars.CUSTOMER_ID)
+                    if marks is not False:
+                        for mark in marks:
+                            shirt_mark = mark['mark']
                     name_text_offset = total_length - len(text_name) - len(text_name)
                     shirt_mark_length = len(shirt_mark)
                     mark_text_offset = 16 - (shirt_mark_length * 2)
@@ -13831,6 +13847,10 @@ class SearchScreen(Screen):
 
                     laundry_count = len(laundry_to_print)
                     shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
+                    marks = SYNC.marks_query(vars.CUSTOMER_ID)
+                    if marks is not False:
+                        for mark in marks:
+                            shirt_mark = mark['mark']
                     name_text_offset = total_length - len(text_name) - len(text_name)
                     shirt_mark_length = len(shirt_mark)
                     mark_text_offset = 16 - (shirt_mark_length * 2)
