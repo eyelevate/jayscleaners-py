@@ -3949,7 +3949,7 @@ GridLayout:
         if item is not False:
 
             inventory_id = item['inventory_id']
-            item_price = item['price']
+            item_price = Decimal(item['price'])
             item_tags = item['tags'] if item['tags'] else 1
             item_quantity = item['quantity'] if item['quantity'] else 1
             inventories = SYNC.inventory_grab(inventory_id)
@@ -4549,7 +4549,7 @@ GridLayout:
                                 item_type = item['type']
                                 item_color = item['color']
                                 item_memo = item['memo']
-                                item_price += item['item_price'] if item['item_price'] else 0
+                                item_price += Decimal(item['item_price']) if item['item_price'] else 0
                                 if item['color']:
                                     if item_color in colors:
                                         colors[item_color] += 1
