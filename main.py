@@ -10921,17 +10921,17 @@ class PickupScreen(Screen):
             data = {
                 'company_id': vars.COMPANY_ID,
                 'customer_id' : vars.CUSTOMER_ID,
-                'pretax' : transaction.pretax,
-                'tax' : transaction.tax,
-                'aftertax' : transaction.aftertax,
-                'credit' : transaction.credit,
-                'discount' : transaction.discount,
-                'total' : transaction.total,
+                'pretax' : str(transaction.pretax),
+                'tax' : str(transaction.tax),
+                'aftertax' : str(transaction.aftertax),
+                'credit' : str(transaction.credit),
+                'discount' : str(transaction.discount),
+                'total' : str(transaction.total),
                 'account_paid' : transaction.account_paid,
                 'account_paid_on' : transaction.account_paid_on,
                 'type' : transaction.type,
                 'last_four' : transaction.last_four,
-                'tendered' : transaction.tendered,
+                'tendered' : str(transaction.tendered),
                 'status': transaction.status
             }
             transaction_create = SYNC.create_transaction(vars.CUSTOMER_ID,data)
