@@ -9948,54 +9948,24 @@ class PickupScreen(Screen):
             else:
                 self.selected_invoices.append(invoice_id)
         print(self.selected_invoices)
-        total = 0
-        quantity = 0
-        subtotal = 0
-        tax = 0
+        self.discount_total = 0
+        self.amount_tendered = 0
+        self.total_amount = 0
+        self.total_subtotal = 0
+        self.total_quantity = 0
+        self.total_tax = 0
         self.discount_total = 0
         if self.selected_invoices:
+            invoice_totals = SYNC.invoice_get_totals(self.selected_invoices)
+            print(invoice_totals)
+            if invoice_totals is not False:
+                self.discount_total = Decimal(invoice_totals['discount'])
+                self.amount_tendered = Decimal(invoice_totals['total'])
+                self.total_amount = Decimal(invoice_totals['total'])
+                self.total_subtotal = Decimal(invoice_totals['pretax'])
+                self.total_quantity = int(invoice_totals['quantity'])
+                self.total_tax = Decimal(invoice_totals['tax'])
 
-            for invoice_id in self.selected_invoices:
-                # get invoice total
-                invoices = SYNC.invoice_grab_id(invoice_id)
-                if invoices:
-
-                    total += float(invoices['total'])
-                    quantity += int(invoices['quantity'])
-                    subtotal += float(invoices['pretax'])
-                    tax += float(invoices['tax'])
-                    if invoices['discount_id'] is not None:
-                        self.discount_id = invoices['discount_id']
-
-                # get discounted totals
-                if self.discount_id:
-                    discount_invoice_total = 0
-                    discounts = SYNC.discount_grab(self.discount_id)
-                    if discounts:
-
-                        discount_type = discounts['type']
-                        discount_inventory_id = discounts['inventory_id']
-                        discount_item_id = discounts['inventory_item_id']
-                        if discount_inventory_id:
-                            invoice_items = SYNC.invoice_item_discount_find(invoice_id,discount_inventory_id)
-                        elif discount_item_id:
-                            invoice_items = InvoiceItem().where({'invoice_id': invoice_id,
-                                                                 'item_id': discount_item_id})
-                            invoice_items = SYNC.invoice_item_discount_find_item_id(invoice_id, discount_item_id)
-                        if invoice_items:
-                            for invoice_item in invoice_items:
-                                discount_invoice_total += invoice_item['pretax']
-                        if discount_type is 1:
-                            discount_rate = discounts['rate']
-                            self.discount_total += float(discount_invoice_total) * float(discount_rate)
-                        else:
-                            self.discount_total += float('%0.2f' % discounts['price'])
-        self.discount_total = float('%0.2f' % self.discount_total)
-        self.amount_tendered = total
-        self.total_amount = total
-        self.total_subtotal = subtotal
-        self.total_quantity = quantity
-        self.total_tax = tax
         if self.credits or self.discount_total:
 
             self.total_due = 0 if Decimal(self.credits) >= Decimal(self.total_amount) else float("%0.2f" % (
