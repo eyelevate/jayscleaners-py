@@ -1730,7 +1730,7 @@ GridLayout:
                         item_type = item['type']
                         item_color = item['color']
                         item_memo = item['memo']
-                        item_price += Decimal(item['item_price']) if item['item_price'] else 0
+                        item_price += float(item['item_price']) if item['item_price'] else 0
                         if item['color']:
                             if item_color in colors:
                                 colors[item_color] += 1
@@ -2197,7 +2197,7 @@ GridLayout:
                                     item_type = item['type']
                                     item_color = item['color']
                                     item_memo = item['memo']
-                                    item_price += item['item_price'] if item['item_price'] else 0
+                                    item_price += float(item['item_price']) if item['item_price'] else 0
                                     if item['color']:
                                         if item_color in colors:
                                             colors[item_color] += 1
@@ -2776,9 +2776,9 @@ GridLayout:
                             else:
                                 inventory_discount = 0
 
-                    tax_amount = (Decimal(save_totals[inventory_id]['subtotal']) - Decimal(inventory_discount)) * Decimal(vars.TAX_RATE)
+                    tax_amount = (float(save_totals[inventory_id]['subtotal']) - float(inventory_discount)) * float(vars.TAX_RATE)
 
-                    total = (save_totals[inventory_id]['subtotal'] - inventory_discount) + tax_amount
+                    total = (float(save_totals[inventory_id]['subtotal']) - float(inventory_discount)) + float(tax_amount)
 
                     # set invoice data to save
                     data = {
@@ -3080,7 +3080,7 @@ GridLayout:
                                 item_type = item['type']
                                 item_color = item['color']
                                 item_memo = item['memo']
-                                item_price += Decimal(item['item_price']) if item['item_price'] else 0
+                                item_price += float(item['item_price']) if item['item_price'] else 0
                                 if item['color']:
                                     if item_color in colors:
                                         colors[item_color] += 1
@@ -3785,10 +3785,10 @@ class EditInvoiceScreen(Screen):
         self.summary_table.add_widget(Builder.load_string(h4))
         self.get_inventory()
         self.get_colors_main()
-        taxes = Tax().where({'company_id': vars.COMPANY_ID, 'status': 1})
+        taxes = SYNC.taxes_query(vars.COMPANY_ID,1)
         if taxes:
             for tax in taxes:
-                vars.TAX_RATE = tax['rate']
+                vars.TAX_RATE = float(tax['rate'])
         else:
             vars.TAX_RATE = 0.096
         self.create_summary_table()
@@ -4050,7 +4050,7 @@ GridLayout:
                         item_type = item['type']
                         item_color = item['color']
                         item_memo = item['memo']
-                        item_price += Decimal(item['item_price']) if item['item_price'] else 0
+                        item_price += float(item['item_price']) if item['item_price'] else 0
                         if item['color']:
                             if item_color in colors:
                                 colors[item_color] += 1
@@ -4147,7 +4147,7 @@ GridLayout:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
         # calculate totals
-        tax_rate = float(vars.TAX_RATE)
+        tax_rate = float("%0.2f" % (vars.TAX_RATE))
         if len(self.invoice_list):
             for item_key, item_values in self.invoice_list.items():
                 for item in item_values:
@@ -4171,16 +4171,17 @@ GridLayout:
                             else:
                                 self.discount += 0
 
-            tax = float(float(self.subtotal) * float(tax_rate))
 
-            total = float(self.subtotal + tax)
-            self.subtotal = "{0:.2f}".format(self.subtotal)
-            self.tax = "{0:.2f}".format(tax)
-            self.total = "{0:.2f}".format(total)
-            self.final_total = "{0:.2f}".format(total)
+            self.subtotal = float("%0.2f" % (self.subtotal))
 
-            self.tax = (float(self.subtotal) - float(self.discount)) * float(tax_rate)
-            self.total = (float(self.subtotal) - float(self.discount)) + float(self.tax)
+
+            self.tax = float("%0.2f" % ((float(self.subtotal) - self.discount) * vars.TAX_RATE))
+            # print(self.tax)
+            self.total =float("%0.2f" % ((float(self.subtotal) - float(self.discount)) + self.tax))
+            # print(self.total)
+            self.final_total = float("%0.2f" % (self.total))
+            # print(self.final_total)
+
             self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
             self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
             self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
@@ -4549,7 +4550,7 @@ GridLayout:
                                 item_type = item['type']
                                 item_color = item['color']
                                 item_memo = item['memo']
-                                item_price += Decimal(item['item_price']) if item['item_price'] else 0
+                                item_price += float(item['item_price']) if item['item_price'] else 0
                                 if item['color']:
                                     if item_color in colors:
                                         colors[item_color] += 1
@@ -5301,7 +5302,7 @@ GridLayout:
                                 item_type = item['type']
                                 item_color = item['color']
                                 item_memo = item['memo']
-                                item_price += Decimal(item['item_price']) if item['item_price'] else 0
+                                item_price += float(item['item_price']) if item['item_price'] else 0
                                 if item['color']:
                                     if item_color in colors:
                                         colors[item_color] += 1
