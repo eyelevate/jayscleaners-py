@@ -9954,15 +9954,16 @@ class PickupScreen(Screen):
         tax = 0
         self.discount_total = 0
         if self.selected_invoices:
+
             for invoice_id in self.selected_invoices:
                 # get invoice total
                 invoices = SYNC.invoice_grab_id(invoice_id)
                 if invoices:
 
-                    total += Decimal(invoices['total'])
+                    total += float(invoices['total'])
                     quantity += int(invoices['quantity'])
-                    subtotal += Decimal(invoices['pretax'])
-                    tax += Decimal(invoices['tax'])
+                    subtotal += float(invoices['pretax'])
+                    tax += float(invoices['tax'])
                     if invoices['discount_id'] is not None:
                         self.discount_id = invoices['discount_id']
 
