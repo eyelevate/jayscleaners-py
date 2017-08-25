@@ -13918,7 +13918,7 @@ class SearchScreen(Screen):
 
         # Pause Schedule
         SCHEDULER.remove_all_jobs()
-        if vars.INVOICE_ID is not None and vars.INVOICE_ID > 0:
+        if vars.INVOICE_ID is not None and int(vars.INVOICE_ID) > 0:
             self.main_popup.title = "Setup Barcode to Items"
             layout = BoxLayout(orientation="vertical")
 
