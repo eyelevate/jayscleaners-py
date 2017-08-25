@@ -637,18 +637,18 @@ class Sync:
             print(e.reason)  # could not save this time around because no internet, move on
             return False
 
-    def rack_invoice(self,invoice_id,rack,rack_date,*args, **kwargs):
+    def rack_invoice(self,racks,*args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/rack-invoice'
         # attempt to connect to server
-        data = parse.urlencode({'invoice_id':invoice_id,'rack': rack,'rack_date': rack_date}).encode('utf-8')
+        data = parse.urlencode({'racks':json.dumps(racks)}).encode('utf-8')
         req = request.Request(url=url, data=data)  # this will make the method "POST"
         try:
             # r = request.urlopen(url)
             r = request.urlopen(req)
             data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             print(data_1)
-            if data_1['status'] is 0:
-                return False
+            if data_1['status'] is False:
+                return data_1['data']
             else:
                 return True
 

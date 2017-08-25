@@ -11698,44 +11698,49 @@ class RackScreen(Screen):
         else:
             formatted_rack = self.rack_number.text.replace("%R", "")
 
-            enter_rack = SYNC.rack_invoice(self.invoice_number.text,formatted_rack,rack_date)
-            if enter_rack:
-                if vars.EPSON:
-                    pr = Printer()
-                    vars.EPSON.write(
-                        pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=3,
-                                    invert=False, smooth=False, flip=False))
-                    if self.edited_rack:
-                        vars.EPSON.write('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
-                            self.invoice_number.text,
-                            self.edited_rack,
-                            formatted_rack))
-                        self.edited_rack = False
-                    else:
-                        vars.EPSON.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
-                self.racks[self.invoice_number.text] = formatted_rack
-                self.invoice_number.text = ''
-                self.rack_number.text = ''
-                self.update_rack_table()
-                self.marked_invoice_number = self.invoice_number.text
+            if vars.EPSON:
+                pr = Printer()
+                vars.EPSON.write(
+                    pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=3,
+                                invert=False, smooth=False, flip=False))
+                if self.edited_rack:
+                    vars.EPSON.write('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
+                        self.invoice_number.text,
+                        self.edited_rack,
+                        formatted_rack))
+                    self.edited_rack = False
+                else:
+                    vars.EPSON.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
+            self.racks[self.invoice_number.text] = formatted_rack
+            self.invoice_number.text = ''
+            self.rack_number.text = ''
+            self.update_rack_table()
+            self.marked_invoice_number = self.invoice_number.text
 
         self.invoice_number.focus = True
 
     def save_racks(self):
 
+        if len(self.racks) > 0:
+
+            enter_rack = SYNC.rack_invoice(self.racks)
+            if enter_rack is False:
+                print('The following racks could not be saved. Please re-enter the racks')
+                print(enter_rack)
+            else:
+                print('Successfully racked invoices')
+
+            # Cut paper
+            if vars.EPSON:
+                pr = Printer()
+                vars.EPSON.write(pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                             invert=False, smooth=False, flip=False))
+                vars.EPSON.write('{}'.format((datetime.datetime.now().strftime('%a %m/%d/%Y %I:%M %p'))))
+                vars.EPSON.write('\n\n\n\n\n\n')
+                vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
         # set user to go back to search screen
         if vars.CUSTOMER_ID:
             self.set_result_status()
-
-        # Cut paper
-        if vars.EPSON:
-            pr = Printer()
-            vars.EPSON.write(pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                                         invert=False, smooth=False, flip=False))
-            vars.EPSON.write('{}'.format((datetime.datetime.now().strftime('%a %m/%d/%Y %I:%M %p'))))
-            vars.EPSON.write('\n\n\n\n\n\n')
-            vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
-
 
 class ReportsScreen(Screen):
     pass
