@@ -12194,78 +12194,79 @@ class SearchScreen(Screen):
         # stop scheduler to get only customer data
 
         # Found customer via where, now display data to screen
-        if len(data) == 1:
-            if len(self.search.text) == 6:
-                vars.INVOICE_ID = self.search.text
-            Clock.schedule_once(self.focus_input)
-            for result in data:
+        if data is not False:
+            if len(data) == 1:
+                if len(self.search.text) == 6:
+                    vars.INVOICE_ID = self.search.text
+                Clock.schedule_once(self.focus_input)
+                for result in data:
 
-                vars.CUSTOMER_ID = result['id']
-                vars.SEARCH_RESULTS_STATUS = True if vars.CUSTOMER_ID else False
+                    vars.CUSTOMER_ID = result['id']
+                    vars.SEARCH_RESULTS_STATUS = True if vars.CUSTOMER_ID else False
 
-                # start syncing in background
-                self.customer_sync()
+                    # start syncing in background
+                    self.customer_sync()
 
-                # last 10 setup
-                vars.update_last_10()
-                # clear the current widget
-                self.invoice_table_body.clear_widgets()
+                    # last 10 setup
+                    vars.update_last_10()
+                    # clear the current widget
+                    self.invoice_table_body.clear_widgets()
 
-                if self.get_invoices is not False:
-                    for inv in self.get_invoices:
-                        self.create_invoice_row(inv)
+                    if self.get_invoices is not False:
+                        for inv in self.get_invoices:
+                            self.create_invoice_row(inv)
 
-                Clock.schedule_once(partial(self.invoice_selected, vars.INVOICE_ID))
-                last_drop = 'Not Available'
+                    Clock.schedule_once(partial(self.invoice_selected, vars.INVOICE_ID))
+                    last_drop = 'Not Available'
 
-                # get the custid data
-                custids = Custid()
-                custid_string = ''
-                if 'custids' in result:
-                    cids = result['custids']
-                    custid_string = custids.make_string(cids)
+                    # get the custid data
+                    custids = Custid()
+                    custid_string = ''
+                    if 'custids' in result:
+                        cids = result['custids']
+                        custid_string = custids.make_string(cids)
 
-                # display data
-                self.cust_info_label.text = 'Customer Info: [color=FF0000]Account[/color]' if result[
-                    'account'] is '1' or result['account'] is True or result['account'] is 1 else 'Customer Info:'
-                self.cust_mark_label.text = custid_string
-                self.customer_id_ti.text = str(vars.CUSTOMER_ID) if vars.CUSTOMER_ID else ''
-                self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
-                self.cust_first_name.text = result['first_name'] if result['first_name'] else ''
-                self.cust_phone.text = Job.make_us_phone(result['phone']) if result['phone'] else ''
-                self.cust_last_drop.text = last_drop
-                self.cust_starch.text = self.get_starch_by_id(result['starch'])
-                self.cust_credit_label.bind(on_ref_press=self.credit_history)
-                self.cust_account_label.bind(on_ref_press=self.account_history_popup)
-                self.cust_credit.text = '${:,.2f}'.format(Decimal(result['credits'])) if result['credits'] else '$0.00'
-                self.cust_account.text = '${:,.2f}'.format(Decimal(result['account_total'])) if result[
-                    'account_total'] else '$0.00'
-                try:
-                    self.cust_invoice_memo.text = result['invoice_memo']
-                except AttributeError:
-                    self.cust_invoice_memo.text = ''
+                    # display data
+                    self.cust_info_label.text = 'Customer Info: [color=FF0000]Account[/color]' if result[
+                        'account'] is '1' or result['account'] is True or result['account'] is 1 else 'Customer Info:'
+                    self.cust_mark_label.text = custid_string
+                    self.customer_id_ti.text = str(vars.CUSTOMER_ID) if vars.CUSTOMER_ID else ''
+                    self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
+                    self.cust_first_name.text = result['first_name'] if result['first_name'] else ''
+                    self.cust_phone.text = Job.make_us_phone(result['phone']) if result['phone'] else ''
+                    self.cust_last_drop.text = last_drop
+                    self.cust_starch.text = self.get_starch_by_id(result['starch'])
+                    self.cust_credit_label.bind(on_ref_press=self.credit_history)
+                    self.cust_account_label.bind(on_ref_press=self.account_history_popup)
+                    self.cust_credit.text = '${:,.2f}'.format(Decimal(result['credits'])) if result['credits'] else '$0.00'
+                    self.cust_account.text = '${:,.2f}'.format(Decimal(result['account_total'])) if result[
+                        'account_total'] else '$0.00'
+                    try:
+                        self.cust_invoice_memo.text = result['invoice_memo']
+                    except AttributeError:
+                        self.cust_invoice_memo.text = ''
 
-                try:
-                    self.cust_important_memo.text = result['important_memo']
-                except AttributeError:
-                    self.cust_important_memo.text = ''
-                custids.close_connection()
+                    try:
+                        self.cust_important_memo.text = result['important_memo']
+                    except AttributeError:
+                        self.cust_important_memo.text = ''
+                    custids.close_connection()
 
-            # show the proper buttons
-            self.history_btn.disabled = False
-            self.edit_customer_btn.disabled = False
-            self.delivery_btn.disabled = False
-            self.reprint_btn.disabled = False
-            self.quick_btn.disabled = False
-            self.pickup_btn.disabled = False
-            self.dropoff_btn.disabled = False
-            # clear the search text input
-            self.search.focus = True
-            self.search.text = ''
+                # show the proper buttons
+                self.history_btn.disabled = False
+                self.edit_customer_btn.disabled = False
+                self.delivery_btn.disabled = False
+                self.reprint_btn.disabled = False
+                self.quick_btn.disabled = False
+                self.pickup_btn.disabled = False
+                self.dropoff_btn.disabled = False
+                # clear the search text input
+                self.search.focus = True
+                self.search.text = ''
 
-        elif len(data) > 1:
-            # show results in new screen search results
-            self.search_results()
+            elif len(data) > 1:
+                # show results in new screen search results
+                self.search_results()
         else:
 
             popup = Popup()
