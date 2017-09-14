@@ -10878,11 +10878,11 @@ class PickupScreen(Screen):
                         old_credits = customer['credits'] if customer['credits'] is not None else 0
                     if customer['account_total'] is not None:
                         old_account_total = Decimal(customer['account_total'])
-            new_credits = float("%0.2f" % (old_credits - credits_spent))
-            new_account_total = float("%0.2f" % (old_account_total + self.total_due))
+            new_credits = float("%0.2f" % (float(old_credits) - float(credits_spent)))
+            new_account_total = float("%0.2f" % (float(old_account_total) + float(self.total_due)))
             data = {
-                'credits': new_credits,
-                'account_total': new_account_total
+                'credits': str(new_credits),
+                'account_total': str(new_account_total)
             }
             customer_pickup_update = SYNC.update_customer_pickup(vars.CUSTOMER_ID, data)
             if customer_pickup_update is not False:
