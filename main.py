@@ -10857,12 +10857,12 @@ class PickupScreen(Screen):
                 new_discount = old_discount + Decimal(self.discount_total)
                 new_total = old_total + Decimal(self.total_due)
                 data = {
-                    'pretax': new_subtotal,
-                    'tax': new_tax,
-                    'aftertax': new_aftertax,
-                    'credit': new_credits,
-                    'discount': new_discount,
-                    'total': new_total
+                    'pretax': str(new_subtotal),
+                    'tax': str(new_tax),
+                    'aftertax': str(new_aftertax),
+                    'credit': str(new_credits),
+                    'discount': str(new_discount),
+                    'total': str(new_total)
                 }
                 check_account = SYNC.update_transaction(vars.CUSTOMER_ID,data)
                 if check_account is not False:
