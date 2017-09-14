@@ -10850,12 +10850,12 @@ class PickupScreen(Screen):
                 old_credit = Decimal(ca['credit'])
                 old_discount = Decimal(ca['discount'])
                 old_total = Decimal(ca['total'])
-                new_subtotal = old_subtotal + self.total_subtotal
-                new_tax = old_tax + self.total_tax
-                new_aftertax = old_aftertax + self.total_amount
+                new_subtotal = old_subtotal + Decimal(self.total_subtotal)
+                new_tax = old_tax + Decimal(self.total_tax)
+                new_aftertax = old_aftertax + Decimal(self.total_amount)
                 new_credits = old_credit + credits_spent
-                new_discount = old_discount + self.discount_total
-                new_total = old_total + self.total_due
+                new_discount = old_discount + Decimal(self.discount_total)
+                new_total = old_total + Decimal(self.total_due)
                 data = {
                     'pretax': new_subtotal,
                     'tax': new_tax,
