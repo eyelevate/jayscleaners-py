@@ -10857,12 +10857,12 @@ class PickupScreen(Screen):
                 new_discount = old_discount + Decimal(self.discount_total)
                 new_total = old_total + Decimal(self.total_due)
                 data = {
-                    'pretax': str(new_subtotal),
-                    'tax': str(new_tax),
-                    'aftertax': str(new_aftertax),
-                    'credit': str(new_credits),
-                    'discount': str(new_discount),
-                    'total': str(new_total)
+                    'pretax': str(self.total_subtotal),
+                    'tax': str(self.total_tax),
+                    'aftertax': str(self.total_amount),
+                    'credit': str(credits_spent),
+                    'discount': str(self.discount_total),
+                    'total': str(self.total_due)
                 }
                 check_account = SYNC.update_transaction(vars.CUSTOMER_ID,data)
                 if check_account is not False:
@@ -10891,16 +10891,12 @@ class PickupScreen(Screen):
             # save transaction_id to Transaction and each invoice
             if self.selected_invoices:
                 invoices = Invoice()
-                account_trans_id = None
-                if transaction_id > 0:
-                    account_trans_id = transaction_id
-                else:
-                    for ca in checks:
-                        account_trans_id = ca['trans_id']
+                account_trans_id = transaction_id
+
                 for invoice_id in self.selected_invoices:
                     data = {
                         'status':5,
-                        'transaction_id': int(account_trans_id)
+                        'transaction_id': str(account_trans_id)
                     }
                     invoices_update = SYNC.update_invoice_pickup(invoice_id,data)
                     if invoices_update is not False:
