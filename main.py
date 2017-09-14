@@ -10881,8 +10881,7 @@ class PickupScreen(Screen):
             new_credits = float("%0.2f" % (float(old_credits) - float(credits_spent)))
             new_account_total = float("%0.2f" % (float(old_account_total) + float(self.total_due)))
             data = {
-                'credits': str(new_credits),
-                'account_total': str(new_account_total)
+                'credits': str(credits_spent)
             }
             customer_pickup_update = SYNC.update_customer_pickup(vars.CUSTOMER_ID, data)
             if customer_pickup_update is not False:
