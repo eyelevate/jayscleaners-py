@@ -7606,43 +7606,43 @@ class HistoryScreen(Screen):
         self.tags_grid.ids.tags_table.add_widget(th5)
         invoices = SYNC.invoice_grab_id(vars.INVOICE_ID)
         if invoices:
-            for inv in invoices:
-                invitems = inv['invoice_items']
-                if len(invitems) > 0:
-                    for ii in invitems:
-                        invoice_items_id = ii['id']
-                        iitem_id = ii['item_id']
-                        tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                        item_name = InventoryItem().getItemName(iitem_id)
-                        item_color = ii['color']
-                        item_memo = ii['memo']
-                        if invoice_items_id in self.selected_tags_list:
-                            trtd1 = Factory.TagsSelectedButton(text=str(invoice_items_id),
-                                                               on_press=partial(self.select_tag, invoice_items_id))
-                            trtd2 = Factory.TagsSelectedButton(text=str(item_name),
-                                                               on_press=partial(self.select_tag, invoice_items_id))
-                            trtd3 = Factory.TagsSelectedButton(text=str(item_color),
-                                                               on_press=partial(self.select_tag, invoice_items_id))
-                            trtd4 = Factory.TagsSelectedButton(text=str(item_memo),
-                                                               on_press=partial(self.select_tag, invoice_items_id))
-                            trtd5 = Factory.TagsSelectedButton(text=str(tags_to_print),
-                                                               on_press=partial(self.select_tag, invoice_items_id))
-                        else:
-                            trtd1 = Button(text=str(invoice_items_id),
-                                           on_press=partial(self.select_tag, invoice_items_id))
-                            trtd2 = Button(text=str(item_name),
-                                           on_press=partial(self.select_tag, invoice_items_id))
-                            trtd3 = Button(text=str(item_color),
-                                           on_press=partial(self.select_tag, invoice_items_id))
-                            trtd4 = Button(text=str(item_memo),
-                                           on_press=partial(self.select_tag, invoice_items_id))
-                            trtd5 = Button(text=str(tags_to_print),
-                                           on_press=partial(self.select_tag, invoice_items_id))
-                        self.tags_grid.ids.tags_table.add_widget(trtd1)
-                        self.tags_grid.ids.tags_table.add_widget(trtd2)
-                        self.tags_grid.ids.tags_table.add_widget(trtd3)
-                        self.tags_grid.ids.tags_table.add_widget(trtd4)
-                        self.tags_grid.ids.tags_table.add_widget(trtd5)
+
+            invitems = invoices['invoice_items']
+            if len(invitems) > 0:
+                for ii in invitems:
+                    invoice_items_id = ii['id']
+                    iitem_id = ii['item_id']
+                    tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                    item_name = InventoryItem().getItemName(iitem_id)
+                    item_color = ii['color']
+                    item_memo = ii['memo']
+                    if invoice_items_id in self.selected_tags_list:
+                        trtd1 = Factory.TagsSelectedButton(text=str(invoice_items_id),
+                                                           on_press=partial(self.select_tag, invoice_items_id))
+                        trtd2 = Factory.TagsSelectedButton(text=str(item_name),
+                                                           on_press=partial(self.select_tag, invoice_items_id))
+                        trtd3 = Factory.TagsSelectedButton(text=str(item_color),
+                                                           on_press=partial(self.select_tag, invoice_items_id))
+                        trtd4 = Factory.TagsSelectedButton(text=str(item_memo),
+                                                           on_press=partial(self.select_tag, invoice_items_id))
+                        trtd5 = Factory.TagsSelectedButton(text=str(tags_to_print),
+                                                           on_press=partial(self.select_tag, invoice_items_id))
+                    else:
+                        trtd1 = Button(text=str(invoice_items_id),
+                                       on_press=partial(self.select_tag, invoice_items_id))
+                        trtd2 = Button(text=str(item_name),
+                                       on_press=partial(self.select_tag, invoice_items_id))
+                        trtd3 = Button(text=str(item_color),
+                                       on_press=partial(self.select_tag, invoice_items_id))
+                        trtd4 = Button(text=str(item_memo),
+                                       on_press=partial(self.select_tag, invoice_items_id))
+                        trtd5 = Button(text=str(tags_to_print),
+                                       on_press=partial(self.select_tag, invoice_items_id))
+                    self.tags_grid.ids.tags_table.add_widget(trtd1)
+                    self.tags_grid.ids.tags_table.add_widget(trtd2)
+                    self.tags_grid.ids.tags_table.add_widget(trtd3)
+                    self.tags_grid.ids.tags_table.add_widget(trtd4)
+                    self.tags_grid.ids.tags_table.add_widget(trtd5)
 
         pass
 
