@@ -6623,7 +6623,7 @@ class HistoryScreen(Screen):
 
         # create Tbody TR
         self.invoice_table_body.clear_widgets()
-        if len(vars.SEARCH_RESULTS) > 0:
+        if vars.SEARCH_RESULTS is not False:
             for cust in vars.SEARCH_RESULTS:
                 self.create_invoice_row(cust)
 
@@ -6642,7 +6642,7 @@ class HistoryScreen(Screen):
 
     def create_invoice_row(self, row, *args, **kwargs):
         """ Creates invoice table row and displays it to screen """
-        check_invoice_id = int(vars.INVOICE_ID) if vars.INVOICE_ID else vars.INVOICE_ID
+        check_invoice_id = vars.INVOICE_ID
         invoice_id = row['id']
         company_id = row['company_id']
         quantity = row['quantity']
@@ -7544,33 +7544,32 @@ class HistoryScreen(Screen):
                                    size_hint=(1, 0.9))
         self.tags_grid = Factory.TagsGrid()
         invoices = SYNC.invoice_grab_id(vars.INVOICE_ID)
-        if invoices:
-            for inv in invoices:
-                invitems = inv['invoice_items']
+        if invoices is not False:
+            invitems = invoices['invoice_items']
 
-                if invitems:
-                    for ii in invitems:
-                        invoice_items_id = ii['invoice_items_id']
-                        iitem_id = ii['item_id']
-                        tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                        item_name = InventoryItem().getItemName(iitem_id)
-                        item_color = ii['color']
-                        item_memo = ii['memo']
-                        trtd1 = Button(text=str(invoice_items_id),
-                                       on_press=partial(self.select_tag, invoice_items_id))
-                        trtd2 = Button(text=str(item_name),
-                                       on_press=partial(self.select_tag, invoice_items_id))
-                        trtd3 = Button(text=str(item_color),
-                                       on_press=partial(self.select_tag, invoice_items_id))
-                        trtd4 = Button(text=str(item_memo),
-                                       on_press=partial(self.select_tag, invoice_items_id))
-                        trtd5 = Button(text=str(tags_to_print),
-                                       on_press=partial(self.select_tag, invoice_items_id))
-                        self.tags_grid.ids.tags_table.add_widget(trtd1)
-                        self.tags_grid.ids.tags_table.add_widget(trtd2)
-                        self.tags_grid.ids.tags_table.add_widget(trtd3)
-                        self.tags_grid.ids.tags_table.add_widget(trtd4)
-                        self.tags_grid.ids.tags_table.add_widget(trtd5)
+            if invitems:
+                for ii in invitems:
+                    invoice_items_id = ii['invoice_items_id']
+                    iitem_id = ii['item_id']
+                    tags_to_print = InventoryItem().tagsToPrint(iitem_id)
+                    item_name = InventoryItem().getItemName(iitem_id)
+                    item_color = ii['color']
+                    item_memo = ii['memo']
+                    trtd1 = Button(text=str(invoice_items_id),
+                                   on_press=partial(self.select_tag, invoice_items_id))
+                    trtd2 = Button(text=str(item_name),
+                                   on_press=partial(self.select_tag, invoice_items_id))
+                    trtd3 = Button(text=str(item_color),
+                                   on_press=partial(self.select_tag, invoice_items_id))
+                    trtd4 = Button(text=str(item_memo),
+                                   on_press=partial(self.select_tag, invoice_items_id))
+                    trtd5 = Button(text=str(tags_to_print),
+                                   on_press=partial(self.select_tag, invoice_items_id))
+                    self.tags_grid.ids.tags_table.add_widget(trtd1)
+                    self.tags_grid.ids.tags_table.add_widget(trtd2)
+                    self.tags_grid.ids.tags_table.add_widget(trtd3)
+                    self.tags_grid.ids.tags_table.add_widget(trtd4)
+                    self.tags_grid.ids.tags_table.add_widget(trtd5)
         inner_layout_1.add_widget(self.tags_grid)
         inner_layout_2 = BoxLayout(orientation="horizontal",
                                    size_hint=(1, 0.1))
