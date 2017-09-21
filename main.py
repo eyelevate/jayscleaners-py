@@ -7544,7 +7544,7 @@ class HistoryScreen(Screen):
 
             if invitems:
                 for ii in invitems:
-                    invoice_items_id = ii['invoice_items_id']
+                    invoice_items_id = ii['id']
                     iitem_id = ii['item_id']
                     tags_to_print = InventoryItem().tagsToPrint(iitem_id)
                     item_name = InventoryItem().getItemName(iitem_id)
