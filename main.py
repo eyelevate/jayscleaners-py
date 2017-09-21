@@ -7610,7 +7610,7 @@ class HistoryScreen(Screen):
                 invitems = inv['invoice_items']
                 if len(invitems) > 0:
                     for ii in invitems:
-                        invoice_items_id = ii['invoice_items_id']
+                        invoice_items_id = ii['id']
                         iitem_id = ii['item_id']
                         tags_to_print = InventoryItem().tagsToPrint(iitem_id)
                         item_name = InventoryItem().getItemName(iitem_id)
@@ -7718,7 +7718,7 @@ class HistoryScreen(Screen):
                     tags_to_print = InventoryItem().tagsToPrint(iitem_id)
                     item_name = InventoryItem().getItemName(iitem_id)
                     item_color = ii['color']
-                    invoice_item_id = ii['invoice_items_id']
+                    invoice_item_id = ii['id']
                     laundry_tag = InventoryItem().getLaundry(iitem_id)
                     memo_string = ii['memo']
                     if laundry_tag:
@@ -7873,7 +7873,7 @@ class HistoryScreen(Screen):
                         tags_to_print = InventoryItem().tagsToPrint(iitem_id)
                         item_name = InventoryItem().getItemName(iitem_id)
                         item_color = inv_items['color']
-                        invoice_item_id = inv_items['invoice_items_id']
+                        invoice_item_id = inv_items['id']
                         laundry_tag = InventoryItem().getLaundry(iitem_id)
                         memo_string = inv_items['memo']
                         if laundry_tag:
