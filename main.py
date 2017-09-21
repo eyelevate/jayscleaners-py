@@ -1893,8 +1893,6 @@ GridLayout:
         memo_grid_layout = Factory.GridLayoutForScrollView(row_default_height='50sp',
                                                            cols=4)
         mmos = Memo()
-        memos = mmos.where({'company_id': vars.COMPANY_ID,
-                            'ORDER_BY': 'ordered asc'})
         memos = SYNC.memos_query(vars.COMPANY_ID)
         if memos:
             for memo in memos:
@@ -5775,9 +5773,6 @@ class EditCustomerScreen(Screen):
 
             customers = User()
             customers.user_id = vars.CUSTOMER_ID
-
-            # data = {'user_id': vars.CUSTOMER_ID}
-            # customer = customers.where(data)
             customer = SYNC.customers_grab(vars.CUSTOMER_ID)
             self.shirt_finish_spinner.bind(text=self.select_shirts_finish)
             self.shirt_preference_spinner.bind(text=self.select_shirts_preference)
@@ -6007,7 +6002,7 @@ class EditCustomerScreen(Screen):
         popup.size = 800, 600
         popup.title = 'Marks deleted'
         marks = Custid()
-        custids = marks.where({'mark': '"{}"'.format(mark)})
+        # custids = marks.where({'mark': '"{}"'.format(mark)})
         delete_mark = SYNC.delete_mark(mark)
         if delete_mark:
             popup.content = Builder.load_string(KV.popup_alert('Mark has been succesfully deleted.'))
@@ -6851,7 +6846,7 @@ class HistoryScreen(Screen):
 
     def items_table_update(self):
         self.items_table.clear_widgets()
-        invoices = Invoice().where({'invoice_id': vars.INVOICE_ID}, deleted_at=False)
+
         invoices = SYNC.invoice_grab_id(vars.INVOICE_ID)
         inv_items = []
         invoice_deleted = False
@@ -6879,7 +6874,7 @@ class HistoryScreen(Screen):
                 inventory_id = itm_srch['inventory_id'] if itm_srch is not False else None
 
 
-                inventories = Inventory().where({'inventory_id': inventory_id})
+
                 inventories = SYNC.inventory_grab(inventory_id)
                 laundry = inventories['laundry'] if inventories is not False else 0
 
@@ -8083,7 +8078,7 @@ class InventoriesScreen(Screen):
                                     row_force_default=True,
                                     row_default_height='50sp',
                                     spacing='2sp')
-        inventories = Inventory().where({'id': id})
+
         inventories = SYNC.inventory_grab(id)
         if inventories is not False:
             inventory_name = inventories['name']
@@ -8874,40 +8869,40 @@ class InvoiceDetailsScreen(Screen):
             # get the transaction information
             transaction_id = invoices['transaction_id']
             transactions = Transaction().where({'transaction_id': transaction_id})
+            transactions = SYNC.transaction_grab(transaction_id)
             if transactions:
-                for transaction in transactions:
-                    payment_type = transaction['type']
-                    discount_pre = transaction['discount'] if transaction['discount'] else 0
-                    discount_total = discount_pre + 0
-                    tendered_total = transaction['tendered'] if transaction['tendered'] else 0
-                    if payment_type == 1:
-                        transaction_type = 'Credit'
-                        tendered = invoices['total'] - discount_total
+                payment_type = transactions['type']
+                discount_pre = transactions['discount'] if transactions['discount'] else 0
+                discount_total = discount_pre + 0
+                tendered_total = transactions['tendered'] if transactions['tendered'] else 0
+                if payment_type == 1:
+                    transaction_type = 'Credit'
+                    tendered = invoices['total'] - discount_total
 
-                    elif payment_type == 2:
-                        transaction_type = 'Cash'
-                    elif payment_type == 3:
-                        transaction_type = 'Check'
-                        tendered_total = invoices['total'] - discount_total
-                    else:
-                        transaction_type = ''
+                elif payment_type == 2:
+                    transaction_type = 'Cash'
+                elif payment_type == 3:
+                    transaction_type = 'Check'
+                    tendered_total = invoices['total'] - discount_total
+                else:
+                    transaction_type = ''
 
-                    last4 = transaction['last_four']
-                    pickup_date = transaction['created_at'] if transaction['created_at'] else ''
+                last4 = transactions['last_four']
+                pickup_date = transactions['created_at'] if transactions['created_at'] else ''
 
-                    discount = '${:,.2f}'.format(transaction['discount']) if transaction['discount'] else '$0.00'
-                    # need to add in credits
-                    credit = '$0.00'
-                    due_amt = invoices['total'] - discount_total - tendered_total
-                    due = '${:,.2f}'.format(due_amt)
+                discount = '${:,.2f}'.format(transactions['discount']) if transactions['discount'] else '$0.00'
+                # need to add in credits
+                credit = '$0.00'
+                due_amt = invoices['total'] - discount_total - tendered_total
+                due = '${:,.2f}'.format(due_amt)
 
-                    self.pickup_label.text = '[color=000000]{}[/color]'.format(pickup_date)
-                    self.payment_type_label.text = '[color=000000]{}[/color]'.format(transaction_type)
-                    self.last4_label.text = '[color=000000]{}[/color]'.format(last4)
-                    self.discount_label.text = '[color=000000]{}[/color]'.format(discount)
-                    self.credit_label.text = '[color=000000]{}[/color]'.format(credit)
-                    self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(due)
-                    self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(tendered_total))
+                self.pickup_label.text = '[color=000000]{}[/color]'.format(pickup_date)
+                self.payment_type_label.text = '[color=000000]{}[/color]'.format(transaction_type)
+                self.last4_label.text = '[color=000000]{}[/color]'.format(last4)
+                self.discount_label.text = '[color=000000]{}[/color]'.format(discount)
+                self.credit_label.text = '[color=000000]{}[/color]'.format(credit)
+                self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(due)
+                self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(tendered_total))
             else:
                 self.pickup_label.text = '[color=000000]{}[/color]'.format('')
                 self.payment_type_label.text = '[color=000000]{}[/color]'.format('')
