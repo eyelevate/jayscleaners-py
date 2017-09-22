@@ -15282,7 +15282,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         store_hours = Company().get_store_hours(vars.COMPANY_ID)
         # schedule dates
         addresses = Address().where({'address_id': self.address_id})
-        addresses = SYNC.address_grab(address_id)
+        addresses = SYNC.address_grab(self.address_id)
         zipcode = False
         if addresses:
             zipcode = addresses['zipcode']
