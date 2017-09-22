@@ -9975,8 +9975,9 @@ class PickupScreen(Screen):
 
         if self.credits or self.discount_total:
 
-            self.total_due = 0 if Decimal(self.credits) >= Decimal(self.total_amount) else float("%0.2f" % (
-                Decimal(self.total_amount) - Decimal(self.credits)))
+            self.total_due = 0 if float(self.credits) >= float(self.total_amount) else float("%0.2f" % (
+                float(self.total_amount) - float(self.credits)))
+            print(self.total_due)
         else:
             self.total_due = float('%0.2f' % (self.total_amount))
 
