@@ -1076,10 +1076,29 @@ class Sync:
             print(e.reason)  # could not save this time around because no internet, move on
             return False
 
-    def pay_account(self, transaction_id, trans, *args, **kwargs):
+    def transaction_payment_query(self, customer_id, *args, **kwargs):
+        print(customer_id)
+        url = 'http://www.jayscleaners.com/admins/api/transaction-payment-query'
+        # attempt to connect to server
+        data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    def pay_account(self, transaction_ids, tendered, customer_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/pay-account'
         # attempt to connect to server
-        data = parse.urlencode({'transaction_id': transaction_id,'trans':json.dumps(trans)}).encode('utf-8')
+        data = parse.urlencode({'transaction_ids': json.dumps(transaction_ids),'tendered':tendered,'customer_id':customer_id}).encode('utf-8')
         req = request.Request(url=url, data=data)  # this will make the method "POST"
         try:
             # r = request.urlopen(url)

@@ -15891,14 +15891,14 @@ A{c},20,1,1,1,1,N,"{tag}"
         self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
         self.inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
         transactions = Transaction()
-        trans = SYNC.transaction_query(vars.CUSTOMER_ID)
+        trans = SYNC.transaction_payment_query(vars.CUSTOMER_ID)
         if trans is not False:
             for tran in trans:
                 billing_period_format = datetime.datetime.strptime(tran['created_at'], "%Y-%m-%d %H:%M:%S")
                 billing_period = billing_period_format.strftime("%b %Y")
-                due_amount = str('$%.2f' % (Decimal(tran['total'])))
+                due_amount = str('$%.2f' % (float(tran['total'])))
                 account_paid_format = tran['account_paid'] if tran['account_paid'] else False
-                account_paid = str('$%.2f' % (account_paid_format)) if account_paid_format else 'Not Paid'
+                account_paid = str('$%.2f' % (float(account_paid_format))) if account_paid_format else 'Not Paid'
                 if tran['status'] is 1:
                     status = 'Paid'
 
@@ -15974,10 +15974,10 @@ A{c},20,1,1,1,1,N,"{tag}"
         account_running_balance = 0
         if customers:
             for customer in customers:
-                account_running_balance = Decimal(customer['account_total']) if Decimal(customer['account_total']) > 0 else 0
+                account_running_balance = float(customer['account_total']) if float(customer['account_total']) > 0 else 0
 
         if float(account_running_balance) < float(due):
-            due = Decimal(account_running_balance)
+            due = account_running_balance
 
         subtotal_label = Factory.BottomLeftFormLabel(text="Subtotal")
         subtotal_input = Factory.CenterVerticalTextInput(text=str('%.2f' % (subtotal)),
@@ -16093,60 +16093,36 @@ A{c},20,1,1,1,1,N,"{tag}"
 
         # save data
         if errors is 0:
-            saved = 0
-            for transaction_id in self.selected_account_tr:
 
-                tran = SYNC.transaction_grab(transaction_id)
-                previous_total = 0
-                if tran is not False:
-                    previous_total = tran['total']
-                account_paid_on = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+            edit_transaction = SYNC.pay_account(self.selected_account_tr, self.tendered_input.text, vars.CUSTOMER_ID)
+            if edit_transaction is not False:
+                popup = Popup()
+                popup.title = 'Account Transaction Paid!'
+                content = KV.popup_alert('Successfully paid account transaction.')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+                self.payment_popup.dismiss()
+                self.main_popup.dismiss()
+                vars.SEARCH_RESULTS_STATUS = True
+                self.reset()
+            else:
+                popup = Popup()
+                popup.title = 'Could not save user data'
+                content = KV.popup_alert('User table error, could not save. Please contact administrator')
+                popup.content = Builder.load_string(content)
+                popup.open()
+                # Beep Sound
+                sys.stdout.write('\a')
+                sys.stdout.flush()
+                self.payment_popup.dismiss()
+                self.main_popup.dismiss()
+                vars.SEARCH_RESULTS_STATUS = True
+                self.reset()
 
-                data = {'tendered': self.tendered_input.text,
-                        'account_paid': str(previous_total),
-                        'account_paid_on': account_paid_on,
-                        'status': 1,
-                        'type': self.payment_type}
-                edit_transaction = SYNC.pay_account(transaction_id,data)
-                if edit_transaction is not False:
-                    saved += 1
-            if saved > 0:
-                customers = User()
-                custs = SYNC.customers_grab(vars.CUSTOMER_ID)
-                previous_account_total = 0
-                if custs:
-                    for cust in custs:
-                        previous_account_total = cust['account_total']
 
-                new_account_total = '%.2f' % (Decimal(previous_account_total) - Decimal(self.total_input.text))
-                update = SYNC.pay_account_customer(vars.CUSTOMER_ID,new_account_total)
-                if update is not False:
-
-                    popup = Popup()
-                    popup.title = 'Account Transaction Paid!'
-                    content = KV.popup_alert('Successfully paid account transaction.')
-                    popup.content = Builder.load_string(content)
-                    popup.open()
-                    # Beep Sound
-                    sys.stdout.write('\a')
-                    sys.stdout.flush()
-                    self.payment_popup.dismiss()
-                    self.main_popup.dismiss()
-                    vars.SEARCH_RESULTS_STATUS = True
-                    self.reset()
-                else:
-                    popup = Popup()
-                    popup.title = 'Could not save user data'
-                    content = KV.popup_alert('User table error, could not save. Please contact administrator')
-                    popup.content = Builder.load_string(content)
-                    popup.open()
-                    # Beep Sound
-                    sys.stdout.write('\a')
-                    sys.stdout.flush()
-                    self.payment_popup.dismiss()
-                    self.main_popup.dismiss()
-                    vars.SEARCH_RESULTS_STATUS = True
-                    self.reset()
 
         # update server
         pass
@@ -16168,7 +16144,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th4))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th5))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
-        transactions = Transaction()
+        # transactions = Transaction()
         trans = SYNC.transaction_query(vars.CUSTOMER_ID)
         if trans is not False:
             for tran in trans:
@@ -16177,10 +16153,10 @@ A{c},20,1,1,1,1,N,"{tag}"
                 due_amount = str('$%.2f' % (Decimal(tran['total'])))
                 account_paid_format = tran['account_paid'] if tran['account_paid'] else False
                 account_paid = str('$%.2f' % (Decimal(account_paid_format))) if account_paid_format else 'Not Paid'
-                if tran['status'] is 1:
+                if tran['status'] is '1':
                     status = 'Paid'
 
-                elif tran['status'] is 2:
+                elif tran['status'] is '2':
                     status = 'Bill Sent'
                 else:
                     status = 'Current'
