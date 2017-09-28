@@ -16093,7 +16093,6 @@ A{c},20,1,1,1,1,N,"{tag}"
 
         # save data
         if errors is 0:
-
             edit_transaction = SYNC.pay_account(self.selected_account_tr, self.tendered_input.text, vars.CUSTOMER_ID)
             if edit_transaction is not False:
                 popup = Popup()
