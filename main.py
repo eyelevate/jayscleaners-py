@@ -15770,7 +15770,7 @@ A{c},20,1,1,1,1,N,"{tag}"
             old_credit = 0
             if custs:
                 for customer in custs:
-                    old_credit = customer['credits'] if customer['credits'] is not None else 0
+                    old_credit = float(customer['credits']) if customer['credits'] is not None else 0
             added_credits = float(self.credit_amount.text) if self.credit_amount.text else 0
             new_credits = old_credit + added_credits
             edit_credit = SYNC.edit_credit(vars.CUSTOMER_ID,new_credits)
