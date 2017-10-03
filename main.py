@@ -232,6 +232,12 @@ class MainScreen(Screen):
         print(value)
 
     def login_show(self):
+        first = round(0.011,2)
+        second = round(0.036,2)
+        third = round(0.4,2)
+        fourth = round(0.199,2)
+        print(float(0.011))
+        print('{}-{}-{}-{}'.format(first,second,third,fourth))
         self.login_popup = Popup()
         self.login_popup.size_hint = (None, None)
         self.login_popup.size = '400sp', '200sp'
@@ -2738,7 +2744,7 @@ GridLayout:
                 save_invoice[inventory_id] = []
                 save_totals[inventory_id] = {'quantity': 0,
                                              'tags': 0,
-                                             'subtotal': 0,
+                                             'subtotal': float(0.00),
                                              'tax': 0,
                                              'discount': 0,
                                              'total': 0}
@@ -2748,7 +2754,7 @@ GridLayout:
                             save_invoice[inventory_id].append(iivalue)
                             save_totals[inventory_id]['quantity'] += iivalue['qty']
                             save_totals[inventory_id]['tags'] += iivalue['tags']
-                            save_totals[inventory_id]['subtotal'] += Decimal(iivalue['item_price'])
+                            save_totals[inventory_id]['subtotal'] += round(float(iivalue['item_price']),2)
                             save_totals[inventory_id]['discount'] += 0
         if save_invoice:
             print_sync_invoice = {}  # if synced to server
@@ -2774,19 +2780,14 @@ GridLayout:
                             else:
                                 inventory_discount = 0
 
-                    tax_amount = (float(save_totals[inventory_id]['subtotal']) - float(inventory_discount)) * float(vars.TAX_RATE)
-
-                    total = (float(save_totals[inventory_id]['subtotal']) - float(inventory_discount)) + float(tax_amount)
 
                     # set invoice data to save
                     data = {
                         'company_id':vars.COMPANY_ID,
                         'customer_id': vars.CUSTOMER_ID,
                         'quantity': save_totals[inventory_id]['quantity'],
-                        'pretax': float('%.2f' % (save_totals[inventory_id]['subtotal'])),
+                        'pretax': str(save_totals[inventory_id]['subtotal']),
                         'discount_id': self.discount_id if self.discount_id is not None else '',
-                        'tax': float('%.2f' % (tax_amount)),
-                        'total': float('%.2f' % (total)),
                         'memo': '',
                         'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S")),
                         'status': 1
@@ -2805,6 +2806,7 @@ GridLayout:
                             'total': save_invoice_check['total']
                         }
                         save_invoice_items[save_invoice_check['id']] = invoice_group
+                        print(save_invoice_items);
                         idx = -1
                         colors = {}
                         print_invoice[save_invoice_check['id']] = {}
@@ -2926,9 +2928,8 @@ GridLayout:
 
                     for item in value:
 
-                        item_price = Decimal(item['item_price']) if item['item_price'] else 0
-                        item_tax = float('%.2f' % (Decimal(item_price) * Decimal(vars.TAX_RATE)))
-                        item_total = float('%.2f' % (Decimal(item_price) * (1 + Decimal(vars.TAX_RATE))))
+                        item_price = item['item_price'] if item['item_price'] else 0
+
                         # set invoice data to save
                         data = {
                             'company_id': vars.COMPANY_ID,
@@ -2940,8 +2941,7 @@ GridLayout:
                             'color': item['color'],
                             'memo': item['memo'],
                             'pretax': str(item_price),
-                            'tax': str(item_tax),
-                            'total': str(item_total),
+
                             'status': item['status']
                         }
                         save_invoice_items = SYNC.create_invoice_item(data)

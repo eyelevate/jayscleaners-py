@@ -2,6 +2,7 @@ import re
 import time
 import datetime
 import phonenumbers
+from decimal import Decimal, ROUND_05UP, ROUND_HALF_UP, DecimalException
 
 
 class Job:
@@ -44,5 +45,13 @@ class Job:
         x_phone = phonenumbers.parse('{}{}'.format(country_code,str(num)),None)
         return phonenumbers.format_number(x_phone, phonenumbers.PhoneNumberFormat.NATIONAL)
 
+    def round_up(self, amount):
+        cents = Decimal('0.01')
+        try:
+            currency = Decimal(amount).quantize(cents, ROUND_HALF_UP)
+        except (ValueError, DecimalException):
+            currency = Decimal(amount)
+
+        return currency
 
 
