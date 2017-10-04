@@ -7,6 +7,9 @@
 #: import DropDown kivy.uix.dropdown
 #: import Popup kivy.uix.popup.Popup
 #: import ListView kivy.uix.listview
+#: import DictAdapter kivy.adapters.listadapter.ListAdapter
+#: import ListAdapter kivy.adapters.listadapter.ListAdapter
+#: import ListItemButton kivy.uix.listview.ListItemButton
 #: import ScrollView kivy.uix.scrollview
 #: import FileChooser kivy.uix.filechooser
 #: import FileChooserListView kivy.uix.filechooser
@@ -14,6 +17,10 @@
 #: import ColorPicker kivy.uix.colorpicker
 
 #:include kv/library.kv
+
+<ListItemButton>:
+    size: (100, '48dp')
+
 
 ScreenManagement:
     transition: NoTransition()

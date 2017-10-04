@@ -57,8 +57,6 @@ from calendar import Calendar
 from decimal import *
 import urllib
 from urllib import error, request, parse
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.schedulers import SchedulerNotRunningError
 
 getcontext().prec = 3
 from kv_generator import KvString
@@ -92,7 +90,8 @@ from kivy.uix.filechooser import FileChooser
 from kivy.uix.filechooser import FileChooserListView
 from kivy.uix.filechooser import FileChooserIconView
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.listview import ListView
+from kivy.adapters.listadapter import ListAdapter
+from kivy.uix.listview import ListView, ListItemButton
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.stacklayout import StackLayout
 from kivy.lang import Builder
@@ -116,6 +115,7 @@ from kivy.graphics.instructions import Canvas
 from kivy.graphics import Rectangle, Color
 from kivy.uix.widget import WidgetException
 from kivy.clock import Clock
+from kivy.config import Config
 
 auth_user = User()
 Job = Job()
@@ -138,70 +138,9 @@ workQueue = queue.Queue(10)
 list_len = []
 printer_list = {}
 SYNC_POPUP = Popup()
-SCHEDULER = BackgroundScheduler()
-SCHEDULER.start()
 
+# config the sections
 
-# handles multithreads for database sync
-class MultiThread(threading.Thread):
-    def __init__(self, threadID, name, q):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = name
-        self.q = q
-
-    def run(self):
-        print("Starting " + self.name)
-        process_data(threadName=self.name, q=self.q)
-        print("Exiting " + self.name)
-
-
-def process_data(threadName, q):
-    while not vars.EXITFLAG:
-        queueLock.acquire()
-        if not workQueue.empty():
-            data = q.get()
-            # do method in here
-            if data == "Sync":
-                SYNC.run_sync()
-
-            queueLock.release()
-            print("{} processing {}".format(threadName, data))
-        else:
-            queueLock.release()
-        time.sleep(0.1)
-
-
-def threads_start():
-    vars.THREADID += 1
-    thread = MultiThread(vars.THREADID, 'Thread-{}'.format(len(vars.WORKLIST)), workQueue)
-    thread.start()
-    vars.THREADS.append(thread)
-
-    # Fill the queue
-    queueLock.acquire()
-    for word in vars.WORKLIST:
-        workQueue.put(word)
-    queueLock.release()
-
-    # Wait for queue to empty
-    while not workQueue.empty():
-        pass
-
-    # Notify threads it's time to exit
-    vars.EXITFLAG = True
-
-    # Wait for all threads to complete
-    thread.join()
-
-    # reset query variables
-    vars.THREADS = []
-    vars.WORKLIST = []
-    vars.EXITFLAG = False
-    vars.THREADID = 1
-
-    print("Exiting Main Thread")
-    SYNC_POPUP.dismiss()
 
 
 # SCREEN CLASSES
@@ -232,12 +171,7 @@ class MainScreen(Screen):
         print(value)
 
     def login_show(self):
-        first = round(0.011,2)
-        second = round(0.036,2)
-        third = round(0.4,2)
-        fourth = round(0.199,2)
-        print(float(0.011))
-        print('{}-{}-{}-{}'.format(first,second,third,fourth))
+
         self.login_popup = Popup()
         self.login_popup.size_hint = (None, None)
         self.login_popup.size = '400sp', '200sp'
@@ -322,7 +256,7 @@ class MainScreen(Screen):
                     auth_user.company_id = user1['company_id']
                     vars.COMPANY_ID = user1['company_id']
                     SYNC.company_id = user1['company_id']
-                    print('successfull server auth - company_id = {}'.format(vars.COMPANY_ID))
+                    
                 print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
                 if print_data:
                     for pr in print_data:
@@ -421,7 +355,6 @@ class MainScreen(Screen):
         t1.join()
         SYNC_POPUP.dismiss()
         # print('initializing auto-sync every 20 seconds')
-        # SCHEDULER.start()
 
         # sync.get_chunk(table='invoice_items',start=140001,end=150000)
 
@@ -614,7 +547,7 @@ class MainScreen(Screen):
 
     def sync_db(self, *args, **kwargs):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        pass
 
 
     def test_sys(self):
@@ -808,7 +741,7 @@ class ColorsScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        # 
         self.set_color_table()
         self.color_hex = ''
         self.color_id = ''
@@ -1140,7 +1073,7 @@ class CompanyScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        # 
 
         companies = SYNC.company_grab(vars.COMPANY_ID)
         if companies:
@@ -1337,8 +1270,6 @@ class CompanyScreen(Screen):
                                   'store_hours': self.store_hours
                                   })
         if put:
-            vars.WORKLIST.append("Sync")
-            threads_start()
             popup = Popup()
             popup.title = 'Company Update'
             content = KV.popup_alert('Successfully updated company!')
@@ -1401,10 +1332,11 @@ class DropoffScreen(Screen):
     colors_table_main = ObjectProperty(None)
     customer_id_backup = None
     discount_id = None
+    item_rows = {}
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+
         # reset the inventory table
         self.inventory_panel.clear_widgets()
         self.get_inventory()
@@ -1468,6 +1400,7 @@ class DropoffScreen(Screen):
         self.memo_list = []
         self.colors_table_main.clear_widgets()
         self.get_colors_main()
+        self.item_rows = {}
         taxes = SYNC.taxes_query(vars.COMPANY_ID,1)
         if taxes:
             for tax in taxes:
@@ -1491,16 +1424,19 @@ class DropoffScreen(Screen):
     def get_colors_main(self):
 
         colors = SYNC.colors_query(vars.COMPANY_ID)
+
         if colors:
             for color in colors:
-                print(color)
+
                 color_btn = Button(markup=True,
                                    text='[b]{color_name}[/b]'.format(color_name=color['name']),
                                    min_state_time=0.020)
                 color_btn.bind(on_press=partial(self.color_selected_main, color['name']))
                 color_btn.background_normal = ''
                 color_btn.background_color = vars.color_rgba(color['name'])
+
                 self.colors_table_main.add_widget(color_btn)
+
 
     def color_selected_main(self, color_name, *args, **kwargs):
         # quantity
@@ -1534,7 +1470,7 @@ class DropoffScreen(Screen):
 
                 self.save_memo_color()
 
-                self.create_summary_table()
+                # self.create_summary_table()
             else:
                 popup = Popup()
                 popup.title = 'Color Quantity Error'
@@ -1633,6 +1569,7 @@ GridLayout:
     def set_item(self, item_id):
         vars.ITEM_ID = item_id
         items = SYNC.inventory_items_grab(item_id)
+        check = False
         if items:
             inventory_id = items['inventory_id']
             item_price = items['price']
@@ -1653,6 +1590,7 @@ GridLayout:
             for x in range(0, self.inv_qty):
 
                 if item_id in self.invoice_list:
+                    check = True
                     self.invoice_list[item_id].append({
                         'type': inventory_init,
                         'inventory_id': inventory_id,
@@ -1703,8 +1641,11 @@ GridLayout:
         del self.invoice_list[vars.ITEM_ID]
         self.invoice_list[item_id] = row
 
-        self.create_summary_table()
         self.set_qty('C')
+        if (check):
+            self.update_row_no_refresh()
+        else:
+            self.create_summary_table()
 
     def create_summary_table(self):
         self.summary_table.clear_widgets()
@@ -1772,6 +1713,9 @@ GridLayout:
                                               text_wrap=True,
                                               on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
                                                   item_id))
+
+
+
                     tr4 = KV.sized_invoice_tr(1,
                                               vars.us_dollar(item_price),
                                               size_hint_x=0.2,
@@ -1784,21 +1728,31 @@ GridLayout:
                                  background_color=(1, 0, 0, 1),
                                  background_normal='',
                                  on_release=partial(self.remove_item_row, item_id))
-                    self.summary_table.add_widget(Builder.load_string(tr1))
-                    self.summary_table.add_widget(Builder.load_string(tr2))
-                    self.summary_table.add_widget(Builder.load_string(tr3))
-                    self.summary_table.add_widget(Builder.load_string(tr4))
+                    tr0_formatted = Builder.load_string(tr1)
+                    tr1_formatted = Builder.load_string(tr2)
+                    tr2_formatted = Builder.load_string(tr3)
+                    tr3_formatted = Builder.load_string(tr4)
+                    self.summary_table.add_widget(tr0_formatted)
+                    self.summary_table.add_widget(tr1_formatted)
+                    self.summary_table.add_widget(tr2_formatted)
+                    self.summary_table.add_widget(tr3_formatted)
                     self.summary_table.add_widget(tr5)
+                    self.item_rows[item_id] = [tr0_formatted,tr1_formatted,tr2_formatted,tr3_formatted]
+          
         self.create_summary_totals()
 
     def select_item(self, item_id, *args, **kwargs):
         vars.ITEM_ID = item_id
-        self.create_summary_table()
+        self.update_row_no_refresh()
 
     def remove_item_row(self, item_id, *args, **kwargs):
         vars.ITEM_ID = item_id
+        if vars.ITEM_ID in self.item_rows:
+            del self.item_rows[vars.ITEM_ID]
+
         if vars.ITEM_ID in self.invoice_list:
             del self.invoice_list[vars.ITEM_ID]
+
         if vars.ITEM_ID in self.invoice_list_copy:
             del self.invoice_list_copy[vars.ITEM_ID]
         if self.invoice_list:
@@ -2107,15 +2061,105 @@ GridLayout:
         self.make_items_table()
 
     def save_memo_color(self, *args, **kwargs):
+
         if vars.ITEM_ID in self.invoice_list_copy:
             idx = -1
+
             for items in self.invoice_list_copy[vars.ITEM_ID]:
                 idx += 1
+
+                text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
                 color = items['color']
                 memo = items['memo']
+
+
+                # update colors in text
+
                 self.invoice_list[vars.ITEM_ID][idx]['color'] = color
                 self.invoice_list[vars.ITEM_ID][idx]['memo'] = memo
-        self.create_summary_table()
+
+            colors = {}
+            color_string = []
+            memo_string = []
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+
+                item_name = items['item_name']
+                item_color = items['color']
+                item_memo = items['memo']
+
+                if items['color']:
+                    if item_color in colors:
+                        colors[item_color] += 1
+                    else:
+                        colors[item_color] = 1
+                if item_memo:
+                    regexed_memo = item_memo.replace('"', '**Inch(es)')
+                    memo_string.append(regexed_memo)
+            if colors:
+                for color_name, color_amount in colors.items():
+                    if color_name:
+                        color_string.append('{}-{}'.format(color_amount, color_name))
+
+            item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
+                                                        '/ '.join(memo_string))
+            self.item_rows[vars.ITEM_ID][2].text = item_string
+
+
+    def update_row_no_refresh(self, *args, **kwargs):
+        # set all colors to plain
+
+        if self.invoice_list:
+
+            for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+                item_id = key
+                selected = True if item_id is vars.ITEM_ID else False;
+                background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
+                background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
+                text_color = 'e5e5e5' if selected else '000000'
+                total_qty = len(values)
+                colors = {}
+                item_price = 0
+                color_string = []
+                memo_string = []
+                if values:
+                    for item in values:
+                        item_name = item['item_name']
+                        item_type = item['type']
+                        item_color = item['color']
+                        item_memo = item['memo']
+                        item_price += float(item['item_price']) if item['item_price'] else 0
+                        if item['color']:
+                            if item_color in colors:
+                                colors[item_color] += 1
+                            else:
+                                colors[item_color] = 1
+                        if item_memo:
+                            regexed_memo = item_memo.replace('"', '**Inch(es)')
+                            memo_string.append(regexed_memo)
+                    if colors:
+                        for color_name, color_amount in colors.items():
+                            if color_name:
+                                color_string.append('{}-{}'.format(color_amount, color_name))
+
+                    item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
+                                                                '/ '.join(memo_string))
+                    if item_id in self.item_rows:
+                        self.item_rows[item_id][0].text = "[color={}]{}[/color]".format(text_color,str(item_type))
+                        self.item_rows[item_id][0].background_color = background_color
+                        self.item_rows[item_id][0].background_normal = ''
+                        self.item_rows[item_id][1].text = "[color={}]{}[/color]".format(text_color,str(total_qty))
+                        self.item_rows[item_id][1].background_color = background_color
+                        self.item_rows[item_id][1].background_normal = ''
+                        self.item_rows[item_id][2].text = "[color={}]{}[/color]".format(text_color,str(item_string))
+                        self.item_rows[item_id][2].background_color = background_color
+                        self.item_rows[item_id][2].background_normal = ''
+                        self.item_rows[item_id][3].text = "[color={}]{}[/color]".format(text_color,vars.us_dollar(item_price))
+                        self.item_rows[item_id][3].background_color = background_color
+                        self.item_rows[item_id][3].background_normal = ''
+                    else:
+                        self.create_summary_table()
+                        break
+
 
     def make_adjust(self):
         self.item_selected_row = 0
@@ -3614,10 +3658,11 @@ class EditInvoiceScreen(Screen):
     discount_id = None
     memo_list = []
     invoice_items_id = None
+    item_rows = {}
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        # 
         # reset the inventory table
         self.customer_id_backup = vars.CUSTOMER_ID
         self.invoice_id = vars.INVOICE_ID
@@ -3629,6 +3674,7 @@ class EditInvoiceScreen(Screen):
         self.discount_id = None
         self.invoice_items_id = None
         self.memo_list = []
+        self.item_rows = {}
         store_hours = Company().get_store_hours(vars.COMPANY_ID)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
@@ -3848,8 +3894,8 @@ class EditInvoiceScreen(Screen):
                 # save rows and continue
 
                 self.save_memo_color()
-
-                self.create_summary_table()
+                #
+                # self.create_summary_table()
             else:
                 popup = Popup()
                 popup.title = 'Color Quantity Error'
@@ -3947,13 +3993,14 @@ GridLayout:
     def set_item(self, item_id):
 
         vars.ITEM_ID = item_id
-        item = SYNC.inventory_items_grab(item_id)
-        if item is not False:
+        items = SYNC.inventory_items_grab(item_id)
+        check = False
+        if items:
+            inventory_id = items['inventory_id']
+            item_price = items['price']
 
-            inventory_id = item['inventory_id']
-            item_price = Decimal(item['price'])
-            item_tags = item['tags'] if item['tags'] else 1
-            item_quantity = item['quantity'] if item['quantity'] else 1
+            item_tags = items['tags'] if items['tags'] else 1
+            item_quantity = items['quantity'] if items['quantity'] else 1
             inventories = SYNC.inventory_grab(inventory_id)
             if inventories:
                 inventory_init = inventories['name'][:1].capitalize()
@@ -3962,10 +4009,13 @@ GridLayout:
                 inventory_init = ''
                 laundry = 0
 
-            item_name = '{} ({})'.format(item['name'], self.starch) if laundry else item['name']
+            starch = self.starch if laundry else ''
+            item_name = '{} ({})'.format(items['name'], starch) if laundry else items['name']
+
             for x in range(0, self.inv_qty):
 
                 if item_id in self.invoice_list:
+                    check = True
                     self.invoice_list[item_id].append({
                         'type': inventory_init,
                         'inventory_id': inventory_id,
@@ -4012,15 +4062,15 @@ GridLayout:
                         'tags': int(item_tags)
                     }]
         # update dictionary make sure that the most recently selected item is on top
-        row = self.invoice_list[item_id]
-        del self.invoice_list[item_id]
+        row = self.invoice_list[vars.ITEM_ID]
+        del self.invoice_list[vars.ITEM_ID]
         self.invoice_list[item_id] = row
 
-        self.create_summary_table()
-        self.inv_qty_list = ['1']
-        self.qty_clicks = 0
-        self.inv_qty = 1
-        self.qty_count_label.text = '1'
+        self.set_qty('C')
+        if (check):
+            self.update_row_no_refresh()
+        else:
+            self.create_summary_table()
 
     def create_summary_table(self):
         self.summary_table.clear_widgets()
@@ -4068,54 +4118,61 @@ GridLayout:
 
                     item_string = '[b]{}[/b] \\n{}\\n{}'.format(item_name, ', '.join(color_string),
                                                                 '/ '.join(memo_string))
-
-                    selected = True if str(vars.ITEM_ID) == str(item_id) else False
-
+                    selected = True if vars.ITEM_ID == item_id else False
                     tr1 = KV.sized_invoice_tr(1,
                                               item_type,
                                               size_hint_x=0.1,
                                               selected=selected,
-                                              on_press='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
                                                   item_id))
                     tr2 = KV.sized_invoice_tr(1,
                                               total_qty,
                                               size_hint_x=0.1,
                                               selected=selected,
-                                              on_press='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
                                                   item_id))
                     tr3 = KV.sized_invoice_tr(1,
                                               item_string,
                                               size_hint_x=0.5,
                                               selected=selected,
                                               text_wrap=True,
-                                              on_press='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
                                                   item_id))
+
                     tr4 = KV.sized_invoice_tr(1,
                                               vars.us_dollar(item_price),
                                               size_hint_x=0.2,
                                               selected=selected,
-                                              on_press='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
+                                              on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
                                                   item_id))
                     tr5 = Button(size_hint_x=0.1,
                                  markup=True,
                                  text="[color=ffffff][b]-[/b][/color]",
                                  background_color=(1, 0, 0, 1),
                                  background_normal='',
-                                 on_press=partial(self.remove_item_row, item_id))
-                    self.summary_table.add_widget(Builder.load_string(tr1))
-                    self.summary_table.add_widget(Builder.load_string(tr2))
-                    self.summary_table.add_widget(Builder.load_string(tr3))
-                    self.summary_table.add_widget(Builder.load_string(tr4))
+                                 on_release=partial(self.remove_item_row, item_id))
+                    tr0_formatted = Builder.load_string(tr1)
+                    tr1_formatted = Builder.load_string(tr2)
+                    tr2_formatted = Builder.load_string(tr3)
+                    tr3_formatted = Builder.load_string(tr4)
+                    self.summary_table.add_widget(tr0_formatted)
+                    self.summary_table.add_widget(tr1_formatted)
+                    self.summary_table.add_widget(tr2_formatted)
+                    self.summary_table.add_widget(tr3_formatted)
                     self.summary_table.add_widget(tr5)
+                    self.item_rows[item_id] = [tr0_formatted, tr1_formatted, tr2_formatted, tr3_formatted]
+
         self.create_summary_totals()
 
     def select_item(self, item_id, *args, **kwargs):
-        print('clicked item - {}'.format(item_id))
+
         vars.ITEM_ID = item_id
-        self.create_summary_table()
+        self.update_row_no_refresh()
 
     def remove_item_row(self, item_id, *args, **kwargs):
         vars.ITEM_ID = item_id
+        if vars.ITEM_ID in self.item_rows:
+            del self.item_rows[vars.ITEM_ID]
         if vars.ITEM_ID in self.invoice_list:
             idx = -1
             for row in self.invoice_list[vars.ITEM_ID]:
@@ -4458,13 +4515,103 @@ GridLayout:
     def save_memo_color(self, *args, **kwargs):
         if vars.ITEM_ID in self.invoice_list_copy:
             idx = -1
+
             for items in self.invoice_list_copy[vars.ITEM_ID]:
                 idx += 1
+
+                text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
                 color = items['color']
                 memo = items['memo']
+
+
+                # update colors in text
+
                 self.invoice_list[vars.ITEM_ID][idx]['color'] = color
                 self.invoice_list[vars.ITEM_ID][idx]['memo'] = memo
-        self.create_summary_table()
+
+            colors = {}
+            color_string = []
+            memo_string = []
+            for items in self.invoice_list_copy[vars.ITEM_ID]:
+
+                item_name = items['item_name']
+                item_color = items['color']
+                item_memo = items['memo']
+
+                if items['color']:
+                    if item_color in colors:
+                        colors[item_color] += 1
+                    else:
+                        colors[item_color] = 1
+                if item_memo:
+                    regexed_memo = item_memo.replace('"', '**Inch(es)')
+                    memo_string.append(regexed_memo)
+            if colors:
+                for color_name, color_amount in colors.items():
+                    if color_name:
+                        color_string.append('{}-{}'.format(color_amount, color_name))
+
+            item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
+                                                        '/ '.join(memo_string))
+            self.item_rows[vars.ITEM_ID][2].text = item_string
+
+    def update_row_no_refresh(self, *args, **kwargs):
+        # set all colors to plain
+
+        if self.invoice_list:
+
+            for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+                item_id = key
+                selected = True if item_id is vars.ITEM_ID else False;
+                background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
+                background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
+                text_color = 'e5e5e5' if selected else '000000'
+                total_qty = len(values)
+                colors = {}
+                item_price = 0
+                color_string = []
+                memo_string = []
+                if values:
+                    for item in values:
+                        item_name = item['item_name']
+                        item_type = item['type']
+                        item_color = item['color']
+                        item_memo = item['memo']
+                        item_price += float(item['item_price']) if item['item_price'] else 0
+                        if item['color']:
+                            if item_color in colors:
+                                colors[item_color] += 1
+                            else:
+                                colors[item_color] = 1
+                        if item_memo:
+                            regexed_memo = item_memo.replace('"', '**Inch(es)')
+                            memo_string.append(regexed_memo)
+                    if colors:
+                        for color_name, color_amount in colors.items():
+                            if color_name:
+                                color_string.append('{}-{}'.format(color_amount, color_name))
+
+                    item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
+                                                                '/ '.join(memo_string))
+                    if item_id in self.item_rows:
+                        self.item_rows[item_id][0].text = "[color={}]{}[/color]".format(text_color,str(item_type))
+                        self.item_rows[item_id][0].background_color = background_color
+                        self.item_rows[item_id][0].background_normal = ''
+                        self.item_rows[item_id][1].text = "[color={}]{}[/color]".format(text_color,str(total_qty))
+                        self.item_rows[item_id][1].background_color = background_color
+                        self.item_rows[item_id][1].background_normal = ''
+                        self.item_rows[item_id][2].text = "[color={}]{}[/color]".format(text_color,str(item_string))
+                        self.item_rows[item_id][2].background_color = background_color
+                        self.item_rows[item_id][2].background_normal = ''
+                        self.item_rows[item_id][3].text = "[color={}]{}[/color]".format(text_color,vars.us_dollar(item_price))
+                        self.item_rows[item_id][3].background_color = background_color
+                        self.item_rows[item_id][3].background_normal = ''
+                    else:
+                        self.create_summary_table()
+                        break
+        self.create_summary_totals()
+
+
 
     def make_adjust(self):
         self.item_selected_row = 0
@@ -6218,7 +6365,7 @@ class EmployeesScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        # 
         self.create_table()
         self.employee_id = None
         self.username = None
@@ -7972,7 +8119,7 @@ class InventoriesScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        # 
         self.inventory_id = None
         self.inventory_laundry = 0
         self.update_inventory_table()
@@ -8127,8 +8274,7 @@ class InventoriesScreen(Screen):
                                     'laundry': self.inventory_laundry})
         if put:
             self.edit_popup.dismiss()
-            vars.WORKLIST.append("Sync")
-            threads_start()
+
             popup = Popup()
             popup.title = 'Inventory Update'
             content = KV.popup_alert('Successfully updated inventory!')
@@ -8190,8 +8336,6 @@ class InventoriesScreen(Screen):
 
         if inventories.add():
             # set invoice_items data to save
-            vars.WORKLIST.append("Sync")
-            threads_start()
 
             popup = Popup()
             popup.title = 'Added Inventory'
@@ -8232,7 +8376,7 @@ class InventoryItemsScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        # 
         self.inventory_id = None
         self.get_inventory()
         self.item_id = None
@@ -8657,7 +8801,7 @@ class ItemDetailsScreen(Screen):
 
     def get_details(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        # 
         # reset invoice_items_id
         vars.INVOICE_ITEMS_ID = None
         # make the items
@@ -9086,7 +9230,7 @@ class MemosScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        # 
         self.memo_id = None
         self.create_memo_table()
         pass
@@ -9339,7 +9483,7 @@ class NewCustomerScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        # 
         self.street.text = ''
         self.street.hint_text = 'Street Address'
         self.street.hint_text_color = DEFAULT_COLOR
@@ -9674,7 +9818,7 @@ class PickupScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        
         # get credit total
         self.credits = 0
         self.credits_spent = 0
@@ -11275,7 +11419,7 @@ class PrinterScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        
         self.printer_name.text = ''
         self.printer_model_number.text = ''
         self.printer_nick_name.text = ''
@@ -11840,21 +11984,10 @@ class SearchScreen(Screen):
     get_invoices = None
 
     def scheduler_stop(self):
-        try:
-            SCHEDULER.remove_all_jobs()
-            print('Auto Sync Stopped')
-        except SchedulerNotRunningError:
-            print('Auto Sync Already Stopped')
+        pass
 
     def scheduler_restart(self):
-        try:
-            SCHEDULER.remove_all_jobs()
-            SCHEDULER.add_job(partial(SYNC.db_sync, vars.COMPANY_ID), 'interval', seconds=30)
-            print('Auto Sync Resumed')
-        except SchedulerNotRunningError:
-            SCHEDULER.add_job(partial(SYNC.db_sync, vars.COMPANY_ID), 'interval', seconds=30)
-            SCHEDULER.start()
-            print('Auto Sync failed to launch starting again')
+        pass
 
     def reset(self, *args, **kwargs):
         # # Resume auto sync
@@ -13907,7 +14040,7 @@ class SearchScreen(Screen):
         self.barcode_save_data = {}
 
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        
         if vars.INVOICE_ID is not None and int(vars.INVOICE_ID) > 0:
             self.main_popup.title = "Setup Barcode to Items"
             layout = BoxLayout(orientation="vertical")
@@ -16486,7 +16619,7 @@ class TaxesScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        
         taxes = Tax()
         tax_rate = None
 
@@ -16545,7 +16678,7 @@ class UpdateScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        SCHEDULER.remove_all_jobs()
+        
         self.search_input.text = ''
         self.company_select.text = "Store Name"
         self.company_select.values = Company().prepareCompanyList()
@@ -16676,8 +16809,7 @@ class UpdateScreen(Screen):
                     # reset the data form
                     self.reset()
                     # sync the database
-                    vars.WORKLIST.append("Sync")
-                    threads_start()
+
                     # alert the user
                     popup = Popup()
                     popup.title = 'Update Invoice Item Success'
