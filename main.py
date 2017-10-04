@@ -1743,6 +1743,7 @@ GridLayout:
 
     def select_item(self, item_id, *args, **kwargs):
         vars.ITEM_ID = item_id
+
         self.update_row_no_refresh()
 
     def remove_item_row(self, item_id, *args, **kwargs):
@@ -2112,7 +2113,9 @@ GridLayout:
 
             for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
                 item_id = key
-                selected = True if item_id is vars.ITEM_ID else False;
+
+                selected = True if int(item_id) == int(vars.ITEM_ID) else False
+
                 background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
                 background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
                 text_color = 'e5e5e5' if selected else '000000'
@@ -2159,6 +2162,7 @@ GridLayout:
                     else:
                         self.create_summary_table()
                         break
+        self.create_summary_totals()
 
 
     def make_adjust(self):
@@ -4562,8 +4566,8 @@ GridLayout:
 
             for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
                 item_id = key
-                selected = True if item_id is vars.ITEM_ID else False;
-                background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
+                selected = True if int(item_id) == int(vars.ITEM_ID) else False;
+                # background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
                 background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
                 text_color = 'e5e5e5' if selected else '000000'
                 total_qty = len(values)
