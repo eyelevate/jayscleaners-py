@@ -1756,13 +1756,15 @@ GridLayout:
 
         if vars.ITEM_ID in self.invoice_list_copy:
             del self.invoice_list_copy[vars.ITEM_ID]
-        if self.invoice_list:
+        if bool(self.invoice_list):
             idx = 0
             for row_key, row_value in self.invoice_list.items():
                 idx += 1
                 if idx == 1:
                     vars.ITEM_ID = row_key
                     break
+        else:
+            self.invoice_list = {}
         self.create_summary_table()
         self.create_summary_totals()
 
@@ -1775,9 +1777,10 @@ GridLayout:
         self.total = 0
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-
+        # print(self.invoice_list)
         # calculate totals
-        if len(self.invoice_list):
+
+        if bool(self.invoice_list):
             for item_key, item_values in self.invoice_list.items():
                 for item in item_values:
                     self.quantity += 1
@@ -1799,12 +1802,13 @@ GridLayout:
                                 self.discount += 0
             self.tax = (self.subtotal - self.discount) * float(vars.TAX_RATE)
             self.total = (self.subtotal - self.discount) + self.tax
-            self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
-            self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
-            self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
-            self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
-            self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
-            self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
+        self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
+        self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
+        self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
+        self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
+        self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
+        self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
+
 
     def make_memo_color(self):
 
@@ -2854,7 +2858,7 @@ GridLayout:
                             'total': save_invoice_check['total']
                         }
                         save_invoice_items[save_invoice_check['id']] = invoice_group
-                        print(save_invoice_items);
+
                         idx = -1
                         colors = {}
                         print_invoice[save_invoice_check['id']] = {}
@@ -2995,7 +2999,8 @@ GridLayout:
                         save_invoice_items = SYNC.create_invoice_item(data)
                         # save to local db
                         if save_invoice_items is not False:
-                            print('saved invoice item')
+                            # print('saved invoice item')
+                            pass
             # set invoice_items data to save
             self.print_popup.dismiss()
             t1 = Thread(target=self.print_function, args=[type,
@@ -3857,7 +3862,6 @@ class EditInvoiceScreen(Screen):
     def get_colors_main(self):
 
         colors = SYNC.colors_query(vars.COMPANY_ID)
-        print(colors)
         if colors is not False:
             for color in colors:
                 color_btn = Button(markup=True,
@@ -4195,7 +4199,7 @@ GridLayout:
                 if idx == 1:
                     vars.ITEM_ID = row_key
                     break
-        print(self.deleted_rows)
+
         self.create_summary_table()
         self.create_summary_totals()
 
@@ -4211,7 +4215,7 @@ GridLayout:
 
         # calculate totals
         tax_rate = float("%0.2f" % (vars.TAX_RATE))
-        if len(self.invoice_list):
+        if bool(self.invoice_list):
             for item_key, item_values in self.invoice_list.items():
                 for item in item_values:
                     self.quantity += 1
@@ -4245,12 +4249,12 @@ GridLayout:
             self.final_total = float("%0.2f" % (self.total))
             # print(self.final_total)
 
-            self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
-            self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
-            self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
-            self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
-            self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
-            self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
+        self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
+        self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
+        self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
+        self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
+        self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
+        self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
 
     def make_memo_color(self):
 
