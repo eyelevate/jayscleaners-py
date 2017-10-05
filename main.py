@@ -139,6 +139,7 @@ list_len = []
 printer_list = {}
 SYNC_POPUP = Popup()
 
+
 # config the sections
 
 
@@ -256,7 +257,7 @@ class MainScreen(Screen):
                     auth_user.company_id = user1['company_id']
                     vars.COMPANY_ID = user1['company_id']
                     SYNC.company_id = user1['company_id']
-                    
+
                 print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
                 if print_data:
                     for pr in print_data:
@@ -549,7 +550,6 @@ class MainScreen(Screen):
         # Pause Schedule
         pass
 
-
     def test_sys(self):
         Sync().migrate()
 
@@ -720,7 +720,7 @@ class MainScreen(Screen):
 
     def reports_page(self):
         webbrowser.open("https://www.jayscleaners.com/reports")
-    
+
     def settings_page(self):
         webbrowser.open("https://jayscleaners.com/admins/settings")
 
@@ -1077,7 +1077,6 @@ class CompanyScreen(Screen):
 
         companies = SYNC.company_grab(vars.COMPANY_ID)
         if companies:
-
             self.company_name.text = companies['name'] if companies['name'] else ''
             self.company_phone.text = companies['phone'] if companies['phone'] else ''
             self.company_email.text = companies['email'] if companies['email'] else ''
@@ -1335,7 +1334,6 @@ class DropoffScreen(Screen):
     item_rows = {}
     in_progress = []
 
-
     def reset(self):
 
         # Pause Schedule
@@ -1408,9 +1406,8 @@ class DropoffScreen(Screen):
         self.in_progress = []
         self.get_inventory()
 
-
         self.item_rows = {}
-        taxes = SYNC.taxes_query(vars.COMPANY_ID,1)
+        taxes = SYNC.taxes_query(vars.COMPANY_ID, 1)
         if taxes:
             for tax in taxes:
                 vars.TAX_RATE = tax['rate']
@@ -1424,8 +1421,6 @@ class DropoffScreen(Screen):
         else:
             self.starch = vars.get_starch_by_code(None)
 
-
-
         SYNC_POPUP.dismiss()
 
     def set_result_status(self):
@@ -1438,7 +1433,6 @@ class DropoffScreen(Screen):
 
         if colors:
             for color in colors:
-
                 color_btn = Button(markup=True,
                                    text='[b]{color_name}[/b]'.format(color_name=color['name']),
                                    min_state_time=0.020)
@@ -1447,7 +1441,6 @@ class DropoffScreen(Screen):
                 color_btn.background_color = vars.color_rgba(color['name'])
 
                 self.colors_table_main.add_widget(color_btn)
-
 
     def color_selected_main(self, color_name, *args, **kwargs):
         # quantity
@@ -1677,14 +1670,12 @@ GridLayout:
 
         self.set_qty('C')
 
-
-
         if (check):
-            t = threading.Thread(target=self.update_row_no_refresh,name="1")
+            t = threading.Thread(target=self.update_row_no_refresh, name="1")
 
         else:
-            t = threading.Thread(target=self.create_summary_table,name="2")
-        t.setDaemon=True
+            t = threading.Thread(target=self.create_summary_table, name="2")
+        t.setDaemon = True
         t.start()
 
     def create_summary_table(self):
@@ -1755,8 +1746,6 @@ GridLayout:
                                               on_release='self.parent.parent.parent.parent.parent.parent.select_item({})'.format(
                                                   item_id))
 
-
-
                     tr4 = KV.sized_invoice_tr(1,
                                               vars.us_dollar(item_price),
                                               size_hint_x=0.2,
@@ -1778,13 +1767,10 @@ GridLayout:
                     self.summary_table.add_widget(tr2_formatted)
                     self.summary_table.add_widget(tr3_formatted)
                     self.summary_table.add_widget(tr5)
-                    self.item_rows[item_id] = [tr0_formatted,tr1_formatted,tr2_formatted,tr3_formatted]
+                    self.item_rows[item_id] = [tr0_formatted, tr1_formatted, tr2_formatted, tr3_formatted]
         p = threading.Thread(target=self.create_summary_totals)
         p.start()
         p.join()
-
-
-
 
     def select_item(self, item_id, *args, **kwargs):
         vars.ITEM_ID = item_id
@@ -1826,7 +1812,6 @@ GridLayout:
 
             for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
 
-
                 self.quantity = len(values)
 
                 if values:
@@ -1861,9 +1846,6 @@ GridLayout:
         except RuntimeError as e:
             pass
 
-
-
-
     def create_summary_totals(self):
 
         self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
@@ -1872,8 +1854,6 @@ GridLayout:
         self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
         self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
         self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
-
-
 
     def make_memo_color(self):
 
@@ -2142,7 +2122,6 @@ GridLayout:
                 color = items['color']
                 memo = items['memo']
 
-
                 # update colors in text
 
                 self.invoice_list[vars.ITEM_ID][idx]['color'] = color
@@ -2171,9 +2150,8 @@ GridLayout:
                         color_string.append('{}-{}'.format(color_amount, color_name))
 
             item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                        '/ '.join(memo_string))
+                                                      '/ '.join(memo_string))
             self.item_rows[vars.ITEM_ID][2].text = item_string
-
 
     def update_row_no_refresh(self, *args, **kwargs):
         # set all colors to plain
@@ -2186,8 +2164,8 @@ GridLayout:
 
                 selected = True if int(item_id) == int(vars.ITEM_ID) else False
 
-                background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
-                background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
+                background_rgba = [0.369, 0.369, 0.369, 0.1] if selected else [0.826, 0.826, 0.826, 0.1]
+                background_color = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
                 text_color = 'e5e5e5' if selected else '000000'
                 total_qty = len(values)
                 colors = {}
@@ -2215,18 +2193,19 @@ GridLayout:
                                 color_string.append('{}-{}'.format(color_amount, color_name))
 
                     item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                                '/ '.join(memo_string))
+                                                              '/ '.join(memo_string))
                     if item_id in self.item_rows:
-                        self.item_rows[item_id][0].text = "[color={}]{}[/color]".format(text_color,str(item_type))
+                        self.item_rows[item_id][0].text = "[color={}]{}[/color]".format(text_color, str(item_type))
                         self.item_rows[item_id][0].background_color = background_color
                         self.item_rows[item_id][0].background_normal = ''
-                        self.item_rows[item_id][1].text = "[color={}]{}[/color]".format(text_color,str(total_qty))
+                        self.item_rows[item_id][1].text = "[color={}]{}[/color]".format(text_color, str(total_qty))
                         self.item_rows[item_id][1].background_color = background_color
                         self.item_rows[item_id][1].background_normal = ''
-                        self.item_rows[item_id][2].text = "[color={}]{}[/color]".format(text_color,str(item_string))
+                        self.item_rows[item_id][2].text = "[color={}]{}[/color]".format(text_color, str(item_string))
                         self.item_rows[item_id][2].background_color = background_color
                         self.item_rows[item_id][2].background_normal = ''
-                        self.item_rows[item_id][3].text = "[color={}]{}[/color]".format(text_color,vars.us_dollar(item_price))
+                        self.item_rows[item_id][3].text = "[color={}]{}[/color]".format(text_color,
+                                                                                        vars.us_dollar(item_price))
                         self.item_rows[item_id][3].background_color = background_color
                         self.item_rows[item_id][3].background_normal = ''
                     else:
@@ -2236,8 +2215,6 @@ GridLayout:
         p = threading.Thread(target=self.create_summary_totals)
         p.start()
         p.join()
-
-
 
     def make_adjust(self):
         self.item_selected_row = 0
@@ -2876,7 +2853,7 @@ GridLayout:
                             save_invoice[inventory_id].append(iivalue)
                             save_totals[inventory_id]['quantity'] += iivalue['qty']
                             save_totals[inventory_id]['tags'] += iivalue['tags']
-                            save_totals[inventory_id]['subtotal'] += round(float(iivalue['item_price']),2)
+                            save_totals[inventory_id]['subtotal'] += round(float(iivalue['item_price']), 2)
                             save_totals[inventory_id]['discount'] += 0
         if save_invoice:
             print_sync_invoice = {}  # if synced to server
@@ -2889,7 +2866,7 @@ GridLayout:
                     inventory_discount = 0
                     # calculate discounts if any
 
-                    discounts = SYNC.discount_query(vars.COMPANY_ID,self.now,self.now,inventory_id)
+                    discounts = SYNC.discount_query(vars.COMPANY_ID, self.now, self.now, inventory_id)
                     if discounts is not False:
                         for discount in discounts:
                             discount_rate = float(discount['rate'])
@@ -2902,10 +2879,9 @@ GridLayout:
                             else:
                                 inventory_discount = 0
 
-
                     # set invoice data to save
                     data = {
-                        'company_id':vars.COMPANY_ID,
+                        'company_id': vars.COMPANY_ID,
                         'customer_id': vars.CUSTOMER_ID,
                         'quantity': save_totals[inventory_id]['quantity'],
                         'pretax': str(save_totals[inventory_id]['subtotal']),
@@ -2917,7 +2893,7 @@ GridLayout:
 
                     data2 = {}
                     # save to cloud
-                    save_invoice_check = SYNC.create_invoice(data,data2)
+                    save_invoice_check = SYNC.create_invoice(data, data2)
 
                     if save_invoice_check is not False:
                         print_totals[save_invoice_check['id']] = {
@@ -2953,7 +2929,8 @@ GridLayout:
                                     colors[item_id][item_color] = 1
                             if save_invoice_check['id'] in print_invoice:
                                 if item_id in print_invoice[save_invoice_check['id']]:
-                                    print_invoice[save_invoice_check['id']][item_id]['item_price'] += Decimal(item_price)
+                                    print_invoice[save_invoice_check['id']][item_id]['item_price'] += Decimal(
+                                        item_price)
                                     print_invoice[save_invoice_check['id']][item_id]['qty'] += 1
                                     if item_id in colors:
                                         print_invoice[save_invoice_check['id']][item_id]['colors'] = colors[item_id]
@@ -3026,7 +3003,7 @@ GridLayout:
                             if new_invoice_id in print_sync_invoice:
                                 if item_id in print_sync_invoice[new_invoice_id]:
 
-                                    print_sync_invoice[new_invoice_id][item_id]['item_price'] +=item_price
+                                    print_sync_invoice[new_invoice_id][item_id]['item_price'] += item_price
                                     print_sync_invoice[new_invoice_id][item_id]['qty'] += 1
                                     if item_memo:
                                         print_sync_invoice[new_invoice_id][item_id]['memos'].append(item_memo)
@@ -3056,7 +3033,7 @@ GridLayout:
                         data = {
                             'company_id': vars.COMPANY_ID,
                             'customer_id': vars.CUSTOMER_ID,
-                            'invoice_id':item['invoice_id'],
+                            'invoice_id': item['invoice_id'],
                             'item_id': item['item_id'],
                             'inventory_id': item['inventory_id'],
                             'quantity': item['qty'],
@@ -3391,7 +3368,7 @@ GridLayout:
                     if item_type == 'L':
                         # get customer mark
 
-                        marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
+                        marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
                         if marks is not False:
                             m_list = []
                             for mark in marks:
@@ -3546,7 +3523,7 @@ GridLayout:
                         vars.EPSON.write('{}\n'.format(customers.invoice_memo))
                     if item_type == 'L':
                         # get customer mark
-                        marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
+                        marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
                         if marks is not False:
                             m_list = []
                             for mark in marks:
@@ -3644,7 +3621,7 @@ GridLayout:
             else:
                 laundry_count = len(laundry_to_print)
                 shirt_mark = Custid().getCustomerMark(self.customer_id_backup)
-                marks = SYNC.marks_query(self.customer_id_backup,1);
+                marks = SYNC.marks_query(self.customer_id_backup, 1);
                 if marks is not False:
                     for mark in marks:
                         shirt_mark = mark['mark']
@@ -3773,7 +3750,7 @@ class EditInvoiceScreen(Screen):
             invoice_items = invoices['invoice_items']
         self.invoice_list = OrderedDict()
         self.invoice_list_copy = OrderedDict()
-        
+
         customers = SYNC.customers_grab(self.customer_id_backup)
         if customers:
             for customer in customers:
@@ -3922,7 +3899,7 @@ class EditInvoiceScreen(Screen):
         except RuntimeError as e:
             pass
 
-        taxes = SYNC.taxes_query(vars.COMPANY_ID,1)
+        taxes = SYNC.taxes_query(vars.COMPANY_ID, 1)
         if taxes:
             for tax in taxes:
                 vars.TAX_RATE = float(tax['rate'])
@@ -4155,9 +4132,9 @@ GridLayout:
 
         self.set_qty('C')
         if (check):
-            p = threading.Thread(target=self.update_row_no_refresh,name="1")
+            p = threading.Thread(target=self.update_row_no_refresh, name="1")
         else:
-            p = threading.Thread(target=self.create_summary_table,name="2")
+            p = threading.Thread(target=self.create_summary_table, name="2")
         try:
             p.start()
         except RuntimeError as e:
@@ -4285,7 +4262,6 @@ GridLayout:
 
         self.create_summary_table()
 
-
     def create_summary_totals(self):
         self.quantity = 0
         self.tags = 0
@@ -4321,13 +4297,11 @@ GridLayout:
                             else:
                                 self.discount += 0
 
-
             self.subtotal = float("%0.2f" % (self.subtotal))
-
-
-            self.tax = float("%0.2f" % ((float(self.subtotal) - self.discount) * vars.TAX_RATE))
+            print(vars.TAX_RATE)
+            self.tax = float("%0.2f" % ((float(self.subtotal) - self.discount) * float(vars.TAX_RATE)))
             # print(self.tax)
-            self.total =float("%0.2f" % ((float(self.subtotal) - float(self.discount)) + self.tax))
+            self.total = float("%0.2f" % ((float(self.subtotal) - float(self.discount)) + self.tax))
             # print(self.total)
             self.final_total = float("%0.2f" % (self.total))
             # print(self.final_total)
@@ -4614,7 +4588,6 @@ GridLayout:
                 color = items['color']
                 memo = items['memo']
 
-
                 # update colors in text
 
                 self.invoice_list[vars.ITEM_ID][idx]['color'] = color
@@ -4643,7 +4616,7 @@ GridLayout:
                         color_string.append('{}-{}'.format(color_amount, color_name))
 
             item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                        '/ '.join(memo_string))
+                                                      '/ '.join(memo_string))
             self.item_rows[vars.ITEM_ID][2].text = item_string
 
     def update_row_no_refresh(self, *args, **kwargs):
@@ -4655,7 +4628,7 @@ GridLayout:
                 item_id = key
                 selected = True if int(item_id) == int(vars.ITEM_ID) else False;
                 # background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
-                background_color = [0.369,0.369,0.369,1] if selected else [0.826, 0.826, 0.826, 1]
+                background_color = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
                 text_color = 'e5e5e5' if selected else '000000'
                 total_qty = len(values)
                 colors = {}
@@ -4683,26 +4656,24 @@ GridLayout:
                                 color_string.append('{}-{}'.format(color_amount, color_name))
 
                     item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                                '/ '.join(memo_string))
+                                                              '/ '.join(memo_string))
                     if item_id in self.item_rows:
-                        self.item_rows[item_id][0].text = "[color={}]{}[/color]".format(text_color,str(item_type))
+                        self.item_rows[item_id][0].text = "[color={}]{}[/color]".format(text_color, str(item_type))
                         self.item_rows[item_id][0].background_color = background_color
                         self.item_rows[item_id][0].background_normal = ''
-                        self.item_rows[item_id][1].text = "[color={}]{}[/color]".format(text_color,str(total_qty))
+                        self.item_rows[item_id][1].text = "[color={}]{}[/color]".format(text_color, str(total_qty))
                         self.item_rows[item_id][1].background_color = background_color
                         self.item_rows[item_id][1].background_normal = ''
-                        self.item_rows[item_id][2].text = "[color={}]{}[/color]".format(text_color,str(item_string))
+                        self.item_rows[item_id][2].text = "[color={}]{}[/color]".format(text_color, str(item_string))
                         self.item_rows[item_id][2].background_color = background_color
                         self.item_rows[item_id][2].background_normal = ''
-                        self.item_rows[item_id][3].text = "[color={}]{}[/color]".format(text_color,vars.us_dollar(item_price))
+                        self.item_rows[item_id][3].text = "[color={}]{}[/color]".format(text_color,
+                                                                                        vars.us_dollar(item_price))
                         self.item_rows[item_id][3].background_color = background_color
                         self.item_rows[item_id][3].background_normal = ''
                     else:
                         self.create_summary_table()
                         break
-
-
-
 
     def make_adjust(self):
         self.item_selected_row = 0
@@ -4760,7 +4731,6 @@ GridLayout:
 
     def make_adjustment_sum_table(self):
 
-        
         self.adjust_sum_grid.clear_widgets()
 
         if vars.ITEM_ID in self.invoice_list_copy:
@@ -5390,10 +5360,10 @@ GridLayout:
                         data = {
                             'quantity': iivalue['qty'],
                             'color': iivalue['color'] if iivalue['color'] else '',
-                            'memo' : item_memo if item_memo is not None else '',
+                            'memo': item_memo if item_memo is not None else '',
                             'pretax': pretax,
                             'tax': tax,
-                            'total':total
+                            'total': total
                         }
                         invoice_items_edit = SYNC.edit_invoice_item(iivalue['invoice_items_id'], data)
                         if invoice_items_edit is not False:
@@ -5473,7 +5443,6 @@ GridLayout:
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    
 
             if type is 'none':
                 self.set_result_status()
@@ -5717,7 +5686,7 @@ GridLayout:
                         if item_type == 'L':
                             # get customer mark
                             marks = Custid()
-                            marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
+                            marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
                             if marks is not False:
                                 m_list = []
                                 for mark in marks:
@@ -5865,7 +5834,7 @@ GridLayout:
                             vars.EPSON.write('{}\n'.format(customers.invoice_memo))
                         if item_type == 'L':
                             # get customer mark
-                            marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
+                            marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
                             if marks is not False:
                                 m_list = []
                                 for mark in marks:
@@ -5903,18 +5872,17 @@ GridLayout:
             'company_id': vars.COMPANY_ID,
             'customer_id': vars.CUSTOMER_ID,
             'quantity': self.tags,
-            'pretax':'{0:.2f}'.format(float(self.subtotal)),
-            'tax' : '{0:.2f}'.format(float(self.tax)),
+            'pretax': '{0:.2f}'.format(float(self.subtotal)),
+            'tax': '{0:.2f}'.format(float(self.tax)),
             'discount_id': self.discount_id if self.discount_id is not None else '',
             'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S")),
             'total': '{0:.2f}'.format(float(self.total))
         }
-        invoice_check = SYNC.edit_invoice(self.invoice_id,data)
+        invoice_check = SYNC.edit_invoice(self.invoice_id, data)
         if invoice_check is not False:
             print('updated invoice')
             vars.CUSTOMER_ID = self.customer_id_backup
             vars.SEARCH_RESULTS_STATUS = True
-                    
 
 
 class EditCustomerScreen(Screen):
@@ -6850,7 +6818,7 @@ class HistoryScreen(Screen):
             row_end,
             vars.ROW_CAP
         )
-        invs = SYNC.invoice_search_history(vars.CUSTOMER_ID,self.row_set,row_end)
+        invs = SYNC.invoice_search_history(vars.CUSTOMER_ID, self.row_set, row_end)
         vars.SEARCH_RESULTS = invs
         # get invoice rows and display them to the table
 
@@ -6993,7 +6961,6 @@ class HistoryScreen(Screen):
         vars.SEARCH_RESULTS_STATUS = True
         # update db with current changes
 
-
     def select_invoice(self, invoice_id, *args, **kwargs):
         # set selected invoice and update the table to show it
         vars.INVOICE_ID = invoice_id
@@ -7089,7 +7056,6 @@ class HistoryScreen(Screen):
         inv_items = []
         invoice_deleted = False
         if invoices is not False:
-
             invoice_deleted = True if invoices['deleted_at'] else False
             inv_items = invoices['invoice_items']
 
@@ -7111,8 +7077,6 @@ class HistoryScreen(Screen):
                 item_name = itm_srch['name'] if itm_srch is not False else ''
                 inventory_id = itm_srch['inventory_id'] if itm_srch is not False else None
 
-
-
                 inventories = SYNC.inventory_grab(inventory_id)
                 laundry = inventories['laundry'] if inventories is not False else 0
 
@@ -7128,7 +7092,7 @@ class HistoryScreen(Screen):
             if items:
                 for key, value in items.items():
                     item_id = key
-                    iinv_items = SYNC.invoice_item_discount_find_item_id(vars.INVOICE_ID,item_id)
+                    iinv_items = SYNC.invoice_item_discount_find_item_id(vars.INVOICE_ID, item_id)
                     if iinv_items:
                         for inv_item in iinv_items:
                             items[item_id]['quantity'] += int(inv_item['quantity']) if inv_item['quantity'] else 1
@@ -7312,18 +7276,16 @@ class HistoryScreen(Screen):
                             all_invoices = SYNC.invoice_query_transaction_id(transaction_id)
                             if all_invoices:
                                 for ainv in all_invoices:
-
-                                    SYNC.remove_invoice_by_transaction(ainv['id'],status)
+                                    SYNC.remove_invoice_by_transaction(ainv['id'], status)
 
                             transactions = Transaction()
                             trans = SYNC.transaction_grab(transaction_id)
                             if trans:
-
                                 tr_id = trans['id']
                                 transactions.id = tr_id
                                 transactions.delete()
 
-                        SYNC.restore_invoice(invoice['id'],status)
+                        SYNC.restore_invoice(invoice['id'], status)
 
                 msg = KV.popup_alert(msg="Successfully updated invoice #{}!".format(vars.INVOICE_ID))
                 # sync the database
@@ -7414,7 +7376,7 @@ class HistoryScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        
+
                 invoices = Invoice()
                 invoice = SYNC.invoice_grab_id(vars.INVOICE_ID)
                 invoice_discount_id = None
@@ -7922,7 +7884,7 @@ class HistoryScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    
+
             invoice_id_str = str(vars.INVOICE_ID)
             invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
             due_date = 'SUN'
@@ -7988,7 +7950,7 @@ class HistoryScreen(Screen):
             if len(laundry_to_print) > 0:
                 laundry_count = len(laundry_to_print)
                 shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
-                marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
+                marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
                 if marks is not False:
                     for mark in marks:
                         shirt_mark = mark['mark']
@@ -8079,7 +8041,7 @@ class HistoryScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    
+
             invoice_id_str = str(vars.INVOICE_ID)
             invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
             due_date = 'SUN'
@@ -8147,7 +8109,7 @@ class HistoryScreen(Screen):
             else:
                 laundry_count = len(laundry_to_print)
                 shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
-                marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
+                marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
                 if marks is not False:
                     for mark in marks:
                         shirt_mark = mark['mark']
@@ -9909,7 +9871,7 @@ class PickupScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        
+
         # get credit total
         self.credits = 0
         self.credits_spent = 0
@@ -9919,7 +9881,8 @@ class PickupScreen(Screen):
         if customers:
             for customer in customers:
                 self.credits = customer['credits'] if customer['credits'] is not None else 0
-                account_status = True if customer['account'] is '1' or customer['account'] is True or customer['account'] is 1 else False
+                account_status = True if customer['account'] is '1' or customer['account'] is True or customer[
+                                                                                                          'account'] is 1 else False
         print(account_status)
         if account_status is not False:
             print('in here')
@@ -9983,7 +9946,7 @@ class PickupScreen(Screen):
         vars.PROFILE_ID = None
         vars.PAYMENT_ID = None
         pro = Profile()
-        profiles = SYNC.profiles_query(vars.CUSTOMER_ID,vars.COMPANY_ID)
+        profiles = SYNC.profiles_query(vars.CUSTOMER_ID, vars.COMPANY_ID)
         if profiles:
             for profile in profiles:
                 vars.PROFILE_ID = profile['profile_id']
@@ -10120,7 +10083,7 @@ class PickupScreen(Screen):
         invoice_data = SYNC.invoices_grab_pickup(vars.CUSTOMER_ID)
         if invoice_data:
             for invoice in invoice_data:
-                
+
                 invoice_id = invoice['id']
                 quantity = 1
                 try:
@@ -10181,7 +10144,7 @@ class PickupScreen(Screen):
         vars.SEARCH_RESULTS_STATUS = True
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
-        
+
         if invoice_id:
             if invoice_id in self.selected_invoices:
 
@@ -10514,9 +10477,8 @@ class PickupScreen(Screen):
             card = SYNC.card_grab(self.card_id)
 
             if card is not False:
-
                 root_payment_id = card['root_payment_id']
-            
+
             card_root = SYNC.card_grab_root(root_payment_id)
             if card_root is not False:
                 self.run_edit_task(card_root)
@@ -10565,7 +10527,7 @@ class PickupScreen(Screen):
             'exp_month': self.edit_card_exp_month.text,
             'exp_year': self.edit_card_exp_year.text
         }
-        card_save = SYNC.update_card(grp['card_id'],data)
+        card_save = SYNC.update_card(grp['card_id'], data)
         if card_save is not False:
             print('card updated')
 
@@ -11056,7 +11018,8 @@ class PickupScreen(Screen):
         transaction.last_four = last_four
         transaction.tendered = self.amount_tendered
         if self.credits:
-            credits_spent = self.total_amount if (Decimal(self.credits) - Decimal(self.total_amount)) >= 0 else Decimal(self.credits)
+            credits_spent = self.total_amount if (Decimal(self.credits) - Decimal(self.total_amount)) >= 0 else Decimal(
+                self.credits)
             self.credits_spent = credits_spent
             transaction.credit = credits_spent
         else:
@@ -11094,7 +11057,7 @@ class PickupScreen(Screen):
                     'discount': str(self.discount_total),
                     'total': str(self.total_due)
                 }
-                check_account = SYNC.update_transaction(vars.CUSTOMER_ID,data)
+                check_account = SYNC.update_transaction(vars.CUSTOMER_ID, data)
                 if check_account is not False:
                     print('saved transaction - account')
             # update any credited amount
@@ -11124,10 +11087,10 @@ class PickupScreen(Screen):
 
                 for invoice_id in self.selected_invoices:
                     data = {
-                        'status':5,
+                        'status': 5,
                         'transaction_id': str(account_trans_id)
                     }
-                    invoices_update = SYNC.update_invoice_pickup(invoice_id,data)
+                    invoices_update = SYNC.update_invoice_pickup(invoice_id, data)
                     if invoices_update is not False:
                         print('invoice updated from pickup')
 
@@ -11142,12 +11105,12 @@ class PickupScreen(Screen):
             old_account_total = 0
             if custs is not False:
                 for customer in custs:
-                    if customer['account_total'] is None or customer['account_total'] is '' or customer['account_total'] is False:
+                    if customer['account_total'] is None or customer['account_total'] is '' or customer[
+                        'account_total'] is False:
                         old_account_total = customer['account_total'] if customer['account_total'] else 0
 
-                        
             new_account_total = float("%0.2f" % (float(old_account_total) + float(self.total_due)))
-            customer_account_total_update = SYNC.update_customer_account_total(vars.CUSTOMER_ID,new_account_total)
+            customer_account_total_update = SYNC.update_customer_account_total(vars.CUSTOMER_ID, new_account_total)
             if customer_account_total_update is not False:
                 print('account total updated')
         else:
@@ -11158,21 +11121,21 @@ class PickupScreen(Screen):
             print('this is a standard save attempting to save data')
             data = {
                 'company_id': vars.COMPANY_ID,
-                'customer_id' : vars.CUSTOMER_ID,
-                'pretax' : str(transaction.pretax),
-                'tax' : str(transaction.tax),
-                'aftertax' : str(transaction.aftertax),
-                'credit' : str(transaction.credit),
-                'discount' : str(transaction.discount),
-                'total' : str(transaction.total),
-                'account_paid' : transaction.account_paid,
-                'account_paid_on' : transaction.account_paid_on,
-                'type' : transaction.type,
-                'last_four' : transaction.last_four,
-                'tendered' : str(transaction.tendered),
+                'customer_id': vars.CUSTOMER_ID,
+                'pretax': str(transaction.pretax),
+                'tax': str(transaction.tax),
+                'aftertax': str(transaction.aftertax),
+                'credit': str(transaction.credit),
+                'discount': str(transaction.discount),
+                'total': str(transaction.total),
+                'account_paid': transaction.account_paid,
+                'account_paid_on': transaction.account_paid_on,
+                'type': transaction.type,
+                'last_four': transaction.last_four,
+                'tendered': str(transaction.tendered),
                 'status': transaction.status
             }
-            transaction_create = SYNC.create_transaction(vars.CUSTOMER_ID,data)
+            transaction_create = SYNC.create_transaction(vars.CUSTOMER_ID, data)
             if transaction_create is not False:
                 print('created new transaction')
 
@@ -11185,7 +11148,7 @@ class PickupScreen(Screen):
                         for customer in custs:
                             old_credits = Decimal(customer['credits'])
                     new_credits = float("%0.2f" % (old_credits - Decimal(credits_spent)))
-                    update_customer_credits = SYNC.update_customer_credits(vars.CUSTOMER_ID,new_credits)
+                    update_customer_credits = SYNC.update_customer_credits(vars.CUSTOMER_ID, new_credits)
                     if update_customer_credits is not False:
                         print('customer credit has been updated')
 
@@ -11201,10 +11164,10 @@ class PickupScreen(Screen):
                         invoices = Invoice()
                         for invoice_id in self.selected_invoices:
                             data = {
-                                'status':5,
+                                'status': 5,
                                 'transaction_id': transaction_id
                             }
-                            update_invoices_pickup = SYNC.update_invoice_pickup(invoice_id,data)
+                            update_invoices_pickup = SYNC.update_invoice_pickup(invoice_id, data)
                             if update_invoices_pickup is not False:
                                 print('invoices pickedup on cloud')
                         self.set_result_status()
@@ -11261,7 +11224,7 @@ class PickupScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        
+
                 if self.selected_invoices:
                     # invoices = Invoice()
                     print_sync_invoice = {}
@@ -11510,7 +11473,7 @@ class PrinterScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        
+
         self.printer_name.text = ''
         self.printer_model_number.text = ''
         self.printer_nick_name.text = ''
@@ -11770,7 +11733,6 @@ class PrinterScreen(Screen):
             popup.content = Builder.load_string(content)
             popup.open()
 
-
     def edit_printer(self):
         printer = Printer()
         print(self.edit_printer_id)
@@ -11958,14 +11920,16 @@ class RackScreen(Screen):
             # Cut paper
             if vars.EPSON:
                 pr = Printer()
-                vars.EPSON.write(pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
-                                             invert=False, smooth=False, flip=False))
+                vars.EPSON.write(
+                    pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+                                invert=False, smooth=False, flip=False))
                 vars.EPSON.write('{}'.format((datetime.datetime.now().strftime('%a %m/%d/%Y %I:%M %p'))))
                 vars.EPSON.write('\n\n\n\n\n\n')
                 vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
         # set user to go back to search screen
         if vars.CUSTOMER_ID:
             self.set_result_status()
+
 
 class ReportsScreen(Screen):
     pass
@@ -12442,7 +12406,11 @@ class SearchScreen(Screen):
 
                     # display data
                     self.cust_info_label.text = 'Customer Info: [color=FF0000]Account[/color]' if result[
-                        'account'] is '1' or result['account'] is True or result['account'] is 1 else 'Customer Info:'
+                                                                                                      'account'] is '1' or \
+                                                                                                  result[
+                                                                                                      'account'] is True or \
+                                                                                                  result[
+                                                                                                      'account'] is 1 else 'Customer Info:'
                     self.cust_mark_label.text = custid_string
                     self.customer_id_ti.text = str(vars.CUSTOMER_ID) if vars.CUSTOMER_ID else ''
                     self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
@@ -12452,7 +12420,8 @@ class SearchScreen(Screen):
                     self.cust_starch.text = self.get_starch_by_id(result['starch'])
                     self.cust_credit_label.bind(on_ref_press=self.credit_history)
                     self.cust_account_label.bind(on_ref_press=self.account_history_popup)
-                    self.cust_credit.text = '${:,.2f}'.format(Decimal(result['credits'])) if result['credits'] else '$0.00'
+                    self.cust_credit.text = '${:,.2f}'.format(Decimal(result['credits'])) if result[
+                        'credits'] else '$0.00'
                     self.cust_account.text = '${:,.2f}'.format(Decimal(result['account_total'])) if result[
                         'account_total'] else '$0.00'
                     try:
@@ -12851,11 +12820,11 @@ class SearchScreen(Screen):
 
         save_invoice = SYNC.create_invoice(data, items)
         if save_invoice is not False:
-            
+
             # print invoices
             if vars.EPSON:
                 pr = Printer()
-                        
+
                 customers = User()
                 custs = SYNC.customers_grab(vars.CUSTOMER_ID)
                 if custs:
@@ -12892,7 +12861,7 @@ class SearchScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        
+
                 vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
                 vars.EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                              invert=False, smooth=False, flip=False))
@@ -13052,7 +13021,7 @@ class SearchScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        
+
                 vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
                 vars.EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                              invert=False, smooth=False, flip=False))
@@ -13256,7 +13225,7 @@ class SearchScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                        
+
                         marks = user['custids']
                 invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
                 if invs:
@@ -13641,7 +13610,6 @@ class SearchScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    
 
             now = datetime.datetime.now()
             vars.EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
@@ -13840,7 +13808,7 @@ class SearchScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    
+
             invoice_id_str = str(vars.INVOICE_ID)
             invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
             due_date = 'SUN'
@@ -13907,7 +13875,7 @@ class SearchScreen(Screen):
                     # vars.BIXOLON.write('\x1b\x6d')
                     laundry_count = len(laundry_to_print)
                     shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
-                    marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
+                    marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
                     if marks is not False:
                         for mark in marks:
                             shirt_mark = mark['mark']
@@ -13997,7 +13965,7 @@ class SearchScreen(Screen):
                     customers.important_memo = user['important_memo']
                     customers.invoice_memo = user['invoice_memo']
                     customers.role_id = user['role_id']
-                    
+
             invoice_id_str = str(vars.INVOICE_ID)
             invs = SYNC.invoice_grab_id(vars.INVOICE_ID)
             due_date = 'SUN'
@@ -14022,7 +13990,6 @@ class SearchScreen(Screen):
             if vars.BIXOLON:
                 vars.BIXOLON.write('\x1b\x40')
                 vars.BIXOLON.write('\x1b\x6d')
-
 
                 for item_id in self.selected_tags_list:
                     inv_items = SYNC.invoice_item_grab(item_id)
@@ -14067,7 +14034,7 @@ class SearchScreen(Screen):
 
                     laundry_count = len(laundry_to_print)
                     shirt_mark = Custid().getCustomerMark(vars.CUSTOMER_ID)
-                    marks = SYNC.marks_query(vars.CUSTOMER_ID,1)
+                    marks = SYNC.marks_query(vars.CUSTOMER_ID, 1)
                     if marks is not False:
                         for mark in marks:
                             shirt_mark = mark['mark']
@@ -14131,7 +14098,7 @@ class SearchScreen(Screen):
         self.barcode_save_data = {}
 
         # Pause Schedule
-        
+
         if vars.INVOICE_ID is not None and int(vars.INVOICE_ID) > 0:
             self.main_popup.title = "Setup Barcode to Items"
             layout = BoxLayout(orientation="vertical")
@@ -14924,7 +14891,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                 status = 1
             elif not self.pickup_delivery_id and self.dropoff_delivery_id:
                 status = 4
-            
+
             data = {
                 'company_id': vars.COMPANY_ID,
                 'customer_id': vars.CUSTOMER_ID,
@@ -14932,12 +14899,12 @@ A{c},20,1,1,1,1,N,"{tag}"
                 'pickup_delivery_id': self.pickup_delivery_id,
                 'pickup_date': self.pickup_date,
                 'pickup_address': self.address_id,
-                'dropoff_delivery_id':self.dropoff_delivery_id,
+                'dropoff_delivery_id': self.dropoff_delivery_id,
                 'dropoff_date': self.dropoff_date,
                 'dropoff_address': self.address_id,
                 'special_instructions': self.special_instructions,
                 'type': 2,
-                'status':status
+                'status': status
             }
             save_schedule = SYNC.create_schedule(data)
 
@@ -14951,7 +14918,6 @@ A{c},20,1,1,1,1,N,"{tag}"
                 # Beep Sound
                 sys.stdout.write('\a')
                 sys.stdout.flush()
-                    
 
         pass
 
@@ -15490,7 +15456,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                                 elif today_day in dow and check_date_string not in blackout_dates:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                   on_press=partial(self.select_dropoff_date,
-                                                                                     today_base, dow[today_day]))
+                                                                                   today_base, dow[today_day]))
                                 else:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                   disabled=True)
@@ -15513,7 +15479,7 @@ A{c},20,1,1,1,1,N,"{tag}"
             zipcode = addresses['zipcode']
         delivery_ids = []
         if zipcode:
-            
+
             zips = SYNC.zipcode_query(zipcode)
             if zips:
                 for zip in zips:
@@ -15524,7 +15490,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         blackout_dates = []
         if delivery_ids:
             for delivery_id in delivery_ids:
-                
+
                 deliveries = SYNC.delivery_grab(delivery_id)
                 if deliveries:
                     dow[deliveries['day']] = delivery_id
@@ -15585,7 +15551,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                                 elif today_day in dow and check_date_string not in blackout_dates:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                   on_press=partial(self.select_pickup_date,
-                                                                                     today_base, dow[today_day]))
+                                                                                   today_base, dow[today_day]))
                                 else:
                                     item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                   disabled=True)
@@ -15738,7 +15704,6 @@ A{c},20,1,1,1,1,N,"{tag}"
                     deliveries = Delivery().where({'delivery_id': dropoff_delivery_id})
                     deliveries = SYNC.delivery_grab(dropoff_delivery_id)
                     if deliveries:
-
                         pickup_time_string = '{} - {}'.format(deliveries['start_time'], deliveries['end_time'])
                 dropoff_time_string = ''
                 if pickup_delivery_id:
@@ -15997,7 +15962,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                     old_credit = float(customer['credits']) if customer['credits'] is not None else 0
             added_credits = float(self.credit_amount.text) if self.credit_amount.text else 0
             new_credits = old_credit + added_credits
-            edit_credit = SYNC.edit_credit(vars.CUSTOMER_ID,new_credits)
+            edit_credit = SYNC.edit_credit(vars.CUSTOMER_ID, new_credits)
 
             if edit_credit is not False:
 
@@ -16198,7 +16163,8 @@ A{c},20,1,1,1,1,N,"{tag}"
         account_running_balance = 0
         if customers:
             for customer in customers:
-                account_running_balance = float(customer['account_total']) if float(customer['account_total']) > 0 else 0
+                account_running_balance = float(customer['account_total']) if float(
+                    customer['account_total']) > 0 else 0
 
         if float(account_running_balance) < float(due):
             due = account_running_balance
@@ -16345,8 +16311,6 @@ A{c},20,1,1,1,1,N,"{tag}"
                 vars.SEARCH_RESULTS_STATUS = True
                 self.reset()
 
-
-
         # update server
         pass
 
@@ -16455,7 +16419,6 @@ A{c},20,1,1,1,1,N,"{tag}"
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th6))
         inner_layout_1.ids.main_table.add_widget(Builder.load_string(th7))
 
-
         invoices = SYNC.invoice_query_transaction_id(transaction_id)
         if invoices:
             for invoice in invoices:
@@ -16561,13 +16524,10 @@ class SearchResultsScreen(Screen):
     search_results_footer = ObjectProperty(None)
     search_results_label = ObjectProperty(None)
 
-
-
     def get_results(self):
         # Pause Schedule
         print(vars.SEARCH_TEXT)
         vars.ROW_CAP = SYNC.customers_row_cap(vars.SEARCH_TEXT)
-
 
         self.search_results_table.clear_widgets()
         self.search_results_footer.clear_widgets()
@@ -16649,7 +16609,7 @@ class SearchResultsScreen(Screen):
         else:
             vars.ROW_SEARCH = vars.ROW_SEARCH[1] + 1, vars.ROW_SEARCH[1] + 10
 
-        cust1 = SYNC.customers_search_results(vars.SEARCH_TEXT,vars.ROW_SEARCH[0])
+        cust1 = SYNC.customers_search_results(vars.SEARCH_TEXT, vars.ROW_SEARCH[0])
         vars.SEARCH_RESULTS = cust1
         self.search_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
             vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
@@ -16666,8 +16626,7 @@ class SearchResultsScreen(Screen):
             vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
         )
 
-
-        cust1 = SYNC.customers_search_results(vars.SEARCH_TEXT,vars.ROW_SEARCH[0])
+        cust1 = SYNC.customers_search_results(vars.SEARCH_TEXT, vars.ROW_SEARCH[0])
         vars.SEARCH_RESULTS = cust1
         self.search_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
             vars.ROW_SEARCH[0], vars.ROW_SEARCH[1], vars.ROW_CAP
@@ -16710,7 +16669,7 @@ class TaxesScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        
+
         taxes = Tax()
         tax_rate = None
 
@@ -16769,7 +16728,7 @@ class UpdateScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        
+
         self.search_input.text = ''
         self.company_select.text = "Store Name"
         self.company_select.values = Company().prepareCompanyList()
