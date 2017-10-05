@@ -6,6 +6,7 @@ import datetime
 import os
 import re
 from collections import OrderedDict
+import multiprocessing
 
 # !/usr/local/bin/python3
 # !/usr/bin/env python3
@@ -62,7 +63,6 @@ getcontext().prec = 3
 from kv_generator import KvString
 from jobs import Job
 from static import Static
-from multiprocessing import Process
 import threading
 import queue
 import authorize
@@ -1333,8 +1333,11 @@ class DropoffScreen(Screen):
     customer_id_backup = None
     discount_id = None
     item_rows = {}
+    in_progress = []
+
 
     def reset(self):
+
         # Pause Schedule
 
         # reset the inventory table
@@ -1389,17 +1392,23 @@ class DropoffScreen(Screen):
         # create th for invoice summary table
         h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
         h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
         h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+        h5 = KV.sized_invoice_tr(0, 'A.', size_hint_x=0.1)
         self.summary_table.add_widget(Builder.load_string(h1))
         self.summary_table.add_widget(Builder.load_string(h2))
         self.summary_table.add_widget(Builder.load_string(h3))
         self.summary_table.add_widget(Builder.load_string(h4))
-        self.get_inventory()
+        self.summary_table.add_widget(Builder.load_string(h5))
+
         self.deleted_rows = []
         self.memo_list = []
         self.colors_table_main.clear_widgets()
         self.get_colors_main()
+        self.in_progress = []
+        self.get_inventory()
+
+
         self.item_rows = {}
         taxes = SYNC.taxes_query(vars.COMPANY_ID,1)
         if taxes:
@@ -1414,6 +1423,8 @@ class DropoffScreen(Screen):
                 self.starch = vars.get_starch_by_code(customer['starch'])
         else:
             self.starch = vars.get_starch_by_code(None)
+
+
 
         SYNC_POPUP.dismiss()
 
@@ -1570,6 +1581,8 @@ GridLayout:
         vars.ITEM_ID = item_id
         items = SYNC.inventory_items_grab(item_id)
         check = False
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         if items:
             inventory_id = items['inventory_id']
             item_price = items['price']
@@ -1583,6 +1596,27 @@ GridLayout:
             else:
                 inventory_init = ''
                 laundry = 0
+
+            # update totals
+            self.quantity += int(self.inv_qty)
+            self.tags += int(item_tags)
+            self.subtotal += (float(item_price) * float(self.inv_qty))
+            # calculate discounts
+            discounts = SYNC.discount_query(vars.COMPANY_ID, now, now, inventory_id)
+
+            if discounts is not False:
+                for discount in discounts:
+                    discount_rate = float(discount['rate'])
+                    discount_price = float(discount['discount'])
+                    self.discount_id = discount['discount_id']
+                    if discount_rate > 0:
+                        self.discount += (float(item_price * discount_rate))
+                    elif discount_rate is 0 and discount_price > 0:
+                        self.discount += (float(item_price) - discount_price)
+                    else:
+                        self.discount += 0
+            self.tax = (self.subtotal - self.discount) * float(vars.TAX_RATE)
+            self.total = (self.subtotal - self.discount) + self.tax
 
             starch = self.starch if laundry else ''
             item_name = '{} ({})'.format(items['name'], starch) if laundry else items['name']
@@ -1642,10 +1676,16 @@ GridLayout:
         self.invoice_list[item_id] = row
 
         self.set_qty('C')
+
+
+
         if (check):
-            self.update_row_no_refresh()
+            t = threading.Thread(target=self.update_row_no_refresh,name="1")
+
         else:
-            self.create_summary_table()
+            t = threading.Thread(target=self.create_summary_table,name="2")
+        t.setDaemon=True
+        t.start()
 
     def create_summary_table(self):
         self.summary_table.clear_widgets()
@@ -1665,6 +1705,7 @@ GridLayout:
         if self.invoice_list:
 
             for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+
                 item_id = key
                 total_qty = len(values)
                 colors = {}
@@ -1738,15 +1779,24 @@ GridLayout:
                     self.summary_table.add_widget(tr3_formatted)
                     self.summary_table.add_widget(tr5)
                     self.item_rows[item_id] = [tr0_formatted,tr1_formatted,tr2_formatted,tr3_formatted]
-          
-        self.create_summary_totals()
+        p = threading.Thread(target=self.create_summary_totals)
+        p.start()
+        p.join()
+
+
+
 
     def select_item(self, item_id, *args, **kwargs):
         vars.ITEM_ID = item_id
-
-        self.update_row_no_refresh()
+        p = threading.Thread(target=self.update_row_no_refresh)
+        try:
+            p.start()
+        except RuntimeError as e:
+            pass
 
     def remove_item_row(self, item_id, *args, **kwargs):
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         vars.ITEM_ID = item_id
         if vars.ITEM_ID in self.item_rows:
             del self.item_rows[vars.ITEM_ID]
@@ -1765,49 +1815,64 @@ GridLayout:
                     break
         else:
             self.invoice_list = {}
-        self.create_summary_table()
-        self.create_summary_totals()
 
-    def create_summary_totals(self):
         self.quantity = 0
-        self.tags = 0
         self.subtotal = 0
-        self.tax = 0
+        self.tags = 0
         self.discount = 0
+        self.tax = 0
         self.total = 0
-        unix = time.time()
-        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-        # print(self.invoice_list)
-        # calculate totals
+        if self.invoice_list:
 
-        if bool(self.invoice_list):
-            for item_key, item_values in self.invoice_list.items():
-                for item in item_values:
-                    self.quantity += 1
-                    self.tags += int(item['tags']) if item['tags'] else 1
-                    self.subtotal += float(item['item_price']) if item['item_price'] else 0
-                    # calculate discounts
-                    discounts = SYNC.discount_query(vars.COMPANY_ID,now, now, item['inventory_id'])
+            for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
 
-                    if discounts is not False:
-                        for discount in discounts:
-                            discount_rate = float(discount['rate'])
-                            discount_price = float(discount['discount'])
-                            self.discount_id = discount['discount_id']
-                            if discount_rate > 0:
-                                self.discount += (float(item['item_price'] * discount_rate))
-                            elif discount_rate is 0 and discount_price > 0:
-                                self.discount += (float(item['item_price']) - discount_price)
-                            else:
-                                self.discount += 0
+
+                self.quantity = len(values)
+
+                if values:
+                    for item in values:
+                        inventory_id = item['inventory_id']
+                        tags = item['tags']
+                        self.tags += tags
+                        self.subtotal += float(item['item_price']) if item['item_price'] else 0
+                        # calculate discounts
+                        discounts = SYNC.discount_query(vars.COMPANY_ID, now, now, inventory_id)
+
+                        if discounts is not False:
+                            for discount in discounts:
+                                discount_rate = float(discount['rate'])
+                                discount_price = float(discount['discount'])
+                                self.discount_id = discount['discount_id']
+                                if discount_rate > 0:
+                                    self.discount += (float(item['item_price'] * discount_rate))
+                                elif discount_rate is 0 and discount_price > 0:
+                                    self.discount += (float(item['item_price']) - discount_price)
+                                else:
+                                    self.discount += 0
             self.tax = (self.subtotal - self.discount) * float(vars.TAX_RATE)
             self.total = (self.subtotal - self.discount) + self.tax
+
+        p = threading.Thread(target=self.create_summary_table)
+
+        try:
+            p.start()
+            p.join()
+
+        except RuntimeError as e:
+            pass
+
+
+
+
+    def create_summary_totals(self):
+
         self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
         self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
         self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.subtotal))
         self.summary_tax_label.text = '[color=000000]{}[/color]'.format(vars.us_dollar(self.tax))
         self.summary_discount_label.text = '[color=000000]({})[/color]'.format(vars.us_dollar(self.discount))
         self.summary_total_label.text = '[color=000000][b]{}[/b][/color]'.format(vars.us_dollar(self.total))
+
 
 
     def make_memo_color(self):
@@ -2113,6 +2178,7 @@ GridLayout:
     def update_row_no_refresh(self, *args, **kwargs):
         # set all colors to plain
 
+
         if self.invoice_list:
 
             for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
@@ -2166,7 +2232,11 @@ GridLayout:
                     else:
                         self.create_summary_table()
                         break
-        self.create_summary_totals()
+
+        p = threading.Thread(target=self.create_summary_totals)
+        p.start()
+        p.join()
+
 
 
     def make_adjust(self):
@@ -3834,22 +3904,31 @@ class EditInvoiceScreen(Screen):
         # create th for invoice summary table
         h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
         h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
+        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
         h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
+        h5 = KV.sized_invoice_tr(0, 'A.', size_hint_x=0.1)
         self.summary_table.add_widget(Builder.load_string(h1))
         self.summary_table.add_widget(Builder.load_string(h2))
         self.summary_table.add_widget(Builder.load_string(h3))
         self.summary_table.add_widget(Builder.load_string(h4))
-        self.get_inventory()
-        self.get_colors_main()
+        self.summary_table.add_widget(Builder.load_string(h5))
+        p = threading.Thread(target=self.get_inventory)
+        q = threading.Thread(target=self.get_colors_main)
+        r = threading.Thread(target=self.create_summary_table)
+        try:
+            p.start()
+            q.start()
+            r.start()
+        except RuntimeError as e:
+            pass
+
         taxes = SYNC.taxes_query(vars.COMPANY_ID,1)
         if taxes:
             for tax in taxes:
                 vars.TAX_RATE = float(tax['rate'])
         else:
             vars.TAX_RATE = 0.096
-        self.create_summary_table()
-        self.create_summary_totals()
+
         self.deleted_rows = []
         SYNC_POPUP.dismiss()
 
@@ -4076,9 +4155,13 @@ GridLayout:
 
         self.set_qty('C')
         if (check):
-            self.update_row_no_refresh()
+            p = threading.Thread(target=self.update_row_no_refresh,name="1")
         else:
-            self.create_summary_table()
+            p = threading.Thread(target=self.create_summary_table,name="2")
+        try:
+            p.start()
+        except RuntimeError as e:
+            pass
 
     def create_summary_table(self):
         self.summary_table.clear_widgets()
@@ -4214,7 +4297,7 @@ GridLayout:
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
         # calculate totals
-        tax_rate = float("%0.2f" % (vars.TAX_RATE))
+        tax_rate = float("%0.2f" % float(vars.TAX_RATE))
         if bool(self.invoice_list):
             for item_key, item_values in self.invoice_list.items():
                 for item in item_values:
