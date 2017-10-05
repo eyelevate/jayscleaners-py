@@ -4284,7 +4284,7 @@ GridLayout:
                     break
 
         self.create_summary_table()
-        self.create_summary_totals()
+
 
     def create_summary_totals(self):
         self.quantity = 0
@@ -4700,7 +4700,7 @@ GridLayout:
                     else:
                         self.create_summary_table()
                         break
-        self.create_summary_totals()
+
 
 
 
