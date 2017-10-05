@@ -1812,10 +1812,9 @@ GridLayout:
 
             for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
 
-                self.quantity = len(values)
-
                 if values:
                     for item in values:
+                        self.quantity += 1
                         inventory_id = item['inventory_id']
                         tags = item['tags']
                         self.tags += tags
