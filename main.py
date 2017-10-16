@@ -9098,7 +9098,7 @@ class InvoiceDetailsScreen(Screen):
                 self.discount_label.text = '[color=000000]{}[/color]'.format(discount)
                 self.credit_label.text = '[color=000000]{}[/color]'.format(credit)
                 self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(due)
-                self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(tendered_total))
+                self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(float(tendered_total)))
             else:
                 self.pickup_label.text = '[color=000000]{}[/color]'.format('')
                 self.payment_type_label.text = '[color=000000]{}[/color]'.format('')
