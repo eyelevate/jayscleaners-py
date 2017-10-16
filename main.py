@@ -9104,7 +9104,7 @@ class InvoiceDetailsScreen(Screen):
                 payment_type = transactions['type']
                 discount_pre = float(transactions['discount']) if transactions['discount'] else 0
                 discount_total = discount_pre + 0
-                if account_check:
+                if not account_check:
                     tendered_total = transactions['tendered'] if transactions['tendered'] else 0
                 else:
                     tendered_total = 'account'
@@ -9126,11 +9126,12 @@ class InvoiceDetailsScreen(Screen):
                 discount = '${:,.2f}'.format(float(transactions['discount'])) if transactions['discount'] else '$0.00'
                 # need to add in credits
                 credit = '$0.00'
-                if account_check:
-                    due = 'account'
-                else:
+                if not account_check:
                     due_amt = float(invoices['total']) - float(discount_total) - float(tendered_total)
                     due = '${:,.2f}'.format(float(due_amt))
+                    
+                else:
+                    due = 'account'
 
                 self.pickup_label.text = '[color=000000]{}[/color]'.format(pickup_date)
                 self.payment_type_label.text = '[color=000000]{}[/color]'.format(transaction_type)
@@ -9138,7 +9139,8 @@ class InvoiceDetailsScreen(Screen):
                 self.discount_label.text = '[color=000000]{}[/color]'.format(discount)
                 self.credit_label.text = '[color=000000]{}[/color]'.format(credit)
                 self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(due)
-                self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(float(tendered_total))) if account_check else 'account'
+                tendered_label = '${:,.2f}'.format(float(tendered_total)) if not account_check else 'account'
+                self.tendered_label.text = '[color=000000]{}[/color]'.format(tendered_label)
             else:
                 self.pickup_label.text = '[color=000000]{}[/color]'.format('')
                 self.payment_type_label.text = '[color=000000]{}[/color]'.format('')
