@@ -6791,7 +6791,10 @@ class HistoryScreen(Screen):
     row_increment = 10
     up_btn = ObjectProperty(None)
     down_btn = ObjectProperty(None)
-
+    def reset_base(self):
+        t1 = Thread(target=self.reset)
+        t1.start()
+        
     def reset(self):
         # Pause Schedule
 
@@ -7022,7 +7025,10 @@ class HistoryScreen(Screen):
                 for ggc in grandchild.children:
                     ggc.color = text_color
         # self.reset()
-        self.items_table_update()
+        t1 = Thread(target=self.items_table_update)
+        t1.start()
+
+        # self.items_table_update()
 
     def invoice_next(self):
         self.row_set += self.row_increment
@@ -7031,8 +7037,9 @@ class HistoryScreen(Screen):
         #     vars.ROW_SEARCH = vars.ROW_CAP - 10, vars.ROW_CAP
         # else:
         #     vars.ROW_SEARCH = vars.ROW_SEARCH[1] + 1, vars.ROW_SEARCH[1] + 10
-
-        self.reset()
+        t1 = Thread(target=self.reset)
+        t1.start()
+        # self.reset()
         self.up_btn.disabled = True if self.row_set <= 0 else False
 
     def invoice_prev(self):
@@ -7045,7 +7052,9 @@ class HistoryScreen(Screen):
         # else:
         #     vars.ROW_SEARCH = vars.ROW_SEARCH[0] - 10, vars.ROW_SEARCH[1] - 10
 
-        self.reset()
+
+        t1 = Thread(target=self.reset)
+        t1.start()
         self.down_btn.disabled = False if self.row_set < vars.ROW_CAP else True
 
     def items_table_update(self):
@@ -7130,9 +7139,15 @@ class HistoryScreen(Screen):
                                               size_hint_x=0.2,
                                               on_release='app.root.current="item_details"',
                                               on_press='self.parent.parent.parent.parent.item_details({})'.format(key))
-                    self.items_table.add_widget(Builder.load_string(tr1))
-                    self.items_table.add_widget(Builder.load_string(tr2))
-                    self.items_table.add_widget(Builder.load_string(tr3))
+                    t1 = Thread(target=self.items_table.add_widget,args=[Builder.load_string(tr1)])
+                    t2 = Thread(target=self.items_table.add_widget, args=[Builder.load_string(tr2)])
+                    t3 = Thread(target=self.items_table.add_widget, args=[Builder.load_string(tr3)])
+                    t1.start()
+                    t2.start()
+                    t3.start()
+                    # self.items_table.add_widget(Builder.load_string(tr1))
+                    # self.items_table.add_widget(Builder.load_string(tr2))
+                    # self.items_table.add_widget(Builder.load_string(tr3))
 
     def item_details(self, item_id):
         vars.ITEM_ID = item_id
@@ -8987,11 +9002,25 @@ class InvoiceDetailsScreen(Screen):
     credit_label = ObjectProperty(None)
     tendered_label = ObjectProperty(None)
     due_label = ObjectProperty(None)
+    invoices = []
+
+    def open_popup(self, *args, **kwargs):
+        print('ter')
+        SYNC_POPUP.title = "Loading"
+        content = KV.popup_alert("Please wait while the page is loading")
+        SYNC_POPUP.content = Builder.load_string(content)
+        SYNC_POPUP.open()
+        
+    def get_details_base(self):
+        t1 = Thread(target=self.get_details)
+        t1.start()
+        # t1.join()
 
     def get_details(self):
         # Pause Schedule
 
         invoices = SYNC.invoice_grab_id(vars.INVOICE_ID)
+        self.invoices = invoices
         if invoices:
             # reset the page first
             self.invoice_number_label.text = ''
@@ -9037,8 +9066,10 @@ class InvoiceDetailsScreen(Screen):
             # get the customer information
             customer_id = invoices['customer_id']
             users = SYNC.customers_grab(customer_id)
+            account_check = False
             if users:
                 for user in users:
+                    account_check = user['account']
                     last_name = user['last_name']
                     first_name = user['first_name']
                     full_name = '{}, {}'.format(last_name.capitalize(), first_name.capitalize())
@@ -9060,26 +9091,32 @@ class InvoiceDetailsScreen(Screen):
                     self.profile_id_label.text = '[color=000000]{}[/color]'.format(profile_id)
 
             # update the items table
-            self.items_table_update()
+            t1 = Thread(target=self.items_table_update)
+            t1.start()
+
+            # self.items_table_update()
 
             # get the transaction information
             transaction_id = invoices['transaction_id']
-            transactions = Transaction().where({'transaction_id': transaction_id})
+            # transactions = Transaction().where({'transaction_id': transaction_id})
             transactions = SYNC.transaction_grab(transaction_id)
             if transactions:
                 payment_type = transactions['type']
                 discount_pre = float(transactions['discount']) if transactions['discount'] else 0
                 discount_total = discount_pre + 0
-                tendered_total = transactions['tendered'] if transactions['tendered'] else 0
+                if account_check:
+                    tendered_total = transactions['tendered'] if transactions['tendered'] else 0
+                else:
+                    tendered_total = 'account'
                 if payment_type == 1:
                     transaction_type = 'Credit'
-                    tendered = invoices['total'] - discount_total
+                    tendered = invoices['total'] - discount_total if not account_check else 0
 
                 elif payment_type == 2:
                     transaction_type = 'Cash'
                 elif payment_type == 3:
                     transaction_type = 'Check'
-                    tendered_total = invoices['total'] - discount_total
+                    tendered_total = invoices['total'] - discount_total if not account_check else 0
                 else:
                     transaction_type = ''
 
@@ -9089,8 +9126,8 @@ class InvoiceDetailsScreen(Screen):
                 discount = '${:,.2f}'.format(float(transactions['discount'])) if transactions['discount'] else '$0.00'
                 # need to add in credits
                 credit = '$0.00'
-                due_amt = float(invoices['total']) - float(discount_total) - float(tendered_total)
-                due = '${:,.2f}'.format(due_amt)
+                due_amt = float(invoices['total']) - float(discount_total) - float(tendered_total) if not account_check else 0
+                due = '${:,.2f}'.format(float(due_amt)) if not account_check else 'account'
 
                 self.pickup_label.text = '[color=000000]{}[/color]'.format(pickup_date)
                 self.payment_type_label.text = '[color=000000]{}[/color]'.format(transaction_type)
@@ -9098,7 +9135,7 @@ class InvoiceDetailsScreen(Screen):
                 self.discount_label.text = '[color=000000]{}[/color]'.format(discount)
                 self.credit_label.text = '[color=000000]{}[/color]'.format(credit)
                 self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(due)
-                self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(float(tendered_total)))
+                self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(float(tendered_total))) if not account_check else 'account'
             else:
                 self.pickup_label.text = '[color=000000]{}[/color]'.format('')
                 self.payment_type_label.text = '[color=000000]{}[/color]'.format('')
@@ -9110,9 +9147,9 @@ class InvoiceDetailsScreen(Screen):
 
     def items_table_update(self):
         self.items_table.clear_widgets()
-        iitems = InvoiceItem()
-        data = {'invoice_id': vars.INVOICE_ID}
-        inv_items = iitems.where(data)
+
+        inv_items = self.invoices['invoice_items'];
+
         if inv_items:
             # create headers
             # create TH
@@ -9134,7 +9171,6 @@ class InvoiceDetailsScreen(Screen):
                         item_name = itm['name']
                 else:
                     item_name = ''
-
                 items[item_id] = {
                     'name': item_name,
                     'total': 0,
@@ -9142,25 +9178,19 @@ class InvoiceDetailsScreen(Screen):
                     'color': {},
                     'memo': []
                 }
+                    
             # populate correct item totals
-            if items:
-                for key, value in items.items():
-                    item_id = key
-                    data = {
-                        'invoice_id': vars.INVOICE_ID,
-                        'item_id': item_id
-                    }
-                    iinv_items = InvoiceItem().where(data)
-                    if iinv_items:
-                        for inv_item in iinv_items:
-                            items[item_id]['quantity'] += int(inv_item['quantity']) if inv_item['quantity'] else 1
-                            items[item_id]['total'] += float(inv_item['pretax']) if inv_item['pretax'] else 0
-                            if inv_item['color'] in items[item_id]['color']:
-                                items[item_id]['color'][inv_item['color']] += 1
-                            else:
-                                items[item_id]['color'][inv_item['color']] = 1
-                            if inv_item['memo']:
-                                items[item_id]['memo'].append(inv_item['memo'])
+            for invoice_item in inv_items:
+                item_id = invoice_item['item_id']
+                items[item_id]['quantity'] += int(invoice_item['quantity']) if invoice_item['quantity'] else 1
+                items[item_id]['total'] += float(invoice_item['pretax']) if invoice_item['pretax'] else 0
+                if invoice_item['color'] in items[item_id]['color']:
+                    items[item_id]['color'][invoice_item['color']] += 1
+                else:
+                    items[item_id]['color'][invoice_item['color']] = 1
+                if invoice_item['memo']:
+                    items[item_id]['memo'].append(invoice_item['memo'])
+                            
             # print out the items into the table
             if items:
                 for key, value in items.items():

@@ -499,6 +499,7 @@
             size_hint: 1, 0.1
             Button:
                 id: cancel
+                on_release: root.open_popup()
                 on_release: app.root.current = "history"
                 font_size:'20sp'
                 text: "Cancel"
