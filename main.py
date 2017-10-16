@@ -9068,7 +9068,7 @@ class InvoiceDetailsScreen(Screen):
             transactions = SYNC.transaction_grab(transaction_id)
             if transactions:
                 payment_type = transactions['type']
-                discount_pre = transactions['discount'] if transactions['discount'] else 0
+                discount_pre = float(transactions['discount']) if transactions['discount'] else 0
                 discount_total = discount_pre + 0
                 tendered_total = transactions['tendered'] if transactions['tendered'] else 0
                 if payment_type == 1:
@@ -9086,10 +9086,10 @@ class InvoiceDetailsScreen(Screen):
                 last4 = transactions['last_four']
                 pickup_date = transactions['created_at'] if transactions['created_at'] else ''
 
-                discount = '${:,.2f}'.format(transactions['discount']) if transactions['discount'] else '$0.00'
+                discount = '${:,.2f}'.format(float(transactions['discount'])) if transactions['discount'] else '$0.00'
                 # need to add in credits
                 credit = '$0.00'
-                due_amt = invoices['total'] - discount_total - tendered_total
+                due_amt = float(invoices['total']) - float(discount_total) - float(tendered_total)
                 due = '${:,.2f}'.format(due_amt)
 
                 self.pickup_label.text = '[color=000000]{}[/color]'.format(pickup_date)
