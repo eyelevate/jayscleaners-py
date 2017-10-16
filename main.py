@@ -9126,8 +9126,11 @@ class InvoiceDetailsScreen(Screen):
                 discount = '${:,.2f}'.format(float(transactions['discount'])) if transactions['discount'] else '$0.00'
                 # need to add in credits
                 credit = '$0.00'
-                due_amt = float(invoices['total']) - float(discount_total) - float(tendered_total) if account_check else 0
-                due = '${:,.2f}'.format(float(due_amt)) if not account_check else 'account'
+                if not account_check:
+                    due = 'account'
+                else:
+                    due_amt = float(invoices['total']) - float(discount_total) - float(tendered_total)
+                    due = '${:,.2f}'.format(float(due_amt))
 
                 self.pickup_label.text = '[color=000000]{}[/color]'.format(pickup_date)
                 self.payment_type_label.text = '[color=000000]{}[/color]'.format(transaction_type)
@@ -9135,7 +9138,7 @@ class InvoiceDetailsScreen(Screen):
                 self.discount_label.text = '[color=000000]{}[/color]'.format(discount)
                 self.credit_label.text = '[color=000000]{}[/color]'.format(credit)
                 self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(due)
-                self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(float(tendered_total))) if account_check else 'account'
+                self.tendered_label.text = '[color=000000]{}[/color]'.format('${:,.2f}'.format(float(tendered_total))) if not account_check else 'account'
             else:
                 self.pickup_label.text = '[color=000000]{}[/color]'.format('')
                 self.payment_type_label.text = '[color=000000]{}[/color]'.format('')
