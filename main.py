@@ -9015,9 +9015,9 @@ class InvoiceDetailsScreen(Screen):
             base_invoice_id = invoices['id']
             company_id = invoices['company_id']
             quantity = invoices['quantity']
-            subtotal = '${:,.2f}'.format(invoices['pretax']) if invoices['pretax'] else '$0.00'
-            tax = '${:,.2f}'.format(invoices['tax']) if invoices['tax'] else '$0.00'
-            total = '${:,.2f}'.format(invoices['total']) if invoices['total'] else '$0.00'
+            subtotal = '${:,.2f}'.format(float(invoices['pretax'])) if invoices['pretax'] else '$0.00'
+            tax = '${:,.2f}'.format(float(invoices['tax'])) if invoices['tax'] else '$0.00'
+            total = '${:,.2f}'.format(float(invoices['total'])) if invoices['total'] else '$0.00'
             rack = invoices['rack'] if invoices['rack'] else ''
             rack_date = invoices['rack_date'] if invoices['rack_date'] else ''
             dropoff_date = invoices['created_at'] if invoices['created_at'] else ''
