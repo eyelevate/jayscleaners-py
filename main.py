@@ -11633,12 +11633,12 @@ class RackScreen(Screen):
                 except USBNotFoundError:
                     Popups.dialog_msg('Error: usb not found',
                                     'Could not print rack number due to usb fault. However, rack has been successfully saved in the system. ')
-
-                self.racks[self.invoice_number.text] = formatted_rack
-                self.invoice_number.text = ''
-                self.rack_number.text = ''
-                self.update_rack_table()
-                self.marked_invoice_number = self.invoice_number.text
+                finally:
+                    self.racks[self.invoice_number.text] = formatted_rack
+                    self.invoice_number.text = ''
+                    self.rack_number.text = ''
+                    self.update_rack_table()
+                    self.marked_invoice_number = self.invoice_number.text
 
         self.invoice_number.focus = True
 
