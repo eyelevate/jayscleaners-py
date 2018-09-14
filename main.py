@@ -153,9 +153,6 @@ class Popups:
         # Beep Sound
         sys.stdout.write('\a')
         sys.stdout.flush()
-        time.sleep(1)
-        sys.stdout.write('\a')
-        sys.stdout.flush()
 
     @staticmethod
     def modal_msg(title_string, msg_string):
@@ -166,9 +163,6 @@ class Popups:
         body = KV.popup_alert(msg=msg_string)
         popup.content = Builder.load_string(body)
         popup.open()
-        # Beep Sound
-        sys.stdout.write('\a')
-        sys.stdout.flush()
 
 # config the sections
 
