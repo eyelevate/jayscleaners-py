@@ -140,8 +140,37 @@ printer_list = {}
 SYNC_POPUP = Popup()
 
 
-# config the sections
+class Popups:
+    @staticmethod
+    def dialog_msg(title_string, msg_string):
+        popup = Popup()
+        popup.title = title_string
+        popup.size_hint = None, None
+        popup.size = 800, 600
+        body = KV.popup_alert(msg=msg_string)
+        popup.content = Builder.load_string(body)
+        popup.open()
+        # Beep Sound
+        sys.stdout.write('\a')
+        sys.stdout.flush()
+        time.sleep(1)
+        sys.stdout.write('\a')
+        sys.stdout.flush()
 
+    @staticmethod
+    def modal_msg(title_string, msg_string):
+        popup = Popup()
+        popup.title = title_string
+        popup.size_hint = None, None
+        popup.size = 800, 600
+        body = KV.popup_alert(msg=msg_string)
+        popup.content = Builder.load_string(body)
+        popup.open()
+        # Beep Sound
+        sys.stdout.write('\a')
+        sys.stdout.flush()
+
+# config the sections
 
 
 # SCREEN CLASSES
@@ -484,14 +513,7 @@ class MainScreen(Screen):
 
         else:
             vars.ZEBRA = False
-            popup = Popup()
-            popup.title = 'Printer Error'
-            content = KV.popup_alert('Tag printer not found.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Printer Error','Tag printer not found.')
 
     def sync_db_popup(self):
 
@@ -616,14 +638,7 @@ class MainScreen(Screen):
 
         else:
             vars.BIXOLON = False
-            popup = Popup()
-            popup.title = 'Printer Error'
-            content = KV.popup_alert('Tag printer not found. Please check settings and try again')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Printer Error','Tag printer not found. Please check settings and try again')
 
     def print_setup(self, vendor_id, product_id):
         vendor_int = int(vendor_id, 16)
@@ -654,69 +669,7 @@ class MainScreen(Screen):
 
         else:
             vars.EPSON = False
-            popup = Popup()
-            popup.title = 'Printer Error'
-            content = KV.popup_alert('Receipt printer not found. Please check settings and try again')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
-
-    # def print_setup(self, vendor_id, product_id):
-    #
-    #     vendor_int = int(vendor_id, 16)
-    #     vendor_id_hex = hex(vendor_int)
-    #     product_int = int(product_id, 16)
-    #     product_id_hex = hex(product_int)
-    #     print('{} - {}'.format(vendor_id_hex, product_id_hex))
-    #     interface_number = 0
-    #     in_ep = 0x81
-    #     out_ep = 0x02
-    #     try:
-    #         dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
-    #         # was it found?
-    #         if dev is None:
-    #             print('Device not found')
-    #
-    #         # set the active configuration. With no arguments, the first
-    #         # configuration will be the active one
-    #         dev.set_configuration()
-    #
-    #         # get an endpoint instance
-    #         cfg = dev.get_active_configuration()
-    #         for cfg in dev:
-    #             sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
-    #             for intf in cfg:
-    #                 interface_number = intf.bInterfaceNumber
-    #                 idx = 0
-    #                 for ep in intf:
-    #                     idx += 1
-    #                     if idx is 1:
-    #                         in_ep = ep.bEndpointAddress
-    #                     else:
-    #                         out_ep = ep.bEndpointAddress
-    #
-    #     except AttributeError:
-    #         print('Error Attribute')
-    #     except TypeError:
-    #         print('Type Error')
-    #
-    #     try:
-    #         vars.EPSON = printer.Usb(vendor_int, product_int, interface_number, in_ep, out_ep)
-    #         print('printer set')
-    #     except USBNotFoundError:
-    #         vars.EPSON = False
-    #         popup = Popup()
-    #         popup.title = 'Printer Error'
-    #         content = KV.popup_alert('Unable to locate usb printer.')
-    #         popup.content = Builder.load_string(content)
-    #         popup.open()
-    #         # Beep Sound
-    #         sys.stdout.write('\a')
-    #         sys.stdout.flush()
-    #     except TextError:
-    #         print('Text error')
+            Popups.dialog_msg('Printer Error','Receipt printer not found. Please check settings and try again')
 
     def reports_page(self):
         webbrowser.open("https://www.jayscleaners.com/reports")
@@ -952,12 +905,7 @@ Button:
         coloreds.ordered = new_order
         coloreds.status = 1
         if coloreds.add():
-            popup = Popup()
-            popup.title = 'New Color'
-            popup.size_hint = (None, None)
-            popup.size = (800, 600)
-            popup.content = Builder.load_string(KV.popup_alert('Succesfully added a new color.'))
-            popup.open()
+            Popups.modal_msg('New Color', 'Succesfully added a new color.')
             self.add_popup.dismiss()
 
     def edit_color(self, *args, **kwargs):
@@ -969,12 +917,7 @@ Button:
                                  'name': self.color_name.text})
 
         if put:
-            popup = Popup()
-            popup.title = 'Edit Color'
-            popup.size_hint = (None, None)
-            popup.size = (800, 600)
-            popup.content = Builder.load_string(KV.popup_alert('Succesfully edited color.'))
-            popup.open()
+            Popups.modal_msg('Edit Color','Succesfully edited color.')
             self.add_popup.dismiss()
 
     def action_popup(self, id, *args, **kwargs):
@@ -1038,21 +981,11 @@ Button:
             for deleted_color in deleted:
                 coloreds.id = deleted_color['id']
                 if coloreds.delete():
-                    popup = Popup()
-                    popup.title = 'Deleted Color Notification'
-                    popup.size_hint = (None, None)
-                    popup.size = (800, 600)
-                    content = KV.popup_alert('Successfully deleted color')
-                    popup.content = Builder.load_string(content)
-                    popup.open()
+                    Popups.modal_msg('Deleted Color Notification','Successfully deleted color')
+
         else:
-            popup = Popup()
-            popup.title = 'Deleted Color Notification'
-            popup.size_hint = (None, None)
-            popup.size = (800, 600)
-            content = KV.popup_alert('Could not delete color. Try again.')
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.modal_msg('Deleted Color Notification', 'Could not delete color. Try again.')
+
         self.reset()
 
 
@@ -1269,11 +1202,7 @@ class CompanyScreen(Screen):
                                   'store_hours': self.store_hours
                                   })
         if put:
-            popup = Popup()
-            popup.title = 'Company Update'
-            content = KV.popup_alert('Successfully updated company!')
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.modal_msg('Company Update','Successfully updated company!')
 
 
 class DeliveryScreen(Screen):
@@ -1476,14 +1405,7 @@ class DropoffScreen(Screen):
 
                 # self.create_summary_table()
             else:
-                popup = Popup()
-                popup.title = 'Color Quantity Error'
-                content = KV.popup_alert('Color quantity does not match invoice item quantity. Please try again.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Color Quantity Error','Color quantity does not match invoice item quantity. Please try again.')
 
         # reset qty
         self.set_qty('C')
@@ -2154,7 +2076,6 @@ GridLayout:
 
     def update_row_no_refresh(self, *args, **kwargs):
         # set all colors to plain
-
 
         if self.invoice_list:
 
@@ -2970,7 +2891,7 @@ GridLayout:
                                         float(invoices['pretax'] * discount_rate))
                                 elif discount_rate is 0 and discount_price > 0:
                                     invoice_discount = (
-                                        float(invoices['pretax']) - discount_price)
+                                            float(invoices['pretax']) - discount_price)
                                 else:
                                     invoice_discount = 0
                         print_sync_totals[new_invoice_id] = {
@@ -3960,14 +3881,7 @@ class EditInvoiceScreen(Screen):
                 #
                 # self.create_summary_table()
             else:
-                popup = Popup()
-                popup.title = 'Color Quantity Error'
-                content = KV.popup_alert('Color quantity does not match invoice item quantity. Please try again.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Color Quantity Error','Color quantity does not match invoice item quantity. Please try again.')
 
         # reset qty
         self.set_qty('C')
@@ -4509,13 +4423,8 @@ GridLayout:
 
                 self.items_grid.add_widget(items_tr5)
         except KeyError as e:
-            popup = Popup()
-            popup.title = 'Selection Error'
-            content = KV.popup_alert('Please select an item before attempting an edit.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Selection Error','Please select an item before attempting an edit.')
+
             return False
         self.items_grid.bind(minimum_height=self.items_grid.setter('height'))
 
@@ -6022,7 +5931,6 @@ class EditCustomerScreen(Screen):
 
                     # delete customer
 
-
                     # if addresses:
                     #     for address in addresses:
                     #         self.address_id = address['id']
@@ -6383,20 +6291,11 @@ class EditCustomerScreen(Screen):
                 self.reset()
                 self.customer_select(vars.CUSTOMER_ID)
                 # create popup
-                content = KV.popup_alert("You have successfully edited this customer.")
-                popup.content = Builder.load_string(content)
-                popup.open()
+                Popups.modal_msg('Customer Update','You have successfully edited this customer.')
 
         else:
-            popup = Popup()
-            popup.title = 'Edit Error'
-            content = KV.popup_alert(
-                '{} Errors in your form. Please check to see if account or delivery is improperly set.'.format(errors))
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Edit Error',
+                              "{} Errors in your form. Please check to see if account or delivery is improperly set.".format(errors))
 
     def customer_select(self, customer_id, *args, **kwargs):
         vars.SEARCH_RESULTS_STATUS = True
@@ -6652,15 +6551,10 @@ class EmployeesScreen(Screen):
             users.role_id = 3  # employees
 
             if users.add():
-                popup = Popup()
-                popup.title = 'Add Employee'
-                popup.content = Builder.load_string(KV.popup_alert('Successfully Added employee!'))
-                popup.open()
+                Popups.modal_msg('Add Employee','Successfully Added employee!')
         else:
-            popup = Popup()
-            popup.title = 'Add Employee'
-            popup.content = Builder.load_string(KV.popup_alert('{} errors. Please fix then continue.'.format(errors)))
-            popup.open()
+            Popups.modal_msg('Add Employee', '{} errors. Please fix then continue.'.format(errors))
+
         self.employee_popup.dismiss()
         self.reset()
 
@@ -6726,15 +6620,11 @@ class EmployeesScreen(Screen):
                                       'email': self.email.text,
                                       'password': self.password.text})
             if put:
-                popup = Popup()
-                popup.title = 'Edit Employee'
-                popup.content = Builder.load_string(KV.popup_alert('Successfully edited employee!'))
-                popup.open()
+                Popups.modal_msg('Edit Employee','Successfully edited employee!')
+
         else:
-            popup = Popup()
-            popup.title = 'Edit Employee'
-            popup.content = Builder.load_string(KV.popup_alert('{} errors. Please fix then continue.'.format(errors)))
-            popup.open()
+            Popups.modal_msg('Edit Employee', '{} errors. Please fix then continue.'.format(errors))
+
         self.employee_popup.dismiss()
         self.reset()
 
@@ -6767,11 +6657,7 @@ class EmployeesScreen(Screen):
                 users.id = e_id
                 if users.delete():
                     count += 1
-
-        popup = Popup()
-        popup.title = 'Employee Deleted'
-        popup.content = Builder.load_string(KV.popup_alert('{} employee(s) deleted.'.format(count)))
-        popup.open()
+        Popups.modal_msg('Employee Deleted','{} employee(s) deleted.'.format(count))
 
         self.reset()
 
@@ -6791,6 +6677,7 @@ class HistoryScreen(Screen):
     row_increment = 10
     up_btn = ObjectProperty(None)
     down_btn = ObjectProperty(None)
+
     def reset_base(self):
         t1 = Thread(target=self.reset)
         t1.start()
@@ -7052,7 +6939,6 @@ class HistoryScreen(Screen):
         # else:
         #     vars.ROW_SEARCH = vars.ROW_SEARCH[0] - 10, vars.ROW_SEARCH[1] - 10
 
-
         t1 = Thread(target=self.reset)
         t1.start()
         self.down_btn.disabled = False if self.row_set < vars.ROW_CAP else True
@@ -7139,7 +7025,7 @@ class HistoryScreen(Screen):
                                               size_hint_x=0.2,
                                               on_release='app.root.current="item_details"',
                                               on_press='self.parent.parent.parent.parent.item_details({})'.format(key))
-                    t1 = Thread(target=self.items_table.add_widget,args=[Builder.load_string(tr1)])
+                    t1 = Thread(target=self.items_table.add_widget, args=[Builder.load_string(tr1)])
                     t2 = Thread(target=self.items_table.add_widget, args=[Builder.load_string(tr2)])
                     t3 = Thread(target=self.items_table.add_widget, args=[Builder.load_string(tr3)])
                     t1.start()
@@ -7727,23 +7613,10 @@ class HistoryScreen(Screen):
                             vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
 
             else:
-                popup = Popup()
-                popup.title = 'Printer Error'
-                content = KV.popup_alert('No printer found. Please try again.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Printer Error','No printer found. Please try again.')
+
         else:
-            popup = Popup()
-            popup.title = 'Reprint Error'
-            content = KV.popup_alert('Please select an invoice.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Reprint Error','Please select an invoice.')
 
     def reprint_tags(self, *args, **kwargs):
         popup = Popup()
@@ -8006,14 +7879,7 @@ class HistoryScreen(Screen):
 
 
         else:
-            popup = Popup()
-            popup.title = 'Reprint Error'
-            content = KV.popup_alert('Please select an invoice.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Reprint Error','Please select an invoice.')
         pass
 
     def print_selected_tags(self, *args, **kwargs):
@@ -8164,14 +8030,7 @@ class HistoryScreen(Screen):
                 vars.BIXOLON.write('\x1b\x6d')
 
         else:
-            popup = Popup()
-            popup.title = 'Reprint Error'
-            content = KV.popup_alert('Please select an invoice item to print tag.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Reprint Error','Please select an invoice item to print tag.')
 
 
 class InventoriesScreen(Screen):
@@ -8341,12 +8200,7 @@ class InventoriesScreen(Screen):
                                     'laundry': self.inventory_laundry})
         if put:
             self.edit_popup.dismiss()
-
-            popup = Popup()
-            popup.title = 'Inventory Update'
-            content = KV.popup_alert('Successfully updated inventory!')
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.modal_msg('Inventory Update','Successfully updated inventory!')
             self.edit_popup.dismiss()
             self.reset()
 
@@ -8403,11 +8257,7 @@ class InventoriesScreen(Screen):
 
         if inventories.add():
             # set invoice_items data to save
-
-            popup = Popup()
-            popup.title = 'Added Inventory'
-            popup.content = Builder.load_string(KV.popup_alert('Successfully created a new inventory!'))
-            popup.open()
+            Popups.modal_msg('Added Inventory','Successfully created a new inventory!')
             self.add_popup.dismiss()
             self.reset()
 
@@ -8674,13 +8524,7 @@ class InventoryItemsScreen(Screen):
                                 popup.open()
 
         else:
-            popup = Popup()
-            popup.title = 'Deleted Item Notification'
-            popup.size_hint = (None, None)
-            popup.size = (800, 600)
-            content = KV.popup_alert('Could not delete item. Try again.')
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.modal_msg('Deleted Item Notification','Could not delete item. Try again.')
 
     def add_item_popup(self):
         inventory_items = InventoryItem()
@@ -8791,19 +8635,12 @@ class InventoryItemsScreen(Screen):
             inventory_items.price = self.r6c2.text
             inventory_items.image = img_name
             if inventory_items.add():
-                popup = Popup()
-                popup.title = 'Form Success'
-                content = KV.popup_alert('Successfully created a new inventory item!')
-                popup.content = Builder.load_string(content)
-                popup.open()
+                Popups.modal_msg('Form Success','Successfully created a new inventory item!')
+
                 self.add_popup.dismiss()
                 self.reset()
         else:
-            popup = Popup()
-            popup.title = 'Form Error'
-            content = KV.popup_alert('{} form errors'.format(errors))
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.modal_msg('Form Error','{} form errors'.format(errors))
 
     def edit_item(self, *args, **kwargs):
         # validate
@@ -8842,22 +8679,14 @@ class InventoryItemsScreen(Screen):
                                             'price': self.r6c2.text,
                                             'image': img_name})
             if put:
-                popup = Popup()
-                popup.title = 'Form Success'
-                content = KV.popup_alert('Successfully updated item!')
-                popup.content = Builder.load_string(content)
-                popup.open()
+                Popups.modal_msg('Form Success','Successfully updated item!')
                 self.edit_popup.dismiss()
                 self.from_id = None
                 self.item_id = None
                 self.reorder_list = {}
                 self.get_inventory()
         else:
-            popup = Popup()
-            popup.title = 'Form Error'
-            content = KV.popup_alert('{} form errors'.format(errors))
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.modal_msg('Form Error','{} form errors'.format(errors))
 
 
 class ItemDetailsScreen(Screen):
@@ -9010,7 +8839,7 @@ class InvoiceDetailsScreen(Screen):
         content = KV.popup_alert("Please wait while the page is loading")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
-        
+
     def get_details_base(self):
         t1 = Thread(target=self.get_details)
         t1.start()
@@ -9129,7 +8958,7 @@ class InvoiceDetailsScreen(Screen):
                 if not account_check:
                     due_amt = float(invoices['total']) - float(discount_total) - float(tendered_total)
                     due = '${:,.2f}'.format(float(due_amt))
-                    
+
                 else:
                     due = 'account'
 
@@ -9183,7 +9012,7 @@ class InvoiceDetailsScreen(Screen):
                     'color': {},
                     'memo': []
                 }
-                    
+
             # populate correct item totals
             for invoice_item in inv_items:
                 item_id = invoice_item['item_id']
@@ -9195,7 +9024,7 @@ class InvoiceDetailsScreen(Screen):
                     items[item_id]['color'][invoice_item['color']] = 1
                 if invoice_item['memo']:
                     items[item_id]['memo'].append(invoice_item['memo'])
-                            
+
             # print out the items into the table
             if items:
                 for key, value in items.items():
@@ -9409,10 +9238,8 @@ class MemosScreen(Screen):
             self.reset()
 
         else:
-            popup = Popup()
-            popup.title = 'Reorder Status'
-            popup.content = Builder.load_string(KV.popup_alert('Could not reorder. Try again.'))
-            popup.open()
+            Popups.modal_msg('Reorder Status','Could not reorder. Try again.')
+
         pass
 
     def popup_memos_add(self):
@@ -9454,10 +9281,8 @@ class MemosScreen(Screen):
             mmos.status = 1
 
             if mmos.add():
-                popup = Popup()
-                popup.title = 'Memo'
-                popup.content = Builder.load_string(KV.popup_alert('Successfully added new memo'))
-                popup.open()
+                Popups.modal_msg('Memo','Successfully added new memo')
+
                 self.popup_memo.dismiss()
                 self.memo_id = None
                 self.reorder_start_id = None
@@ -9486,10 +9311,7 @@ class MemosScreen(Screen):
         mmos = Memo()
         mmos.id = self.memo_id
         if mmos.delete():
-            popup = Popup()
-            popup.title = 'Deleted Memo'
-            popup.content = Builder.load_string(KV.popup_alert('Successfully removed memo'))
-            popup.open()
+            Popups.modal_msg('Deleted Memo','Successfully removed memo')
             self.reset()
 
     def popup_memos_edit(self, *args, **kwargs):
@@ -9527,10 +9349,7 @@ class MemosScreen(Screen):
         put = mmos.put(where={'id': self.memo_id},
                        data={'memo': self.msg.text})
         if put:
-            popup = Popup()
-            popup.title = 'Updated Memo'
-            popup.content = Builder.load_string(KV.popup_alert('Successfully updated memo'))
-            popup.open()
+            Popups.modal_msg('Updated Memo', 'Successfully updated memo')
 
             self.popup_memo.dismiss()
             self.reset()
@@ -9538,10 +9357,7 @@ class MemosScreen(Screen):
             self.reorder_start_id = None
             self.reorder_end_id = None
         else:
-            popup = Popup()
-            popup.title = 'Updated Memo'
-            popup.content = Builder.load_string(KV.popup_alert('Could not edit memo. Please try again.'))
-            popup.open()
+            Popups.modal_msg('Update Memo Error', 'Could not edit memo. Please try again.')
 
 
 class NewCustomerScreen(Screen):
@@ -9916,7 +9732,7 @@ class PickupScreen(Screen):
             for customer in customers:
                 self.credits = customer['credits'] if customer['credits'] is not None else 0
                 account_status = True if customer['account'] is '1' or customer['account'] is True or customer[
-                                                                                                          'account'] is 1 else False
+                    'account'] is 1 else False
         print(account_status)
         if account_status is not False:
             print('in here')
@@ -10208,7 +10024,7 @@ class PickupScreen(Screen):
         if self.credits or self.discount_total:
 
             self.total_due = 0 if float(self.credits) >= float(self.total_amount) else float("%0.2f" % (
-                float(self.total_amount) - float(self.credits)))
+                    float(self.total_amount) - float(self.credits)))
             print(self.total_due)
         else:
             self.total_due = float('%0.2f' % (self.total_amount))
@@ -10344,14 +10160,7 @@ class PickupScreen(Screen):
     def update_card(self, *args, **kwargs):
         self.finish_popup.title = 'Update Credit Card'
         if self.card_id is None:
-            popup = Popup()
-            popup.title = 'Card Error'
-            content = KV.popup_alert('Credit Card Not Selected. Please select card and try again.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Card Error','Credit Card Not Selected. Please select card and try again.')
         else:
 
             if self.cards:
@@ -10417,15 +10226,7 @@ class PickupScreen(Screen):
                         self.finish_popup.content = base_layout
                         self.finish_popup.open()
             else:
-                popup = Popup()
-                popup.title = 'Card Error'
-                content = KV.popup_alert(
-                    'Card selected but could not locate card in local db. Please add a new card instead')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Card Error','Card selected but could not locate card in local db. Please add a new card instead')
 
         pass
 
@@ -10518,15 +10319,8 @@ class PickupScreen(Screen):
                 self.run_edit_task(card_root)
 
             # finish and reset
-            popup = Popup()
-            popup.title = 'Card Update Successful'
-            content = KV.popup_alert(
-                'Successfully updated card. Please reselect your card and invoices before making the online payment.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.modal_msg('Card Update Successful','Successfully updated card. Please reselect your card and invoices before making the online payment.')
+
             self.finish_popup.dismiss()
             self.reset()
             self.select_card_location('1')
@@ -10761,14 +10555,8 @@ class PickupScreen(Screen):
                             if cards_create is not False:
                                 print('card saved')
                         else:
-                            popup = Popup()
-                            popup.title = 'Card Error'
-                            content = KV.popup_alert(result['message'])
-                            popup.content = Builder.load_string(content)
-                            popup.open()
-                            # Beep Sound
-                            sys.stdout.write('\a')
-                            sys.stdout.flush()
+                            Popups.modal_msg('Card Error',result['message'])
+
                     else:
                         # make profile_id and payment_id
 
@@ -10835,34 +10623,18 @@ class PickupScreen(Screen):
 
 
                         else:
-                            popup = Popup()
-                            popup.title = 'Add Card Error'
-                            content = KV.popup_alert(make_profile['message'])
-                            popup.content = Builder.load_string(content)
-                            popup.open()
-                            # Beep Sound
-                            sys.stdout.write('\a')
-                            sys.stdout.flush()
+                            Popups.modal_msg('Add Card error',make_profile['message'])
+
             if save_success > 0:
                 # finish and reset
-                popup = Popup()
-                popup.title = 'Card Add Successful'
-                content = KV.popup_alert('Successfully added a card.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.modal_msg('Card Add Successful','Successfully added a card.')
+
                 self.send_to_db()
                 self.finish_popup.dismiss()
                 self.reset()
                 self.select_card_location('1')
             else:
-                popup = Popup()
-                popup.title = 'Card Add Unsuccessful'
-                content = KV.popup_alert('There were problems saving your card. Please try again')
-                popup.content = Builder.load_string(content)
-                popup.open()
+                Popups.modal_msg('Card Add Unsuccessful','There were problems saving your card. Please try again')
 
         pass
 
@@ -10880,15 +10652,7 @@ class PickupScreen(Screen):
             self.calc_total.text = '[color=000000][b]{}[/b][/color]'.format(total)
         else:
             # finish and reset
-            popup = Popup()
-            popup.title = 'Transaction Error'
-            content = KV.popup_alert(
-                'Please select an invoice before processing.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Transaction Error','Please select an invoice before processing.')
 
     def pay_popup_create(self):
 
@@ -11463,7 +11227,7 @@ class PickupScreen(Screen):
                     vars.EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     vars.EPSON.write('     BALANCE:')
                     balance = 0 if (
-                                       self.amount_tendered - self.total_due) < 0  else self.amount_tendered - self.total_due
+                                           self.amount_tendered - self.total_due) < 0 else self.amount_tendered - self.total_due
                     string_length = len(vars.us_dollar(balance))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     vars.EPSON.write('{}{}\n\n'.format(' ' * string_offset, vars.us_dollar(balance)))
@@ -11472,14 +11236,7 @@ class PickupScreen(Screen):
                     vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
 
             else:
-                popup = Popup()
-                popup.title = 'Printer Error'
-                content = KV.popup_alert('Usb device not found')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Printer Error','Usb Device not found')
 
         self.status_popup.dismiss()
 
@@ -11674,14 +11431,7 @@ class PrinterScreen(Screen):
             self.reset()
         else:
             self.reset()
-            popup = Popup()
-            popup.title = "Printer Setting"
-            content = KV.popup_alert("There are some errors with your printer edit form! Please review and try again.")
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Printer Setting',"There are some errors with your printer edit form! Please review and try again.")
 
     def validate(self):
         self.validated = 0
@@ -11739,14 +11489,7 @@ class PrinterScreen(Screen):
             self.reset()
         else:
             self.reset()
-            popup = Popup()
-            popup.title = "Printer Setting"
-            content = KV.popup_alert("There are some errors with your printer form! Please review and try again.")
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.modal_msg('Printer Setting','There are some errors with your printer form! Please review and try again.')
 
     def add_printer(self):
         printer = Printer()
@@ -11760,12 +11503,7 @@ class PrinterScreen(Screen):
         printer.status = 1
 
         if printer.add():
-            print('successfully synced a printer')
-            popup = Popup()
-            popup.title = "Printer Setting"
-            content = KV.popup_alert("Successfully added a printer!")
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.modal_msg('Printer Setting','Successfully added a printer.')
 
     def edit_printer(self):
         printer = Printer()
@@ -11778,11 +11516,7 @@ class PrinterScreen(Screen):
                                                               'type': self.r6c2.text})
 
         # set invoice_items data to save
-        popup = Popup()
-        popup.title = "Printer Setting"
-        content = KV.popup_alert("Successfully edited printer - {}!".format(self.r1c2.text))
-        popup.content = Builder.load_string(content)
-        popup.open()
+        Popups.modal_msg('Printer Setting',"Successfully edited printer - {}!".format(self.r1c2.text))
         self.edit_popup.dismiss()
 
 
@@ -11862,30 +11596,10 @@ class RackScreen(Screen):
 
         found_invoices = SYNC.invoice_grab_id(search)
         if not self.invoice_number.text:
-            popup = Popup()
-            popup.title = 'Error: Rack process error'
-            popup.size_hint = None, None
-            popup.size = 800, 600
-            body = KV.popup_alert(
-                msg='Invoice number cannot be left empty.')
-            popup.content = Builder.load_string(body)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Error: Rack process error','Invoice number cannot be left empty.')
+
         elif found_invoices is False:
-            # check to see if invoice is in server or on local
-            popup = Popup()
-            popup.title = 'Error: Rack process error'
-            popup.size_hint = None, None
-            popup.size = 800, 600
-            body = KV.popup_alert(
-                msg='No such invoice number.')
-            popup.content = Builder.load_string(body)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Error: Rack process error', 'No such invoice number.')
 
         elif self.invoice_number.text in self.racks:
             self.edited_rack = self.racks[self.invoice_number.text]
@@ -11904,39 +11618,33 @@ class RackScreen(Screen):
         now = datetime.datetime.now()
         rack_date = datetime.datetime.strftime(now, "%Y-%m-%d %H:%M:%S")
         if not self.invoice_number.text:
-            popup = Popup()
-            popup.title = 'Error: Rack process error'
-            popup.size_hint = None, None
-            popup.size = 800, 600
-            body = KV.popup_alert(
-                msg='Please provide an invoice number.')
-            popup.content = Builder.load_string(body)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
-
+            Popups.dialog_msg(title_string='Error: Rack Process error', msg_string='Please provide an invoice number.')
         else:
             formatted_rack = self.rack_number.text.replace("%R", "")
 
             if vars.EPSON:
-                pr = Printer()
-                vars.EPSON.write(
-                    pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=3,
-                                invert=False, smooth=False, flip=False))
-                if self.edited_rack:
-                    vars.EPSON.write('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
-                        self.invoice_number.text,
-                        self.edited_rack,
-                        formatted_rack))
-                    self.edited_rack = False
-                else:
-                    vars.EPSON.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
-            self.racks[self.invoice_number.text] = formatted_rack
-            self.invoice_number.text = ''
-            self.rack_number.text = ''
-            self.update_rack_table()
-            self.marked_invoice_number = self.invoice_number.text
+                try:
+                    pr = Printer()
+                    vars.EPSON.write(
+                        pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=3,
+                                    invert=False, smooth=False, flip=False))
+                    if self.edited_rack:
+                        vars.EPSON.write('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
+                            self.invoice_number.text,
+                            self.edited_rack,
+                            formatted_rack))
+                        self.edited_rack = False
+                    else:
+                        vars.EPSON.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
+                except USBNotFoundError:
+                    Popups.dialog_msg('Error: usb not found',
+                                    'Could not print rack number due to usb fault. However, rack has been successfully saved in the system. ')
+                finally:
+                    self.racks[self.invoice_number.text] = formatted_rack
+                    self.invoice_number.text = ''
+                    self.rack_number.text = ''
+                    self.update_rack_table()
+                    self.marked_invoice_number = self.invoice_number.text
 
         self.invoice_number.focus = True
 
@@ -12190,7 +11898,6 @@ class SearchScreen(Screen):
         SYNC_POPUP.open()
 
     def search_customer(self, *args, **kwargs):
-        popup = Popup()
         search_text = self.search.text
         customers = User()
         vars.INVOICE_ID = None
@@ -12202,11 +11909,9 @@ class SearchScreen(Screen):
             self.customer_results(users)
 
         else:
-            popup = Popup()
-            popup.title = 'Search Error'
-            popup.content = Builder.load_string(
-                KV.popup_alert('Search cannot be an empty value. Please try again.'))
-            popup.open()
+            Popups.dialog_msg(title_string='Search Error',
+                            msg_string='Search cannot be an empty value. Please try again.')
+
         customers.close_connection()
 
     def create_invoice_row(self, row, *args, **kwargs):
@@ -12485,14 +12190,8 @@ class SearchScreen(Screen):
                 # show results in new screen search results
                 self.search_results()
         else:
-
-            popup = Popup()
-            popup.title = 'Search Results'
-            popup.size_hint = None, None
-            popup.size = 800, 600
-            content = KV.popup_alert(msg="No customers found! Please try again!")
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.dialog_msg(title_string='Search Results',
+                            msg_string='No customers found! Please try again!')
 
     def search_results(self):
         vars.SEARCH_TEXT = self.search.text
@@ -12503,14 +12202,8 @@ class SearchScreen(Screen):
             self.search.focus = True
 
         else:
-
-            popup = Popup()
-            popup.title = 'Search Results'
-            popup.size_hint = None, None
-            popup.size = 800, 600
-            content = KV.popup_alert(msg="No customers found! Please try again!")
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.dialog_msg(title_string='Search Results',
+                            msg_string='No customers found! Please try again!')
 
     def get_starch_by_id(self, starch):
         if starch == 1:
@@ -12961,27 +12654,12 @@ class SearchScreen(Screen):
 
 
             else:
-                popup = Popup()
-                popup.title = 'Printer Error'
-                content = KV.popup_alert('Could not find usb.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
-
+                Popups.dialog_msg(title_string='Printer Error',
+                                msg_string='Could not find usb.')
 
         else:
-            popup = Popup()
-            popup.title = 'Error!'
-            popup.size_hint = None, None
-            popup.size = 800, 600
-            content = KV.popup_alert(msg="Could not save quick drop! Please try again!")
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg(title_string='Error!',
+                            msg_string='Could not save quick drop! Please try again!')
 
             pass
 
@@ -13182,26 +12860,12 @@ class SearchScreen(Screen):
                 vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
 
             else:
-                popup = Popup()
-                popup.title = 'Printer Error'
-                content = KV.popup_alert('Could not find usb.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg(title_string='Printer Error',
+                                msg_string='Could not find usb. Please shut down system and find the proper connection via the Zadig app.')
 
         else:
-            popup = Popup()
-            popup.title = 'Error!'
-            popup.size_hint = None, None
-            popup.size = 800, 600
-            content = KV.popup_alert(msg="Could not save quick drop! Please try again!")
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg(title_string='Error!',
+                            msg_string='Could not save quick drop! Please try again!')
 
         self.main_popup.dismiss()
         self.customer_select(vars.CUSTOMER_ID)
@@ -13581,17 +13245,11 @@ class SearchScreen(Screen):
                             vars.EPSON.write('\n\n\n\n\n\n')
                             vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
             else:
-                popup = Popup()
-                popup.title = 'Printer Error'
-                content = KV.popup_alert('No printer found. Please try again.')
-                popup.content = Builder.load_string(content)
-                popup.open()
+                Popups.dialog_msg(title_string='Printer Error',
+                                msg_string='No printer found. Please try again.')
         else:
-            popup = Popup()
-            popup.title = 'Reprint Error'
-            content = KV.popup_alert('Please select an invoice.')
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.dialog_msg(title_string='Reprint Error',
+                            msg_string='Please select an invoice.')
 
     def print_card(self, *args, **kwargs):
 
@@ -13682,11 +13340,7 @@ class SearchScreen(Screen):
             vars.EPSON.write(pr.pcmd('PARTIAL_CUT'))
 
         else:
-            popup = Popup()
-            popup.title = 'Printer Error'
-            content = KV.popup_alert('No printer found. Please try again.')
-            popup.content = Builder.load_string(content)
-            popup.open()
+            Popups.dialog_msg('Printer Error', 'No printer found. Please try again.')
 
     def reprint_tags(self, *args, **kwargs):
         popup = Popup()
@@ -13950,14 +13604,8 @@ class SearchScreen(Screen):
                 vars.BIXOLON.write('\x1b\x6d')
 
         else:
-            popup = Popup()
-            popup.title = 'Reprint Error'
-            content = KV.popup_alert('Please select an invoice.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Reprint Error', 'Please select an invoice')
+
         pass
 
     def print_selected_tags(self, *args, **kwargs):
@@ -14108,24 +13756,10 @@ class SearchScreen(Screen):
                     vars.BIXOLON.write('\n\n\n\n\n\n')
                     vars.BIXOLON.write('\x1b\x6d')
             else:
-                popup = Popup()
-                popup.title = 'Reprint Error'
-                content = KV.popup_alert('Tag Printer is not available.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Reprint Error', 'Tag printer is not available')
 
         else:
-            popup = Popup()
-            popup.title = 'Reprint Error'
-            content = KV.popup_alert('Please select an invoice item to print tag.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Reprint Error', 'Please select an invoice item to print tag')
 
     def barcode_popup(self):
         # reset data
@@ -14295,14 +13929,7 @@ A{c},20,1,1,1,1,N,"{tag}"
            c=close)
             vars.ZEBRA.write(final_content)
         else:
-            popup = Popup()
-            popup.title = 'Label Error'
-            content = KV.popup_alert('Please select a customer before printing out a label')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Label Error', 'Please select a customer before printing out a label')
 
     def calculator_popup(self):
         popup = Popup()
@@ -14766,14 +14393,7 @@ A{c},20,1,1,1,1,N,"{tag}"
             self.main_popup.content = layout
             self.main_popup.open()
         else:
-            popup = Popup()
-            popup.title = 'Delivery Error'
-            content = KV.popup_alert('You must first select an address before selecting a dropoff date.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Delivery Error', 'You must first select an address before selecting a dropoff date.')
         pass
 
     def get_pickup_dates(self, *args, **kwargs):
@@ -14857,67 +14477,26 @@ A{c},20,1,1,1,1,N,"{tag}"
             self.main_popup.content = layout
             self.main_popup.open()
         else:
-            popup = Popup()
-            popup.title = 'Delivery Error'
-            content = KV.popup_alert('You must first select an address before selecting a dropoff date.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Delivery Error', 'You must first select an address before selecting a dropoff date')
         pass
 
     def set_delivery(self, *args, **kwargs):
         # validate
         if self.card_id is None:
+            Popups.dialog_msg('Schedule Error', 'You have not selected a credit card on file')
 
-            popup = Popup()
-            popup.title = 'Schedule Error'
-            content = KV.popup_alert('You have not selected a credit card on file')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
         elif self.address_id is None:
+            Popups.dialog_msg('Schedule Error', 'You must first select an address.')
 
-            popup = Popup()
-            popup.title = 'Schedule Error'
-            content = KV.popup_alert('You must first select an address.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
         elif self.pickup_status is True and self.pickup_delivery_id is None:
+            Popups.dialog_msg('Delivery Error', 'You must first select an address before selecting a dropoff date')
 
-            popup = Popup()
-            popup.title = 'Schedule Error'
-            content = KV.popup_alert('Please select a proper pickup date and time')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
         elif self.dropoff_status is True and self.dropoff_delivery_id is None:
+            Popups.dialog_msg('Schedule Error', 'Please select a proper dropoff date and time')
 
-            popup = Popup()
-            popup.title = 'Schedule Error'
-            content = KV.popup_alert('Please select a proper dropoff date and time.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
         elif self.dropoff_status is False and self.pickup_status is False:
-            popup = Popup()
-            popup.title = 'Schedule Error'
-            content = KV.popup_alert('You must choose at least a dropoff or a pickup.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Schedule Error', 'You must choose at least a dropoff or a pickup')
+
         else:
             # create a new schedule instance
 
@@ -14944,14 +14523,7 @@ A{c},20,1,1,1,1,N,"{tag}"
 
             if save_schedule is not False:
                 self.delivery_popup.dismiss()
-                popup = Popup()
-                popup.title = 'Schedule Successfully Made'
-                content = KV.popup_alert('Delivery has been succesfully scheduled.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Schedule Successfully Made', 'Delivery has been successfully scheduled')
 
         pass
 
@@ -15158,14 +14730,8 @@ A{c},20,1,1,1,1,N,"{tag}"
                             if cards_add is not False:
                                 print('card added')
                         else:
-                            popup = Popup()
-                            popup.title = 'Card Error'
-                            content = KV.popup_alert(result['message'])
-                            popup.content = Builder.load_string(content)
-                            popup.open()
-                            # Beep Sound
-                            sys.stdout.write('\a')
-                            sys.stdout.flush()
+                            Popups.dialog_msg('Card Error', result['message'])
+
                     else:
                         # make profile_id and payment_id
                         customers = User().where({'user_id': vars.CUSTOMER_ID})
@@ -15245,24 +14811,11 @@ A{c},20,1,1,1,1,N,"{tag}"
                                     print('card added')
 
                         else:
-                            popup = Popup()
-                            popup.title = 'Add Card Error'
-                            content = KV.popup_alert(make_profile['message'])
-                            popup.content = Builder.load_string(content)
-                            popup.open()
-                            # Beep Sound
-                            sys.stdout.write('\a')
-                            sys.stdout.flush()
+                            Popups.dialog_msg('Add Card Error',make_profile['message'])
+
             if save_success > 0:
                 # finish and reset
-                popup = Popup()
-                popup.title = 'Card Add Successful'
-                content = KV.popup_alert('Successfully added a card.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Card Add Successful','Successfully added a card')
 
                 self.main_popup.dismiss()
 
@@ -15286,11 +14839,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                 self.card_id_spinner.values = self.card_string
 
             else:
-                popup = Popup()
-                popup.title = 'Card Add Unsuccessful'
-                content = KV.popup_alert('There were problems saving your card. Please try again')
-                popup.content = Builder.load_string(content)
-                popup.open()
+                Popups.dialog_msg('Card Add Unsuccessful','There were problems saving your card. Please try again')
 
         pass
 
@@ -15391,14 +14940,7 @@ A{c},20,1,1,1,1,N,"{tag}"
                                                                           address['zipcode']))
             self.address_id_spinner.values = self.address_string
             self.main_popup.dismiss()
-            popup = Popup()
-            popup.title = 'Address Added'
-            content = KV.popup_alert('Successfully added a new address to delivery setup')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Address Added','Successfully added a new address to delivery setup')
 
         pass
 
@@ -16008,24 +15550,10 @@ A{c},20,1,1,1,1,N,"{tag}"
                 # last 10 setup
                 vars.update_last_10()
                 self.main_popup.dismiss()
-                popup = Popup()
-                popup.title = 'Store Credit'
-                content = KV.popup_alert('Successfully added store credit.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
-            else:
+                Popups.dialog_msg('Store Credit','Successfully added store credit')
 
-                popup = Popup()
-                popup.title = 'Store Credit'
-                content = KV.popup_alert('Could not update store credit. Please try again.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+            else:
+                Popups.dialog_msg('Store Credit','Could not update store credit. Please try again.')
         pass
 
     def credit_history(self, *args, **kwargs):
@@ -16306,40 +15834,21 @@ A{c},20,1,1,1,1,N,"{tag}"
 
         if len(self.selected_account_tr) is 0:
             errors += 1
-            popup = Popup()
-            popup.title = 'Form Error'
-            content = KV.popup_alert('Please select an account invoice and try again.')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('Form Error','Please select an account invoice and try again.')
 
         # save data
         if errors is 0:
             edit_transaction = SYNC.pay_account(self.selected_account_tr, self.tendered_input.text, vars.CUSTOMER_ID)
             if edit_transaction is not False:
-                popup = Popup()
-                popup.title = 'Account Transaction Paid!'
-                content = KV.popup_alert('Successfully paid account transaction.')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Account Transaction Paid!', 'Successfully paid account transaction.')
+
                 self.payment_popup.dismiss()
                 self.main_popup.dismiss()
                 vars.SEARCH_RESULTS_STATUS = True
                 self.reset()
             else:
-                popup = Popup()
-                popup.title = 'Could not save user data'
-                content = KV.popup_alert('User table error, could not save. Please contact administrator')
-                popup.content = Builder.load_string(content)
-                popup.open()
-                # Beep Sound
-                sys.stdout.write('\a')
-                sys.stdout.flush()
+                Popups.dialog_msg('Could not save user data', 'User table error, could not save. Please contact administrator')
+
                 self.payment_popup.dismiss()
                 self.main_popup.dismiss()
                 vars.SEARCH_RESULTS_STATUS = True
@@ -16727,19 +16236,11 @@ class TaxesScreen(Screen):
             taxes.rate = tax_rate
             taxes.status = 1
             if taxes.add():
-                popup = Popup()
-                popup.title = 'Update Taxes'
-                popup.size_hint = (None, None)
-                popup.size = (800, 600)
-                popup.content = Builder.load_string(KV.popup_alert('Successfully updated tax!'))
-                popup.open()
+                Popups.dialog_msg('Update Taxes','Successfully updated tax!')
+
             else:
-                popup = Popup()
-                popup.title = 'Error On Update'
-                popup.size_hint = (None, None)
-                popup.size = (800, 600)
-                popup.content = Builder.load_string(KV.popup_alert('Could not update tax rate! Please try again.'))
-                popup.open()
+                Popups.dialog_msg('Error On Update', 'Could not update tax rate! Please try again.')
+
         else:
             self.tax_rate_input.hint_text = "Enter Tax Rate"
             self.tax_rate_input.hint_text_color = ERROR_COLOR
@@ -16810,14 +16311,8 @@ class UpdateScreen(Screen):
             self.item_total.text = str('{:,.2f}'.format(invitems['total']))
             self.new_total = list(str(int(invitems['total'] * 100)))
         else:
-            popup = Popup()
-            popup.title = 'No Such Invoice Item'
-            content = KV.popup_alert('Could not find any invoice item with that id. Please try again')
-            popup.content = Builder.load_string(content)
-            popup.open()
-            # Beep Sound
-            sys.stdout.write('\a')
-            sys.stdout.flush()
+            Popups.dialog_msg('No Such Invoice Item','Could not find any invoice item with that id. Please try again')
+
             self.reset()
         pass
 
@@ -16895,14 +16390,7 @@ class UpdateScreen(Screen):
                     # sync the database
 
                     # alert the user
-                    popup = Popup()
-                    popup.title = 'Update Invoice Item Success'
-                    content = KV.popup_alert('Successfully updated the invoice item.')
-                    popup.content = Builder.load_string(content)
-                    popup.open()
-                    # Beep Sound
-                    sys.stdout.write('\a')
-                    sys.stdout.flush()
+                    Popups.dialog_msg('Update Invoice Item Success','Successfully updated the invoice item.')
 
         pass
 
