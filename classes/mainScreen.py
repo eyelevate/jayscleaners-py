@@ -556,7 +556,7 @@ class MainScreen(Screen):
             sessions.put('_bixolon', value=bixolon)
 
         else:
-            sessions.put('_bixolon', False)
+            sessions.put('_bixolon', value=False)
             Popups.dialog_msg('Printer Error', 'Tag printer not found. Please check settings and try again')
 
     def print_setup(self, vendor_id, product_id):
