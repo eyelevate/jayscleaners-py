@@ -1,0 +1,13 @@
+#: import CheckBox kivy.uix.checkbox
+
+<Remember@CheckBox>:
+    size_hint_x: .05
+    color: .22,.78,.35,1
+    halign:'left'
+    valign:'middle'
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size

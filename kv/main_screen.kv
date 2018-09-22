@@ -7,7 +7,7 @@
     dropoff_button: dropoff_button
     login_button: login_button
     item_search_button: item_search_button
-
+    on_pre_enter: print('now')
     ActionBar:
         id: _action_main
         size_hint: 1,0.1
@@ -21,9 +21,12 @@
                 previous_image: ''
                 on_release: root.manager.current = "main"
             ActionGroup:
-                text: '          File          '
+                text: '               File               '
                 mode: 'spinner'
-                width: 500
+                width: 900
+                ActionButton:
+                    text: 'Reconnect Printers'
+                    on_release: root.reconnect_printers()
                 ActionButton:
                     text: 'Quit'
                     on_release: app.get_running_app().stop()

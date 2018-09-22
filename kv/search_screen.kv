@@ -51,7 +51,7 @@
         Button:
             on_release: root.barcode_popup()
             font_size:'20sp'
-            disabled: False
+            disabled: True
             text: "Barcode"
         Button:
             on_release: app.root.current = "rack"
@@ -158,7 +158,7 @@
                         id: customer_important_memo_ti
                         hint_text: "Important Memo"
                         font_size:'17sp'
-                        size_hint_y: None
+                        size_hint_y: '17sp'
                         height: '72sp'
                         multiline: True
                         readonly: True
@@ -171,7 +171,7 @@
                         id: customer_invoice_memo_ti
                         hint_text: "Invoice Memo"
                         font_size:'17sp'
-                        size_hint_y: None
+                        size_hint_y: '17sp'
                         height: '72sp'
                         multiline: True
                         readonly: True
