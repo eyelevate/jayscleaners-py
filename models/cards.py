@@ -1,7 +1,7 @@
 import datetime
 import time
 import sqlite3
-import authorize
+import authorizenet
 from models.model import *
 from models.companies import Company
 
@@ -358,13 +358,13 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
                 payment_api_login = str(company['payment_api_login'])
                 payment_gateway_id = str(company['payment_gateway_id'])
         if payment_api_login and payment_gateway_id:
-            authorize.Configuration.configure(
-                authorize.Environment.PRODUCTION,
+            authorizenet.Configuration.configure(
+                authorizenet.Environment.PRODUCTION,
                 payment_api_login,
                 payment_gateway_id,
             )
-            # authorize.Configuration.configure(
-            #     authorize.Environment.PRODUCTION,
+            # authorizenet.Configuration.configure(
+            #     authorizenet.Environment.PRODUCTION,
             #     'api_login_id',
             #     'api_transaction_key',
             # )
@@ -386,7 +386,7 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
                 if cards:
                     for card in cards:
                         payment_id = str(card['payment_id'])
-                        result = authorize.CreditCard.details(profile_id, payment_id)
+                        result = authorizenet.CreditCard.details(profile_id, payment_id)
                         last_four = result.payment_profile.payment.credit_card.card_number
                         card_type = result.payment_profile.payment.credit_card.card_type
                         card['last_four'] = last_four
@@ -407,7 +407,7 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
 
         if self.connectAuthNet(company_id):
             try:
-                result = authorize.Customer.create(data)
+                result = authorizenet.Customer.create(data)
                 print(result)
                 if result.messages:
                     for response in result.messages:
@@ -426,10 +426,10 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
                         'status':False,
                         'message': 'Could not connect to server. Please try again'
                     }
-            except authorize.exceptions.AuthorizeResponseError:
+            except authorizenet.exceptions.AuthorizeResponseError:
                 return {'status':False,
-                        'message': authorize.exceptions.AuthorizeResponseError}
-            except authorize.exceptions.AuthorizeInvalidError:
+                        'message': authorizenet.exceptions.AuthorizeResponseError}
+            except authorizenet.exceptions.AuthorizeInvalidError:
                 error_message = 'There were problems validating your card. Please try again.'
 
 
@@ -445,7 +445,7 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
 
         if self.connectAuthNet(company_id):
             try:
-                result = authorize.CreditCard.create(str(profile_id), data)
+                result = authorizenet.CreditCard.create(str(profile_id), data)
                 print(result)
                 if result.messages:
                     for response in result.messages:
@@ -465,12 +465,12 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
                         'message': 'Could not connect to server. Please try again'
                     }
 
-            except authorize.exceptions.AuthorizeResponseError as e:
+            except authorizenet.exceptions.AuthorizeResponseError as e:
                 return {'status':False,
                         'message':e}
-            except authorize.exceptions.AuthorizeInvalidError:
+            except authorizenet.exceptions.AuthorizeInvalidError:
                 error_message = ''
-                for key, value in authorize.exceptions.AuthorizeInvalidError:
+                for key, value in authorizenet.exceptions.AuthorizeInvalidError:
                     error_message = 'Error: {} field has an error of "{}"'.format(key, value)
                 return {'status':False,
                         'message':error_message}
@@ -483,12 +483,12 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
         if self.connectAuthNet(company_id):
 
             try:
-                result = authorize.CreditCard.update(str(profile_id), str(payment_id),data)
+                result = authorizenet.CreditCard.update(str(profile_id), str(payment_id),data)
                 return {'status':True,
                         'message':'Successfully updated credit cards with all companies'}
-            except authorize.exceptions.AuthorizeResponseError:
+            except authorizenet.exceptions.AuthorizeResponseError:
                 return {'status':False,
-                        'message':authorize.exceptions.AuthorizeResponseError}
+                        'message':authorizenet.exceptions.AuthorizeResponseError}
         else:
             return {'status': False,
                     'message': 'Could not authenticate with server'}
@@ -497,7 +497,7 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
 
         if self.connectAuthNet(company_id):
             try:
-                result = authorize.CreditCard.validate(str(profile_id), str(payment_id), {
+                result = authorizenet.CreditCard.validate(str(profile_id), str(payment_id), {
                     'validationMode': 'liveMode'
                 })
                 print(result)
@@ -518,10 +518,10 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
                         'message': 'Could not connect to server. Please try again'
                     }
 
-            except authorize.exceptions.AuthorizeResponseError:
+            except authorizenet.exceptions.AuthorizeResponseError:
                 return {'status': False,
-                        'message': authorize.exceptions.AuthorizeResponseError}
-            except authorize.exceptions.AuthorizeInvalidError:
+                        'message': authorizenet.exceptions.AuthorizeResponseError}
+            except authorizenet.exceptions.AuthorizeInvalidError:
                 error_message = 'Error: there were problems with your validation. please use another card'
 
                 return {'status': False,
