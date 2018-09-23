@@ -9,10 +9,16 @@ class SelectableButton(RecycleDataViewBehavior, Button):
     def refresh_view_attrs(self, rv, index, data):
         """ Catch and handle the view changes """
         self.index = index
-        return super(SelectableButton, self).refresh_view_attrs(rv, index, data)
+        if data:
+            try:
+                return super(SelectableButton, self).refresh_view_attrs(rv, index, data)
+            except ValueError:
+                pass
+
+        return False
 
     def on_press(self):
-        print('pressed')
+        print(self.index)
 
     def on_release(self):
-        print('removed')
+        print(self.index)

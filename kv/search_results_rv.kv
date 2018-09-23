@@ -1,4 +1,11 @@
 <SelectableButton>:
+    markup: True
+    size_hint: 1, None
+    text_size: self.size
+    valign:'middle'
+    halign:'center'
+    padding_x: sp(4)
+    font_size:sp(15)
     # Draw a background to indicate selection
     canvas.before:
         Color:
@@ -7,12 +14,14 @@
             pos: self.pos
             size: self.size
 <SearchResultsRV>:
-    rv_layout: layout
     viewclass: 'SelectableButton'
     SelectableRecycleBoxLayout:
         id: layout
+        bar_width: dp(5)
         default_size: None, dp(56)
-        default_size_hint: 0.1, None
+        default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
-        orientation: "vertical"
+        orientation: 'vertical'
+        multiselect: False
+        touch_multiselect: False

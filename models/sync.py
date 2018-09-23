@@ -1281,12 +1281,12 @@ class Sync:
             print(e.reason)  # could not save this time around because no internet, move on
             return False
 
-    def customers_search_results(self, query, start, *args, **kwargs):
+    def customers_search_results(self, query,*args, **kwargs):
         list = query.split()
         print(list)
-        url = 'http://www.jayscleaners.com/admins/api/customers-search-results'
+        url = 'http://www.jayscleaners.com/admins/api/cust-search-results'
         # attempt to connect to server
-        data = parse.urlencode({'list': json.dumps(list), 'start': start}).encode('utf-8')
+        data = parse.urlencode({'list': json.dumps(list)}).encode('utf-8')
         req = request.Request(url=url, data=data)  # this will make the method "POST"
         try:
             r = request.urlopen(req)

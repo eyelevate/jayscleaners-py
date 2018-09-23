@@ -3,7 +3,8 @@ import time
 import datetime
 import phonenumbers
 from decimal import Decimal, ROUND_05UP, ROUND_HALF_UP, DecimalException
-
+from operator import itemgetter as i
+from functools import cmp_to_key
 
 class Job:
     @staticmethod
@@ -60,4 +61,5 @@ class Job:
             currency = Decimal(amount)
 
         return currency
+
 

@@ -29,6 +29,8 @@ if not sessions.exists('_last10'):
     sessions.put('_last10', value=[])
 if not sessions.exists('_searchResults'):
     sessions.put('_searchResults', value=[])
+if not sessions.exists('_searchFilteredIndex'):
+    sessions.put('_searchFilteredIndex', value=[])
 if not sessions.exists('_searchResultsStatus'):
     sessions.put('_searchResultsStatus', value=False)
 if not sessions.exists('_searchText'):

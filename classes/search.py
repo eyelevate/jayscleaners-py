@@ -610,7 +610,8 @@ class SearchScreen(Screen):
 
     def search_results(self):
         sessions.put('_searchText',value= self.search.text)
-        sessions.put('_searchResults',value=SYNC.customers_search_results(sessions.get('_searchText')['value'], 0))
+        results = SYNC.customers_search_results(sessions.get('_searchText')['value'])
+        sessions.put('_searchResults',value=results)
         if sessions.get('_searchResults')['value'] is not False:
 
             self.parent.current = 'search_results'
