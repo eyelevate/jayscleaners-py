@@ -1,9 +1,12 @@
 from kivy.clock import Clock
+from kivy.factory import Factory
 from kivy.lang import Builder
 from kivy.properties import ObjectProperty, partial
 from kivy.uix.screenmanager import Screen
-
+from classes.selectable_button import SelectableButton
+from classes.selectable_rv_boxlayout import SelectableRecycleBoxLayout
 from models.custids import Custid
+from classes.search_results_rv import SearchResultsRV
 from models.sync import Sync
 from models.kv_generator import KvString
 from kivy.uix.popup import Popup
@@ -19,75 +22,17 @@ class SearchResultsScreen(Screen):
     """Takes in a customer searched dictionary and gives a table to select which customer we want to find
     once the user selects the customer gives an action to go back to the search screen with the correct
     customer id"""
-    search_results_table = ObjectProperty(None)
+    search_results_rv = SearchResultsRV
     search_results_footer = ObjectProperty(None)
     search_results_label = ObjectProperty(None)
+    search_results_selectable_button = SelectableButton
 
     def get_results(self):
         # Pause Schedule
-        print(sessions.get('_searchText')['value'])
         sessions.put('_rowCap', value=SYNC.customers_row_cap(sessions.get('_searchText')['value']))
-
-        self.search_results_table.clear_widgets()
+        self.search_results_selectable_button = SelectableButton()
+        self.search_results_rv = SearchResultsRV()
         self.search_results_footer.clear_widgets()
-        row_search = sessions.get('_rowSearch')['value']
-        self.search_results_label.text = "[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]".format(
-            row_search[0], row_search[1], sessions.get('_rowCap')['value']
-
-        )
-
-        # create TH
-        h1 = KV.widget_item(type='Label', data='ID', text_color='000000', rgba=(1, 1, 1, 1))
-        h2 = KV.widget_item(type='Label', data='Mark', text_color='000000', rgba=(1, 1, 1, 1))
-        h3 = KV.widget_item(type='Label', data='Last', text_color='000000', rgba=(1, 1, 1, 1))
-        h4 = KV.widget_item(type='Label', data='First', text_color='000000', rgba=(1, 1, 1, 1))
-        h5 = KV.widget_item(type='Label', data='Phone', text_color='000000', rgba=(1, 1, 1, 1))
-        h6 = KV.widget_item(type='Label', data='Action', text_color='000000', rgba=(1, 1, 1, 1))
-        self.search_results_table.add_widget(Builder.load_string(h1))
-        self.search_results_table.add_widget(Builder.load_string(h2))
-        self.search_results_table.add_widget(Builder.load_string(h3))
-        self.search_results_table.add_widget(Builder.load_string(h4))
-        self.search_results_table.add_widget(Builder.load_string(h5))
-        self.search_results_table.add_widget(Builder.load_string(h6))
-
-        # create Tbody TR
-        even_odd = 0
-        if sessions.get('_searchResults')['value'] is not False:
-            for cust in sessions.get('_searchResults')['value']:
-                even_odd += 1
-                first_name = cust['first_name']
-                last_name = cust['last_name']
-                customer_id = cust['id']
-                phone = cust['phone']
-                rgba = '0.369,0.369,0.369,1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 1'
-                background_rgba = '0.369,0.369,0.369,0.1' if even_odd % 2 == 0 else '0.826, 0.826, 0.826, 0.1'
-                text_color = 'e5e5e5' if even_odd % 2 == 0 else '000000'
-                marks = Custid()
-                mark = ''
-                # custids = marks.where({'customer_id': cust['id']})
-                custids = cust['custids']
-                if custids:
-                    for custid in custids:
-                        mark = custid['mark']
-                tr1 = KV.widget_item(type='Label', data=customer_id, rgba=rgba,
-                                     background_rgba=background_rgba, text_color=text_color)
-                tr2 = KV.widget_item(type='Label', data=mark, rgba=rgba,
-                                     background_rgba=background_rgba, text_color=text_color)
-                tr3 = KV.widget_item(type='Label', data=last_name, rgba=rgba,
-                                     background_rgba=background_rgba, text_color=text_color)
-                tr4 = KV.widget_item(type='Label', data=first_name, rgba=rgba,
-                                     background_rgba=background_rgba, text_color=text_color)
-                tr5 = KV.widget_item(type='Label', data=phone, rgba=rgba,
-                                     background_rgba=background_rgba, text_color=text_color)
-                tr6 = KV.widget_item(type='Button', data='View',
-                                     callback='self.parent.parent.parent.customer_select({})'
-                                     .format(customer_id))
-                self.search_results_table.add_widget(Builder.load_string(tr1))
-                self.search_results_table.add_widget(Builder.load_string(tr2))
-                self.search_results_table.add_widget(Builder.load_string(tr3))
-                self.search_results_table.add_widget(Builder.load_string(tr4))
-                self.search_results_table.add_widget(Builder.load_string(tr5))
-                self.search_results_table.add_widget(Builder.load_string(tr6))
         fc_cancel = KV.widget_item(type='Button', data='Cancel', callback='app.root.current = "search"')
         fc_up = KV.widget_item(type='Button', data='Prev', callback='self.parent.parent.parent.prev()')
         fc_down = KV.widget_item(type='Button', data='Next', callback='self.parent.parent.parent.next()')
