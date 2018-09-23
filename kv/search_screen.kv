@@ -38,7 +38,7 @@
         pos_hint: {'top':1}
         TextInput:
             id: search
-            font_size:'20sp'
+            font_size:sp(20)
             hint_text: "Search"
             multiline: False
             focus: True
@@ -46,20 +46,20 @@
             text: ''
         Button:
             on_release: root.search_customer()
-            font_size:'20sp'
+            font_size:sp(20)
             text: "Search"
         Button:
             on_release: root.barcode_popup()
-            font_size:'20sp'
+            font_size:sp(20)
             disabled: True
             text: "Barcode"
         Button:
             on_release: app.root.current = "rack"
-            font_size:'20sp'
+            font_size:sp(20)
             text: "Rack"
         Button:
             on_release: app.root.current = "main"
-            font_size:'20sp'
+            font_size:sp(20)
             text: "Main"
     Popup:
         id: search_popup
@@ -100,19 +100,19 @@
                         id: cust_info_label
                         text: "Customer Info"
                         markup:True
-                        font_size: '20sp'
+                        font_size: sp(20)
 
                     Label:
                         id: customer_mark_l
                         text: ""
-                        font_size: '20sp'
+                        font_size: sp(20)
                     BottomLeftFormLabel:
                         text: "ID"
 
                     CenterVerticalTextInput:
                         id: customer_id_ti
                         hint_text: "Customer ID #"
-                        font_size:'20sp'
+                        font_size:sp(20)
                         multiline: False
                         readonly: True
                         padding: [5,5,5,5]
@@ -123,7 +123,7 @@
                     CenterVerticalTextInput:
                         id: customer_last_name_ti
                         hint_text: "Last Name"
-                        font_size:'20sp'
+                        font_size:sp(20)
                         multiline: False
                         readonly: True
                         padding: [5,5,5,5]
@@ -133,7 +133,7 @@
 
                     CenterVerticalTextInput:
                         id: customer_first_name_ti
-                        font_size:'20sp'
+                        font_size:sp(20)
                         hint_text: "First Name"
                         multiline: False
                         readonly: True
@@ -144,7 +144,7 @@
 
                     CenterVerticalTextInput:
                         id: customer_phone_ti
-                        font_size:'20sp'
+                        font_size:sp(20)
                         hint_text: "(xxx) xxx-xxxx"
                         multiline: False
                         readonly: True
@@ -157,9 +157,9 @@
                     CenterVerticalTextInput:
                         id: customer_important_memo_ti
                         hint_text: "Important Memo"
-                        font_size:'17sp'
-                        size_hint_y: '17sp'
-                        height: '72sp'
+                        font_size: sp(17)
+                        size_hint_y: sp(17)
+                        height: sp(72)
                         multiline: True
                         readonly: True
                         padding: [5,5,5,5]
@@ -170,9 +170,9 @@
                     CenterVerticalTextInput:
                         id: customer_invoice_memo_ti
                         hint_text: "Invoice Memo"
-                        font_size:'17sp'
-                        size_hint_y: '17sp'
-                        height: '72sp'
+                        font_size:sp(17)
+                        size_hint_y: sp(17)
+                        height: sp(72)
                         multiline: True
                         readonly: True
                         padding: [5,5,5,5]
@@ -183,7 +183,7 @@
 
                     CenterVerticalTextInput:
                         id: customer_last_drop_ti
-                        font_size:'20sp'
+                        font_size:sp(20)
                         hint_text: "Last Drop"
                         multiline: False
                         readonly: True
@@ -194,7 +194,7 @@
 
                     CenterVerticalTextInput:
                         id: customer_starch_ti
-                        font_size:'20sp'
+                        font_size:sp(20)
                         hint_text: "Starch"
                         multiline: False
                         readonly: True
@@ -244,7 +244,7 @@
                         on_release: root.view_deliveries()
                     Label:
                         text: ""
-                        font_size: '20sp'
+                        font_size: sp(20)
         GridLayout:
             cols: 2
             RelativeLayout:
@@ -340,7 +340,7 @@
                 Button:
                     id: reprint_btn
                     on_release: root.reprint_popup()
-                    font_size:'20sp'
+                    font_size:sp(20)
                     text: "Reprint"
                     disabled: True
                 Button:
@@ -352,14 +352,14 @@
 
                 Button:
                     id: edit_invoice_btn
-                    font_size:'20sp'
+                    font_size:sp(20)
                     on_release: root.open_popup()
                     on_release: app.root.current = "edit_invoice"
                     text: "Edit"
                     disabled: True
                 Button:
                     id: history_btn
-                    font_size:'20sp'
+                    font_size:sp(20)
                     on_release: root.open_popup()
                     on_release: app.root.current = "history"
                     text: "History"
@@ -373,22 +373,22 @@
 
         Button:
             on_release: app.root.current = "new_customer"
-            font_size:'20sp'
+            font_size:sp(20)
             text: "New"
         Button:
             id: edit_customer_btn
             on_release: app.root.current = "edit_customer"
-            font_size:'15sp'
+            font_size: sp(15)
             text: "Edit Customer"
             disabled: True
         Button:
             on_release: app.root.current = 'last10'
-            font_size:'20sp'
+            font_size:sp(20)
             text: "Last 10"
 
         Button:
             id: quick_btn
-            font_size:'20sp'
+            font_size:sp(20)
             text: "Quick"
             disabled: True
             on_release: root.quick_popup()
@@ -396,13 +396,13 @@
             id: pickup_btn
             on_release: root.open_popup()
             on_release: app.root.current = "pickup"
-            font_size:'20sp'
+            font_size:sp(20)
             text: "Pickup"
             disabled: True
         Button:
             id: dropoff_btn
             on_release: root.open_popup()
             on_release: app.root.current = "dropoff"
-            font_size:'20sp'
+            font_size:sp(20)
             text: "Dropoff"
             disabled: True

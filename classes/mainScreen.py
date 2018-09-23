@@ -106,54 +106,11 @@ class MainScreen(Screen):
                 'Hexadecimal VendorID=' + hex(cfg.idVendor) + ' & ProductID=' + hex(cfg.idProduct) + '\n\n')
 
     def login_show(self):
-
-        self.login_popup = Popup()
-        self.login_popup.size_hint = (None, None)
-        self.login_popup.size = '400sp', '250sp'
-        self.login_popup.title = 'Login Screen'
-        layout = BoxLayout(orientation='vertical')
-        inner_content_1 = GridLayout(rows=3,
-                                     cols=2,
-                                     row_force_default=True,
-                                     row_default_height='40sp',
-                                     size_hint=(1, 0.6))
-        inner_content_1.add_widget(Label(text="username",
-                                         size_hint_y=None,
-                                         font_size='20sp'))
-        self.username = Factory.CenterVerticalTextInput(id='username',
-                                                        write_tab=False,
-                                                        hint_text='Username',
-                                                        on_text_validate=self.login)
-        inner_content_1.add_widget(self.username)
-        self.username.focus = True
-        inner_content_1.add_widget(Label(text="password",
-                                         size_hint_y=None,
-                                         font_size='20sp'))
-        self.password = Factory.CenterVerticalTextInput(id='password',
-                                                        write_tab=False,
-                                                        password=True,
-                                                        hint_text='Password',
-                                                        on_text_validate=self.login)
-
-        inner_content_1.add_widget(self.password)
-        self.checkbox = Factory.Remember()
-        self.checkbox.bind(active=self.on_remember_active)
-
-        inner_content_1.add_widget(Factory.MiddleLeftFormLabel(text="remember me",
-                                                               size_hint_y=None,
-                                                               font_size='20sp'))
-        inner_content_1.add_widget(self.checkbox)
-        inner_content_2 = BoxLayout(orientation='horizontal',
-                                    size_hint=(1, 0.2))
-        inner_content_2.add_widget(Button(text="Cancel",
-                                          font_size='20sp',
-                                          on_release=self.login_popup.dismiss))
-        inner_content_2.add_widget(Button(text="Login",
-                                          font_size='20sp',
-                                          on_release=self.login))
-        layout.add_widget(inner_content_1)
-        layout.add_widget(inner_content_2)
-        self.login_popup.content = layout
+        self.login_popup = Factory.LoginPopup()
+        self.login_popup.ids.login_username_input.bind(on_text_validate=self.login)
+        self.login_popup.ids.login_password_input.bind(on_text_validate=self.login)
+        self.login_popup.ids.login_button.bind(on_release=self.login)
+        self.login_popup.ids.login_remember_me.bind(active=self.on_remember_active)
         self.login_popup.open()
 
     def on_remember_active(self, obj, value):
@@ -164,20 +121,16 @@ class MainScreen(Screen):
     def login(self, *args, **kwargs):
 
         user = User()
+        self.username = self.login_popup.ids.login_username_input
+        self.password = self.login_popup.ids.login_password_input
         user.username = self.username.text
         user.password = self.password.text  # cipher and salt later
         data = SYNC.server_login(username=user.username, password=user.password)
         SYNC_POPUP.title = 'Login Screen'
         # validate the form data
-        if not user.username:
-            self.username.hint_text = "Username must exist"
-            self.username.hint_text_color = ERROR_COLOR
-        elif not user.password:
-            self.password.hint_text = "Password cannot be left empty"
-            self.password.hint_text_color = ERROR_COLOR
 
         # authenticate
-        elif user.username and user.password:
+        if user.username and user.password:
             self.username.hint_text = "Enter username"
             self.username.hint_text_color = DEFAULT_COLOR
             self.password.hint_text = "Enter password"
@@ -253,11 +206,35 @@ class MainScreen(Screen):
                                        'Please try again!!'))
                 SYNC_POPUP.open()
 
-        else:
+        elif not user.username and not user.password:
+
             self.username.hint_text = "Username must exist"
+
             self.username.hint_text_color = ERROR_COLOR
+
             self.password.hint_text = "Password cannot be left empty"
+
             self.password.hint_text_color = ERROR_COLOR
+
+        elif not user.password and user.username:
+
+            self.username.hint_text = "Username"
+
+            self.username.hint_text_color = DEFAULT_COLOR
+
+            self.password.hint_text = "Password cannot be left empty"
+
+            self.password.hint_text_color = ERROR_COLOR
+
+        else:
+
+            self.username.hint_text = "Username must exist"
+
+            self.username.hint_text_color = ERROR_COLOR
+
+            self.password.hint_text = "Password"
+
+            self.password.hint_text_color = DEFAULT_COLOR
 
     def active_state(self):
         self.login_button.text = "Logout"

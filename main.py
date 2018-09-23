@@ -65,7 +65,11 @@ from classes.update import UpdateScreen
 class ScreenManagement(ScreenManager):
     pass
 
-KV_PATH = path.abspath("kv/main.kv")
+
+main_path_windows = "kv/main_windows.kv"
+main_path_mac = "kv/main_mac.kv"
+main_path_relative = "kv/main.kv"
+KV_PATH = path.abspath(main_path_relative)
 presentation = Builder.load_file(KV_PATH)
 
 class MainApp(App):
