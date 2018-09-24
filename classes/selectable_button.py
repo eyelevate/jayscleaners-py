@@ -1,6 +1,7 @@
 from kivy.uix.button import Button
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
-
+from models.sessions import sessions
+from pubsub import pub
 
 class SelectableButton(RecycleDataViewBehavior, Button):
     """ Add selection support to the Label """
@@ -18,7 +19,7 @@ class SelectableButton(RecycleDataViewBehavior, Button):
         return False
 
     def on_press(self):
-        print(self.index)
+        sessions.put('_customerId',value=sessions.get('_filteredSearchResults')['value'][self.index]['id'])
 
     def on_release(self):
-        print(self.index)
+        pub.sendMessage('close_search_results_popup')

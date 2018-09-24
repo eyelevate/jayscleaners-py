@@ -29,15 +29,15 @@ class SearchResultsScreen(Screen):
 
     def __init__(self, **kwargs):
         super(SearchResultsScreen, self).__init__(**kwargs)
-
+        pub.subscribe(self.customer_select, 'close_search_results_popup')
 
     def get_results(self):
         # Pause Schedule
         if sessions.get('_searchResults')['value'] is not False:
-
+            sessions.put('_filteredSearchResults',value=sessions.get('_searchResults')['value'])
             self.search_results_rv.data = [{
-                'text': '[b]{}, {}[/b]\n{} - {}'.format('' if not x['last_name'] else x['last_name'].upper(), '' if not x['first_name'] else x['first_name'].upper(), x['id'], Job.make_us_phone(x['phone']))
-            } for x in sessions.get('_searchResults')['value']]
+                'text': '[b]{}, {}[/b] - [b]{}[/b]\n{}'.format('' if not x['last_name'] else x['last_name'].upper(), '' if not x['first_name'] else x['first_name'].upper(), x['id'], Job.make_us_phone(x['phone']))
+            } for x in sessions.get('_filteredSearchResults')['value']]
 
     def open_popup(self, *args, **kwargs):
         SYNC_POPUP.title = "Loading"
@@ -50,7 +50,6 @@ class SearchResultsScreen(Screen):
     def filter(self):
         self.search_results_rv.data = []
         filtered = []
-        original_index = []
         search = self.search_results_input.text
         if search is not '':
             for k,result in enumerate(sessions.get('_searchResults')['value']):
@@ -65,33 +64,29 @@ class SearchResultsScreen(Screen):
                 phone_check = True if str(f) in phone else False
                 if id_check or last_check or first_check or phone_check:
                     filtered.append(result)
-
+            sessions.put('_filteredSearchResults', value=filtered)
             self.search_results_rv.data = [{
-                'text': '[b]{}, {}[/b]\n{} - {}'.format('' if not x['last_name'] else x['last_name'].upper(),
+                'text': '[b]{}, {}[/b] - [b]{}[/b]\n{}'.format('' if not x['last_name'] else x['last_name'].upper(),
                                                         '' if not x['first_name'] else x['first_name'].upper(), x['id'],
                                                         Job.make_us_phone(x['phone']))
             } for x in filtered]
         else:
             self.get_results()
 
+    def customer_select(self, *args, **kwargs):
 
-    def customer_select(self, customer_id, *args, **kwargs):
-        sessions.put('_searchResults', value=False)
+
+        self.search_results_input.text = ''
         SYNC_POPUP.title = "Loading"
         content = KV.popup_alert("Gathering information on selected customer. Please wait...")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
-        Clock.schedule_once(partial(self.customer_select_sync, customer_id))
+        sessions.put('_searchResultsStatus', value=True)
+        sessions.put('_invoiceId', value=None)
+        sessions.put('_searchResults', value=[])
+        sessions.put('_filteredSearchResults', value=[])
+        self.parent.current = 'search'
+        Static.update_last_10(sessions.get('_customerId')['value'], sessions.get('_last10')['value'])
         # send event
         pub.sendMessage('close_loading_popup', popup=SYNC_POPUP)
 
-    def customer_select_sync(self, customer_id, *args, **kwargs):
-        sessions.put('_searchResultsStatus', value=True)
-        sessions.put('_rowCap', value=0)
-        sessions.put('_customerId', value=customer_id)
-        sessions.put('_invoiceId', value=None)
-        sessions.put('_rowSearch', value=(0, 10))
-        self.parent.current = 'search'
-        # last 10 setup
-
-        Static.update_last_10(customer_id, sessions.get('_last10')['value'])
