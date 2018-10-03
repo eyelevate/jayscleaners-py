@@ -248,7 +248,7 @@ class EditInvoiceScreen(Screen):
                 for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
                     sessions.put('_itemId',value=int(key))
                     break
-                    
+
         invoices = SYNC.invoice_grab_id(self.invoice_id)
         if invoices:
 
