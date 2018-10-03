@@ -360,7 +360,7 @@ class Sync:
     def discount_grab_by_company(self, company_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/discount-grab-by-company'
         # attempt to connect to server
-        data = parse.urlencode({'comapny_id': company_id}).encode('utf-8')
+        data = parse.urlencode({'company_id': str(company_id)}).encode('utf-8')
         req = request.Request(url=url, data=data)  # this will make the method "POST"
         try:
             # r = request.urlopen(url)

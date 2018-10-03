@@ -17,7 +17,12 @@
 #: import ColorPicker kivy.uix.colorpicker
 #: import RecycleView kivy.uix.recycleview
 #: import LayoutSelectionBehavior kivy.uix.recycleview.layout
-#: import SelectableButton classes.selectable_button
+#: import SelectableButton components.selectable_button
+#: import InventoryItemsButton components.inventory_items_button
+#: import ItemsTableButton components.items_table_buttons
+#: import SelectableGridLayoutRV components.selectable_grid_layout_rv
+#: import SelectableRecycleBoxLayout components.selectable_rv_boxlayout
+#: import SearchResultsRV components.search_results_rv
 
 <ListItemButton>:
     size: (100, '48dp')
@@ -49,6 +54,12 @@ ScreenManagement:
     SettingsScreen:
     UpdateScreen:
     TaxesScreen:
+#:include ./kv/remember_me_checkbox.kv
+#:include ./kv/library.kv
+#:include ./kv/login_popup.kv
+#:include ./kv/search_results_rv.kv
+#:include ./kv/inventory_items_rv.kv
+#:include ./kv/items_table_rv.kv
 
 #:include ./kv/main_screen.kv
 #:include ./kv/colors_screen.kv
@@ -75,7 +86,3 @@ ScreenManagement:
 #:include ./kv/settings_screen.kv
 #:include ./kv/update_screen.kv
 #:include ./kv/taxes_screen.kv
-#:include ./kv/remember_me_checkbox.kv
-#:include ./kv/library.kv
-#:include ./kv/login_popup.kv
-#:include ./kv/search_results_rv.kv

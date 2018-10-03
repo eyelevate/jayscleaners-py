@@ -7,6 +7,8 @@ if not sessions.exists('_rememberMeTimestamp'):
     sessions.put('_rememberMeTimestamp', value=False)
 if not sessions.exists('_customerId'):
     sessions.put('_customerId', value=None)
+if not sessions.exists('_discounts'):
+    sessions.put('_discounts', value=None)
 if not sessions.exists('_username'):
     sessions.put('_username', value=None)
 if not sessions.exists('_userId'):
@@ -23,6 +25,8 @@ if not sessions.exists('_inventories'):
     sessions.put('_inventories', value=None)
 if not sessions.exists('_inventoryTimestamp'):
     sessions.put('_inventoryTimestamp', value=None)
+if not sessions.exists('_inventoryItems'):
+    sessions.put('_inventoryItems', value=[])
 if not sessions.exists('_searchNew'):
     sessions.put('_searchNew', value=False)
 if not sessions.exists('_last10'):

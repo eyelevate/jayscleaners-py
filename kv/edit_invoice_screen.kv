@@ -11,7 +11,20 @@
     summary_total_label: summary_total_label
     date_picker: date_picker
     colors_table_main: colors_table_main
+    dryclean_tab: dryclean_tab
+    laundry_tab: laundry_tab
+    alterations_tab: alterations_tab
+    household_tab: household_tab
+    other_tab: other_tab
+    dryclean_rv: dryclean_rv
+    laundry_rv: laundry_rv
+    alterations_rv: alterations_rv
+    household_rv: household_rv
+    other_rv: other_rv
+    items_table_rv: items_table_rv
     on_enter: root.reset()
+    on_pre_enter: root.attach()
+    on_leave: root.detach()
     BoxLayout:
         orientation: 'vertical'
         GridLayout:
@@ -73,6 +86,32 @@
                 id: inventory_panel
                 do_default_tab: False
                 size_hint: 0.5,1
+
+                TabbedPanelItem:
+                    id: dryclean_tab
+                    text: 'Dry Clean'
+                    InventoryItemRecycleView:
+                        id: dryclean_rv
+                TabbedPanelItem:
+                    id: laundry_tab
+                    text: 'Laundry'
+                    InventoryItemRecycleView:
+                        id: laundry_rv
+                TabbedPanelItem:
+                    id: alterations_tab
+                    text: 'Alterations'
+                    InventoryItemRecycleView:
+                        id: alterations_rv
+                TabbedPanelItem:
+                    id: household_tab
+                    text: 'Household'
+                    InventoryItemRecycleView:
+                        id: household_rv
+                TabbedPanelItem:
+                    id: other_tab
+                    text: 'Other'
+                    InventoryItemRecycleView:
+                        id: other_rv
             RelativeLayout:
                 size_hint: 0.1,1
                 ScrollView:
@@ -90,72 +129,85 @@
                 pos_hint:{'top':1}
                 size_hint: 0.4,1
                 orientation:'vertical'
-                RelativeLayout:
-                    size_hint: 1, .95
-                    pos_hint:{'top':1}
-                    ScrollView:
-                        size_hint: 1, 1
+                canvas.before:
+                    Color:
+                        rgba: .75, .75, .75, 0.3
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                GridLayout:
+                    id: summary_table
+                    height: self.minimum_height
+                    cols:5
+                    rows:1
+                    size_hint: 1, 0.1
+                    Label:
+                        size_hint_x: 0.1
+                        markup: True
+                        text: "[color=000000][b]Type[/b][/color]"
+                        font_size:'15sp'
                         canvas.before:
                             Color:
-                                rgba: 0, 0, 1, 0.2
+                                rgba: 1, 1, 1, 1
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
-                        GridLayout:
-                            id: summary_table
-                            height: self.minimum_height
-                            cols:5
-                            row_force_default: True
-                            row_default_height: 100
-                            size_hint_y:None
-                            Label:
-                                size_hint_x: 0.1
-                                markup: True
-                                text: "[color=000000][b]Type[/b][/color]"
-                                font_size:'15sp'
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            Label:
-                                size_hint_x: 0.1
-                                markup: True
-                                text: "[color=000000][b]Qty[/b][/color]"
-                                font_size:'15sp'
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            Label:
-                                size_hint_x: 0.6
-                                markup: True
-                                text: "[color=000000][b]Item[/b][/color]"
-                                font_size:'15sp'
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            Label:
-                                size_hint_x: 0.2
-                                markup: True
-                                text: "[color=000000][b]Subtotal[/b][/color]"
-                                font_size:'15sp'
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
+                    Label:
+
+                        size_hint_x: 0.1
+                        markup: True
+                        text: "[color=000000][b]Qty[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+
+                        size_hint_x: 0.5
+                        markup: True
+                        text: "[color=000000][b]Item[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        size_hint_x: 0.2
+                        markup: True
+                        text: "[color=000000][b]Subtotal[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        size_hint_x: 0.1
+                        markup: True
+                        text: "[color=000000][b]A.[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                RelativeLayout:
+                    size_hint: 1, 0.7
+                    pos_hint:{'top':1}
+
+                    ItemsTableRecycleView:
+                        id: items_table_rv
+                        pos_hint:{'top':1}
                 GridLayout:
-                    size_hint: 1, 0.3
-                    row_force_default: True
-                    row_default_height:'20sp'
+                    pos_hint:{'bottom':1}
+                    size_hint: 1, 0.2
                     cols:2
                     rows:6
 
@@ -319,6 +371,7 @@
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
+
                     Label:
                         padding_x:20
                         size_hint_y: '20sp'
@@ -351,7 +404,6 @@
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
-
         BoxLayout:
             orientation: 'horizontal'
             size_hint: 1,0.1

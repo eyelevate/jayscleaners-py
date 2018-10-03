@@ -1,0 +1,21 @@
+<ItemsTableButton>:
+    id: items_table_button
+    markup: True
+    font_size:sp(15)
+    markup: True
+    disabled: False
+    text_size: self.size
+    valign: 'middle'
+    halign: 'center'
+
+<ItemsTableRecycleView@RecycleView>:
+    viewclass: 'ItemsTableButton'
+    SelectableRecycleGridLayout:
+        bar_width: dp(5)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'horizontal'
+        row_force_default: True,
+        row_default_height: 120
+        cols:5

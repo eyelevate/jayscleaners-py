@@ -60,6 +60,13 @@ class EditInvoiceScreen(Screen):
     qty_count_label = ObjectProperty(None)
     item_selected_row = 0
     items_layout = ObjectProperty(None)
+    dryclean_tab = ObjectProperty(None)
+    items_table_rv = ObjectProperty(None)
+    dryclean_rv = ObjectProperty(None)
+    laundry_rv = ObjectProperty(None)
+    alterations_rv = ObjectProperty(None)
+    household_rv = ObjectProperty(None)
+    other_rv = ObjectProperty(None)
     memo_text_input = TextInput(size_hint=(1, 0.4),
                                 multiline=True)
     summary_table = ObjectProperty(None)
@@ -102,6 +109,20 @@ class EditInvoiceScreen(Screen):
     memo_list = []
     invoice_items_id = None
     item_rows = {}
+    invoice_company_id = sessions.get('_companyId')['value']
+
+    def __init__(self, **kwargs):
+        super(EditInvoiceScreen, self).__init__(**kwargs)
+
+    def attach(self):
+        pub.subscribe(self.set_item, "set_item")
+        pub.subscribe(self.remove_item_row, "remove_item_row")
+        pub.subscribe(self.select_item, "select_item")
+
+    def detach(self):
+        pub.unsubscribe(self.set_item, "set_item")
+        pub.unsubscribe(self.remove_item_row, "remove_item_row")
+        pub.unsubscribe(self.select_item, "select_item")
 
     def reset(self):
         # Pause Schedule
@@ -110,7 +131,6 @@ class EditInvoiceScreen(Screen):
         self.customer_id_backup = sessions.get('_customerId')['value']
         self.invoice_id = sessions.get('_invoiceId')['value']
         self.inventory_panel.clear_widgets()
-        self.summary_table.clear_widgets()
         self.colors_table_main.clear_widgets()
         self.final_total = 0
         self.discount_id = None
@@ -120,10 +140,10 @@ class EditInvoiceScreen(Screen):
         comp = Company()
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
-        store_hours = comp.get_store_hours(sessions.get('_companyId')['value'])
+        store_hours = comp.get_store_hours(self.invoice_company_id)
 
         if store_hours is False:
-            comp.retrieve(sessions.get('_companyId')['value'])
+            comp.retrieve(self.invoice_company_id)
             store_hours = comp.store_hours
 
         turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
@@ -154,6 +174,8 @@ class EditInvoiceScreen(Screen):
                 invoice_items_id = invoice_item['id']
                 item_id = int(invoice_item['item_id'])
                 items = SYNC.inventory_items_grab(item_id)
+                self.invoice_company_id = invoice_item['company_id']
+
                 if items is not False:
                     inventory_id = items['inventory_id']
                     self.inventory_id = inventory_id
@@ -169,7 +191,7 @@ class EditInvoiceScreen(Screen):
                         laundry = 0
 
                     item_name = '{} ({})'.format(items['name'], self.starch) if laundry else items['name']
-                    if item_id in self.invoice_list:
+                    if int(item_id) in self.invoice_list:
                         self.invoice_list[item_id].append({
                             'invoice_items_id': invoice_items_id,
                             'type': inventory_init,
@@ -223,6 +245,10 @@ class EditInvoiceScreen(Screen):
                             'tags': int(tags) if tags else 1,
                             'deleted': False
                         }]
+                for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+                    sessions.put('_itemId',value=int(key))
+                    break
+                    
         invoices = SYNC.invoice_grab_id(self.invoice_id)
         if invoices:
 
@@ -266,29 +292,16 @@ class EditInvoiceScreen(Screen):
         self.memo_text_input.text = ''
         self.adjust_price = 0
         self.adjust_price_list = []
-        sessions.put('_itemId', value=None)
-
-        # create th for invoice summary table
-        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
-        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
-        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-        h5 = KV.sized_invoice_tr(0, 'A.', size_hint_x=0.1)
-        self.summary_table.add_widget(Builder.load_string(h1))
-        self.summary_table.add_widget(Builder.load_string(h2))
-        self.summary_table.add_widget(Builder.load_string(h3))
-        self.summary_table.add_widget(Builder.load_string(h4))
-        self.summary_table.add_widget(Builder.load_string(h5))
         self.get_inventory()
         q = threading.Thread(target=self.get_colors_main)
-        r = threading.Thread(target=self.create_summary_table)
+        r = threading.Thread(target=self.calculate_totals)
         try:
             q.start()
             r.start()
         except RuntimeError as e:
             pass
 
-        taxes = SYNC.taxes_query(sessions.get('_companyId')['value'], 1)
+        taxes = SYNC.taxes_query(self.invoice_company_id, 1)
         if taxes:
             for tax in taxes:
                 sessions.put('_taxRate', value=float(tax['rate']))
@@ -302,11 +315,9 @@ class EditInvoiceScreen(Screen):
         sessions.put('_customerId', value=self.customer_id_backup)
         sessions.put('_invoiceId', value=self.invoice_id)
         sessions.put('_searchResultsStatus', value=True)
-        self.summary_table.clear_widgets()
 
     def get_colors_main(self):
-        time.sleep(1)
-        colors = SYNC.colors_query(sessions.get('_companyId')['value'])
+        colors = SYNC.colors_query(self.invoice_company_id)
         if colors is not False:
             for color in colors:
                 color_btn = Button(markup=True,
@@ -347,8 +358,6 @@ class EditInvoiceScreen(Screen):
                 # save rows and continue
 
                 self.save_memo_color()
-                #
-                # self.create_summary_table()
             else:
                 Popups.dialog_msg('Color Quantity Error',
                                   'Color quantity does not match invoice item quantity. Please try again.')
@@ -361,76 +370,65 @@ class EditInvoiceScreen(Screen):
     def get_inventory(self):
         iitems = InventoryItem()
         inventories = self.set_inventories()
-
-        if inventories is not None:
+        if inventories:
             idx = 0
-            self.inventory_panel.clear_tabs()
-            self.inventory_panel.clear_widgets()
+            invitems = []
+
             for inventory in inventories:
                 idx += 1
-                inventory_id = inventory['id']
-                inventory_name = inventory['name']
                 inventory_items = inventory['inventory_items']
-                tph = TabbedPanelHeader(text='{}'.format(inventory_name))
-                layout = ScrollView()
-                content = '''
-GridLayout:
-    size_hint_y:None
-    height: self.minimum_height
-    cols:4
-    row_force_default: True
-    row_default_height:'150sp'
-'''
-                if inventory_items:
-                    for item in inventory_items:
-                        item_id = item['id']
-                        item_price = '${:,.2f}'.format(Decimal(item['price']))
-                        content += '''
-    Button:
-        font_size:'17sp'
-        markup:True
-        text: '[b]{item_name}[/b]\\n[i]{item_price}[/i]'
-        disabled: False
-        text_size:self.size
-        valign:'bottom'
-        halign:'center'
-        on_press: root.parent.parent.parent.parent.parent.parent.set_item({item_id})
-        background_rgba:(.7,.3,.5,1)
-        Image:
-            id: item_image
-            source: '{img_src}'
-            size: '50sp','50sp'
-            center_x: self.parent.center_x
-            center_y: self.parent.center_y
-            allow_stretch: True'''.format(item_name=item['name'],
-                                          item_price=item_price,
-                                          item_id=item_id,
-                                          img_src=iitems.get_image_src(item['id']))
+                new = []
+                for x in inventory_items:
+                    invitems.append(x)
+                    new.append({
+                            'text': '[b]{}[/b]\n[i]{}[/i]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
+                            'item_id': x['id'],
+                            'Image': {
+                                'source': '{}'.format(iitems.get_image_src(x['id'])),
+                                'size': '(sp(50),sp(50))',
+                                'center_x': 'self.parent.center_x',
+                                'center_y': 'self.parent.center_y',
+                                'allow_stretch': 'True'
+                            }})
 
-                layout.add_widget(Builder.load_string(content))
-                tph.content = layout
-                self.inventory_panel.add_widget(tph)
                 if idx == 1:
-                    self.inventory_panel.switch_to(tph)
+                    self.dryclean_rv.data = new
+                elif idx == 2:
+                    self.laundry_rv.data = new
+                elif idx == 3:
+                    self.alterations_rv.data = new
+                elif idx == 4:
+                    self.household_rv.data = new
+                else:
+                    self.other_rv.data = new
+            sessions.put('_inventoryItems', value=invitems)
+        self.inventory_panel.switch_to(self.dryclean_tab)
+        pass
 
     def set_inventories(self):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         dt = datetime.datetime.strptime(now, "%Y-%m-%d %H:%M:%S")
         now_timestamp = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-        one_hour_later = now_timestamp + (60 * 60)
-        inventory_timestamp = sessions.get('_inventoryTimestamp')['value']
-        send_to_server = True
-        not_expired = False if inventory_timestamp is None else inventory_timestamp < one_hour_later
-        if not_expired and sessions.get('_inventories')['value'] is not None:
-            send_to_server = False
-        if send_to_server:
-            inventories = SYNC.inventories_by_company(sessions.get('_companyId')['value'])
-            sessions.put('_inventories', value=inventories)
-            sessions.put('_inventoryTimestamp', value=now_timestamp)
-        else:
-            inventories = sessions.get('_inventories')['value']
+        inventories = SYNC.inventories_by_company(self.invoice_company_id)
+        sessions.put('_inventories', value=inventories)
+        sessions.put('_inventoryTimestamp', value=now_timestamp)
+        # update discounts on each inventory row
+        self._update_discounts_by_inventory()
+
         return inventories
+
+    def _update_discounts_by_inventory(self):
+        unix = time.time()
+        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        self.discounts = {}
+        for x in sessions.get('_inventories')['value']:
+            inventory_id = x['id']
+            company_id = self.invoice_company_id
+            row = SYNC.discount_query(company_id, now, now, inventory_id)
+            self.discounts[inventory_id] = row
+        sessions.put('_discounts', value=self.discounts)
+
 
     def sync_inventory_items(self):
         SYNC.get_chunk('inventory_items', 0, 1000)
@@ -461,9 +459,9 @@ GridLayout:
         self.inv_qty = int(inv_str)
 
     def set_item(self, item_id):
-        sessions.put('_itemId', value=item_id)
+        item_id = int(item_id)
+        sessions.put('_itemId', value=int(item_id))
         items = SYNC.inventory_items_grab(item_id)
-        check = False
         if items:
             inventory_id = items['inventory_id']
             item_price = items['price']
@@ -483,9 +481,8 @@ GridLayout:
 
             for x in range(0, self.inv_qty):
 
-                if item_id in self.invoice_list:
-                    check = True
-                    self.invoice_list[item_id].append({
+                if int(item_id) in self.invoice_list:
+                    self.invoice_list[int(item_id)].append({
                         'type': inventory_init,
                         'inventory_id': inventory_id,
                         'item_id': item_id,
@@ -531,46 +528,26 @@ GridLayout:
                         'tags': int(item_tags)
                     }]
         # update dictionary make sure that the most recently selected item is on top
-        row = self.invoice_list[sessions.get('_itemId')['value']]
-        del self.invoice_list[sessions.get('_itemId')['value']]
-        self.invoice_list[item_id] = row
+        row = self.invoice_list[int(sessions.get('_itemId')['value'])]
+        del self.invoice_list[int(sessions.get('_itemId')['value'])]
+        self.invoice_list[int(item_id)] = row
 
         self.set_qty('C')
-        if (check):
-            p = threading.Thread(target=self.update_row_no_refresh, name="1")
-        else:
-            p = threading.Thread(target=self.create_summary_table, name="2")
-        try:
-            p.start()
-        except RuntimeError as e:
-            pass
-        finally:
-            p.join()
+        self.calculate_totals()
 
     def create_summary_table(self):
-        self.summary_table.clear_widgets()
-
-        # create th
-        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
-        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
-        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-        h5 = KV.sized_invoice_tr(0, 'A.', size_hint_x=0.1)
-        self.summary_table.add_widget(Builder.load_string(h1))
-        self.summary_table.add_widget(Builder.load_string(h2))
-        self.summary_table.add_widget(Builder.load_string(h3))
-        self.summary_table.add_widget(Builder.load_string(h4))
-        self.summary_table.add_widget(Builder.load_string(h5))
-
+        self.items_table_rv.data = []
         if self.invoice_list:
-
+            tr = []
             for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+
                 item_id = key
                 total_qty = len(values)
                 colors = {}
                 item_price = 0
                 color_string = []
                 memo_string = []
+
                 if values:
                     for item in values:
                         item_name = item['item_name']
@@ -591,127 +568,135 @@ GridLayout:
                             if color_name:
                                 color_string.append('{}-{}'.format(color_amount, color_name))
 
-                    item_string = '[b]{}[/b] \\n{}\\n{}'.format(item_name, ', '.join(color_string),
-                                                                '/ '.join(memo_string))
+                    item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
+                                                              '/ '.join(memo_string))
                     selected = True if sessions.get('_itemId')['value'] == item_id else False
-                    tr1 = KV.sized_invoice_tr(1,
-                                              item_type,
-                                              size_hint_x=0.1,
-                                              selected=selected,
-                                              on_release='self.parent.parent.parent.parent.parent.parent.parent.select_item({})'.format(
-                                                  item_id))
-                    tr2 = KV.sized_invoice_tr(1,
-                                              total_qty,
-                                              size_hint_x=0.1,
-                                              selected=selected,
-                                              on_release='self.parent.parent.parent.parent.parent.parent.parent.select_item({})'.format(
-                                                  item_id))
-                    tr3 = KV.sized_invoice_tr(1,
-                                              item_string,
-                                              size_hint_x=0.5,
-                                              selected=selected,
-                                              text_wrap=True,
-                                              on_release='self.parent.parent.parent.parent.parent.parent.parent.select_item({})'.format(
-                                                  item_id))
+                    text_color = 'e5e5e5' if selected else '000000'
+                    background_rgba = (0.369, 0.369, 0.369, 1) if selected else (0.826, 0.826, 0.826, 1)
+                    tr.append({
+                        'column': 1,
+                        'item_id': item_id,
+                        'text': '[color={}]{}[/color]'.format(text_color, item_type),
+                        'size_hint': (0.1,1),
+                        'height': 100,
+                        'background_color': background_rgba,
+                        'background_normal': '',
+                        'selected': selected
+                    })
+                    tr.append({
+                        'column': 2,
+                        'item_id': item_id,
+                        'text': '[color={}]{}[/color]'.format(text_color, total_qty),
+                        'size_hint':(0.1,1),
+                        'background_color': background_rgba,
+                        'background_normal': '',
+                        'selected': selected
+                    })
+                    tr.append({
+                        'column': 3,
+                        'item_id': item_id,
+                        'text': '[color={}]{}[/color]'.format(text_color, item_string),
+                        'valign': 'top',
+                        'halign': 'left',
+                        'size_hint':(0.5,1),
+                        'background_color': background_rgba,
+                        'background_normal': '',
+                        'selected': selected
+                    })
+                    tr.append({
+                        'column': 4,
+                        'item_id': item_id,
+                        'text': '[color={}]{}[/color]'.format(text_color, str(Static.us_dollar(item_price))),
+                        'size_hint': (0.2,1),
+                        'background_color': background_rgba,
+                        'background_normal': '',
+                        'selected': selected
+                    })
+                    tr.append({
+                        'column': 5,
+                        'item_id': item_id,
+                        'size_hint':(0.1,1),
+                        'text': '[color=ffffff][b]-[/b][/color]',
+                        'background_color': (1, 0, 0, 1),
+                        'background_normal': '',
+                        'selected': selected
+                    })
 
-                    tr4 = KV.sized_invoice_tr(1,
-                                              Static.us_dollar(item_price),
-                                              size_hint_x=0.2,
-                                              selected=selected,
-                                              on_release='self.parent.parent.parent.parent.parent.parent.parent.select_item({})'.format(
-                                                  item_id))
-                    tr5 = Button(size_hint_x=0.1,
-                                 markup=True,
-                                 text="[color=ffffff][b]-[/b][/color]",
-                                 background_color=(1, 0, 0, 1),
-                                 background_normal='',
-                                 on_release=partial(self.remove_item_row, item_id))
-                    tr0_formatted = Builder.load_string(tr1)
-                    tr1_formatted = Builder.load_string(tr2)
-                    tr2_formatted = Builder.load_string(tr3)
-                    tr3_formatted = Builder.load_string(tr4)
-                    self.summary_table.add_widget(tr0_formatted)
-                    self.summary_table.add_widget(tr1_formatted)
-                    self.summary_table.add_widget(tr2_formatted)
-                    self.summary_table.add_widget(tr3_formatted)
-                    self.summary_table.add_widget(tr5)
-                    self.item_rows[item_id] = [tr0_formatted, tr1_formatted, tr2_formatted, tr3_formatted]
-
-        self.create_summary_totals()
+            self.items_table_rv.data = tr
 
     def select_item(self, item_id, *args, **kwargs):
-        sessions.put('_itemId', value=item_id)
-        self.update_row_no_refresh()
+        sessions.put('_itemId', value=int(item_id))
+        self.calculate_totals()
 
     def remove_item_row(self, item_id, *args, **kwargs):
-        sessions.put('_itemId', value=item_id)
-        if sessions.get('_itemId')['value'] in self.item_rows:
-            del self.item_rows[sessions.get('_itemId')['value']]
-        if sessions.get('_itemId')['value'] in self.invoice_list:
-            idx = -1
-            for row in self.invoice_list[sessions.get('_itemId')['value']]:
-                idx += 1
-                if 'invoice_items_id' in row:
-                    self.invoice_list[sessions.get('_itemId')['value']][idx]['delete'] = True
-                    self.deleted_rows.append(row['invoice_items_id'])
+        item_id = int(item_id)
+        remove_row = False
+        sessions.put('_itemId', value=int(item_id))
+        if item_id in self.item_rows:
+            del self.item_rows[item_id]
 
-            del self.invoice_list[sessions.get('_itemId')['value']]
-        if sessions.get('_itemId')['value'] in self.invoice_list_copy:
-            del self.invoice_list_copy[sessions.get('_itemId')['value']]
-        if self.invoice_list:
+        if item_id in self.invoice_list:
+            for x in self.invoice_list[item_id]:
+                if 'invoice_items_id' in x:
+                    self.deleted_rows.append(x['invoice_items_id'])
+                    print('here2')
+            del self.invoice_list[item_id]
+
+        if item_id in self.invoice_list_copy:
+            del self.invoice_list_copy[item_id]
+
+        if bool(self.invoice_list):
             idx = 0
             for row_key, row_value in self.invoice_list.items():
                 idx += 1
                 if idx == 1:
-                    sessions.get('_itemId')['value'] = row_key
+                    sessions.put('_itemId', value=int(row_key))
                     break
+        else:
+            self.invoice_list = {}
 
+        self.calculate_totals()
+
+    def calculate_totals(self):
+        self.quantity = 0
+        self.subtotal = 0
+        self.tags = 0
+
+        self.tax = 0
+        self.total = 0
+        sum_list = []
+        if self.invoice_list:
+            for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+                for x in values:
+                    sum_list.append(x)
+        self.quantity = sum(int(item['qty']) for item in sum_list)
+        self.subtotal = sum(float(item['item_price']) for item in sum_list)
+        self.tags = sum(int(item['tags']) for item in sum_list)
+        self._calc_discount(sum_list)
+        self.tax = (self.subtotal - self.discount) * float(sessions.get('_taxRate')['value'])
+        self.total = (self.subtotal - self.discount) + self.tax
         self.create_summary_table()
+        self.create_summary_totals()
+
+    def _calc_discount(self, list):
+        self.discount = 0
+
+        for x in list:
+            inventory_id = int(x['inventory_id'])
+            disc = sessions.get('_discounts')['value']
+            if disc[inventory_id]:
+                for discount in disc[inventory_id]:
+                    discount_rate = float(discount['rate'])
+                    discount_price = float(discount['discount'])
+                    self.discount_id = discount['discount_id']
+                    if discount_rate > 0:
+                        self.discount += (float(x['item_price'] * discount_rate))
+                    elif discount_rate is 0 and discount_price > 0:
+                        self.discount += (float(x['item_price']) - discount_price)
+                    else:
+                        self.discount += 0
 
     def create_summary_totals(self):
-        self.quantity = 0
-        self.tags = 0
-        self.subtotal = 0
-        self.tax = 0
-        self.discount = 0
-        self.total = 0
-        unix = time.time()
-        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-
-        # calculate totals
-        tax_rate = float("%0.2f" % float(sessions.get('_taxRate')['value']))
-        if bool(self.invoice_list):
-            for item_key, item_values in self.invoice_list.items():
-                for item in item_values:
-                    self.quantity += 1
-                    self.tags += int(item['tags']) if item['tags'] else 1
-                    self.subtotal += float(item['item_price']) if item['item_price'] else 0
-                    # calculate discounts
-                    discounts = Discount().where({'company_id': sessions.get('_companyId')['value'],
-                                                  'start_date': {'<=': '"{}"'.format(now)},
-                                                  'end_date': {'>=': '"{}"'.format(now)},
-                                                  'inventory_id': item['inventory_id']})
-                    if discounts:
-                        for discount in discounts:
-                            discount_rate = float(discount['rate'])
-                            discount_price = float(discount['discount'])
-                            self.discount_id = discount['discount_id']
-                            if discount_rate > 0:
-                                self.discount += (float(item['item_price'] * discount_rate))
-                            elif discount_rate is 0 and discount_price > 0:
-                                self.discount += (float(item['item_price'] - discount_price))
-                            else:
-                                self.discount += 0
-
-            self.subtotal = float("%0.2f" % (self.subtotal))
-            print(sessions.get('_taxRate')['value'])
-            self.tax = float(
-                "%0.2f" % ((float(self.subtotal) - self.discount) * float(sessions.get('_taxRate')['value'])))
-            # print(self.tax)
-            self.total = float("%0.2f" % ((float(self.subtotal) - float(self.discount)) + self.tax))
-            # print(self.total)
-            self.final_total = float("%0.2f" % (self.total))
-            # print(self.final_total)
 
         self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
         self.summary_tags_label.text = '[color=000000]{} tags'.format(self.tags)
@@ -745,7 +730,7 @@ GridLayout:
                                 row_force_default=True,
                                 row_default_height='60sp')
         color_grid.bind(minimum_height=color_grid.setter('height'))
-        colors = Colored().where({'company_id': sessions.get('_companyId')['value'], 'ORDER_BY': 'ordered asc'})
+        colors = Colored().where({'company_id': self.invoice_company_id, 'ORDER_BY': 'ordered asc'})
         if colors:
             for color in colors:
                 color_btn = Button(markup=True,
@@ -768,7 +753,7 @@ GridLayout:
         memo_grid_layout = Factory.GridLayoutForScrollView(row_default_height='50sp',
                                                            cols=4)
         mmos = Memo()
-        memos = mmos.where({'company_id': sessions.get('_companyId')['value'],
+        memos = mmos.where({'company_id': self.invoice_company_id,
                             'ORDER_BY': 'ordered asc'})
         if memos:
             for memo in memos:
@@ -994,88 +979,7 @@ GridLayout:
 
                 self.invoice_list[sessions.get('_itemId')['value']][idx]['color'] = color
                 self.invoice_list[sessions.get('_itemId')['value']][idx]['memo'] = memo
-
-            colors = {}
-            color_string = []
-            memo_string = []
-            for items in self.invoice_list_copy[sessions.get('_itemId')['value']]:
-
-                item_name = items['item_name']
-                item_color = items['color']
-                item_memo = items['memo']
-
-                if items['color']:
-                    if item_color in colors:
-                        colors[item_color] += 1
-                    else:
-                        colors[item_color] = 1
-                if item_memo:
-                    regexed_memo = item_memo.replace('"', '**Inch(es)')
-                    memo_string.append(regexed_memo)
-            if colors:
-                for color_name, color_amount in colors.items():
-                    if color_name:
-                        color_string.append('{}-{}'.format(color_amount, color_name))
-
-            item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                      '/ '.join(memo_string))
-            self.item_rows[sessions.get('_itemId')['value']][2].text = item_string
-
-    def update_row_no_refresh(self, *args, **kwargs):
-        # set all colors to plain
-
-        if self.invoice_list:
-
-            for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
-                item_id = key
-                selected = True if int(item_id) == int(sessions.get('_itemId')['value']) else False;
-                # background_rgba = [0.369,0.369,0.369,0.1] if selected else [0.826, 0.826, 0.826, 0.1]
-                background_color = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
-                text_color = 'e5e5e5' if selected else '000000'
-                total_qty = len(values)
-                colors = {}
-                item_price = 0
-                color_string = []
-                memo_string = []
-                if values:
-                    for item in values:
-                        item_name = item['item_name']
-                        item_type = item['type']
-                        item_color = item['color']
-                        item_memo = item['memo']
-                        item_price += float(item['item_price']) if item['item_price'] else 0
-                        if item['color']:
-                            if item_color in colors:
-                                colors[item_color] += 1
-                            else:
-                                colors[item_color] = 1
-                        if item_memo:
-                            regexed_memo = item_memo.replace('"', '**Inch(es)')
-                            memo_string.append(regexed_memo)
-                    if colors:
-                        for color_name, color_amount in colors.items():
-                            if color_name:
-                                color_string.append('{}-{}'.format(color_amount, color_name))
-
-                    item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                              '/ '.join(memo_string))
-                    if item_id in self.item_rows:
-                        self.item_rows[item_id][0].text = "[color={}]{}[/color]".format(text_color, str(item_type))
-                        self.item_rows[item_id][0].background_color = background_color
-                        self.item_rows[item_id][0].background_normal = ''
-                        self.item_rows[item_id][1].text = "[color={}]{}[/color]".format(text_color, str(total_qty))
-                        self.item_rows[item_id][1].background_color = background_color
-                        self.item_rows[item_id][1].background_normal = ''
-                        self.item_rows[item_id][2].text = "[color={}]{}[/color]".format(text_color, str(item_string))
-                        self.item_rows[item_id][2].background_color = background_color
-                        self.item_rows[item_id][2].background_normal = ''
-                        self.item_rows[item_id][3].text = "[color={}]{}[/color]".format(text_color,
-                                                                                        Static.us_dollar(item_price))
-                        self.item_rows[item_id][3].background_color = background_color
-                        self.item_rows[item_id][3].background_normal = ''
-                    else:
-                        self.create_summary_table()
-                        break
+        self.calculate_totals()
 
     def make_adjust(self):
         self.item_selected_row = 0
@@ -1423,31 +1327,21 @@ GridLayout:
                 idx += 1
                 new_price = items['item_price']
                 self.invoice_list[sessions.get('_itemId')['value']][idx]['item_price'] = new_price
-            self.create_summary_table()
-            self.create_summary_totals()
+            self.calculate_totals()
 
     def item_row_delete_selected(self, row, invoice_items_id, *args, **kwargs):
-        print('deleting item row #{}'.format(row))
         if sessions.get('_itemId')['value'] in self.invoice_list:
             print('test1')
-            for item_row in self.invoice_list[sessions.get('_itemId')['value']]:
-                if item_row['invoice_items_id'] is invoice_items_id:
-                    print('reached it. deleting now')
-                    self.invoice_list[sessions.get('_itemId')['value']][row]['delete'] = True
-                    self.deleted_rows.append(item_row['invoice_items_id'])
-                    invoice_items = InvoiceItem()
-                    invoice_items.delete_item(item_row['invoice_items_id'])
-                    t1 = Thread(target=SYNC.db_sync, args=(str(sessions.get('_companyId')['value'])))
-                    t1.start()
-
-        print(self.deleted_rows)
+            for item_row in self.invoice_list[int(sessions.get('_itemId')['value'])]:
+                if 'invoice_items_id' in item_row:
+                    if item_row['invoice_items_id'] is invoice_items_id:
+                        self.deleted_rows.append(item_row['invoice_items_id'])
         del self.invoice_list[sessions.get('_itemId')['value']][row]
         del self.invoice_list_copy[sessions.get('_itemId')['value']][row]
         self.item_selected_row = 0
         self.make_adjustment_sum_table()
         self.make_adjustment_individual_table()
-        self.create_summary_table()
-        self.create_summary_totals()
+        self.calculate_totals()
 
     def item_row_adjusted_selected(self, type=None, price=0, row=None, *args, **kwargs):
         self.item_selected_row = row
@@ -1458,7 +1352,7 @@ GridLayout:
 
     def make_calendar(self):
 
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
+        store_hours = Company().get_store_hours(self.invoice_company_id)
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
         turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
@@ -1536,7 +1430,7 @@ GridLayout:
     def create_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
+        store_hours = Company().get_store_hours(self.invoice_company_id)
         today_date = datetime.datetime.today()
         today_string = today_date.strftime('%Y-%m-%d 00:00:00')
         check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
@@ -1633,7 +1527,7 @@ GridLayout:
         self.create_calendar_table()
 
     def select_due_date(self, selected_date, *args, **kwargs):
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
+        store_hours = Company().get_store_hours(self.invoice_company_id)
 
         dow = int(selected_date.strftime("%w"))
         turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
@@ -1764,7 +1658,7 @@ GridLayout:
                         print('Here...')
 
                         data = {
-                            'company_id': sessions.get('_companyId')['value'],
+                            'company_id': self.invoice_company_id,
                             'customer_id': sessions.get('_customerId')['value'],
                             'invoice_id': self.invoice_id,
                             'item_id': item_id,
@@ -1787,7 +1681,7 @@ GridLayout:
         if EPSON:
             pr = Printer()
             companies = Company()
-            comps = SYNC.company_grab(sessions.get('_companyId')['value'])
+            comps = SYNC.company_grab(self.invoice_company_id)
             if comps:
                 companies.id = comps['id']
                 companies.company_id = comps['id']
@@ -2260,7 +2154,7 @@ GridLayout:
         print('starting update on invoice - {}'.format(self.invoice_id))
 
         data = {
-            'company_id': sessions.get('_companyId')['value'],
+            'company_id': self.invoice_company_id,
             'customer_id': sessions.get('_customerId')['value'],
             'quantity': self.tags,
             'pretax': '{0:.2f}'.format(float(self.subtotal)),

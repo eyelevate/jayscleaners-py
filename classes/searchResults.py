@@ -1,11 +1,6 @@
-from kivy.clock import Clock
-from kivy.factory import Factory
 from kivy.lang import Builder
-from kivy.properties import ObjectProperty, partial
+from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import Screen
-from classes.selectable_rv_boxlayout import SelectableRecycleBoxLayout
-from models.custids import Custid
-from classes.search_results_rv import SearchResultsRV
 from models.sync import Sync
 from models.kv_generator import KvString
 from kivy.uix.popup import Popup

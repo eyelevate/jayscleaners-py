@@ -477,3 +477,49 @@ Button:
                                       opress=on_press,
                                       orelease=on_release)
         return tr
+
+    def inventory_items_panel(self, inventories):
+        panel = '''
+TabbedPanel:
+    id: tabbedPanel
+    do_default_tab: False
+    size_hint: 1,1'''
+        for inventory in inventories:
+            inventory_id = inventory['id']
+            inventory_name = inventory['name']
+            inventory_items = inventory['inventory_items']
+            panel += '''
+    InventoryItemsButton:
+        markup: True
+        disabled: False
+        size_hint: 1, None
+        text_size: self.size
+        valign: 'bottom'
+        halign: 'center'
+        font_size:sp(17)
+        canvas.before:
+            Color:
+                rgba: (0.0, 0.9, 0.1, 0.3)
+            Rectangle:
+                pos: self.pos
+                size: self.size
+    RecycleView: 
+        viewclass: 'InventoryItemsButton'
+        SelectableRecycleBoxLayout:
+            id: tab_content_{}
+            bar_width: dp(5)
+            default_size: None, sp(150)
+            default_size_hint: 1, None
+            size_hint_y: None
+            height: self.minimum_height
+            orientation: 'horizontal'
+            multiselect: False
+            touch_multiselect: False
+    TabbedPanelHeader:
+            id: def_tab
+            text: '{}'
+            content:tab_content_{}.__self__
+    '''.format(inventory_id, inventory_name, inventory_id)
+
+
+        return panel
