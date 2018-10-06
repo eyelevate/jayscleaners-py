@@ -126,32 +126,18 @@ class DropoffScreen(Screen):
     def reset(self):
         print('start')
         self.start = datetime.datetime.now()
-        comp = Company()
-        today = datetime.datetime.today()
-        dow = int(datetime.datetime.today().strftime("%w"))
-        store_hours = comp.get_store_hours(sessions.get('_companyId')['value'])
         self.btn_memos_list = []
         self.items_table_rv.data = []
         self.sync_inventory_items()
         self.inventory_panel.clear_widgets()
         self.colors_table_main.clear_widgets()
         print('{} (line 138)'.format(str(datetime.datetime.now() - self.start)))
+        try:
+            o = threading.Thread(target=self.get_store_hours)
+            o.start()
+        except RuntimeError as e:
+            pass
 
-        if store_hours is False:
-            comp.retrieve(sessions.get('_companyId')['value'])
-            store_hours = comp.store_hours
-
-        turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
-        new_date = today + datetime.timedelta(days=turn_around_day)
-        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
-                                           turn_around_minutes)
-        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
-        self.date_picker.text = self.due_date_string
         self.memo_color_popup.dismiss()
         print('{} (line 156)'.format(str(datetime.datetime.now() - self.start)))
         self.qty_clicks = 0
@@ -209,6 +195,27 @@ class DropoffScreen(Screen):
 
     def set_result_status(self):
         sessions.put('_searchResultsStatus', value=True)
+
+    def get_store_hours(self):
+        comp = Company()
+        today = datetime.datetime.today()
+        dow = int(datetime.datetime.today().strftime("%w"))
+        store_hours = comp.get_store_hours(sessions.get('_companyId')['value'])
+        if store_hours is False:
+            comp.retrieve(sessions.get('_companyId')['value'])
+            store_hours = comp.store_hours
+
+        turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
+        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
+        new_date = today + datetime.timedelta(days=turn_around_day)
+        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                           turn_around_minutes)
+        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+        self.date_picker.text = self.due_date_string
 
     def get_colors_main(self):
 
