@@ -104,7 +104,11 @@ class DropoffScreen(Screen):
     in_progress = []
     items_table_rv = ObjectProperty(None)
     btn_memos_list = []
-    inventory_set = {}
+
+    #stop watch
+    start = None
+    stop = None
+    elapsed = None
 
     def __init__(self, **kwargs):
         super(DropoffScreen, self).__init__(**kwargs)
@@ -120,6 +124,7 @@ class DropoffScreen(Screen):
         pub.unsubscribe(self.select_item, "select_item")
 
     def reset(self):
+        self.start = datetime.datetime.now()
         comp = Company()
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
@@ -171,13 +176,7 @@ class DropoffScreen(Screen):
         self.customer_id_backup = sessions.get('_customerId')['value']
         self.adjust_price_list = []
         sessions.put('_itemId', value=None)
-        self.inventory_set = {
-            0: False,
-            1: False,
-            2: False,
-            3: False,
-            4: False
-        }
+
         self.deleted_rows = []
         self.memo_list = []
         try:
@@ -204,6 +203,7 @@ class DropoffScreen(Screen):
                 self.starch = Static.get_starch_by_code(customer['starch'])
         else:
             self.starch = Static.get_starch_by_code(None)
+        print(str(datetime.datetime.now() - self.start))
 
     def set_result_status(self):
         sessions.put('_searchResultsStatus', value=True)
@@ -292,73 +292,16 @@ class DropoffScreen(Screen):
                     invitems[inventory_id]= new
                 if idx == 1:
                     self.dryclean_rv.data = new
-                    self.inventory_set[0] = True
-                # elif idx == 2:
-                #     self.laundry_rv.data = new
-                # elif idx == 3:
-                #     self.alterations_rv.data = new
-                # elif idx == 4:
-                #     self.household_rv.data = new
-                # else:
-                #     self.other_rv.data = new
+                elif idx == 2:
+                    self.laundry_rv.data = new
+                elif idx == 3:
+                    self.alterations_rv.data = new
+                elif idx == 4:
+                    self.household_rv.data = new
+                else:
+                    self.other_rv.data = new
             sessions.put('_inventoryItems', value=invitems)
         self.inventory_panel.switch_to(self.dryclean_tab)
-
-    def set_laundry_items(self):
-        if not self.inventory_set[1]:
-            inventories = sessions.get('_inventories')['value']
-            items = sessions.get('_inventoryItems')['value']
-            if inventories:
-                for inventory in inventories:
-                    inventory_name = inventory['name']
-                    inventory_id = inventory['id']
-                    if inventory_name == 'Laundry':
-                        self.laundry_rv.data = items[inventory_id]
-                        break
-
-                self.inventory_set[1] = True
-
-    def set_household_items(self):
-        if not self.inventory_set[2]:
-            inventories = sessions.get('_inventories')['value']
-            items = sessions.get('_inventoryItems')['value']
-            if inventories:
-                for inventory in inventories:
-                    inventory_name = inventory['name']
-                    inventory_id = inventory['id']
-                    if inventory_name == 'Household':
-                        self.household_rv.data = items[inventory_id]
-                        break
-
-                self.inventory_set[2] = True
-
-    def set_alteration_items(self):
-        if not self.inventory_set[3]:
-            inventories = sessions.get('_inventories')['value']
-            items = sessions.get('_inventoryItems')['value']
-            if inventories:
-                for inventory in inventories:
-                    inventory_name = inventory['name']
-                    inventory_id = inventory['id']
-                    if inventory_name == 'Alterations':
-                        self.alterations_rv.data = items[inventory_id]
-                        break
-
-                self.inventory_set[3] = True
-
-    def set_other_items(self):
-        if not self.inventory_set[4]:
-            inventories = sessions.get('_inventories')['value']
-            items = sessions.get('_inventoryItems')['value']
-            if inventories:
-                for inventory in inventories:
-                    inventory_name = inventory['name']
-                    inventory_id = inventory['id']
-                    if inventory_name == 'Others':
-                        self.other_rv.data = items[inventory_id]
-                        break
-
-                self.inventory_set[4] = True
 
     def set_inventories(self):
         unix = time.time()
