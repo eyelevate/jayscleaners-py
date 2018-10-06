@@ -124,6 +124,7 @@ class DropoffScreen(Screen):
         pub.unsubscribe(self.select_item, "select_item")
 
     def reset(self):
+        print('start')
         self.start = datetime.datetime.now()
         comp = Company()
         today = datetime.datetime.today()
@@ -133,8 +134,8 @@ class DropoffScreen(Screen):
         self.items_table_rv.data = []
         self.sync_inventory_items()
         self.inventory_panel.clear_widgets()
-
         self.colors_table_main.clear_widgets()
+        print('{} (line 138)'.format(str(datetime.datetime.now() - self.start)))
 
         if store_hours is False:
             comp.retrieve(sessions.get('_companyId')['value'])
@@ -152,6 +153,7 @@ class DropoffScreen(Screen):
         self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
         self.date_picker.text = self.due_date_string
         self.memo_color_popup.dismiss()
+        print('{} (line 156)'.format(str(datetime.datetime.now() - self.start)))
         self.qty_clicks = 0
         self.inv_qty = 1
         self.inv_qty_list = ['1']
@@ -176,7 +178,7 @@ class DropoffScreen(Screen):
         self.customer_id_backup = sessions.get('_customerId')['value']
         self.adjust_price_list = []
         sessions.put('_itemId', value=None)
-
+        print('{} (line 181)'.format(str(datetime.datetime.now() - self.start)))
         self.deleted_rows = []
         self.memo_list = []
         try:
@@ -203,7 +205,7 @@ class DropoffScreen(Screen):
                 self.starch = Static.get_starch_by_code(customer['starch'])
         else:
             self.starch = Static.get_starch_by_code(None)
-        print(str(datetime.datetime.now() - self.start))
+        print('{} (end)'.format(str(datetime.datetime.now() - self.start)))
 
     def set_result_status(self):
         sessions.put('_searchResultsStatus', value=True)
