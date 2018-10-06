@@ -128,10 +128,10 @@ class DropoffScreen(Screen):
         self.start = datetime.datetime.now()
         self.btn_memos_list = []
         self.items_table_rv.data = []
-        self.sync_inventory_items()
+        # self.sync_inventory_items()
         self.inventory_panel.clear_widgets()
         self.colors_table_main.clear_widgets()
-        print('{} (line 138)'.format(str(datetime.datetime.now() - self.start)))
+        print('{} (line 134)'.format(str(datetime.datetime.now() - self.start)))
         try:
             o = threading.Thread(target=self.get_store_hours)
             o.start()

@@ -127,7 +127,7 @@ class EditInvoiceScreen(Screen):
 
     def reset(self):
         # Pause Schedule
-        self.sync_inventory_items()
+        # self.sync_inventory_items()
         # reset the inventory table
         self.customer_id_backup = sessions.get('_customerId')['value']
         self.invoice_id = sessions.get('_invoiceId')['value']
