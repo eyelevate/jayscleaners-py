@@ -53,11 +53,11 @@ class DropoffScreen(Screen):
     invoice_list_copy = OrderedDict()
     inventory_panel = ObjectProperty(None)
     dryclean_tab = ObjectProperty(None)
-    dryclean_rv= ObjectProperty(None)
-    laundry_rv= ObjectProperty(None)
-    alterations_rv= ObjectProperty(None)
-    household_rv= ObjectProperty(None)
-    other_rv= ObjectProperty(None)
+    dryclean_rv = ObjectProperty(None)
+    laundry_rv = ObjectProperty(None)
+    alterations_rv = ObjectProperty(None)
+    household_rv = ObjectProperty(None)
+    other_rv = ObjectProperty(None)
     items_grid = GridLayout()
     qty_count_label = ObjectProperty(None)
     item_selected_row = 0
@@ -103,6 +103,8 @@ class DropoffScreen(Screen):
     item_rows = {}
     in_progress = []
     items_table_rv = ObjectProperty(None)
+    btn_memos_list = []
+    inventory_set = {}
 
     def __init__(self, **kwargs):
         super(DropoffScreen, self).__init__(**kwargs)
@@ -121,16 +123,13 @@ class DropoffScreen(Screen):
         comp = Company()
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
-        unix = time.time()
-        now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         store_hours = comp.get_store_hours(sessions.get('_companyId')['value'])
-        company_id = sessions.get('_companyId')['value']
+        self.btn_memos_list = []
         self.items_table_rv.data = []
         self.sync_inventory_items()
         self.inventory_panel.clear_widgets()
 
         self.colors_table_main.clear_widgets()
-
 
         if store_hours is False:
             comp.retrieve(sessions.get('_companyId')['value'])
@@ -172,19 +171,23 @@ class DropoffScreen(Screen):
         self.customer_id_backup = sessions.get('_customerId')['value']
         self.adjust_price_list = []
         sessions.put('_itemId', value=None)
-
-
+        self.inventory_set = {
+            0: False,
+            1: False,
+            2: False,
+            3: False,
+            4: False
+        }
         self.deleted_rows = []
         self.memo_list = []
-        self.get_inventory()
-
         try:
+            p = threading.Thread(target=self.get_inventory)
             q = threading.Thread(target=self.get_colors_main)
             q.start()
+            p.start()
         except RuntimeError as e:
             pass
-        finally:
-            q.join()
+
         self.in_progress = []
 
         self.item_rows = {}
@@ -263,40 +266,99 @@ class DropoffScreen(Screen):
     def get_inventory(self):
         iitems = InventoryItem()
         inventories = self.set_inventories()
+
         if inventories:
             idx = 0
-            invitems = []
+            invitems = {}
 
             for inventory in inventories:
                 idx += 1
                 inventory_items = inventory['inventory_items']
+                inventory_id = inventory['id']
+                invitems[inventory_id] = None
                 new = []
                 for x in inventory_items:
-                    invitems.append(x)
-                    new.append({
-                            'text': '[b]{}[/b]\n[i]{}[/i]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
-                            'item_id': x['id'],
-                            'Image': {
-                                'source': '{}'.format(iitems.get_image_src(x['id'])),
-                                'size': '(sp(50),sp(50))',
-                                'center_x': 'self.parent.center_x',
-                                'center_y': 'self.parent.center_y',
-                                'allow_stretch': 'True'
-                            }})
 
+                    new.append({
+                        'text': '[b]{}[/b]\n[i]{}[/i]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
+                        'item_id': x['id'],
+                        'Image': {
+                            'source': '{}'.format(iitems.get_image_src(x['id'])),
+                            'size': '(sp(50),sp(50))',
+                            'center_x': 'self.parent.center_x',
+                            'center_y': 'self.parent.center_y',
+                            'allow_stretch': 'True'
+                        }})
+                    invitems[inventory_id]= new
                 if idx == 1:
                     self.dryclean_rv.data = new
-                elif idx == 2:
-                    self.laundry_rv.data = new
-                elif idx == 3:
-                    self.alterations_rv.data = new
-                elif idx == 4:
-                    self.household_rv.data = new
-                else:
-                    self.other_rv.data = new
+                    self.inventory_set[0] = True
+                # elif idx == 2:
+                #     self.laundry_rv.data = new
+                # elif idx == 3:
+                #     self.alterations_rv.data = new
+                # elif idx == 4:
+                #     self.household_rv.data = new
+                # else:
+                #     self.other_rv.data = new
             sessions.put('_inventoryItems', value=invitems)
         self.inventory_panel.switch_to(self.dryclean_tab)
-        pass
+
+    def set_laundry_items(self):
+        if not self.inventory_set[1]:
+            inventories = sessions.get('_inventories')['value']
+            items = sessions.get('_inventoryItems')['value']
+            if inventories:
+                for inventory in inventories:
+                    inventory_name = inventory['name']
+                    inventory_id = inventory['id']
+                    if inventory_name == 'Laundry':
+                        self.laundry_rv.data = items[inventory_id]
+                        break
+
+                self.inventory_set[1] = True
+
+    def set_household_items(self):
+        if not self.inventory_set[2]:
+            inventories = sessions.get('_inventories')['value']
+            items = sessions.get('_inventoryItems')['value']
+            if inventories:
+                for inventory in inventories:
+                    inventory_name = inventory['name']
+                    inventory_id = inventory['id']
+                    if inventory_name == 'Household':
+                        self.household_rv.data = items[inventory_id]
+                        break
+
+                self.inventory_set[2] = True
+
+    def set_alteration_items(self):
+        if not self.inventory_set[3]:
+            inventories = sessions.get('_inventories')['value']
+            items = sessions.get('_inventoryItems')['value']
+            if inventories:
+                for inventory in inventories:
+                    inventory_name = inventory['name']
+                    inventory_id = inventory['id']
+                    if inventory_name == 'Alterations':
+                        self.alterations_rv.data = items[inventory_id]
+                        break
+
+                self.inventory_set[3] = True
+
+    def set_other_items(self):
+        if not self.inventory_set[4]:
+            inventories = sessions.get('_inventories')['value']
+            items = sessions.get('_inventoryItems')['value']
+            if inventories:
+                for inventory in inventories:
+                    inventory_name = inventory['name']
+                    inventory_id = inventory['id']
+                    if inventory_name == 'Others':
+                        self.other_rv.data = items[inventory_id]
+                        break
+
+                self.inventory_set[4] = True
 
     def set_inventories(self):
         unix = time.time()
@@ -479,24 +541,24 @@ class DropoffScreen(Screen):
                                 color_string.append('{}-{}'.format(color_amount, color_name))
 
                     item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                                '/ '.join(memo_string))
+                                                              '/ '.join(memo_string))
                     selected = True if sessions.get('_itemId')['value'] == item_id else False
                     text_color = 'e5e5e5' if selected else '000000'
-                    background_rgba = (0.369,0.369,0.369,1) if selected else (0.826, 0.826, 0.826, 1)
+                    background_rgba = (0.369, 0.369, 0.369, 1) if selected else (0.826, 0.826, 0.826, 1)
                     tr.append({
                         'column': 1,
                         'item_id': item_id,
-                        'text':'[color={}]{}[/color]'.format(text_color,item_type),
-                        'size_hint':(0.1,1),
+                        'text': '[color={}]{}[/color]'.format(text_color, item_type),
+                        'size_hint': (0.1, 1),
                         'background_color': background_rgba,
                         'background_normal': '',
-                        'selected':selected
+                        'selected': selected
                     })
                     tr.append({
                         'column': 2,
                         'item_id': item_id,
-                        'text': '[color={}]{}[/color]'.format(text_color,total_qty),
-                        'size_hint':(0.1,1),
+                        'text': '[color={}]{}[/color]'.format(text_color, total_qty),
+                        'size_hint': (0.1, 1),
                         'background_color': background_rgba,
                         'background_normal': '',
                         'selected': selected
@@ -504,10 +566,10 @@ class DropoffScreen(Screen):
                     tr.append({
                         'column': 3,
                         'item_id': item_id,
-                        'text': '[color={}]{}[/color]'.format(text_color,item_string),
+                        'text': '[color={}]{}[/color]'.format(text_color, item_string),
                         'valign': 'top',
                         'halign': 'left',
-                        'size_hint':(0.5,1),
+                        'size_hint': (0.5, 1),
                         'background_color': background_rgba,
                         'background_normal': '',
                         'selected': selected
@@ -515,8 +577,8 @@ class DropoffScreen(Screen):
                     tr.append({
                         'column': 4,
                         'item_id': item_id,
-                        'text':'[color={}]{}[/color]'.format(text_color,str(Static.us_dollar(item_price))),
-                        'size_hint': (0.2,1),
+                        'text': '[color={}]{}[/color]'.format(text_color, str(Static.us_dollar(item_price))),
+                        'size_hint': (0.2, 1),
                         'background_color': background_rgba,
                         'background_normal': '',
                         'selected': selected
@@ -524,16 +586,14 @@ class DropoffScreen(Screen):
                     tr.append({
                         'column': 5,
                         'item_id': item_id,
-                        'size_hint': (0.1,1),
+                        'size_hint': (0.1, 1),
                         'text': '[color=ffffff][b]-[/b][/color]',
                         'background_color': (1, 0, 0, 1),
                         'background_normal': '',
                         'selected': selected
                     })
 
-
             self.items_table_rv.data = tr
-
 
     def select_item(self, item_id, *args, **kwargs):
         sessions.put('_itemId', value=int(item_id))
@@ -566,7 +626,6 @@ class DropoffScreen(Screen):
             self.invoice_list = {}
 
         self.calculate_totals()
-
 
     def calculate_totals(self):
         self.quantity = 0
@@ -606,7 +665,6 @@ class DropoffScreen(Screen):
                     else:
                         self.discount += 0
 
-
     def create_summary_totals(self):
 
         self.summary_quantity_label.text = '[color=000000]{}[/color] pcs'.format(self.quantity)
@@ -619,6 +677,8 @@ class DropoffScreen(Screen):
     def make_memo_color(self):
 
         self.item_row_selected(row=0)
+        self.btn_memos_list = []
+        self.memo_list = self._update_memo_btn_statuses()
 
         # make popup
         self.memo_color_popup.title = "Add Memo / Color"
@@ -663,12 +723,15 @@ class DropoffScreen(Screen):
         memo_scroll_view = ScrollView()
         memo_grid_layout = Factory.GridLayoutForScrollView(row_default_height='50sp',
                                                            cols=4)
-        mmos = Memo()
+        # check memo button statuses
         memos = SYNC.memos_query(sessions.get('_companyId')['value'])
         if memos:
             for memo in memos:
                 btn_memo = Factory.LongButton(text=str(memo['memo']),
-                                              on_release=partial(self.append_memo, memo['memo']))
+                                              background_normal='',
+                                              background_color=(0.369, 0.369, 0.369, 1))
+                btn_memo.bind(on_press=partial(self.append_memo, btn_memo, memo['memo']))
+                self.btn_memos_list.append(btn_memo)
                 memo_grid_layout.add_widget(btn_memo)
 
         memo_scroll_view.add_widget(memo_grid_layout)
@@ -693,7 +756,7 @@ class DropoffScreen(Screen):
         memo_layout.add_widget(memo_inner_layout_1)
         memo_layout.add_widget(memo_inner_layout_2)
         self.memo_text_input = memo_text_input
-        memo_add_button = Button(text='Add',
+        memo_add_button = Button(text='Update',
                                  size_hint=(0.3, 1),
                                  on_press=self.add_memo)
         memo_inner_layout_2.add_widget(memo_add_button)
@@ -727,15 +790,93 @@ class DropoffScreen(Screen):
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         self.memo_color_popup.content = layout
+        self._redo_memo_btn_states()
         # show layout
         self.memo_color_popup.open()
 
-    def append_memo(self, msg, *args, **kwargs):
-        if not self.memo_list:
-            self.memo_list = [msg]
+    def append_memo(self, btn, msg, *args, **kwargs):
+        self.memo_text_input.text = ''
+        # check if memo is in the memo_list
+        if msg in self.memo_list[self.item_selected_row]:
+            self.memo_list[self.item_selected_row].remove(msg)
+            self._change_memo_btn_state(btn, False)
         else:
-            self.memo_list.append(msg)
-        self.memo_text_input.text = ', '.join(self.memo_list)
+            self.memo_list[self.item_selected_row].append(msg)
+            self._change_memo_btn_state(btn, True)
+        # memo_string = ', '.join(self.memo_list)
+        # self.memo_text_input.text = ''
+        return
+
+    def _change_memo_btn_state(self, btn, state, *args, **kwargs):
+        background_rgba = (0.369, 0.369, 0.369, 1) if not state else (0.826, 0.826, 0.826, 1)
+        btn.background_color = background_rgba
+        self.memo_text_input.text = ''
+        self.add_memo(self.item_selected_row)
+        pass
+
+    def _update_memo_btn_statuses(self):
+        memo_list = []
+        if self.invoice_list_copy[sessions.get('_itemId')['value']]:
+
+            for x in self.invoice_list_copy[sessions.get('_itemId')['value']]:
+
+                if 'memo' in x:
+                    if x['memo'] == '':
+                        memo_list.append([])
+                    else:
+                        memo_list.append(str(x['memo']).split(', ') if ',' in x['memo'] else [x['memo']])
+        return memo_list
+
+    def _redo_memo_btn_states(self):
+        # reset states of buttons back to default
+        self._reset_memo_btn_states_to_default()
+
+        # set the states of buttons based on row and item previously picked
+        filtered_list = self.memo_list[self.item_selected_row]
+        if self.btn_memos_list:
+            for btns in self.btn_memos_list:
+                if filtered_list:
+                    for memo in filtered_list:
+                        if str(btns.text) == str(memo):
+                            filtered_list.remove(memo)
+                            btns.background_color = (0.826, 0.826, 0.826, 1)
+
+                            break
+                        else:
+                            btns.background_color = (0.369, 0.369, 0.369, 1)
+                            continue
+
+            remaining_items = ''
+            if filtered_list and len(filtered_list) == 1:
+                remaining_items = filtered_list[0]
+            self.memo_text_input.text = str(remaining_items)
+
+    def _reset_memo_btn_states_to_default(self):
+        for btns in self.btn_memos_list:
+            btns.background_color = (0.369, 0.369, 0.369, 1)
+        pass
+
+    def add_memo(self, *args, **kwargs):
+        if sessions.get('_itemId')['value'] in self.invoice_list_copy:
+            # loop through to check if we are updating the text only
+            temp_memos = []
+            if self.memo_text_input.text != '':
+                memo_string = self.memo_text_input.text
+                if self.btn_memos_list:
+                    for btns in self.btn_memos_list:
+                        if btns.background_color == [0.826, 0.826, 0.826, 1]:
+                            temp_memos.append(btns.text)
+
+                temp_memos.append(memo_string)
+                self.memo_list[self.item_selected_row] = temp_memos
+
+            memo_string = ''.join(self.memo_list[self.item_selected_row]) if \
+                len(self.memo_list[self.item_selected_row]) == 1 else ', '.join(self.memo_list[self.item_selected_row])
+
+            self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row][
+                'memo'] = memo_string
+            self.make_items_table()
+            self.memo_text_input.text = ''
 
     def make_items_table(self):
         self.items_grid.clear_widgets()
@@ -792,6 +933,7 @@ class DropoffScreen(Screen):
                                                                                                 msg=item_memo),
                                                on_press=partial(self.item_row_selected, idx),
                                                size_hint_x=0.4,
+                                               font_size='12sp',
                                                background_color=background_color,
                                                background_normal=background_normal)
                 items_tr5 = Button(markup=True,
@@ -815,17 +957,6 @@ class DropoffScreen(Screen):
 
             return False
         self.items_grid.bind(minimum_height=self.items_grid.setter('height'))
-
-    def add_memo(self, *args, **kwargs):
-        if sessions.get('_itemId')['value'] in self.invoice_list_copy:
-            self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row][
-                'memo'] = self.memo_text_input.text
-            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                self.invoice_list_copy[sessions.get('_itemId')['value']]) else 0
-            self.item_selected_row = next_row
-            self.make_items_table()
-            self.memo_text_input.text = ''
-            self.memo_list = []
 
     def color_selected(self, color=False, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
@@ -867,13 +998,15 @@ class DropoffScreen(Screen):
 
     def remove_memo(self, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
-            self.memo_list = []
+            # self.memo_list = []
             self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row]['memo'] = ''
             self.make_items_table()
 
     def item_row_selected(self, row, *args, **kwargs):
         self.item_selected_row = row
         self.make_items_table()
+        self.memo_list = self._update_memo_btn_statuses()
+        self._redo_memo_btn_states()
 
     def save_memo_color(self, *args, **kwargs):
 
@@ -1233,7 +1366,6 @@ class DropoffScreen(Screen):
             self.make_adjustment_sum_table()
             self.make_adjustment_individual_table()
 
-
     def save_price_adjustment(self, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
             idx = -1
@@ -1243,7 +1375,6 @@ class DropoffScreen(Screen):
                 self.invoice_list_copy[sessions.get('_itemId')['value']][idx]['item_price'] = new_price
             self.invoice_list = self.invoice_list_copy
             self.calculate_totals()
-
 
     def item_row_delete_selected(self, row, *args, **kwargs):
         del self.invoice_list[sessions.get('_itemId')['value']][row]

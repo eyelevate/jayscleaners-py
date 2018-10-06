@@ -110,6 +110,7 @@ class EditInvoiceScreen(Screen):
     invoice_items_id = None
     item_rows = {}
     invoice_company_id = sessions.get('_companyId')['value']
+    inventory_set = {}
 
     def __init__(self, **kwargs):
         super(EditInvoiceScreen, self).__init__(**kwargs)
@@ -292,12 +293,21 @@ class EditInvoiceScreen(Screen):
         self.memo_text_input.text = ''
         self.adjust_price = 0
         self.adjust_price_list = []
-        self.get_inventory()
+        self.inventory_set = {
+            0: False,
+            1: False,
+            2: False,
+            3: False,
+            4: False
+        }
+        p = threading.Thread(target=self.get_inventory)
         q = threading.Thread(target=self.get_colors_main)
         r = threading.Thread(target=self.calculate_totals)
         try:
-            q.start()
+            p.start()
             r.start()
+            q.start()
+
         except RuntimeError as e:
             pass
 
@@ -370,41 +380,92 @@ class EditInvoiceScreen(Screen):
     def get_inventory(self):
         iitems = InventoryItem()
         inventories = self.set_inventories()
+
         if inventories:
             idx = 0
-            invitems = []
+            invitems = {}
 
             for inventory in inventories:
                 idx += 1
                 inventory_items = inventory['inventory_items']
+                inventory_id = inventory['id']
+                invitems[inventory_id] = None
                 new = []
                 for x in inventory_items:
-                    invitems.append(x)
-                    new.append({
-                            'text': '[b]{}[/b]\n[i]{}[/i]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
-                            'item_id': x['id'],
-                            'Image': {
-                                'source': '{}'.format(iitems.get_image_src(x['id'])),
-                                'size': '(sp(50),sp(50))',
-                                'center_x': 'self.parent.center_x',
-                                'center_y': 'self.parent.center_y',
-                                'allow_stretch': 'True'
-                            }})
 
+                    new.append({
+                        'text': '[b]{}[/b]\n[i]{}[/i]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
+                        'item_id': x['id'],
+                        'Image': {
+                            'source': '{}'.format(iitems.get_image_src(x['id'])),
+                            'size': '(sp(50),sp(50))',
+                            'center_x': 'self.parent.center_x',
+                            'center_y': 'self.parent.center_y',
+                            'allow_stretch': 'True'
+                        }})
+                    invitems[inventory_id]= new
                 if idx == 1:
                     self.dryclean_rv.data = new
-                elif idx == 2:
-                    self.laundry_rv.data = new
-                elif idx == 3:
-                    self.alterations_rv.data = new
-                elif idx == 4:
-                    self.household_rv.data = new
-                else:
-                    self.other_rv.data = new
+                    self.inventory_set[0] = True
+
             sessions.put('_inventoryItems', value=invitems)
         self.inventory_panel.switch_to(self.dryclean_tab)
-        pass
 
+    def set_laundry_items(self):
+        if not self.inventory_set[1]:
+            inventories = sessions.get('_inventories')['value']
+            items = sessions.get('_inventoryItems')['value']
+            if inventories:
+                for inventory in inventories:
+                    inventory_name = inventory['name']
+                    inventory_id = inventory['id']
+                    if inventory_name == 'Laundry':
+                        self.laundry_rv.data = items[inventory_id]
+                        break
+
+                self.inventory_set[1] = True
+
+    def set_household_items(self):
+        if not self.inventory_set[2]:
+            inventories = sessions.get('_inventories')['value']
+            items = sessions.get('_inventoryItems')['value']
+            if inventories:
+                for inventory in inventories:
+                    inventory_name = inventory['name']
+                    inventory_id = inventory['id']
+                    if inventory_name == 'Household':
+                        self.household_rv.data = items[inventory_id]
+                        break
+
+                self.inventory_set[2] = True
+
+    def set_alteration_items(self):
+        if not self.inventory_set[3]:
+            inventories = sessions.get('_inventories')['value']
+            items = sessions.get('_inventoryItems')['value']
+            if inventories:
+                for inventory in inventories:
+                    inventory_name = inventory['name']
+                    inventory_id = inventory['id']
+                    if inventory_name == 'Alterations':
+                        self.alterations_rv.data = items[inventory_id]
+                        break
+
+                self.inventory_set[3] = True
+
+    def set_other_items(self):
+        if not self.inventory_set[4]:
+            inventories = sessions.get('_inventories')['value']
+            items = sessions.get('_inventoryItems')['value']
+            if inventories:
+                for inventory in inventories:
+                    inventory_name = inventory['name']
+                    inventory_id = inventory['id']
+                    if inventory_name == 'Others':
+                        self.other_rv.data = items[inventory_id]
+                        break
+
+                self.inventory_set[4] = True
     def set_inventories(self):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
@@ -882,6 +943,7 @@ class EditInvoiceScreen(Screen):
                                                                                                 msg=item_memo),
                                                on_press=partial(self.item_row_selected, idx),
                                                size_hint_x=0.4,
+                                               font_size='12sp',
                                                background_color=background_color,
                                                background_normal=background_normal)
                 items_tr5 = Button(markup=True,
