@@ -833,7 +833,7 @@ class DropoffScreen(Screen):
         self._reset_memo_btn_states_to_default()
 
         # set the states of buttons based on row and item previously picked
-        filtered_list = self.memo_list[self.item_selected_row]
+        filtered_list = self.memo_list[self.item_selected_row] if self.item_selected_row in self.memo_list else []
         if self.btn_memos_list:
             for btns in self.btn_memos_list:
                 if filtered_list:
