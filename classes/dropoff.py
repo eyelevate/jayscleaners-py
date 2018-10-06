@@ -816,7 +816,7 @@ class DropoffScreen(Screen):
 
     def _update_memo_btn_statuses(self):
         memo_list = []
-        if self.invoice_list_copy[sessions.get('_itemId')['value']]:
+        if sessions.get('_itemId')['value'] in self.invoice_list_copy:
 
             for x in self.invoice_list_copy[sessions.get('_itemId')['value']]:
 
@@ -826,6 +826,7 @@ class DropoffScreen(Screen):
                     else:
                         memo_list.append(str(x['memo']).split(', ') if ',' in x['memo'] else [x['memo']])
         return memo_list
+
 
     def _redo_memo_btn_states(self):
         # reset states of buttons back to default
