@@ -23,7 +23,7 @@
                 height: self.minimum_height
                 cols:4
                 row_force_default: True
-                row_default_height:'50sp'
+                row_default_height:sp(50)
         BoxLayout:
             orientation: 'vertical'
             pos_hint:{'top':1}
@@ -33,7 +33,7 @@
                 size_hint_y:0.4
                 Button:
                     id: img_button
-                    font_size:'20sp'
+                    font_size:sp(15)
                     on_release: root.image_full_view()
                     text: ""
                     disabled: False
@@ -48,12 +48,12 @@
                     id: item_preview_layout
                     cols:2
                     row_force_default: True
-                    row_default_height:'50sp'
+                    row_default_height:sp(40)
                     Label:
                         size_hint_y: None
                         markup: True
                         text: "[color=000000][b]Group[/b][/color]"
-                        font_size:'15sp'
+                        font_size:sp(15)
                         canvas.before:
                             Color:
                                 rgba: 1, 1, 1, 1
@@ -64,7 +64,7 @@
                         size_hint_y: None
                         markup: True
                         text: "[color=000000][b]Name[/b][/color]"
-                        font_size:'15sp'
+                        font_size:sp(15)
                         canvas.before:
                             Color:
                                 rgba: 1, 1, 1, 1
@@ -76,13 +76,13 @@
                         size_hint_y: None
                         markup: True
                         text: ""
-                        font_size:'15sp'
+                        font_size:sp(15)
                     Label:
                         id: inventory_item_name
                         size_hint_y: None
                         markup: True
                         text: ""
-                        font_size:'15sp'
+                        font_size:sp(15)
 
             ScrollView:
                 pos_hint:{'top':1}
@@ -98,7 +98,7 @@
                     height: self.minimum_height
                     cols:3
                     row_force_default: True,
-                    row_default_height:sp(50)
+                    row_default_height:sp(40)
                     canvas.before:
                         Color:
                             rgba: 1, 1, 1, 1
@@ -109,7 +109,7 @@
                         size_hint_y: None
                         markup: True
                         text: "[color=000000][b]ID[/b][/color]"
-                        font_size:'15sp'
+                        font_size:sp(15)
                         canvas.before:
                             Color:
                                 rgba: 1, 1, 1, 1
@@ -120,7 +120,7 @@
                         size_hint_y: None
                         markup: True
                         text: "[color=000000][b]Scanned[/b][/color]"
-                        font_size:'15sp'
+                        font_size:sp(15)
                         canvas.before:
                             Color:
                                 rgba: 1, 1, 1, 1
@@ -131,7 +131,7 @@
                         size_hint_y: None
                         markup: True
                         text: "[color=000000][b]Location[/b][/color]"
-                        font_size:'15sp'
+                        font_size:sp(15)
                         canvas.before:
                             Color:
                                 rgba: 1, 1, 1, 1
@@ -145,6 +145,6 @@
         Button:
             id: cancel
             on_release: app.root.current = "history"
-            font_size:'20sp'
+            font_size:sp(20)
             text: "Cancel"
             disabled: False
