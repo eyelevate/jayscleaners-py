@@ -7,7 +7,6 @@ KV = KvString()
 
 class ItemDetailsScreen(Screen):
     name = ObjectProperty(None)
-    items_table = ObjectProperty(None)
 
     def get_details(self):
         self.item_image.source = ''
@@ -17,24 +16,11 @@ class ItemDetailsScreen(Screen):
         pass
 
     def items_table_update(self):
-        self.items_table.clear_widgets()
         invoice_id = sessions.get('_invoiceId')['value']
         item_id = sessions.get('_itemId')['value']
         invs = sessions.get('_invoices')['value']
 
-        # create headers
-        # create TH
-        h1 = KV.sized_invoice_tr(0, 'ID', size_hint_x=0.3)
-        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.4)
-        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-
-
         if invs:
-            self.items_table.add_widget(Builder.load_string(h1))
-            self.items_table.add_widget(Builder.load_string(h2))
-            self.items_table.add_widget(Builder.load_string(h3))
-            self.items_table.add_widget(Builder.load_string(h4))
             for inv in invs:
                 if invoice_id == inv['id']:
                     inv_items = inv['invoice_items']
@@ -48,47 +34,47 @@ class ItemDetailsScreen(Screen):
                                 if 'inventory_item' in invoice_item:
                                     if 'name' in invoice_item['inventory_item']:
                                         item_name = invoice_item['inventory_item']['name']
-                                tr1 = KV.sized_invoice_tr(1,
-                                                          invoice_item['id'],
-                                                          size_hint_x=0.1,
-                                                          selected=selected,
-                                                          on_release='app.root.current="item_details"',
-                                                          on_press='self.parent.parent.parent.parent.item_details({})'.format(
-                                                              invoice_items_id))
-
-                                tr2 = KV.sized_invoice_tr(1,
-                                                          invoice_item['quantity'],
-                                                          size_hint_x=0.1,
-                                                          selected=selected,
-                                                          on_release='app.root.current="item_details"',
-                                                          on_press='self.parent.parent.parent.parent.item_details({})'.format(
-                                                              invoice_items_id))
-                                color_name = invoice_item['color']
-
-                                item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=item_name,
-                                                                                            color_s='{}'.format(color_name),
-                                                                                            memo_s='{}'.format(invoice_item['memo']))
-                                # print(item_string)
-                                tr3 = KV.sized_invoice_tr(1,
-                                                          item_string,
-                                                          text_wrap=True,
-                                                          size_hint_x=0.6,
-                                                          selected=selected,
-                                                          on_release='app.root.current="item_details"',
-                                                          on_press='self.parent.parent.parent.parent.item_details({})'.format(
-                                                              invoice_items_id))
-
-                                tr4 = KV.sized_invoice_tr(1,
-                                                          '${:,.2f}'.format(float(invoice_item['pretax'])),
-                                                          size_hint_x=0.2,
-                                                          selected=selected,
-                                                          on_release='app.root.current="item_details"',
-                                                          on_press='self.parent.parent.parent.parent.item_details({})'.format(
-                                                              invoice_items_id))
-                                self.items_table.add_widget(Builder.load_string(tr1))
-                                self.items_table.add_widget(Builder.load_string(tr2))
-                                self.items_table.add_widget(Builder.load_string(tr3))
-                                self.items_table.add_widget(Builder.load_string(tr4))
+                                        # tr1 = KV.sized_invoice_tr(1,
+                                        #                           invoice_item['id'],
+                                        #                           size_hint_x=0.1,
+                                        #                           selected=selected,
+                                        #                           on_release='app.root.current="item_details"',
+                                        #                           on_press='self.parent.parent.parent.parent.item_details({})'.format(
+                                        #                               invoice_items_id))
+                                        #
+                                        # tr2 = KV.sized_invoice_tr(1,
+                                        #                           invoice_item['quantity'],
+                                        #                           size_hint_x=0.1,
+                                        #                           selected=selected,
+                                        #                           on_release='app.root.current="item_details"',
+                                        #                           on_press='self.parent.parent.parent.parent.item_details({})'.format(
+                                        #                               invoice_items_id))
+                                        # color_name = invoice_item['color']
+                                        #
+                                        # item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=item_name,
+                                        #                                                             color_s='{}'.format(color_name),
+                                        #                                                             memo_s='{}'.format(invoice_item['memo']))
+                                        # # print(item_string)
+                                        # tr3 = KV.sized_invoice_tr(1,
+                                        #                           item_string,
+                                        #                           text_wrap=True,
+                                        #                           size_hint_x=0.6,
+                                        #                           selected=selected,
+                                        #                           on_release='app.root.current="item_details"',
+                                        #                           on_press='self.parent.parent.parent.parent.item_details({})'.format(
+                                        #                               invoice_items_id))
+                                        #
+                                        # tr4 = KV.sized_invoice_tr(1,
+                                        #                           '${:,.2f}'.format(float(invoice_item['pretax'])),
+                                        #                           size_hint_x=0.2,
+                                        #                           selected=selected,
+                                        #                           on_release='app.root.current="item_details"',
+                                        #                           on_press='self.parent.parent.parent.parent.item_details({})'.format(
+                                        #                               invoice_items_id))
+                                        # self.items_table.add_widget(Builder.load_string(tr1))
+                                        # self.items_table.add_widget(Builder.load_string(tr2))
+                                        # self.items_table.add_widget(Builder.load_string(tr3))
+                                        # self.items_table.add_widget(Builder.load_string(tr4))
 
     def item_details(self, id):
         # highlight the selected invoice items
