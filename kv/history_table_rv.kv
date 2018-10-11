@@ -7,14 +7,6 @@
     text_size: self.size
     valign: 'middle'
     halign: 'center'
-    background_normal: ''
-    canvas.before:
-        Color:
-            id: history_items_color
-            rgba: 0, 0, 0, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
 
 <HistoryItemsTableRV@RecycleView>:
     viewclass: 'HistoryItemsTableButton'
