@@ -62,8 +62,11 @@
 
             HistoryItemsTableRV:
                 id: history_items_table_rv
+                size_hint_x: 1
+                spacing: 1
                 row_force_default: True
                 row_default_height: dp(30)
+
         BoxLayout:
             orientation: 'vertical'
             pos_hint:{'top':1}
@@ -139,6 +142,8 @@
                             size: self.size
             HistoryInvoiceItemsTableRV:
                 id: history_invoice_items_table_rv
+                size_hint_x: 1
+                spacing: 1
                 row_force_default: True
                 row_default_height: dp(30)
     BoxLayout:
