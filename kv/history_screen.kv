@@ -63,32 +63,32 @@
             HistoryItemsTableRV:
                 id: history_items_table_rv
                 row_force_default: True
-                row_default_height: sp(40)
+                row_default_height: sp(30)
         BoxLayout:
             orientation: 'vertical'
             pos_hint:{'top':1}
             size_hint_x: 0.1
             Button:
                 id: delete_invoice_btn
-                font_size:'20sp'
+                font_size:sp(20)
                 on_release: root.delete_invoice_confirm()
                 text: "Delete"
                 disabled: False
             Button:
                 id: undo_btn
-                font_size:'20sp'
+                font_size:sp(20)
                 on_release: root.undo_invoice_confirm()
                 text: "Undo"
                 disabled: False
             Button:
                 id: reprint_btn
-                font_size:'20sp'
+                font_size:sp(20)
                 on_release: root.reprint_popup()
                 text: "Reprint"
                 disabled: False
             Button:
                 id: invoice_details_btn
-                font_size:'20sp'
+                font_size:sp(20)
                 on_release: app.root.current = "invoice_details"
                 text: "Details"
                 disabled: False
@@ -140,7 +140,7 @@
             HistoryInvoiceItemsTableRV:
                 id: history_invoice_items_table_rv
                 row_force_default: True
-                row_default_height: sp(40)
+                row_default_height: sp(30)
     BoxLayout:
         size_hint: 1,0.2
         orientation: 'vertical'
@@ -157,6 +157,6 @@
             on_press: root.open_popup()
             on_release: root.set_result_status()
             on_release: app.root.current = "search"
-            font_size:'20sp'
+            font_size:sp(20)
             text: "Cancel"
             disabled: False
