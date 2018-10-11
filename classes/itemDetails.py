@@ -8,8 +8,6 @@ KV = KvString()
 class ItemDetailsScreen(Screen):
     name = ObjectProperty(None)
     items_table = ObjectProperty(None)
-    inventory_name_label = ObjectProperty(None)
-    inventory_item_name = ObjectProperty(None)
 
     def get_details(self):
         self.item_image.source = ''
