@@ -11,9 +11,10 @@
     viewclass: 'HistoryInvoiceItemsTableButton'
     SelectableRecycleGridLayout:
         bar_width: dp(5)
-        default_size_y: sp(40)
         default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
         orientation: 'horizontal'
+        row_force_default: True,
+        row_default_height: sp(50)
         cols:3
