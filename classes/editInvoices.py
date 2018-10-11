@@ -110,6 +110,8 @@ class EditInvoiceScreen(Screen):
     invoice_items_id = None
     item_rows = {}
     invoice_company_id = sessions.get('_companyId')['value']
+    btn_memos_list = []
+    company_ids = []
 
     def __init__(self, **kwargs):
         super(EditInvoiceScreen, self).__init__(**kwargs)
@@ -128,6 +130,7 @@ class EditInvoiceScreen(Screen):
         # Pause Schedule
         # self.sync_inventory_items()
         # reset the inventory table
+        sessions.put('_discounts',value=[])
         self.customer_id_backup = sessions.get('_customerId')['value']
         self.invoice_id = sessions.get('_invoiceId')['value']
         self.inventory_panel.clear_widgets()
@@ -136,6 +139,7 @@ class EditInvoiceScreen(Screen):
         self.discount_id = None
         self.invoice_items_id = None
         self.memo_list = []
+        self.company_ids = []
         self.item_rows = {}
         comp = Company()
         today = datetime.datetime.today()
@@ -174,13 +178,15 @@ class EditInvoiceScreen(Screen):
                 invoice_items_id = invoice_item['id']
                 item_id = int(invoice_item['item_id'])
                 items = SYNC.inventory_items_grab(item_id)
+                if invoice_item['company_id'] not in self.company_ids:
+                    self.company_ids.append(invoice_item['company_id'])
                 self.invoice_company_id = invoice_item['company_id']
 
                 if items is not False:
                     inventory_id = items['inventory_id']
                     self.inventory_id = inventory_id
 
-                    inventories = SYNC.inventory_grab(inventory_id)
+                    inventories = SYNC.inventory_grab(self.inventory_id)
                     tags = items['tags']
                     if inventories:
 
@@ -249,8 +255,7 @@ class EditInvoiceScreen(Screen):
                     sessions.put('_itemId',value=int(key))
                     break
 
-        invoices = SYNC.invoice_grab_id(self.invoice_id)
-        if invoices:
+        if invoices is not False:
 
             self.due_date = datetime.datetime.strptime(invoices['due_date'], "%Y-%m-%d %H:%M:%S")
             self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
@@ -310,6 +315,7 @@ class EditInvoiceScreen(Screen):
             sessions.put('_taxRate', value=0.096)
 
         self.deleted_rows = []
+        self.calculate_totals()
 
     def set_result_status(self):
         sessions.put('_customerId', value=self.customer_id_backup)
@@ -320,9 +326,14 @@ class EditInvoiceScreen(Screen):
         colors = SYNC.colors_query(self.invoice_company_id)
         if colors is not False:
             for color in colors:
-                color_btn = Button(markup=True,
-                                   text='[b]{color_name}[/b]'.format(color_name=color['name']),
-                                   on_release=partial(self.color_selected_main, color['name']))
+                if color['name'] == 'White':
+                    color_btn = Button(markup=True,
+                                       text='[color="#000000"][b]{color_name}[/b][/color]'.format(color_name=color['name']),
+                                       on_release=partial(self.color_selected_main, color['name']))
+                else:
+                    color_btn = Button(markup=True,
+                                       text='[b]{color_name}[/b]'.format(color_name=color['name']),
+                                       on_release=partial(self.color_selected_main, color['name']))
                 color_btn.background_normal = ''
                 color_btn.background_color = Static.color_rgba(color['name'])
                 self.colors_table_main.add_widget(color_btn)
@@ -424,14 +435,17 @@ class EditInvoiceScreen(Screen):
     def _update_discounts_by_inventory(self):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-        self.discounts = {}
-        for x in sessions.get('_inventories')['value']:
-            inventory_id = x['id']
-            company_id = self.invoice_company_id
-            row = SYNC.discount_query(company_id, now, now, inventory_id)
-            self.discounts[inventory_id] = row
-        sessions.put('_discounts', value=self.discounts)
-
+        discounts = {}
+        if len(sessions.get('_discounts')['value']) == 0:
+            if self.company_ids:
+                for company_id in self.company_ids:
+                    inventories = SYNC.inventories_by_company(company_id)
+                    for x in inventories:
+                        inventory_id = x['id']
+                        row = SYNC.discount_query(company_id, now, now, inventory_id)
+                        discounts[inventory_id] = row
+            self.discounts = discounts
+            sessions.put('_discounts', value=discounts)
 
     def sync_inventory_items(self):
         SYNC.get_chunk('inventory_items', 0, 1000)
@@ -687,7 +701,7 @@ class EditInvoiceScreen(Screen):
         for x in list:
             inventory_id = int(x['inventory_id'])
             disc = sessions.get('_discounts')['value']
-            if disc[inventory_id]:
+            if disc[inventory_id] is not False and inventory_id in disc:
                 for discount in disc[inventory_id]:
                     discount_rate = float(discount['rate'])
                     discount_price = float(discount['discount'])
@@ -710,7 +724,7 @@ class EditInvoiceScreen(Screen):
 
     def make_memo_color(self):
 
-        self.item_row_selected(row=0)
+        self.btn_memos_list = []
 
         # make popup
         self.memo_color_popup.title = "Add Memo / Color"
@@ -733,12 +747,12 @@ class EditInvoiceScreen(Screen):
                                 row_force_default=True,
                                 row_default_height='60sp')
         color_grid.bind(minimum_height=color_grid.setter('height'))
-        colors = Colored().where({'company_id': self.invoice_company_id, 'ORDER_BY': 'ordered asc'})
+        colors = SYNC.colors_query(sessions.get('_companyId')['value'])
         if colors:
             for color in colors:
                 color_btn = Button(markup=True,
                                    text='[b]{color_name}[/b]'.format(color_name=color['name']),
-                                   on_press=partial(self.color_selected, color['name']))
+                                   on_release=partial(self.color_selected, color['name']))
                 color_btn.text_size = color_btn.size
                 color_btn.font_size = '12sp'
                 color_btn.valign = 'bottom'
@@ -755,13 +769,15 @@ class EditInvoiceScreen(Screen):
         memo_scroll_view = ScrollView()
         memo_grid_layout = Factory.GridLayoutForScrollView(row_default_height='50sp',
                                                            cols=4)
-        mmos = Memo()
-        memos = mmos.where({'company_id': self.invoice_company_id,
-                            'ORDER_BY': 'ordered asc'})
+        # check memo button statuses
+        memos = SYNC.memos_query(sessions.get('_companyId')['value'])
         if memos:
             for memo in memos:
                 btn_memo = Factory.LongButton(text=str(memo['memo']),
-                                              on_press=partial(self.append_memo, memo['memo']))
+                                              background_normal='',
+                                              background_color=(0.369, 0.369, 0.369, 1))
+                btn_memo.bind(on_press=partial(self.append_memo, btn_memo, memo['memo']))
+                self.btn_memos_list.append(btn_memo)
                 memo_grid_layout.add_widget(btn_memo)
 
         memo_scroll_view.add_widget(memo_grid_layout)
@@ -786,7 +802,7 @@ class EditInvoiceScreen(Screen):
         memo_layout.add_widget(memo_inner_layout_1)
         memo_layout.add_widget(memo_inner_layout_2)
         self.memo_text_input = memo_text_input
-        memo_add_button = Button(text='Add',
+        memo_add_button = Button(text='Update',
                                  size_hint=(0.3, 1),
                                  on_press=self.add_memo)
         memo_inner_layout_2.add_widget(memo_add_button)
@@ -822,13 +838,90 @@ class EditInvoiceScreen(Screen):
         self.memo_color_popup.content = layout
         # show layout
         self.memo_color_popup.open()
+        self.item_row_selected(row=0)
 
-    def append_memo(self, msg, *args, **kwargs):
-        if not self.memo_list:
-            self.memo_list = [msg]
+    def append_memo(self, btn, msg, *args, **kwargs):
+        self.memo_list = self._update_memo_btn_statuses()
+        self.memo_text_input.text = ''
+        # check if memo is in the memo_list
+        if msg in self.memo_list[self.item_selected_row]:
+            self.memo_list[self.item_selected_row].remove(msg)
+            self._change_memo_btn_state(btn, False)
         else:
-            self.memo_list.append(msg)
-        self.memo_text_input.text = ', '.join(self.memo_list)
+            self.memo_list[self.item_selected_row].append(msg)
+            self._change_memo_btn_state(btn, True)
+        # memo_string = ', '.join(self.memo_list)
+        # self.memo_text_input.text = ''
+        return
+
+    def _change_memo_btn_state(self, btn, state, *args, **kwargs):
+        background_rgba = (0.369, 0.369, 0.369, 1) if not state else (0.826, 0.826, 0.826, 1)
+        btn.background_color = background_rgba
+        self.memo_text_input.text = ''
+        self.add_memo(self.item_selected_row)
+        pass
+
+    def _update_memo_btn_statuses(self):
+        memo_list = []
+        if sessions.get('_itemId')['value'] in self.invoice_list_copy:
+
+            for x in self.invoice_list_copy[sessions.get('_itemId')['value']]:
+
+                if 'memo' in x:
+                    if x['memo'] is '' or x['memo'] is None or not x['memo']:
+                        memo_list.append([])
+                    else:
+                        memo_list.append(str(x['memo']).split(', ') if ',' in x['memo'] else [x['memo']])
+        return memo_list
+
+    def _redo_memo_btn_states(self):
+        # set the states of buttons based on row and item previously picked
+        filtered_list = self.memo_list[self.item_selected_row] if self.memo_list[self.item_selected_row ] else []
+        if filtered_list:
+            if self.btn_memos_list:
+                for btns in self.btn_memos_list:
+                    if filtered_list:
+                        for memo in filtered_list:
+                            if str(btns.text) == str(memo):
+                                filtered_list.remove(memo)
+                                btns.background_color = (0.826, 0.826, 0.826, 1)
+
+                                break
+                            else:
+                                btns.background_color = (0.369, 0.369, 0.369, 1)
+                                continue
+
+                remaining_items = ''
+                if filtered_list and len(filtered_list) == 1:
+                    remaining_items = filtered_list[0]
+                self.memo_text_input.text = str(remaining_items)
+
+    def _reset_memo_btn_states_to_default(self):
+        for btns in self.btn_memos_list:
+            btns.background_color = (0.369, 0.369, 0.369, 1)
+        pass
+
+    def add_memo(self, *args, **kwargs):
+        if sessions.get('_itemId')['value'] in self.invoice_list_copy:
+            # loop through to check if we are updating the text only
+            temp_memos = []
+            if self.memo_text_input.text != '':
+                memo_string = self.memo_text_input.text
+                if self.btn_memos_list:
+                    for btns in self.btn_memos_list:
+                        if btns.background_color == [0.826, 0.826, 0.826, 1]:
+                            temp_memos.append(btns.text)
+
+                temp_memos.append(memo_string)
+                self.memo_list[self.item_selected_row] = temp_memos
+
+            memo_string = ''.join(self.memo_list[self.item_selected_row]) if \
+                len(self.memo_list[self.item_selected_row]) == 1 else ', '.join(self.memo_list[self.item_selected_row])
+
+            self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row][
+                'memo'] = memo_string
+            self.make_items_table()
+            self.memo_text_input.text = ''
 
     def make_items_table(self):
         self.items_grid.clear_widgets()
@@ -910,23 +1003,9 @@ class EditInvoiceScreen(Screen):
             return False
         self.items_grid.bind(minimum_height=self.items_grid.setter('height'))
 
-    def add_memo(self, *args, **kwargs):
-        if sessions.get('_itemId')['value'] in self.invoice_list_copy:
-            self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row][
-                'memo'] = self.memo_text_input.text
-            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                self.invoice_list_copy[sessions.get('_itemId')['value']]) else 0
-            self.item_selected_row = next_row
-
-            self.make_items_table()
-            self.memo_text_input.text = ''
-
     def color_selected(self, color=False, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
             self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row]['color'] = color
-            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                self.invoice_list_copy[sessions.get('_itemId')['value']]) else 0
-            self.item_selected_row = next_row
             self.make_items_table()
 
     def item_row_edit(self, row, *args, **kwargs):
@@ -967,6 +1046,9 @@ class EditInvoiceScreen(Screen):
     def item_row_selected(self, row, *args, **kwargs):
         self.item_selected_row = row
         self.make_items_table()
+        self.memo_list = self._update_memo_btn_statuses()
+        self._reset_memo_btn_states_to_default()
+        self._redo_memo_btn_states()
 
     def save_memo_color(self, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:

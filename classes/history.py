@@ -1,4 +1,5 @@
 import datetime
+import threading
 import time
 from _pydecimal import Decimal
 from threading import Thread
@@ -40,32 +41,43 @@ EPSON = sessions.get('_epson')['value']
 BIXOLON = sessions.get('_bixolon')['value']
 
 class HistoryScreen(Screen):
-    invoices_table = ObjectProperty(None)
-    invoice_table_body = ObjectProperty(None)
+    # invoices_table = ObjectProperty(None)
+    # invoice_table_body = ObjectProperty(None)
+    history_items_table_rv = ObjectProperty(None)
+    history_invoice_items_table_rv = ObjectProperty(None)
     item_image = ObjectProperty(None)
-    items_table = ObjectProperty(None)
-    invs_results_label = ObjectProperty(None)
+    invs_results_ti = ObjectProperty(None)
     history_popup = ObjectProperty(None)
     status_spinner = ObjectProperty(None)
     starch = None
     selected_tags_list = []
     tags_grid = ObjectProperty(None)
-    row_set = 0
-    row_increment = 10
-    up_btn = ObjectProperty(None)
-    down_btn = ObjectProperty(None)
+    force_update = True
+    history_inventory_items = {}
+    history_rows = False
+    # up_btn = ObjectProperty(None)
+    # down_btn = ObjectProperty(None)
 
-    def reset_base(self):
-        t1 = Thread(target=self.reset)
-        t1.start()
+    def __init__(self, **kwargs):
+        super(HistoryScreen, self).__init__(**kwargs)
+
+    def attach(self):
+        pub.subscribe(self.select_invoice, "select_invoice")
+        pub.subscribe(self.close_loading_popup, 'close_history_popup')
+        pub.subscribe(self.switch_screen, "app_change_screen")
+
+    def detach(self):
+        pub.unsubscribe(self.select_invoice, "select_invoice")
+        pub.unsubscribe(self.close_loading_popup, 'close_history_popup')
+        pub.subscribe(self.switch_screen, "app_change_screen")
+
+    def switch_screen(self, screen, *args, **kwargs):
+        self.manager.current = screen
 
     def reset(self):
-        # Pause Schedule
-
-        # check if an invoice was previously selected
-        self.items_table.clear_widgets()
-
         # set any necessary variables
+        self.history_rows = False
+        self.invs_results_ti.text = ''
         customers = SYNC.customers_grab(sessions.get('_customerId')['value'])
         if customers:
             for customer in customers:
@@ -73,32 +85,18 @@ class HistoryScreen(Screen):
         else:
             self.starch = Static.get_starch_by_code(None)
 
-        # create the invoice count list
-        sessions.get('_rowCap')['value'] = SYNC.invoices_grab_count(sessions.get('_customerId')['value'])
-        if sessions.get('_rowCap')['value'] < 10 and sessions.get('_rowCap')['value'] <= self.row_set:
-            self.row_set = 0
-
-        row_end = self.row_set + 9
-        self.invs_results_label.text = '[color=000000]Showing rows [b]{}[/b] - [b]{}[/b] out of [b]{}[/b][/color]'.format(
-            self.row_set,
-            row_end,
-            sessions.get('_rowCap')['value']
-        )
-        invs = SYNC.invoice_search_history(sessions.get('_customerId')['value'], self.row_set, row_end)
-        sessions.put('_searchResults', value= invs)
-        # get invoice rows and display them to the table
-
-        # create Tbody TR
-        self.invoice_table_body.clear_widgets()
-        if sessions.get('_searchResults')['value'] is not False:
-            for cust in sessions.get('_searchResults')['value']:
-                self.create_invoice_row(cust)
-
-        sessions.get('_searchResults')['value'] = []
-
-        if sessions.get('_invoiceId')['value']:
-            self.items_table_update()
-
+        # update history table rows
+        self.force_update = True
+        sessions.put('_invoices',value=None)
+        sessions.put('_mappedHistory', value={})
+        self.history_inventory_items = {}
+        self.history_items_table_rv.data = []
+        self.history_invoice_items_table_rv.data = []
+        q = threading.Thread(target=self.update_history_table_rv)
+        try:
+            q.start()
+        except RuntimeError as e:
+            pass
 
     def open_popup(self, *args, **kwargs):
         SYNC_POPUP.title = "Loading"
@@ -108,24 +106,107 @@ class HistoryScreen(Screen):
         # send event
         pub.sendMessage('close_loading_popup', popup=SYNC_POPUP)
 
-    def create_invoice_row(self, row, *args, **kwargs):
-        """ Creates invoice table row and displays it to screen """
-        check_invoice_id = sessions.get('_invoiceId')['value']
-        invoice_id = row['id']
-        company_id = row['company_id']
-        quantity = row['quantity']
-        rack = row['rack']
-        total = '${:,.2f}'.format(Decimal(row['total']))
-        due = row['due_date']
-        status = row['status']
-        invoices = SYNC.invoice_grab_id(invoice_id)
-        invoice_items = []
-        if invoices is not False:
-            invoice_items = invoices['invoice_items']
+    def close_loading_popup(self, popup, *args, **kwargs):
+        popup.dismiss()
 
-        count_invoice_items = len(invoice_items)
-        deleted_at = row['deleted_at']
-        transaction_id = row['transaction_id']
+    def update_history_table_rv(self):
+        customer_id = sessions.get('_customerId')['value']
+        if self.force_update:
+            invs = SYNC.invoice_search_history(customer_id, 'START', 'END')
+            sessions.put('_invoices',value=invs)
+            self.force_update = False
+        else:
+            invs = sessions.get('_invoices')['value']
+
+        check_invoice_id = sessions.get('_invoiceId')['value']
+
+        self.history_rows = []
+        if invs:
+            for inv in invs:
+                invoice_id = inv['id']
+                selected = True if invoice_id == check_invoice_id else False
+                company_id = inv['company_id']
+                quantity = inv['quantity']
+                rack = inv['rack']
+                total = '${:,.2f}'.format(Decimal(inv['total']))
+                due = inv['due_date']
+                status = inv['status']
+                invoice_items = inv['invoice_items']
+                count_invoice_items = len(invoice_items)
+                deleted_at = inv['deleted_at']
+                states_info = self._get_states_info(due, selected, status, deleted_at, count_invoice_items)
+
+                self.history_rows.append({
+                    'column': 1,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}]{}[/color]'.format(states_info['text_color'],'{0:06d}'.format(invoice_id)),
+                    'background_color': states_info['background_rgba'],
+                    'background_normal': '',
+                    'selected': selected
+                })
+                self.history_rows.append({
+                    'column': 2,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}]{}[/color]'.format(states_info['text_color'],company_id),
+                    'background_color': states_info['background_rgba'],
+                    'background_normal': '',
+                    'selected': selected
+                })
+                self.history_rows.append({
+                    'column': 3,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}]{}[/color]'.format(states_info['text_color'],states_info['due_date']),
+                    'background_color': states_info['background_rgba'],
+                    'background_normal': '',
+                    'selected': selected
+                })
+                self.history_rows.append({
+                    'column': 4,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}]{}[/color]'.format(states_info['text_color'],rack),
+                    'background_color': states_info['background_rgba'],
+                    'background_normal': '',
+                    'selected': selected
+                })
+                self.history_rows.append({
+                    'column': 5,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}]{}[/color]'.format(states_info['text_color'],quantity),
+                    'background_color': states_info['background_rgba'],
+                    'background_normal': '',
+                    'selected': selected
+                })
+                self.history_rows.append({
+                    'column': 6,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}]{}[/color]'.format(states_info['text_color'],total),
+                    'background_color': states_info['background_rgba'],
+                    'background_normal': '',
+                    'selected': selected
+                })
+
+            if len(self.history_rows) > 54:
+                p = threading.Thread(target=partial(self._update_history_table_rows_short, self.history_rows))
+                try:
+                    p.start()
+                except RuntimeError as e:
+                    pass
+
+        q = threading.Thread(target=partial(self._update_history_table_rows, self.history_rows))
+        r = threading.Thread(target=self.items_table_update)
+        try:
+            q.start()
+            r.start()
+        except RuntimeError as e:
+            pass
+
+    def _update_history_table_rows_short(self, rows, *args, **kwargs):
+        self.history_items_table_rv.data = rows[0:54]
+
+    def _update_history_table_rows(self, rows, *args, **kwargs):
+        self.history_items_table_rv.data = rows
+
+    def _get_states_info(self, due, selected, status, deleted_at, count_invoice_items):
         try:
             dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
         except ValueError:
@@ -139,84 +220,44 @@ class HistoryScreen(Screen):
             dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
 
         now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-        invoice_status = row['status']
-        selected = True if invoice_id == check_invoice_id else False
+
         if deleted_at:
             state = 4
+        elif count_invoice_items == 0:
+            state = 6
+        elif due_strtotime < now_strtotime and int(status) == 1 or int(status) == 3:
+            state = 3
         else:
-            if invoice_status is 5:
-                state = 5
-            elif invoice_status is 4:
-                state = 4
-            elif invoice_status is 3:
-                state = 4
-            elif invoice_status is 2:
-                state = 3
-            else:
-                if due_strtotime < now_strtotime:  # overdue
-                    state = 2
-                elif count_invoice_items == 0:  # #quick drop
-                    state = 6
-                else:
-                    state = 1
+            state = int(status)
 
-        if state is 1:
-            text_color = [0.898, 0.898, 0.898, 1] if selected else [0, 0, 0, 1]
-            background_rgba = [0.369, 0.369, 0.369, 0.1] if selected else [0.826, 0.826, 0.826, 0.1]
-            background_color = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
-        elif state is 2:
-            text_color = [0.8157, 0.847, 0.961, 1] if selected else [0.059, 0.278, 1, 1]
-            background_rgba = [0.059, 0.278, 1, 0.1] if selected else [0.816, 0.847, 0.961, 0.1]
-            background_color = [0.059, 0.278, 1, 1] if selected else [0.816, 0.847, 0.961, 1]
-        elif state is 3:
-            text_color = [0.847, 0.967, 0.847, 1] if selected else [0, 0.639, 0.149, 1]
-            background_rgba = [0, 0.64, 0.149, 0.1] if selected else [0.847, 0.968, 0.847, 0.1]
-            background_color = [0, 0.64, 0.149, 1] if selected else [0.847, 0.968, 0.847, 1]
-        elif state is 4:
-            text_color = [1, 0.8, 0.8, 1] if selected else [1, 0, 0, 1]
-            background_rgba = [1, 0, 0, 0.1] if selected else [1, 0.717, 0.717, 0.1]
-            background_color = [1, 0, 0, 1] if selected else [1, 0.717, 0.717, 1]
-        elif state is 5:
-            text_color = [0.898, 0.898, 0.898, 1] if selected else [0, 0, 0, 1]
-            background_rgba = [0.369, 0.369, 0.369, 0.1] if selected else [0.826, 0.826, 0.826, 0.1]
-            background_color = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
+        if state == 1: # new
+            text_color = 'e5e5e5' if selected else '000000'
+            background_rgba = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
+        elif state == 2: # rack
+            text_color = 'd8f7d8' if selected else '00a326'
+            background_rgba = [0, 0.64, 0.149, 1] if selected else [0.847, 0.968, 0.847, 1]
+
+        elif state == 3: # overdue
+            text_color = 'd0d8f5' if selected else '0f47ff'
+            background_rgba = [0.059, 0.278, 1, 1] if selected else [0.816, 0.847, 0.961, 1]
+        elif state == 4: #
+            text_color = 'ffcccc' if selected else 'ff0000'
+            background_rgba = [1, 0, 0, 1] if selected else [1, 0.717, 0.717, 1]
+        elif state == 5:
+            text_color = 'e5e5e5' if selected else '000000'
+            background_rgba = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
         else:
-            text_color = [0, 0, 0, 1] if selected else [0, 0, 0, 1]
-            background_rgba = [0.98431373, 1, 0, 0.1] if selected else [0.9960784314, 1, 0.7176470588, 1]
-            background_color = [0.98431373, 1, 0, 1] if selected else [0.9960784314, 1, 0.7176470588, 1]
-        tr = Factory.InvoiceTr(on_press=partial(self.select_invoice, invoice_id),
-                               group="tr")
-        tr.status = state
-        tr.set_color = background_color
-        tr.background_color = background_rgba
-        label_1 = Label(markup=True,
-                        color=text_color,
-                        text="{}".format('{0:06d}'.format(invoice_id)))
-        tr.ids.invoice_table_row_td.add_widget(label_1)
-        label_2 = Label(markup=True,
-                        color=text_color,
-                        text='{}'.format(company_id))
-        tr.ids.invoice_table_row_td.add_widget(label_2)
-        label_3 = Label(markup=True,
-                        color=text_color,
-                        text='{}'.format(due_date))
-        tr.ids.invoice_table_row_td.add_widget(label_3)
-        label_4 = Label(markup=True,
-                        color=text_color,
-                        text='{}'.format(rack))
-        tr.ids.invoice_table_row_td.add_widget(label_4)
-        label_5 = Label(markup=True,
-                        color=text_color,
-                        text='{}'.format(quantity))
-        tr.ids.invoice_table_row_td.add_widget(label_5)
-        label_6 = Label(markup=True,
-                        color=text_color,
-                        text='{}'.format(total))
-        tr.ids.invoice_table_row_td.add_widget(label_6)
+            text_color = '000000'
+            background_rgba = [0.98431373, 1, 0, 1] if selected else [0.9960784314, 1, 0.7176470588, 1]
 
-        self.invoice_table_body.add_widget(tr)
 
-        return True
+        return {
+            'text_color': text_color,
+            'background_rgba': background_rgba,
+            'due_date': '{}'.format(due_date)
+        }
+
+
 
     def reprint(self):
         pass
@@ -232,180 +273,110 @@ class HistoryScreen(Screen):
         # set selected invoice and update the table to show it
         sessions.put('_invoiceId',value= invoice_id)
 
-        # check state of button and update rows
-        for child in self.invoice_table_body.children:
-            if child.state is 'down':
-                # find status and change the background color
-
-                if child.status is 1:
-                    text_color = [0.898, 0.898, 0.898, 1]
-                    child.background_color = [0.369, 0.369, 0.369, 0.1]
-                    child.set_color = [0.369, 0.369, 0.369, 1]
-                elif child.status is 2:
-                    text_color = [0.8156, 0.847, 0.961, 1]
-                    child.background_color = [0.059, 0.278, 1, 0.1]
-                    child.set_color = [0.059, 0.278, 1, 1]
-                elif child.status is 3:
-                    text_color = [0.847, 0.969, 0.847, 1]
-                    child.background_color = [0, 0.64, 0.149, 0.1]
-                    child.set_color = [0, 0.64, 0.149, 1]
-                elif child.status is 4:
-                    text_color = [1, 0.8, 0.8, 1]
-                    child.background_color = [1, 0, 0, 0.1]
-                    child.set_color = [1, 0, 0, 1]
-                elif child.status is 5:
-                    text_color = [0.898, 0.898, 0.898, 1]
-                    child.background_color = [0.369, 0.369, 0.369, 0.1]
-                    child.set_color = [0.369, 0.369, 0.369, 1]
-                else:
-                    text_color = [0, 0, 0, 1]
-                    child.background_color = [0.98431373, 1, 0, 0.1]
-                    child.set_color = [0.98431373, 1, 0, 1]
-            else:
-                if child.status is 1:
-                    text_color = [0, 0, 0, 1]
-                    child.background_color = [0.826, 0.826, 0.826, 0.1]
-                    child.set_color = [0.826, 0.826, 0.826, 1]
-                elif child.status is 2:
-                    text_color = [0.059, 0.278, 1, 1]
-                    child.background_color = [0.816, 0.847, 0.961, 0.1]
-                    child.set_color = [0.816, 0.847, 0.961, 1]
-                elif child.status is 3:
-                    text_color = [0, 0.639, 0.149, 1]
-                    child.background_color = [0.847, 0.968, 0.847, 0.1]
-                    child.set_color = [0.847, 0.968, 0.847, 1]
-                elif child.status is 4:
-                    text_color = [1, 0, 0, 1]
-                    child.background_color = [1, 0.717, 0.717, 0.1]
-                    child.set_color = [1, 0.717, 0.717, 1]
-                elif child.status is 5:
-                    text_color = [0, 0, 0, 1]
-                    child.background_color = [0.826, 0.826, 0.826, 0.1]
-                    child.set_color = [0.826, 0.826, 0.826, 1]
-                else:
-                    text_color = [0, 0, 0, 1]
-                    child.background_color = [0.9960784314, 1, 0.7176470588, 0.1]
-                    child.set_color = [0.9960784314, 1, 0.7176470588, 1]
-            for grandchild in child.children:
-                for ggc in grandchild.children:
-                    ggc.color = text_color
-        # self.reset()
-        t1 = Thread(target=self.items_table_update)
-        t1.start()
-
-        # self.items_table_update()
-
-    def invoice_next(self):
-        self.row_set += self.row_increment
-        self.down_btn.disabled = True if (self.row_set + 10) > sessions.get('_rowCap')['value'] else False
-
-        t1 = Thread(target=self.reset)
-        t1.start()
-        # self.reset()
-        self.up_btn.disabled = True if self.row_set <= 0 else False
-
-    def invoice_prev(self):
-        row_prev = self.row_set - self.row_increment
-        self.up_btn.disabled = True if self.row_set - self.row_increment <= 0 else False
-
-        self.row_set = 0 if self.row_set - self.row_increment <= 0 else row_prev
-
-
-        t1 = Thread(target=self.reset)
-        t1.start()
-        self.down_btn.disabled = False if self.row_set < sessions.get('_rowCap')['value'] else True
+        self.force_update = False
+        q = threading.Thread(target=self.update_history_table_rv)
+        r = threading.Thread(target=self.items_table_update)
+        try:
+            q.start()
+            r.start()
+        except RuntimeError as e:
+            pass
 
     def items_table_update(self):
-        self.items_table.clear_widgets()
+        # self.items_table.clear_widgets()
 
-        invoices = SYNC.invoice_grab_id(sessions.get('_invoiceId')['value'])
-        inv_items = []
-        invoice_deleted = False
-        if invoices is not False:
-            invoice_deleted = True if invoices['deleted_at'] else False
-            inv_items = invoices['invoice_items']
+        invoices = sessions.get('_invoices')['value']
+        invoice_id = sessions.get('_invoiceId')['value']
+        inv_items = False
+        if invoice_id not in self.history_inventory_items:
+            self.history_inventory_items[invoice_id] = []
+            if invoices:
 
-        if inv_items:
-            # create headers
-            # create TH
-            h1 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.2)
-            h2 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
-            h3 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-            self.items_table.add_widget(Builder.load_string(h1))
-            self.items_table.add_widget(Builder.load_string(h2))
-            self.items_table.add_widget(Builder.load_string(h3))
-            items = {}
+                for invoice in invoices:
+                    invoice_deleted = True if invoice['deleted_at'] else False
+                    if invoice['id'] == sessions.get('_invoiceId')['value']:
+                        inv_items = invoice['invoice_items']
+                        break
 
-            for invoice_item in inv_items:
-                item_id = invoice_item['item_id']
+            if inv_items:
+                items = {}
 
-                itm_srch = SYNC.inventory_items_grab(item_id)
-                item_name = itm_srch['name'] if itm_srch is not False else ''
-                inventory_id = itm_srch['inventory_id'] if itm_srch is not False else None
+                for invoice_item in inv_items:
+                    item_id = invoice_item['item_id']
+                    inventory = invoice_item['inventory']
+                    inventory_item = invoice_item['inventory_item']
+                    inventory_id = invoice_item['inventory_id']
+                    item_name = invoice_item['inventory_item']['name'] if 'name' in invoice_item['inventory_item'] else ''
+                    laundry = inventory['laundry'] if 'laundry' in inventory else 0
 
-                inventories = SYNC.inventory_grab(inventory_id)
-                laundry = inventories['laundry'] if inventories is not False else 0
+                    items[item_id] = {
+                        'id': invoice_item['id'],
+                        'name': '{} ({})'.format(item_name, self.starch) if laundry else item_name,
+                        'total': 0,
+                        'quantity': 0,
+                        'color': {},
+                        'memo': []
+                    }
+                sessions.put('_items', value=items)
+                # populate correct item totals
+                if items:
+                    for key, value in items.items():
+                        item_id = key
+                        iinv_items = SYNC.invoice_item_discount_find_item_id(sessions.get('_invoiceId')['value'], item_id)
+                        if iinv_items:
 
-                items[item_id] = {
-                    'id': invoice_item['id'],
-                    'name': '{} ({})'.format(item_name, self.starch) if laundry else item_name,
-                    'total': 0,
-                    'quantity': 0,
-                    'color': {},
-                    'memo': []
-                }
-            # populate correct item totals
-            if items:
-                for key, value in items.items():
-                    item_id = key
-                    iinv_items = SYNC.invoice_item_discount_find_item_id(sessions.get('_invoiceId')['value'], item_id)
-                    if iinv_items:
-                        for inv_item in iinv_items:
-                            items[item_id]['quantity'] += int(inv_item['quantity']) if inv_item['quantity'] else 1
-                            items[item_id]['total'] += float(inv_item['pretax']) if inv_item['pretax'] else 0
-                            if inv_item['color'] in items[item_id]['color']:
-                                items[item_id]['color'][inv_item['color']] += 1
-                            else:
-                                items[item_id]['color'][inv_item['color']] = 1
-                            if inv_item['memo']:
-                                items[item_id]['memo'].append(inv_item['memo'])
-            # print out the items into the table
-            if items:
-                for key, value in items.items():
-                    tr1 = KV.sized_invoice_tr(1,
-                                              value['quantity'],
-                                              size_hint_x=0.2,
-                                              on_release='app.root.current="item_details"',
-                                              on_press='self.parent.parent.parent.parent.item_details({})'.format(key))
-                    color_string = []
-                    for color_name, color_qty in value['color'].items():
-                        if color_name:
-                            color_string.append('{count}-{name}'.format(count=str(color_qty), name=color_name))
 
-                    item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=value['name'],
-                                                                                color_s=', '.join(color_string),
-                                                                                memo_s='/ '.join(value['memo']))
-                    tr2 = KV.sized_invoice_tr(1,
-                                              item_string,
-                                              text_wrap=True,
-                                              size_hint_x=0.6,
-                                              on_release='app.root.current="item_details"',
-                                              on_press='self.parent.parent.parent.parent.item_details({})'.format(key))
+                            for inv_item in iinv_items:
+                                items[item_id]['quantity'] += 1
+                                items[item_id]['total'] += float(inv_item['total'])
+                                if inv_item['color'] in items[item_id]['color']:
+                                    items[item_id]['color'][inv_item['color']] += 1
+                                else:
+                                    items[item_id]['color'][inv_item['color']] = 1
+                                if inv_item['memo']:
+                                    items[item_id]['memo'].append(inv_item['memo'])
 
-                    tr3 = KV.sized_invoice_tr(1,
-                                              '${:,.2f}'.format(value['total']),
-                                              size_hint_x=0.2,
-                                              on_release='app.root.current="item_details"',
-                                              on_press='self.parent.parent.parent.parent.item_details({})'.format(key))
-                    t1 = Thread(target=self.items_table.add_widget, args=[Builder.load_string(tr1)])
-                    t2 = Thread(target=self.items_table.add_widget, args=[Builder.load_string(tr2)])
-                    t3 = Thread(target=self.items_table.add_widget, args=[Builder.load_string(tr3)])
-                    t1.start()
-                    t2.start()
-                    t3.start()
-                    # self.items_table.add_widget(Builder.load_string(tr1))
-                    # self.items_table.add_widget(Builder.load_string(tr2))
-                    # self.items_table.add_widget(Builder.load_string(tr3))
+                    for key, value in items.items():
+                        self.history_inventory_items[invoice_id].append({
+                            'text': '[color=ffffff]{}[/color]'.format(value['quantity']),
+                            'size_hint_x': 0.2,
+                            'id': key
+                        })
+
+                        self.history_inventory_items[invoice_id].append({
+                            'text': self.make_color_string(value),
+                            'size_hint_x': 0.6,
+                            'valign': 'top',
+                            'halign': 'left',
+                            'id': key
+                        })
+
+                        self.history_inventory_items[invoice_id].append({
+                            'text': '[color=ffffff]${:,.2f}[/color]'.format(value['total']),
+                            'size_hint_x': 0.2,
+                            'id': key
+                        })
+        if len(self.history_inventory_items[invoice_id]) > 0:
+            self.history_invoice_items_table_rv.data = self.history_inventory_items[invoice_id]
+        else:
+            self.history_invoice_items_table_rv.data = []
+
+
+
+    def make_color_string(self, value):
+
+        color_string = []
+        if 'color' not in value and 'memo' not in value:
+            return ''
+        else:
+            for color_name, color_qty in value['color'].items():
+                if color_name:
+                    color_string.append('{count}-{name}'.format(count=str(color_qty), name=color_name))
+
+            item_string = "[color=ffffff][b]{item}[/b]:\n{color_s}\n{memo_s}[/color]".format(item=value['name'],
+                                                                        color_s=', '.join(color_string),
+                                                                        memo_s='/ '.join(value['memo']))
+        return item_string
 
     def item_details(self, item_id):
         sessions.put('_itemId',value= item_id)
@@ -571,6 +542,108 @@ class HistoryScreen(Screen):
         popup.open()
         self.history_popup.dismiss()
         self.reset()
+
+    def set_search_filter(self):
+        sessions.put('_invoiceId', value=None)
+        self.history_items_table_rv.data = []
+        filtered = []
+        search = self.invs_results_ti.text
+        f = search.upper()
+        invs = sessions.get('_invoices')['value']
+        if search is not '':
+            if invs:
+                for inv in invs:
+                    invoice_id = inv['id']
+                    formatted_invoice_id = '{0:06d}'.format(int(inv['id']))
+                    selected = True if invoice_id == sessions.get('_invoiceId') else False
+                    company_id = inv['company_id']
+                    quantity = inv['quantity']
+                    rack = inv['rack']
+                    total = '${:,.2f}'.format(Decimal(inv['total']))
+                    due = inv['due_date']
+                    status = inv['status']
+                    invoice_items = inv['invoice_items']
+                    count_invoice_items = len(invoice_items)
+                    deleted_at = inv['deleted_at']
+                    states_info = self._get_states_info(due, selected, status, deleted_at, count_invoice_items)
+                    invoice_id_check = True if str(f) in str(formatted_invoice_id) else False
+                    rack_check = True if str(f) in str(rack) else False
+                    if invoice_id_check or rack_check:
+                        filtered.append({
+                            'column': 1,
+                            'invoice_id': invoice_id,
+                            'text': '[color={}]{}[/color]'.format(states_info['text_color'],formatted_invoice_id),
+                            'background_color': states_info['background_rgba'],
+                            'background_normal': '',
+                            'selected': selected
+                        })
+                        filtered.append({
+                            'column': 2,
+                            'invoice_id': invoice_id,
+                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], company_id),
+                            'background_color': states_info['background_rgba'],
+                            'background_normal': '',
+                            'selected': selected
+                        })
+                        filtered.append({
+                            'column': 3,
+                            'invoice_id': invoice_id,
+                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], states_info['due_date']),
+                            'background_color': states_info['background_rgba'],
+                            'background_normal': '',
+                            'selected': selected
+                        })
+                        filtered.append({
+                            'column': 4,
+                            'invoice_id': invoice_id,
+                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], rack),
+                            'background_color': states_info['background_rgba'],
+                            'background_normal': '',
+                            'selected': selected
+                        })
+                        filtered.append({
+                            'column': 5,
+                            'invoice_id': invoice_id,
+                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], quantity),
+                            'background_color': states_info['background_rgba'],
+                            'background_normal': '',
+                            'selected': selected
+                        })
+                        filtered.append({
+                            'column': 6,
+                            'invoice_id': invoice_id,
+                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], total),
+                            'background_color': states_info['background_rgba'],
+                            'background_normal': '',
+                            'selected': selected
+                        })
+                if len(filtered) > 54:
+                    p = threading.Thread(target=partial(self._update_history_table_rows_short, filtered))
+                    try:
+                        p.start()
+                    except RuntimeError as e:
+                        pass
+
+            q = threading.Thread(target=partial(self._update_history_table_rows, filtered))
+            r = threading.Thread(target=self.items_table_update)
+            try:
+                q.start()
+                r.start()
+            except RuntimeError as e:
+                pass
+        else:
+            self.update_history_table_rv()
+
+        n = threading.Thread(target=self._reset_filter_input)
+        try:
+            n.start()
+        except RuntimeError as e:
+            pass
+
+    def _reset_filter_input(self):
+        time.sleep(0.1)
+        self.invs_results_ti.focus = True
+        self.invs_results_ti.select_all()
 
     def reprint_popup(self):
         popup = Popup()
@@ -1053,11 +1126,11 @@ class HistoryScreen(Screen):
             self.selected_tags_list.append(item_id)
 
         self.tags_grid.ids.tags_table.clear_widgets()
-        th1 = Factory.TagsGridHeaders(text="[color=#000000]ID[/color]")
-        th2 = Factory.TagsGridHeaders(text="[color=#000000]Item[/color]")
-        th3 = Factory.TagsGridHeaders(text="[color=#000000]Color[/color]")
-        th4 = Factory.TagsGridHeaders(text="[color=#000000]Memo[/color]")
-        th5 = Factory.TagsGridHeaders(text="[color=#000000]Tags[/color]")
+        th1 = Factory.TagsGridHeaders(text="[color=000000]ID[/color]")
+        th2 = Factory.TagsGridHeaders(text="[color=000000]Item[/color]")
+        th3 = Factory.TagsGridHeaders(text="[color=000000]Color[/color]")
+        th4 = Factory.TagsGridHeaders(text="[color=000000]Memo[/color]")
+        th5 = Factory.TagsGridHeaders(text="[color=000000]Tags[/color]")
         self.tags_grid.ids.tags_table.add_widget(th1)
         self.tags_grid.ids.tags_table.add_widget(th2)
         self.tags_grid.ids.tags_table.add_widget(th3)

@@ -9,6 +9,7 @@ from models.kv_generator import KvString
 from models.sync import Sync
 from kivy.uix.popup import Popup
 from models.sessions import sessions
+from pubsub import pub
 SYNC_POPUP = Popup()
 KV = KvString()
 SYNC = Sync()
@@ -44,6 +45,7 @@ class InvoiceDetailsScreen(Screen):
         content = KV.popup_alert("Please wait while the page is loading")
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
+        pub.sendMessage('close_history_popup', popup=SYNC_POPUP)
 
     def get_details_base(self):
         t1 = Thread(target=self.get_details)

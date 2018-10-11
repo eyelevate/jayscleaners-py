@@ -1,0 +1,29 @@
+<HistoryItemsTableButton>:
+    id: history_items_table_button
+    markup: True
+    font_size:sp(15)
+    markup: True
+    disabled: False
+    text_size: self.size
+    valign: 'middle'
+    halign: 'center'
+    background_normal: ''
+    canvas.before:
+        Color:
+            id: history_items_color
+            rgba: 0, 0, 0, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<HistoryItemsTableRV@RecycleView>:
+    viewclass: 'HistoryItemsTableButton'
+    SelectableRecycleGridLayout:
+        bar_width: dp(5)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'horizontal'
+        row_force_default: True,
+        row_default_height: sp(50)
+        cols:6

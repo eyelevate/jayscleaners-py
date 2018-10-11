@@ -21,12 +21,16 @@ if not sessions.exists('_invoiceItemsId'):
     sessions.put('_invoiceItemsId', value=None)
 if not sessions.exists('_itemId'):
     sessions.put('_itemId', value=None)
+if not sessions.exists('_items'):
+    sessions.put('_items', value=None)
 if not sessions.exists('_inventories'):
     sessions.put('_inventories', value=None)
 if not sessions.exists('_inventoryTimestamp'):
     sessions.put('_inventoryTimestamp', value=None)
 if not sessions.exists('_inventoryItems'):
     sessions.put('_inventoryItems', value=[])
+if not sessions.exists('_mappedHistory'):
+    sessions.put('_mappedHistory', value={})
 if not sessions.exists('_searchNew'):
     sessions.put('_searchNew', value=False)
 if not sessions.exists('_last10'):

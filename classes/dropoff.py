@@ -223,9 +223,13 @@ class DropoffScreen(Screen):
 
         if colors:
             for color in colors:
-                color_btn = Button(markup=True,
-                                   text='[b]{color_name}[/b]'.format(color_name=color['name']),
-                                   min_state_time=0.020)
+                if color['name'] == 'White':
+                    color_btn = Button(markup=True,
+                                       text='[color="#000000"][b]{color_name}[/b][/color]'.format(color_name=color['name']))
+                else:
+                    color_btn = Button(markup=True,
+                                       text='[b]{color_name}[/b]'.format(color_name=color['name']))
+
                 color_btn.bind(on_press=partial(self.color_selected_main, color['name']))
                 color_btn.background_normal = ''
                 color_btn.background_color = Static.color_rgba(color['name'])
@@ -628,9 +632,7 @@ class DropoffScreen(Screen):
 
     def make_memo_color(self):
 
-        self.item_row_selected(row=0)
         self.btn_memos_list = []
-        self.memo_list = self._update_memo_btn_statuses()
 
         # make popup
         self.memo_color_popup.title = "Add Memo / Color"
@@ -742,11 +744,14 @@ class DropoffScreen(Screen):
         layout.add_widget(inner_layout_1)
         layout.add_widget(inner_layout_2)
         self.memo_color_popup.content = layout
-        self._redo_memo_btn_states()
         # show layout
         self.memo_color_popup.open()
+        self.item_row_selected(row=0)
+
+
 
     def append_memo(self, btn, msg, *args, **kwargs):
+        self.memo_list = self._update_memo_btn_statuses()
         self.memo_text_input.text = ''
         # check if memo is in the memo_list
         if msg in self.memo_list[self.item_selected_row]:
@@ -779,30 +784,28 @@ class DropoffScreen(Screen):
                         memo_list.append(str(x['memo']).split(', ') if ',' in x['memo'] else [x['memo']])
         return memo_list
 
-
     def _redo_memo_btn_states(self):
-        # reset states of buttons back to default
-        self._reset_memo_btn_states_to_default()
-
         # set the states of buttons based on row and item previously picked
-        filtered_list = self.memo_list[self.item_selected_row] if self.item_selected_row in self.memo_list else []
-        if self.btn_memos_list:
-            for btns in self.btn_memos_list:
-                if filtered_list:
-                    for memo in filtered_list:
-                        if str(btns.text) == str(memo):
-                            filtered_list.remove(memo)
-                            btns.background_color = (0.826, 0.826, 0.826, 1)
+        if self.item_selected_row in self.memo_list:
+            filtered_list = self.memo_list[self.item_selected_row] if self.memo_list[self.item_selected_row ] else []
+            if filtered_list:
+                if self.btn_memos_list:
+                    for btns in self.btn_memos_list:
+                        if filtered_list:
+                            for memo in filtered_list:
+                                if str(btns.text) == str(memo):
+                                    filtered_list.remove(memo)
+                                    btns.background_color = (0.826, 0.826, 0.826, 1)
 
-                            break
-                        else:
-                            btns.background_color = (0.369, 0.369, 0.369, 1)
-                            continue
+                                    break
+                                else:
+                                    btns.background_color = (0.369, 0.369, 0.369, 1)
+                                    continue
 
-            remaining_items = ''
-            if filtered_list and len(filtered_list) == 1:
-                remaining_items = filtered_list[0]
-            self.memo_text_input.text = str(remaining_items)
+                    remaining_items = ''
+                    if filtered_list and len(filtered_list) == 1:
+                        remaining_items = filtered_list[0]
+                    self.memo_text_input.text = str(remaining_items)
 
     def _reset_memo_btn_states_to_default(self):
         for btns in self.btn_memos_list:
@@ -914,9 +917,6 @@ class DropoffScreen(Screen):
     def color_selected(self, color=False, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
             self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row]['color'] = color
-            next_row = self.item_selected_row + 1 if (self.item_selected_row + 1) < len(
-                self.invoice_list_copy[sessions.get('_itemId')['value']]) else 0
-            self.item_selected_row = next_row
             self.make_items_table()
 
     def item_row_edit(self, row, *args, **kwargs):
@@ -959,6 +959,7 @@ class DropoffScreen(Screen):
         self.item_selected_row = row
         self.make_items_table()
         self.memo_list = self._update_memo_btn_statuses()
+        self._reset_memo_btn_states_to_default()
         self._redo_memo_btn_states()
 
     def save_memo_color(self, *args, **kwargs):
