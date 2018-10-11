@@ -5,6 +5,7 @@
     markup: True
     disabled: False
     text_size: self.size
+    size_hint: None,None
     valign: 'middle'
     halign: 'center'
 
@@ -12,7 +13,6 @@
     viewclass: 'HistoryInvoiceItemsTableButton'
     SelectableRecycleGridLayout:
         bar_width: dp(5)
-        default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
         orientation: 'horizontal'
