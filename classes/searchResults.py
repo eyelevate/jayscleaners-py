@@ -28,6 +28,7 @@ class SearchResultsScreen(Screen):
 
     def get_results(self):
         # Pause Schedule
+        self.search_results_rv.scroll_y = 1
         if sessions.get('_searchResults')['value'] is not False:
             sessions.put('_filteredSearchResults',value=sessions.get('_searchResults')['value'])
             self.search_results_rv.data = [{

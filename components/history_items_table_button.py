@@ -9,12 +9,14 @@ class HistoryItemsTableButton(RecycleDataViewBehavior, Button):
     index = None
     id = None
     column = None
+    row = 0
 
     def refresh_view_attrs(self, rv, index, data):
         """ Catch and handle the view changes """
         self.index = index
         self.id = data['invoice_id'] if 'invoice_id' in data else None
         self.column = int(data['column']) if 'column' in data else None
+        self.row = int(data['row']) if 'row' in data else 0
         if data:
             try:
                 return super(HistoryItemsTableButton, self).refresh_view_attrs(rv, index, data)
@@ -27,5 +29,5 @@ class HistoryItemsTableButton(RecycleDataViewBehavior, Button):
         sessions.put('_invoiceId',value=self.id)
 
     def on_release(self):
-        pub.sendMessage("select_invoice", invoice_id=int(self.id))
+        pub.sendMessage("select_invoice", invoice_id=int(self.id), row=self.row)
         pass

@@ -7,10 +7,13 @@
     text_size: self.size
     valign: 'middle'
     halign: 'center'
+    default_size: None , dp(50)
+    spacing: 0
 
-<HistoryItemsTableRV@RecycleView>:
+<HistoryTableRV@RecycleView>:
     viewclass: 'HistoryItemsTableButton'
-    SelectableRecycleGridLayout:
+    HistoryRecycleGridLayout:
+        id: test
         bar_width: dp(5)
         default_size_hint: 1, None
         default_size: dp(30), None

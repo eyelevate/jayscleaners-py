@@ -1,7 +1,7 @@
 <HistoryScreen>:
     id: screen_history
     name:"history"
-    history_items_table_rv: history_items_table_rv
+    history_table_rv: history_table_rv
     history_invoice_items_table_rv: history_invoice_items_table_rv
     invs_results_ti: invs_results_ti
     on_enter: root.reset()
@@ -60,8 +60,8 @@
                     background_rgba: 1,1,1,1
                     background_normal: ''
 
-            HistoryItemsTableRV:
-                id: history_items_table_rv
+            HistoryTableRV:
+                id: history_table_rv
                 size_hint_x: 1
                 spacing: 1
                 row_force_default: True
@@ -140,7 +140,7 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-            HistoryInvoiceItemsTableRV:
+            HistoryItemsTableRV:
                 id: history_invoice_items_table_rv
                 size_hint_x: 1
                 spacing: 1

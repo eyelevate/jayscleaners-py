@@ -6,6 +6,7 @@ from threading import Thread
 
 from kivy.factory import Factory
 from kivy.lang import Builder
+from kivy.metrics import dp
 from kivy.properties import ObjectProperty, partial
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -16,6 +17,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.spinner import Spinner
 
 from classes.popups import Popups
+from components.history_items_table_rv import HistoryRecycleGridLayout
 from models.companies import Company
 from models.custids import Custid
 from models.discounts import Discount
@@ -43,7 +45,7 @@ BIXOLON = sessions.get('_bixolon')['value']
 class HistoryScreen(Screen):
     # invoices_table = ObjectProperty(None)
     # invoice_table_body = ObjectProperty(None)
-    history_items_table_rv = ObjectProperty(None)
+    history_table_rv = ObjectProperty(None)
     history_invoice_items_table_rv = ObjectProperty(None)
     item_image = ObjectProperty(None)
     invs_results_ti = ObjectProperty(None)
@@ -90,11 +92,12 @@ class HistoryScreen(Screen):
         sessions.put('_invoices',value=None)
         sessions.put('_mappedHistory', value={})
         self.history_inventory_items = {}
-        self.history_items_table_rv.data = []
+        self.history_table_rv.data = []
         self.history_invoice_items_table_rv.data = []
         q = threading.Thread(target=self.update_history_table_rv)
         try:
             q.start()
+            self.history_table_rv.scroll_y = 1
         except RuntimeError as e:
             pass
 
@@ -110,20 +113,32 @@ class HistoryScreen(Screen):
         popup.dismiss()
 
     def update_history_table_rv(self):
+        print('start')
+        a = datetime.datetime.now()
+        print('a has started at {}'.format(a))
         customer_id = sessions.get('_customerId')['value']
         if self.force_update:
-            invs = SYNC.invoice_search_history(customer_id, 'START', 'END')
+            invs= SYNC.invoice_search_history(customer_id, 'START', 'END')
+            ab = datetime.datetime.now()
+            print('ab has started at {} time difference of {}'.format(ab, ab - a))
             sessions.put('_invoices',value=invs)
             self.force_update = False
+            ac = datetime.datetime.now()
+            print('ac has started at {} time difference of {}'.format(ac, ac - ab))
+            pass
         else:
             invs = sessions.get('_invoices')['value']
 
         check_invoice_id = sessions.get('_invoiceId')['value']
 
-        self.history_rows = []
+        b = datetime.datetime.now()
+        print('b has started at {} time difference of {}'.format(b, b - a))
         if invs:
-            for inv in invs:
-                invoice_id = inv['id']
+
+            self.history_rows = []
+            for key, inv in enumerate(invs):
+
+                invoice_id = int(inv['id'])
                 selected = True if invoice_id == check_invoice_id else False
                 company_id = inv['company_id']
                 quantity = inv['quantity']
@@ -135,14 +150,14 @@ class HistoryScreen(Screen):
                 count_invoice_items = len(invoice_items)
                 deleted_at = inv['deleted_at']
                 states_info = self._get_states_info(due, selected, status, deleted_at, count_invoice_items)
-
                 self.history_rows.append({
                     'column': 1,
                     'invoice_id': invoice_id,
                     'text': '[color={}]{}[/color]'.format(states_info['text_color'],'{0:06d}'.format(invoice_id)),
                     'background_color': states_info['background_rgba'],
                     'background_normal': '',
-                    'selected': selected
+                    'selected': selected,
+                    'row': key
                 })
                 self.history_rows.append({
                     'column': 2,
@@ -150,7 +165,8 @@ class HistoryScreen(Screen):
                     'text': '[color={}]{}[/color]'.format(states_info['text_color'],company_id),
                     'background_color': states_info['background_rgba'],
                     'background_normal': '',
-                    'selected': selected
+                    'selected': selected,
+                    'row': key
                 })
                 self.history_rows.append({
                     'column': 3,
@@ -158,7 +174,8 @@ class HistoryScreen(Screen):
                     'text': '[color={}]{}[/color]'.format(states_info['text_color'],states_info['due_date']),
                     'background_color': states_info['background_rgba'],
                     'background_normal': '',
-                    'selected': selected
+                    'selected': selected,
+                    'row': key
                 })
                 self.history_rows.append({
                     'column': 4,
@@ -166,7 +183,8 @@ class HistoryScreen(Screen):
                     'text': '[color={}]{}[/color]'.format(states_info['text_color'],rack),
                     'background_color': states_info['background_rgba'],
                     'background_normal': '',
-                    'selected': selected
+                    'selected': selected,
+                    'row': key
                 })
                 self.history_rows.append({
                     'column': 5,
@@ -174,7 +192,8 @@ class HistoryScreen(Screen):
                     'text': '[color={}]{}[/color]'.format(states_info['text_color'],quantity),
                     'background_color': states_info['background_rgba'],
                     'background_normal': '',
-                    'selected': selected
+                    'selected': selected,
+                    'row': key
                 })
                 self.history_rows.append({
                     'column': 6,
@@ -182,29 +201,22 @@ class HistoryScreen(Screen):
                     'text': '[color={}]{}[/color]'.format(states_info['text_color'],total),
                     'background_color': states_info['background_rgba'],
                     'background_normal': '',
-                    'selected': selected
+                    'selected': selected,
+                    'row': key
                 })
+            c = datetime.datetime.now()
+            print('c has started at {} time difference of {}'.format(c, c - b))
+            self._update_history_table_rows(self.history_rows)
+            d = datetime.datetime.now()
+            print('d has started at {} time difference of {}'.format(d, d - c))
+        e = datetime.datetime.now()
+        print('A total of {} has passed'.format(e - a))
 
-            if len(self.history_rows) > 54:
-                p = threading.Thread(target=partial(self._update_history_table_rows_short, self.history_rows))
-                try:
-                    p.start()
-                except RuntimeError as e:
-                    pass
-
-        q = threading.Thread(target=partial(self._update_history_table_rows, self.history_rows))
-        r = threading.Thread(target=self.items_table_update)
-        try:
-            q.start()
-            r.start()
-        except RuntimeError as e:
-            pass
-
-    def _update_history_table_rows_short(self, rows, *args, **kwargs):
-        self.history_items_table_rv.data = rows[0:54]
 
     def _update_history_table_rows(self, rows, *args, **kwargs):
-        self.history_items_table_rv.data = rows
+
+        self.history_table_rv.data = rows
+        self.items_table_update()
 
     def _get_states_info(self, due, selected, status, deleted_at, count_invoice_items):
         try:
@@ -269,22 +281,15 @@ class HistoryScreen(Screen):
         sessions.put('_searchResultsStatus', value= True)
         # update db with current changes
 
-    def select_invoice(self, invoice_id, *args, **kwargs):
+    def select_invoice(self, invoice_id, row, *args, **kwargs):
         # set selected invoice and update the table to show it
         sessions.put('_invoiceId',value= invoice_id)
-
         self.force_update = False
-        q = threading.Thread(target=self.update_history_table_rv)
-        r = threading.Thread(target=self.items_table_update)
-        try:
-            q.start()
-            r.start()
-        except RuntimeError as e:
-            pass
+        # update selected
+        self.update_history_table_rv()
+
 
     def items_table_update(self):
-        # self.items_table.clear_widgets()
-
         invoices = sessions.get('_invoices')['value']
         invoice_id = sessions.get('_invoiceId')['value']
         inv_items = False
@@ -545,7 +550,7 @@ class HistoryScreen(Screen):
 
     def set_search_filter(self):
         sessions.put('_invoiceId', value=None)
-        self.history_items_table_rv.data = []
+        self.history_table_rv.data = []
         filtered = []
         search = self.invs_results_ti.text
         f = search.upper()

@@ -7,11 +7,10 @@ KV = KvString()
 
 class ItemDetailsScreen(Screen):
     name = ObjectProperty(None)
+    items_detail_table_rv = ObjectProperty(None)
 
     def get_details(self):
-        self.item_image.source = ''
-        self.inventory_name_label.text = ''
-        self.inventory_item_name.text = ''
+        self.items_detail_table_rv.data = []
         self.items_table_update()
         pass
 
@@ -19,7 +18,7 @@ class ItemDetailsScreen(Screen):
         invoice_id = sessions.get('_invoiceId')['value']
         item_id = sessions.get('_itemId')['value']
         invs = sessions.get('_invoices')['value']
-
+        item_details = []
         if invs:
             for inv in invs:
                 if invoice_id == inv['id']:
@@ -34,47 +33,39 @@ class ItemDetailsScreen(Screen):
                                 if 'inventory_item' in invoice_item:
                                     if 'name' in invoice_item['inventory_item']:
                                         item_name = invoice_item['inventory_item']['name']
-                                        # tr1 = KV.sized_invoice_tr(1,
-                                        #                           invoice_item['id'],
-                                        #                           size_hint_x=0.1,
-                                        #                           selected=selected,
-                                        #                           on_release='app.root.current="item_details"',
-                                        #                           on_press='self.parent.parent.parent.parent.item_details({})'.format(
-                                        #                               invoice_items_id))
-                                        #
-                                        # tr2 = KV.sized_invoice_tr(1,
-                                        #                           invoice_item['quantity'],
-                                        #                           size_hint_x=0.1,
-                                        #                           selected=selected,
-                                        #                           on_release='app.root.current="item_details"',
-                                        #                           on_press='self.parent.parent.parent.parent.item_details({})'.format(
-                                        #                               invoice_items_id))
-                                        # color_name = invoice_item['color']
-                                        #
-                                        # item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=item_name,
-                                        #                                                             color_s='{}'.format(color_name),
-                                        #                                                             memo_s='{}'.format(invoice_item['memo']))
-                                        # # print(item_string)
-                                        # tr3 = KV.sized_invoice_tr(1,
-                                        #                           item_string,
-                                        #                           text_wrap=True,
-                                        #                           size_hint_x=0.6,
-                                        #                           selected=selected,
-                                        #                           on_release='app.root.current="item_details"',
-                                        #                           on_press='self.parent.parent.parent.parent.item_details({})'.format(
-                                        #                               invoice_items_id))
-                                        #
-                                        # tr4 = KV.sized_invoice_tr(1,
-                                        #                           '${:,.2f}'.format(float(invoice_item['pretax'])),
-                                        #                           size_hint_x=0.2,
-                                        #                           selected=selected,
-                                        #                           on_release='app.root.current="item_details"',
-                                        #                           on_press='self.parent.parent.parent.parent.item_details({})'.format(
-                                        #                               invoice_items_id))
-                                        # self.items_table.add_widget(Builder.load_string(tr1))
-                                        # self.items_table.add_widget(Builder.load_string(tr2))
-                                        # self.items_table.add_widget(Builder.load_string(tr3))
-                                        # self.items_table.add_widget(Builder.load_string(tr4))
+                                        item_details.append({
+                                            'text': str(invoice_item['id']),
+                                            'size_hint_x': 0.1,
+                                            'selected': selected,
+                                            'item_id': invoice_item['id']
+                                        })
+                                        item_details.append({
+                                            'text': str(invoice_item['quantity']),
+                                            'size_hint_x': 0.1,
+                                            'selected': selected,
+                                            'item_id': invoice_item['id']
+                                        })
+
+                                        color_name = invoice_item['color']
+                                        item_string = "[b]{item}[/b]:\n{color_s}\n{memo_s}".format(item=item_name,
+                                                                                                    color_s='{}'.format(color_name),
+                                                                                                    memo_s='{}'.format(invoice_item['memo']))
+                                        item_details.append({
+                                            'text': item_string,
+                                            'text_wrap': True,
+                                            'halign': 'left',
+                                            'valign': 'top',
+                                            'size_hint_x': 0.6,
+                                            'selected': selected,
+                                            'item_id': invoice_item['id']
+                                        })
+                                        item_details.append({
+                                            'text': '${:,.2f}'.format(float(invoice_item['pretax'])),
+                                            'size_hint_x': 0.2,
+                                            'selected': selected,
+                                            'item_id': invoice_item['id']
+                                        })
+        self.items_detail_table_rv.data = item_details
 
     def item_details(self, id):
         # highlight the selected invoice items
@@ -82,22 +73,5 @@ class ItemDetailsScreen(Screen):
         self.items_table_update()
         # get item details and display them to item_detail_history_table
         invs = sessions.get('_invoices')['value']
-        if invs:
-            for inv in invs:
-
-                    inv_items = inv['invoice_items']
-                    if inv_items:
-                        for invoice_item in inv_items:
-                            if id == invoice_item['id']:
-                                if 'inventory' in invoice_item:
-                                    if 'name' in invoice_item['inventory']:
-                                        inventory_name = invoice_item['inventory']['name']
-                                if 'inventory_item' in invoice_item:
-                                    if 'name' in invoice_item['inventory_item']:
-                                        item_name = invoice_item['inventory_item']['name']
-                                        item_image = '{}/{}'.format('src', invoice_item['inventory_item']['image'])
-                                        self.item_image.source = item_image if item_image else ''
-                                        self.inventory_item_name.text = item_name if item_name else ''
-                                        self.inventory_name_label.text = inventory_name if inventory_name else ''
 
         pass

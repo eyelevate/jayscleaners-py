@@ -1,12 +1,9 @@
 <ItemDetailsScreen>:
     id: screen_item_details
     name:"item_details"
-    item_image: item_image
     items_detail_history_table: items_detail_history_table
-    img_button: img_button
-    item_preview_layout: item_preview_layout
-    inventory_name_label: inventory_name_label
-    inventory_item_name: inventory_item_name
+    items_detail_table_rv: items_detail_table_rv
+
     on_enter: root.get_details()
 
     BoxLayout:
@@ -15,17 +12,13 @@
         size_hint: 1,0.9
         BoxLayout:
             orientation:'vertical'
-            size_hint_x: 0.5
-            size_hint_y: 1
-            pos_hint: {'top':1}
             GridLayout:
-                size_hint_x: 1
                 height: self.minimum_height
                 cols:4
+                pos_hint: {'top':1}
                 rows:1
                 row_force_default: True
-                row_default_height:dp(25)
-                pos_hint:{'top':1}
+                row_default_height:'25dp'
                 CenteredLabel:
                     text: '[color=000000]ID[/color]'
                     size_x: 0.3
@@ -43,67 +36,14 @@
                     size_x: 0.2
                     font_size: sp(15)
 
+            ItemsDetailTableRV:
+                pos_hint: {'top':1}
+                id: items_detail_table_rv
 
         BoxLayout:
             orientation: 'vertical'
             pos_hint:{'top':1}
             size_hint: 0.5,1
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_x: 1
-                size_hint_y:0.4
-                Button:
-                    id: img_button
-                    font_size:sp(15)
-                    on_release: root.image_full_view()
-                    text: ""
-                    disabled: False
-                    Image:
-                        id: item_image
-                        source: 'src/imgs/dc.jpg'
-                        size: dp(150),dp(150)
-                        center_x: self.parent.center_x
-                        center_y: self.parent.center_y
-                        allow_stretch: True
-                GridLayout:
-                    id: item_preview_layout
-                    cols:2
-                    row_force_default: True
-                    row_default_height:dp(40)
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text_size:self.size
-                        halign:'center'
-                        valign:'middle'
-                        text: "[color=ffffff][b]Group[/b][/color]"
-                        font_size:sp(15)
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text_size:self.size
-                        halign:'center'
-                        valign:'middle'
-                        text: "[color=ffffff][b]Name[/b][/color]"
-                        font_size:sp(15)
-                    Label:
-                        id: inventory_name_label
-                        size_hint_y: None
-                        text_size:self.size
-                        halign:'center'
-                        valign:'middle'
-                        markup: True
-                        text: ""
-                        font_size:sp(15)
-                    Label:
-                        id: inventory_item_name
-                        size_hint_y: None
-                        markup: True
-                        text_size:self.size
-                        halign:'center'
-                        valign:'middle'
-                        text: ""
-                        font_size:sp(15)
 
             ScrollView:
                 pos_hint:{'top':1}
