@@ -1,7 +1,6 @@
 <ItemDetailsScreen>:
     id: screen_item_details
     name:"item_details"
-    items_detail_history_table: items_detail_history_table
     items_detail_table_rv: items_detail_table_rv
 
     on_enter: root.get_details()
@@ -12,7 +11,7 @@
         size_hint: 1,0.9
         BoxLayout:
             orientation:'vertical'
-            size_hint: 0.5,1
+            size_hint: 1,1
             GridLayout:
                 size_hint_y:None
                 size_hint_x: 1
@@ -23,76 +22,28 @@
                 row_default_height:dp(25)
                 CenteredLabel:
                     text: '[color=000000]ID[/color]'
-                    size_x: 0.2
+                    size_hint_x: 0.2
                     font_size: sp(15)
                     text_size: self.size
                 CenteredLabel:
                     text: '[color=000000]QTY[/color]'
-                    size_x: 0.1
+                    size_hint_x: 0.1
                     font_size: sp(15)
                     text_size: self.size
                 CenteredLabel:
                     text: '[color=000000]ITEM[/color]'
-                    size_x: 0.5
+                    size_hint_x: 0.5
                     font_size: sp(15)
                     text_size: self.size
                 CenteredLabel:
                     text: '[color=000000]SUBTOTAL[/color]'
-                    size_x: 0.2
+                    size_hint_x: 0.2
                     font_size: sp(15)
                     text_size: self.size
 
             ItemsDetailTableRV:
                 id: items_detail_table_rv
 
-        BoxLayout:
-            orientation: 'vertical'
-            pos_hint:{'top':1}
-            size_hint: 0.5,1
-
-            ScrollView:
-                pos_hint:{'top':1}
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-                GridLayout:
-                    pos_hint:{'top':1}
-                    id: items_detail_history_table
-                    size_hint_y:None
-                    height: self.minimum_height
-                    cols:3
-                    row_force_default: True,
-                    row_default_height:dp(40)
-
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text_size:self.size
-                        halign:'center'
-                        valign:'middle'
-                        text: "[color=000000][b]ID[/b][/color]"
-                        font_size:sp(15)
-
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text_size:self.size
-                        halign:'center'
-                        valign:'middle'
-                        text: "[color=000000][b]Scanned[/b][/color]"
-                        font_size:sp(15)
-
-                    Label:
-                        size_hint_y: None
-                        markup: True
-                        text_size:self.size
-                        halign:'center'
-                        valign:'middle'
-                        text: "[color=000000][b]Location[/b][/color]"
-                        font_size:sp(15)
 
     BoxLayout:
         size_hint: 1,0.1
