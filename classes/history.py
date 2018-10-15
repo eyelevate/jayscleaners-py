@@ -43,8 +43,6 @@ EPSON = sessions.get('_epson')['value']
 BIXOLON = sessions.get('_bixolon')['value']
 
 class HistoryScreen(Screen):
-    # invoices_table = ObjectProperty(None)
-    # invoice_table_body = ObjectProperty(None)
     history_table_rv = ObjectProperty(None)
     history_invoice_items_table_rv = ObjectProperty(None)
     item_image = ObjectProperty(None)
@@ -57,8 +55,8 @@ class HistoryScreen(Screen):
     force_update = True
     history_inventory_items = {}
     history_rows = False
-    # up_btn = ObjectProperty(None)
-    # down_btn = ObjectProperty(None)
+    filtered_rows = []
+    filtered = False
 
     def __init__(self, **kwargs):
         super(HistoryScreen, self).__init__(**kwargs)
@@ -79,7 +77,10 @@ class HistoryScreen(Screen):
     def reset(self):
         # set any necessary variables
         self.history_rows = False
+        self.filtered = False
+        self.filtered_rows = []
         self.invs_results_ti.text = ''
+
         customers = SYNC.customers_grab(sessions.get('_customerId')['value'])
         if customers:
             for customer in customers:
@@ -97,9 +98,13 @@ class HistoryScreen(Screen):
         q = threading.Thread(target=self.update_history_table_rv)
         try:
             q.start()
-            self.history_table_rv.scroll_y = 1
+
         except RuntimeError as e:
             pass
+
+    def hard_reset(self):
+        sessions.put('_invoiceId', value=None)
+        self.history_table_rv.scroll_y = 1
 
     def open_popup(self, *args, **kwargs):
         SYNC_POPUP.title = "Loading"
@@ -127,7 +132,7 @@ class HistoryScreen(Screen):
             print('ac has started at {} time difference of {}'.format(ac, ac - ab))
             pass
         else:
-            invs = sessions.get('_invoices')['value']
+            invs = self.filtered_rows if self.filtered else sessions.get('_invoices')['value']
 
         check_invoice_id = sessions.get('_invoiceId')['value']
 
@@ -574,71 +579,15 @@ class HistoryScreen(Screen):
                     invoice_id_check = True if str(f) in str(formatted_invoice_id) else False
                     rack_check = True if str(f) in str(rack) else False
                     if invoice_id_check or rack_check:
-                        filtered.append({
-                            'column': 1,
-                            'invoice_id': invoice_id,
-                            'text': '[color={}]{}[/color]'.format(states_info['text_color'],formatted_invoice_id),
-                            'background_color': states_info['background_rgba'],
-                            'background_normal': '',
-                            'selected': selected
-                        })
-                        filtered.append({
-                            'column': 2,
-                            'invoice_id': invoice_id,
-                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], company_id),
-                            'background_color': states_info['background_rgba'],
-                            'background_normal': '',
-                            'selected': selected
-                        })
-                        filtered.append({
-                            'column': 3,
-                            'invoice_id': invoice_id,
-                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], states_info['due_date']),
-                            'background_color': states_info['background_rgba'],
-                            'background_normal': '',
-                            'selected': selected
-                        })
-                        filtered.append({
-                            'column': 4,
-                            'invoice_id': invoice_id,
-                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], rack),
-                            'background_color': states_info['background_rgba'],
-                            'background_normal': '',
-                            'selected': selected
-                        })
-                        filtered.append({
-                            'column': 5,
-                            'invoice_id': invoice_id,
-                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], quantity),
-                            'background_color': states_info['background_rgba'],
-                            'background_normal': '',
-                            'selected': selected
-                        })
-                        filtered.append({
-                            'column': 6,
-                            'invoice_id': invoice_id,
-                            'text': '[color={}]{}[/color]'.format(states_info['text_color'], total),
-                            'background_color': states_info['background_rgba'],
-                            'background_normal': '',
-                            'selected': selected
-                        })
-                if len(filtered) > 54:
-                    p = threading.Thread(target=partial(self._update_history_table_rows_short, filtered))
-                    try:
-                        p.start()
-                    except RuntimeError as e:
-                        pass
+                        filtered.append(inv)
 
-            q = threading.Thread(target=partial(self._update_history_table_rows, filtered))
-            r = threading.Thread(target=self.items_table_update)
-            try:
-                q.start()
-                r.start()
-            except RuntimeError as e:
-                pass
+            self.filtered_rows = filtered
+            self.filtered = True
+
         else:
-            self.update_history_table_rv()
+            self.filtered = False
 
+        self.update_history_table_rv()
         n = threading.Thread(target=self._reset_filter_input)
         try:
             n.start()

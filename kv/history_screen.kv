@@ -156,12 +156,21 @@
             hint_text: 'Search Invoice'
             focus: True
             on_text_validate: root.set_search_filter()
-        Button:
-            id: cancel
+        BoxLayout:
+            orientation: 'horizontal'
             size_hint: 1, 0.5
-            on_press: root.open_popup()
-            on_release: root.set_result_status()
-            on_release: app.root.current = "search"
-            font_size:sp(20)
-            text: "Cancel"
-            disabled: False
+            Button:
+                on_press: root.hard_reset()
+                on_release: root.reset()
+                font_size:sp(20)
+                text: "[color=FFFACD]Refresh Page[/color]"
+                markup: True
+                disabled: False
+            Button:
+                id: cancel
+                on_press: root.open_popup()
+                on_release: app.root.current = "search"
+                font_size:sp(20)
+                text: "[color=00FF1B]Done[/color]"
+                markup: True
+                disabled: False
