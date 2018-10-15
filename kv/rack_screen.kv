@@ -36,8 +36,8 @@
                     id: rack_number
                     multiline: False
                     on_text_validate: root.set_rack_number()
-        ScrollView:
-            id: parent_scroll
+        BoxLayout:
+            orientation: 'vertical'
             size_hint: 0.7, 1
             canvas.before:
                 Color:
@@ -45,20 +45,23 @@
                 Rectangle:
                     pos: self.pos
                     size: self.size
-            GridLayout:
-                id: rack_table
-                size_hint_x: 1
-                size_hint_y:None
-                height: self.minimum_height
-                cols:4
-                row_force_default: True
-                row_default_height:dp(50)
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
+            ScrollView:
+                id: parent_scroll
+                size_hint: 1, 1
+                GridLayout:
+                    id: rack_table
+                    size_hint_x: 1
+                    size_hint_y:None
+                    height: self.minimum_height
+                    cols:4
+                    row_force_default: True
+                    row_default_height:dp(50)
+                    canvas.before:
+                        Color:
+                            rgba: 1, 1, 1, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
 
     BoxLayout:
         orientation: 'horizontal'
