@@ -4,9 +4,8 @@
     font_size:sp(15)
     markup: True
     disabled: False
-    size_hint_y: None
-    height: 30
     text_size: self.size
+    size_hint: 1, 1
     valign: 'middle'
     halign: 'center'
 
@@ -14,8 +13,8 @@
     viewclass: 'ItemsDetailTableButton'
     SelectableRecycleGridLayout:
         bar_width: dp(5)
-        default_size_hint: 1, None
-        size_hint_y: None
+        size_hint_y:None
+        size_hint_x:1
         height: self.minimum_height
-        orientation: 'horizontal'
+        spacing: 1
         cols:4
