@@ -38,8 +38,7 @@
                     on_text_validate: root.set_rack_number()
         ScrollView:
             id: parent_scroll
-            size_hint_x: 0.7
-            pos_hint:{'top':1}
+            size_hint: 0.7, 1
             canvas.before:
                 Color:
                     rgba: 1, 1, 1, 1
@@ -48,11 +47,12 @@
                     size: self.size
             GridLayout:
                 id: rack_table
+                size_hint_x: 1
                 size_hint_y:None
                 height: self.minimum_height
                 cols:4
                 row_force_default: True
-                row_default_height:'50sp'
+                row_default_height:dp(50)
                 canvas.before:
                     Color:
                         rgba: 1, 1, 1, 1
