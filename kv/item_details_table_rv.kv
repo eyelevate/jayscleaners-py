@@ -1,10 +1,11 @@
 <ItemsDetailTableButton>:
     id: items_detail_table_button
     markup: True
-    font_size:sp(13)
+    font_size:sp(15)
     markup: True
     disabled: False
     text_size: self.size
+    default_size: 1, None
     valign: 'middle'
     halign: 'center'
 
@@ -17,5 +18,5 @@
         height: self.minimum_height
         orientation: 'horizontal'
         row_force_default: True,
-        row_default_height: '50dp'
+        row_default_height: dp(50)
         cols:4

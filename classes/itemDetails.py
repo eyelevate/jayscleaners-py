@@ -35,7 +35,7 @@ class ItemDetailsScreen(Screen):
                                         item_name = invoice_item['inventory_item']['name']
                                         item_details.append({
                                             'text': str(invoice_item['id']),
-                                            'size_hint_x': 0.1,
+                                            'size_hint_x': 0.2,
                                             'selected': selected,
                                             'item_id': invoice_item['id']
                                         })
@@ -55,7 +55,7 @@ class ItemDetailsScreen(Screen):
                                             'text_wrap': True,
                                             'halign': 'left',
                                             'valign': 'top',
-                                            'size_hint_x': 0.6,
+                                            'size_hint_x': 0.5,
                                             'selected': selected,
                                             'item_id': invoice_item['id']
                                         })
