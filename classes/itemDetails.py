@@ -42,6 +42,8 @@ class ItemDetailsScreen(Screen):
                                         item_details.append({
                                             'text': str(invoice_item['quantity']),
                                             'size_hint_x': 0.1,
+                                            'halign': 'center',
+                                            'valign': 'middle',
                                             'selected': selected,
                                             'item_id': invoice_item['id']
                                         })
