@@ -13,7 +13,8 @@
     viewclass: 'ItemsDetailTableButton'
     SelectableRecycleGridLayout:
         bar_width: dp(5)
-        size_hint_y:None
-        size_hint_x:1
-        default_size_y: sp(32)
+        default_size: None, dp(32)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
         cols:4
