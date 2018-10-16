@@ -24,11 +24,11 @@ EPSON = sessions.get('_epson')['value']
 class RackScreen(Screen):
     invoice_number = ObjectProperty(None)
     rack_number = ObjectProperty(None)
-    rack_table = ObjectProperty(None)
     racks = OrderedDict()
-    parent_scroll = ObjectProperty(None)
     marked_invoice_number = None
     edited_rack = False
+    rack_table_rv = ObjectProperty(None)
+    rack_rows = []
 
     def reset(self):
         # Pause sync scheduler
@@ -39,7 +39,9 @@ class RackScreen(Screen):
         self.invoice_number.focus = True
         self.marked_invoice_number = None
         self.edited_rack = False
+        self.rack_table_rv.data = []
         self.update_rack_table()
+        self.rack_rows = []
 
     def open_popup(self, *args, **kwargs):
         SYNC_POPUP.title = "Sync In Progress"
@@ -55,44 +57,45 @@ class RackScreen(Screen):
         self.reset()
 
     def update_rack_table(self):
-        self.rack_table.clear_widgets()
-        h1 = KV.invoice_tr(0, '#')
-        h2 = KV.invoice_tr(0, 'Invoice #')
-        h3 = KV.invoice_tr(0, 'Rack #')
-        h4 = KV.invoice_tr(0, 'Action')
-        self.rack_table.add_widget(Builder.load_string(h1))
-        self.rack_table.add_widget(Builder.load_string(h2))
-        self.rack_table.add_widget(Builder.load_string(h3))
-        self.rack_table.add_widget(Builder.load_string(h4))
+        self.rack_rows = []
         if self.racks:
             idx = 0
-            marked_tr4 = False
             for invoice_number, rack_number in self.racks.items():
                 idx += 1
-                if invoice_number == self.marked_invoice_number:
-                    tr1 = Factory.CenteredHighlightedLabel(text='[color=000000]{}[/color]'.format(idx))
-                    tr2 = Factory.CenteredHighlightedLabel(text='[color=000000]{}[/color]'.format(invoice_number))
-                    tr3 = Factory.CenteredHighlightedLabel(
-                        text='[color=000000]{}[/color]'.format(rack_number if rack_number else ''))
-                    tr4 = Button(markup=True,
-                                 text='Edit')
-                    marked_tr4 = tr4
-                else:
-                    tr1 = Factory.CenteredLabel(text='[color=000000]{}[/color]'.format(idx))
-                    tr2 = Factory.CenteredLabel(text='[color=000000]{}[/color]'.format(invoice_number))
-                    tr3 = Factory.CenteredLabel(
-                        text='[color=000000]{}[/color]'.format(rack_number if rack_number else ''))
-                    tr4 = Button(markup=True,
-                                 text='Edit')
-                    marked_tr4 = False
-                self.rack_table.add_widget(tr1)
-                self.rack_table.add_widget(tr2)
-                self.rack_table.add_widget(tr3)
-                self.rack_table.add_widget(tr4)
-            if marked_tr4:
-                self.parent_scroll.scroll_to(marked_tr4)
-            else:
-                self.parent_scroll.scroll_to(tr4)
+                selected = invoice_number == self.marked_invoice_number
+                selected_color = 'ffffff' if selected else '000000'
+                selected_background = '' if selected else [.90, .90, .90, 1]
+                selected_rgba = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
+                self.rack_rows.append({
+                    'text': '[color={}]{}[/color]'.format(selected_color,idx),
+                    'column': 1,
+                    'invoice_id': invoice_number,
+                    'background_color': selected_rgba,
+                    'background_normal':  selected_background
+                })
+                self.rack_rows.append({
+                    'text': '[color={}]{}[/color]'.format(selected_color, '{0:06d}'.format(int(invoice_number))),
+                    'column': 2,
+                    'invoice_id': invoice_number,
+                    'background_color': selected_rgba,
+                    'background_normal':  selected_background
+                })
+                self.rack_rows.append({
+                    'text': '[color={}]{}[/color]'.format(selected_color, rack_number if rack_number else ''),
+                    'column': 3,
+                    'invoice_id': invoice_number,
+                    'background_color': selected_rgba,
+                    'background_normal':  selected_background
+                })
+                self.rack_rows.append({
+                    'text': '[color=ffffff]remove[/color]',
+                    'column': 4,
+                    'invoice_id': invoice_number,
+                    'background_color': [1,0,0,1],
+                    'background_normal': ''
+                })
+
+        self.rack_table_rv.data = self.rack_rows
 
     def set_invoice_number(self):
         invoices = Invoice()
@@ -174,3 +177,6 @@ class RackScreen(Screen):
         # set user to go back to search screen
         if sessions.get('_customerId')['value']:
             self.set_result_status()
+
+    def _remove_row(self, invoice_id):
+        pass

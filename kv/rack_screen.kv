@@ -1,9 +1,8 @@
 <RackScreen>:
     id: screen_rack
+    rack_table_rv: rack_table_rv
     invoice_number: invoice_number
     rack_number: rack_number
-    rack_table: rack_table
-    parent_scroll: parent_scroll
     name:"rack"
 
     on_enter: root.reset()
@@ -45,24 +44,33 @@
                 Rectangle:
                     pos: self.pos
                     size: self.size
-            ScrollView:
-                id: parent_scroll
-                size_hint: 1, 1
-                GridLayout:
-                    id: rack_table
-                    size_hint_x: 1
-                    size_hint_y:None
-                    height: self.minimum_height
-                    cols:4
-                    row_force_default: True
-                    row_default_height:dp(50)
-                    canvas.before:
-                        Color:
-                            rgba: 1, 1, 1, 1
-                        Rectangle:
-                            pos: self.pos
-                            size: self.size
 
+            GridLayout:
+                size_hint_y:None
+                size_hint_x: 1
+                height: self.minimum_height
+                cols:4
+                rows:1
+                row_force_default: True
+                row_default_height:dp(25)
+                CenteredLabel:
+                    text: '[color=000000]#[/color]'
+                    font_size: sp(15)
+                    text_size: self.size
+                CenteredLabel:
+                    text: '[color=000000]Invoice #[/color]'
+                    font_size: sp(15)
+                    text_size: self.size
+                CenteredLabel:
+                    text: '[color=000000]Rack #[/color]'
+                    font_size: sp(15)
+                    text_size: self.size
+                CenteredLabel:
+                    text: '[color=000000]Action[/color]'
+                    font_size: sp(15)
+                    text_size: self.size
+            RackTableRV:
+                id: rack_table_rv
     BoxLayout:
         orientation: 'horizontal'
         size_hint: 1,0.1
