@@ -68,8 +68,6 @@ class ScreenManagement(ScreenManager):
     pass
 
 data_folder = Path("./kv")
-main_path_windows =  data_folder / "main_windows.kv"
-main_path_mac = data_folder / "main_mac.kv"
 main_path_relative = data_folder / "main.kv"
 KV_PATH = path.abspath(main_path_relative)
 presentation = Builder.load_file(KV_PATH)
