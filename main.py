@@ -3,6 +3,7 @@ import platform
 import time
 import os
 from os import path
+from pathlib import Path
 # !/usr/local/bin/python3
 # !/usr/bin/env python3
 from kivy.clock import Clock
@@ -66,10 +67,10 @@ class ScreenManagement(ScreenManager):
 
     pass
 
-
-main_path_windows = "kv/main_windows.kv"
-main_path_mac = "kv/main_mac.kv"
-main_path_relative = "kv/main.kv"
+data_folder = Path("./kv")
+main_path_windows =  data_folder / "main_windows.kv"
+main_path_mac = data_folder / "main_mac.kv"
+main_path_relative = data_folder / "main.kv"
 KV_PATH = path.abspath(main_path_relative)
 presentation = Builder.load_file(KV_PATH)
 
