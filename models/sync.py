@@ -654,6 +654,25 @@ class Sync:
             print(e.reason)  # could not save this time around because no internet, move on
             return False
 
+    def remove_racks_from_list(self, racks, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/remove-racks-from-list'
+        # attempt to connect to server
+        data = parse.urlencode({'racks': json.dumps(racks)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            print(data_1)
+            if data_1 is False:
+                return False
+            return True
+
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
     def delete_invoice(self, invoice_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/delete-invoice'
         # attempt to connect to server

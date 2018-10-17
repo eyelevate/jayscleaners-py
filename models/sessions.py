@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from kivy.storage.dictstore import DictStore
 
 sessions = DictStore('sessions')
@@ -43,6 +45,8 @@ if not sessions.exists('_searchResultsStatus'):
     sessions.put('_searchResultsStatus', value=False)
 if not sessions.exists('_searchText'):
     sessions.put('_searchText', value=False)
+if not sessions.exists('_racks'):
+    sessions.put('_racks', value=OrderedDict())
 if not sessions.exists('_rowGroup'):
     sessions.put('_rowGroup', value=0)
 if not sessions.exists('_rowSearch'):

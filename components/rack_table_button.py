@@ -24,8 +24,11 @@ class RackTableButton(RecycleDataViewBehavior, Button):
         return False
 
     def on_press(self):
+        sessions.put('_invoiceId',value=self.id)
         pass
 
     def on_release(self):
-        pass
-        # pub.sendMessage("set_item", item_id=int(self.id))
+        if self.column == 4:
+            pub.sendMessage("remove_row", invoice_id=int(self.id))
+        else:
+            pub.sendMessage("edit_row", invoice_id=int(self.id))
