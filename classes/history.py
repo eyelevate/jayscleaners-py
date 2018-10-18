@@ -47,6 +47,7 @@ class HistoryScreen(Screen):
     history_invoice_items_table_rv = ObjectProperty(None)
     item_image = ObjectProperty(None)
     invs_results_ti = ObjectProperty(None)
+    invoice_details_btn = ObjectProperty(None)
     history_popup = ObjectProperty(None)
     status_spinner = ObjectProperty(None)
     starch = None
@@ -80,7 +81,7 @@ class HistoryScreen(Screen):
         self.filtered = False
         self.filtered_rows = []
         self.invs_results_ti.text = ''
-
+        self.invoice_details_btn.disabled = True
         customers = SYNC.customers_grab(sessions.get('_customerId')['value'])
         if customers:
             for customer in customers:
@@ -104,6 +105,7 @@ class HistoryScreen(Screen):
 
     def hard_reset(self):
         sessions.put('_invoiceId', value=None)
+        self.invoice_details_btn.disabled = True
         self.history_table_rv.scroll_y = 1
 
     def open_popup(self, *args, **kwargs):
@@ -145,6 +147,8 @@ class HistoryScreen(Screen):
 
                 invoice_id = int(inv['id'])
                 selected = True if invoice_id == check_invoice_id else False
+                if selected:
+                    self.invoice_details_btn.disabled = False
                 company_id = inv['company_id']
                 quantity = inv['quantity']
                 rack = inv['rack']

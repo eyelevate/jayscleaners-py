@@ -10,6 +10,8 @@ from models.sync import Sync
 from kivy.uix.popup import Popup
 from models.sessions import sessions
 from pubsub import pub
+from models.jobs import Job
+from datetime import datetime
 SYNC_POPUP = Popup()
 KV = KvString()
 SYNC = Sync()
@@ -28,7 +30,6 @@ class InvoiceDetailsScreen(Screen):
     profile_id_label = ObjectProperty(None)
     rack_label = ObjectProperty(None)
     rack_date_label = ObjectProperty(None)
-    items_table = ObjectProperty(None)
     quantity_label = ObjectProperty(None)
     subtotal_label = ObjectProperty(None)
     tax_label = ObjectProperty(None)
@@ -37,6 +38,7 @@ class InvoiceDetailsScreen(Screen):
     credit_label = ObjectProperty(None)
     tendered_label = ObjectProperty(None)
     due_label = ObjectProperty(None)
+    details_table_rv: ObjectProperty(None)
     invoices = []
 
     def open_popup(self, *args, **kwargs):
@@ -84,9 +86,14 @@ class InvoiceDetailsScreen(Screen):
             tax = '${:,.2f}'.format(float(invoices['tax'])) if invoices['tax'] else '$0.00'
             total = '${:,.2f}'.format(float(invoices['total'])) if invoices['total'] else '$0.00'
             rack = invoices['rack'] if invoices['rack'] else ''
-            rack_date = invoices['rack_date'] if invoices['rack_date'] else ''
-            dropoff_date = invoices['created_at'] if invoices['created_at'] else ''
-            due_date = invoices['due_date'] if invoices['due_date'] else ''
+            rack_date = datetime.strftime(datetime.strptime(invoices['rack_date'], '%Y-%m-%d %H:%M:%S'), '%a %m/%d %I:%M%p') \
+                if invoices['rack_date'] else ''
+
+            dropoff_date = datetime.strftime(datetime.strptime(invoices['created_at'], '%Y-%m-%d %H:%M:%S'), '%a %m/%d %I:%M%p') \
+                if invoices['created_at'] else ''
+            due_date =  datetime.strftime(datetime.strptime(invoices['due_date'], '%Y-%m-%d %H:%M:%S'), '%a %m/%d %I:%M%p') \
+                if invoices['due_date'] else ''
+
             memo = invoices['memo']
             status = invoices['status']
             self.invoice_number_label.text = '[color=000000]#{}[/color]'.format(
@@ -109,7 +116,7 @@ class InvoiceDetailsScreen(Screen):
                     last_name = user['last_name']
                     first_name = user['first_name']
                     full_name = '{}, {}'.format(last_name.capitalize(), first_name.capitalize())
-                    phone = user['phone']
+                    phone = Job.make_us_phone(user['phone'])
                     payment_id = user['payment_id']
                     profile_id = user['profile_id']
                     delivery = 'Delivery' if user['delivery'] == 1 else False
@@ -125,12 +132,6 @@ class InvoiceDetailsScreen(Screen):
                     self.customer_type_label.text = '[color=000000]{}[/color]'.format(customer_type)
                     self.payment_id_label.text = '[color=000000]{}[/color]'.format(payment_id)
                     self.profile_id_label.text = '[color=000000]{}[/color]'.format(profile_id)
-
-            # update the items table
-            t1 = Thread(target=self.items_table_update)
-            t1.start()
-
-            # self.items_table_update()
 
             # get the transaction information
             transaction_id = invoices['transaction_id']
@@ -157,7 +158,8 @@ class InvoiceDetailsScreen(Screen):
                     transaction_type = ''
 
                 last4 = transactions['last_four']
-                pickup_date = transactions['created_at'] if transactions['created_at'] else ''
+                pickup_date = datetime.strftime(datetime.strptime(transactions['created_at'], '%Y-%m-%d %H:%M:%S'), '%a %m/%d %I:%M%p') \
+                    if transactions['created_at'] else ''
 
                 discount = '${:,.2f}'.format(float(transactions['discount'])) if transactions['discount'] else '$0.00'
                 # need to add in credits
@@ -185,21 +187,14 @@ class InvoiceDetailsScreen(Screen):
                 self.credit_label.text = '[color=000000]{}[/color]'.format('$0.00')
                 self.due_label.text = '[color=000000][b]{}[/b][/color]'.format(total)
                 self.tendered_label.text = '[color=000000]{}[/color]'.format('$0.00')
+        self.items_table_update()
 
     def items_table_update(self):
-        self.items_table.clear_widgets()
-
-        inv_items = self.invoices['invoice_items'];
-
+        self.details_table_rv.data = []
+        inv_items = self.invoices['invoice_items']
+        item_rows = []
         if inv_items:
-            # create headers
-            # create TH
-            h1 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.2)
-            h2 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
-            h3 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-            self.items_table.add_widget(Builder.load_string(h1))
-            self.items_table.add_widget(Builder.load_string(h2))
-            self.items_table.add_widget(Builder.load_string(h3))
+
             items = {}
 
             for invoice_item in inv_items:
@@ -235,23 +230,29 @@ class InvoiceDetailsScreen(Screen):
             # print out the items into the table
             if items:
                 for key, value in items.items():
-                    tr1 = KV.sized_invoice_tr(1, value['quantity'], size_hint_x=0.2)
+                    item_rows.append({
+                        'text':'[color=000000]{}[/color]'.format(value['quantity']),
+                        'size_hint_x': 0.2
+                    })
                     color_string = []
                     for name, color_qty in value['color'].items():
                         if name:
                             color_string.append('{count}-{name}'.format(count=str(color_qty),
                                                                         name=name))
-
-                    item_string = "[b]{item}[/b]:\\n {color_s} {memo_s}".format(item=value['name'],
+                    item_string = "[b]{item}[/b]:\n{color_s}\n{memo_s}".format(item=value['name'],
                                                                                 color_s=', '.join(color_string),
                                                                                 memo_s='/ '.join(value['memo']))
-                    # print(item_string)
-                    tr2 = KV.sized_invoice_tr(1,
-                                              item_string,
-                                              text_wrap=True,
-                                              size_hint_x=0.6)
+                    item_rows.append({
+                        'text': '[color=000000]{}[/color]'.format(item_string),
+                        'text_wrap': True,
+                        'valign': 'top',
+                        'halign': 'left',
+                        'size_hint_x':0.6
+                    })
 
-                    tr3 = KV.sized_invoice_tr(1, '${:,.2f}'.format(value['total']), size_hint_x=0.2)
-                    self.items_table.add_widget(Builder.load_string(tr1))
-                    self.items_table.add_widget(Builder.load_string(tr2))
-                    self.items_table.add_widget(Builder.load_string(tr3))
+                    item_rows.append({
+                        'text': '[color=000000]${:,.2f}[/color]'.format(value['total']),
+                        'size_hint_x':0.2
+                    })
+
+        self.details_table_rv.data = item_rows

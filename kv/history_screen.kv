@@ -4,6 +4,7 @@
     history_table_rv: history_table_rv
     history_invoice_items_table_rv: history_invoice_items_table_rv
     invs_results_ti: invs_results_ti
+    invoice_details_btn: invoice_details_btn
     on_enter: root.reset()
     on_pre_enter: root.attach()
     on_leave: root.detach()
@@ -94,7 +95,7 @@
                 font_size:sp(20)
                 on_release: app.root.current = "invoice_details"
                 text: "Details"
-                disabled: False
+                disabled: True
         BoxLayout:
             orientation: 'vertical'
             pos_hint:{'top':1}
