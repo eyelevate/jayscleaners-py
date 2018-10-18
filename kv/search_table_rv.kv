@@ -1,0 +1,26 @@
+<SearchTableButton>:
+    markup: True
+    font_size:sp(15)
+    markup: True
+    disabled: False
+    text_size: self.size
+    valign: 'middle'
+    halign: 'center'
+    default_size: None , dp(32)
+
+<SearchTableRV@RecycleView>:
+    viewclass: 'SearchTableButton'
+    SelectableRecycleGridLayout:
+        bar_width: dp(5)
+        default_size: None, dp(50)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        spacing: 1
+        cols:6
+        canvas.before:
+            Color:
+                rgba: 1,1,1,1
+            Rectangle:
+                pos: self.pos
+                size: self.size

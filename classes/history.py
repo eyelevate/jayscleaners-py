@@ -81,7 +81,7 @@ class HistoryScreen(Screen):
         self.filtered = False
         self.filtered_rows = []
         self.invs_results_ti.text = ''
-        self.invoice_details_btn.disabled = True
+        self.invoice_details_btn.disabled = False
         customers = SYNC.customers_grab(sessions.get('_customerId')['value'])
         if customers:
             for customer in customers:

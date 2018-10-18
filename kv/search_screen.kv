@@ -15,8 +15,6 @@
     cust_account: customer_account_ti
     cust_invoice_memo: customer_invoice_memo_ti
     cust_important_memo: customer_important_memo_ti
-    invoice_table: invoice_table
-    invoice_table_body: invoice_table_body
     cust_mark_label: customer_mark_l
     history_btn: history_btn
     edit_invoice_btn: edit_invoice_btn
@@ -30,15 +28,19 @@
     search_results_table: search_results_table
     search_results_footer: search_results_footer
     view_deliveries_btn: view_deliveries_btn
+    search_table_rv: search_table_rv
     name:"search"
     on_enter: root.reset()
+    on_pre_enter: root.attach()
+    on_leave: root.detach()
+
     BoxLayout:
         orientation: 'horizontal'
         size_hint: 1,0.1
         pos_hint: {'top':1}
         TextInput:
             id: search
-            font_size:sp(20)
+            font_size:'20sp'
             hint_text: "Search"
             multiline: False
             focus: True
@@ -46,20 +48,20 @@
             text: ''
         Button:
             on_release: root.search_customer()
-            font_size:sp(20)
+            font_size:'20sp'
             text: "Search"
         Button:
             on_release: root.barcode_popup()
-            font_size:sp(20)
-            disabled: True
+            font_size:'20sp'
+            disabled: False
             text: "Barcode"
         Button:
             on_release: app.root.current = "rack"
-            font_size:sp(20)
+            font_size:'20sp'
             text: "Rack"
         Button:
             on_release: app.root.current = "main"
-            font_size:sp(20)
+            font_size:'20sp'
             text: "Main"
     Popup:
         id: search_popup
@@ -100,19 +102,19 @@
                         id: cust_info_label
                         text: "Customer Info"
                         markup:True
-                        font_size: sp(20)
+                        font_size: '20sp'
 
                     Label:
                         id: customer_mark_l
                         text: ""
-                        font_size: sp(20)
+                        font_size: '20sp'
                     BottomLeftFormLabel:
                         text: "ID"
 
                     CenterVerticalTextInput:
                         id: customer_id_ti
                         hint_text: "Customer ID #"
-                        font_size:sp(20)
+                        font_size:'20sp'
                         multiline: False
                         readonly: True
                         padding: [5,5,5,5]
@@ -123,7 +125,7 @@
                     CenterVerticalTextInput:
                         id: customer_last_name_ti
                         hint_text: "Last Name"
-                        font_size:sp(20)
+                        font_size:'20sp'
                         multiline: False
                         readonly: True
                         padding: [5,5,5,5]
@@ -133,7 +135,7 @@
 
                     CenterVerticalTextInput:
                         id: customer_first_name_ti
-                        font_size:sp(20)
+                        font_size:'20sp'
                         hint_text: "First Name"
                         multiline: False
                         readonly: True
@@ -144,7 +146,7 @@
 
                     CenterVerticalTextInput:
                         id: customer_phone_ti
-                        font_size:sp(20)
+                        font_size:'20sp'
                         hint_text: "(xxx) xxx-xxxx"
                         multiline: False
                         readonly: True
@@ -158,8 +160,8 @@
                         id: customer_important_memo_ti
                         hint_text: "Important Memo"
                         font_size: sp(17)
-                        size_hint_y: sp(17)
-                        height: sp(72)
+                        size_hint_y: None
+                        height: dp(30)
                         multiline: True
                         readonly: True
                         padding: [5,5,5,5]
@@ -170,9 +172,9 @@
                     CenterVerticalTextInput:
                         id: customer_invoice_memo_ti
                         hint_text: "Invoice Memo"
-                        font_size:sp(17)
-                        size_hint_y: sp(17)
-                        height: sp(72)
+                        font_size: sp(17)
+                        size_hint_y: None
+                        height: dp(30)
                         multiline: True
                         readonly: True
                         padding: [5,5,5,5]
@@ -183,7 +185,7 @@
 
                     CenterVerticalTextInput:
                         id: customer_last_drop_ti
-                        font_size:sp(20)
+                        font_size:'20sp'
                         hint_text: "Last Drop"
                         multiline: False
                         readonly: True
@@ -194,7 +196,7 @@
 
                     CenterVerticalTextInput:
                         id: customer_starch_ti
-                        font_size:sp(20)
+                        font_size:'20sp'
                         hint_text: "Starch"
                         multiline: False
                         readonly: True
@@ -244,94 +246,77 @@
                         on_release: root.view_deliveries()
                     Label:
                         text: ""
-                        font_size: sp(20)
+                        font_size: '20sp'
         GridLayout:
             cols: 2
-            RelativeLayout:
-                ScrollView:
-                    GridLayout:
-                        id:invoice_table
-                        cols: 1
-                        size_hint_y:None
-                        height: self.minimum_height
+            BoxLayout:
+                orientation: 'vertical'
+
+                GridLayout:
+                    rows: 1
+                    cols: 6
+                    size_hint_y: None
+                    size_hint_x: 1
+                    spacing: 2
+                    height: self.minimum_height
+                    row_force_default: True
+                    row_default_height: sp(25)
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Inv[/b][/color]"
                         canvas.before:
                             Color:
-                                rgba: 0, 0, 0, 1
+                                rgba: 1, 1, 1, 1
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
-                        GridLayout:
-                            rows: 1
-                            cols: 6
-                            size_hint_y: None
-                            size_hint_x: 1
-                            spacing: 2
-                            height: self.minimum_height
-                            row_force_default: True
-                            row_default_height: sp(25)
-                            Label:
-                                markup: True
-                                text: "[color=000000][b]Inv[/b][/color]"
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            Label:
-                                markup: True
-                                text: "[color=000000][b]Loc[/b][/color]"
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            Label:
-                                markup: True
-                                text: "[color=000000][b]Due[/b][/color]"
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            Label:
-                                markup: True
-                                text: "[color=000000][b]Rack[/b][/color]"
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            Label:
-                                markup: True
-                                text: "[color=000000][b]Qty[/b][/color]"
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            Label:
-                                markup: True
-                                text: "[color=000000][b]Total[/b][/color]"
-                                canvas.before:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                        GridLayout:
-                            id: invoice_table_body
-                            cols: 1
-                            size_hint_y:None
-                            size_hint_x:1
-                            height: self.minimum_height
-                            spacing: 2
-                            row_force_default: True
-                            row_default_height:sp(32)
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Loc[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Due[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Rack[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Qty[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Total[/b][/color]"
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                SearchTableRV:
+                    id: search_table_rv
 
 
             BoxLayout:
@@ -340,7 +325,7 @@
                 Button:
                     id: reprint_btn
                     on_release: root.reprint_popup()
-                    font_size:sp(20)
+                    font_size:'20sp'
                     text: "Reprint"
                     disabled: True
                 Button:
@@ -352,14 +337,14 @@
 
                 Button:
                     id: edit_invoice_btn
-                    font_size:sp(20)
+                    font_size:'20sp'
                     on_release: root.open_popup()
                     on_release: app.root.current = "edit_invoice"
                     text: "Edit"
                     disabled: True
                 Button:
                     id: history_btn
-                    font_size:sp(20)
+                    font_size:'20sp'
                     on_release: root.open_popup()
                     on_release: app.root.current = "history"
                     text: "History"
@@ -373,22 +358,22 @@
 
         Button:
             on_release: app.root.current = "new_customer"
-            font_size:sp(20)
+            font_size:'20sp'
             text: "New"
         Button:
             id: edit_customer_btn
             on_release: app.root.current = "edit_customer"
-            font_size: sp(15)
+            font_size:'15sp'
             text: "Edit Customer"
             disabled: True
         Button:
             on_release: app.root.current = 'last10'
-            font_size:sp(20)
+            font_size:'20sp'
             text: "Last 10"
 
         Button:
             id: quick_btn
-            font_size:sp(20)
+            font_size:'20sp'
             text: "Quick"
             disabled: True
             on_release: root.quick_popup()
@@ -396,13 +381,13 @@
             id: pickup_btn
             on_release: root.open_popup()
             on_release: app.root.current = "pickup"
-            font_size:sp(20)
+            font_size:'20sp'
             text: "Pickup"
             disabled: True
         Button:
             id: dropoff_btn
             on_release: root.open_popup()
             on_release: app.root.current = "dropoff"
-            font_size:sp(20)
+            font_size:'20sp'
             text: "Dropoff"
             disabled: True

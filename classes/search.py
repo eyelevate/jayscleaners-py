@@ -92,8 +92,8 @@ ZEBRA = sessions.get('_zebra')['value']
 class SearchScreen(Screen):
     id = ObjectProperty(None)
     cust_mark_label = ObjectProperty(None)
-    invoice_table = ObjectProperty(None)
-    invoice_table_body = ObjectProperty(None)
+    search_table_rv = ObjectProperty(None)
+    invoice_table_rows = []
     search = ObjectProperty(None)
     cust_last_name = ObjectProperty(None)
     cust_first_name = ObjectProperty(None)
@@ -191,6 +191,15 @@ class SearchScreen(Screen):
     barcode_input = ObjectProperty(None)
     get_invoices = None
 
+    def __init__(self, **kwargs):
+        super(SearchScreen, self).__init__(**kwargs)
+
+    def attach(self):
+        pub.subscribe(self.invoice_selected, "invoice_selected")
+
+    def detach(self):
+        pub.unsubscribe(self.invoice_selected, "invoice_selected")
+
     def scheduler_stop(self):
         pass
 
@@ -198,9 +207,6 @@ class SearchScreen(Screen):
         pass
 
     def reset(self, *args, **kwargs):
-
-        # # Resume auto sync
-        # self.scheduler_restart()
 
         # reset member variables
         sessions.put('_rowSearch',value=(0,10))
@@ -211,6 +217,7 @@ class SearchScreen(Screen):
         self.calc_amount = []
         self.selected_tags_list = []
         self.selected_account_tr = []
+        self.invoice_table_rows = []
         self.inner_layout_1 = None
         self.cards = False
         self.card_id = None
@@ -257,7 +264,6 @@ class SearchScreen(Screen):
         self.get_invoices = None
         self.search.text = ''
         if sessions.get('_searchResultsStatus')['value']:
-            self.edit_invoice_btn.disabled = False if sessions.get('_invoiceId')['value'] is not None else True
             users = SYNC.customers_grab(sessions.get('_customerId')['value'])
             Clock.schedule_once(partial(self.customer_results, users), 1)
 
@@ -289,7 +295,7 @@ class SearchScreen(Screen):
             # clear the search text input
             self.search.text = ''
             # clear the inventory table
-            self.invoice_table_body.clear_widgets()
+            self.search_table_rv.data = []
             self.due_date = None
             self.due_date_string = None
             sessions.put('_searchResultsStatus',value=False)
@@ -312,203 +318,157 @@ class SearchScreen(Screen):
         # send event
         pub.sendMessage('close_loading_popup', popup=SYNC_POPUP)
 
-
     def close_initial_popup(self, *args, **kwargs):
         SYNC_POPUP.dismiss()
 
     def search_customer(self, *args, **kwargs):
-        search_text = self.search.text
-        customers = User()
         sessions.put('_invoiceId', value=None)
 
         if len(self.search.text) > 0:
-
             users = SYNC.customers_grab(self.search.text)
-
             self.customer_results(users)
 
         else:
             Popups.dialog_msg(title_string='Search Error',
                               msg_string='Search cannot be an empty value. Please try again.')
 
+    def update_invoice_rows(self):
+        self.invoice_table_rows = []
+        self.edit_invoice_btn.disabled = True
+        if self.get_invoices is not False:
+            for inv in self.get_invoices:
+                """ Creates invoice table row and displays it to screen """
+                check_invoice_id = False
+                try:
+                    check_invoice_id = True if (
+                                int(sessions.get('_invoiceId')['value']) - int(inv['id']) == 0) else False
+                    if check_invoice_id:
+                        self.edit_invoice_btn.disabled = False
+                except ValueError:
+                    pass
+                except TypeError:
+                    pass
+                # invoice_id = inv['invoice_id']
+                invoice_id = inv['id']
 
-    def create_invoice_row(self, row, *args, **kwargs):
-        """ Creates invoice table row and displays it to screen """
-        check_invoice_id = False
-        try:
-            check_invoice_id = True if (int(sessions.get('_invoiceId')['value']) - int(row['id']) == 0) else False
-        except ValueError:
-            pass
-        except TypeError:
-            pass
+                company_id = inv['company_id']
+                company_name = 'R' if company_id is 1 else 'M'
+                quantity = inv['quantity']
+                rack = inv['rack']
+                total = Static.us_dollar(inv['total'])
+                due = inv['due_date']
+                count_invoice_items = 0
+                if 'invoice_items' in inv:
+                    iitems = inv['invoice_items']
+                    if len(iitems) > 0:
+                        count_invoice_items = len(iitems)
+                try:
+                    dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+                except TypeError:
+                    dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+                due_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+                dow = Static.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
+                due_date = dt.strftime('%m/%d {}').format(dow)
+                dt = datetime.datetime.strptime(NOW,
+                                                "%Y-%m-%d %H:%M:%S") if NOW is not None else datetime.datetime.strptime(
+                    '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
+                now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+                # check to see if invoice is overdue
 
-        # invoice_id = row['invoice_id']
-        invoice_id = row['id']
-        company_id = row['company_id']
-        company_name = 'R' if company_id is 1 else 'M'
-        quantity = row['quantity']
-        rack = row['rack']
-        total = Static.us_dollar(row['total'])
-        due = row['due_date']
-        count_invoice_items = 0
-        if 'invoice_items' in row:
-            iitems = row['invoice_items']
-            if len(iitems) > 0:
-                count_invoice_items = len(iitems)
-        try:
-            dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
-        except TypeError:
-            dt = datetime.datetime.strptime('1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
-        due_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-        dow = Static.dow(dt.replace(tzinfo=datetime.timezone.utc).weekday())
-        due_date = dt.strftime('%m/%d {}').format(dow)
-        dt = datetime.datetime.strptime(NOW,
-                                        "%Y-%m-%d %H:%M:%S") if NOW is not None else datetime.datetime.strptime(
-            '1970-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
-        now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-        # check to see if invoice is overdue
+                invoice_status = int(inv['status'])
+                row_settings = self._make_row_settings(invoice_status, check_invoice_id, due_strtotime, now_strtotime, count_invoice_items)
 
-        invoice_status = int(row['status'])
+                self.invoice_table_rows.append({
+                    'column': 1,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], '{0:06d}'.format(invoice_id)),
+                    'background_color': row_settings['background_color'],
+                    'background_normal': ''
+                })
+                self.invoice_table_rows.append({
+                    'column': 2,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], company_name),
+                    'background_color': row_settings['background_color'],
+                    'background_normal': ''
+                })
+                self.invoice_table_rows.append({
+                    'column': 3,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], due_date),
+                    'background_color': row_settings['background_color'],
+                    'background_normal': ''
+                })
+                self.invoice_table_rows.append({
+                    'column': 4,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], rack),
+                    'background_color': row_settings['background_color'],
+                    'background_normal': ''
+                })
+                self.invoice_table_rows.append({
+                    'column': 5,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], quantity),
+                    'background_color': row_settings['background_color'],
+                    'background_normal': ''
+                })
+                self.invoice_table_rows.append({
+                    'column': 6,
+                    'invoice_id': invoice_id,
+                    'text': '[color={}][b]${}[/b][/color]'.format(row_settings['text_color'],total),
+                    'background_color': row_settings['background_color'],
+                    'background_normal': ''
+                })
+        self.search_table_rv.data = self.invoice_table_rows
+
+    def _make_row_settings(self, invoice_status, check_invoice_id, due_strtotime, now_strtotime, count_invoice_items):
+
         if invoice_status is 5:  # state 5
-            text_color = [0, 0, 0, 1] if not check_invoice_id else [0.898, 0.898, 0.898, 1]
-            self.background_rgba = [0.826, 0.826, 0.826, 0.1] if not check_invoice_id else [0.369, 0.369, 0.369, 0.1]
-            self.background_color = [0.826, 0.826, 0.826, 1] if not check_invoice_id else [0.369, 0.369, 0.369, 1]
-            self.status = 5
+            text_color = '000000' if not check_invoice_id else 'e5e5e5'
+            background_color = [0.826, 0.826, 0.826, 1] if not check_invoice_id else [0.369, 0.369, 0.369, 1]
+            status = 5
 
         elif invoice_status is 4 or invoice_status is 3:  # state 4
-            text_color = [1, 0, 0, 1] if check_invoice_id else [1, 0.8, 0.8, 1]
-            self.background_rgba = [1, 0.717, 0.717, 0.1] if not check_invoice_id else [1, 0, 0, 0.1]
-            self.background_color = [1, 0.717, 0.717, 1] if not check_invoice_id else [1, 0, 0, 1]
-            self.status = 4
+            text_color = 'FF0000' if not check_invoice_id else 'FFCCCC'
+            background_color = [1, 0.717, 0.717, 1] if not check_invoice_id else [1, 0, 0, 1]
+            status = 4
 
         elif invoice_status is 2:  # state 3
-            text_color = [0, 0.639, 0.149, 1] if check_invoice_id else [0.847, 0.969, 0.847, 1]
-            self.background_rgba = [0.847, 0.968, 0.847, 0.1] if not check_invoice_id else [0, 0.64, 0.149, 0.1]
-            self.background_color = [0.847, 0.968, 0.847, 1] if not check_invoice_id else [0, 0.64, 0.149, 1]
-            self.status = 3
+            text_color = '228B22' if not check_invoice_id else 'D8F7D8'
+            background_color = [0.847, 0.968, 0.847, 1] if not check_invoice_id else [0, 0.64, 0.149, 1]
+            status = 3
 
         else:
             if due_strtotime < now_strtotime:  # overdue state 2
-                text_color = [0.059, 0.278, 1, 1] if check_invoice_id else [0.8156, 0.847, 0.961, 1]
-                self.background_rgba = [0.816, 0.847, 0.961, 0.1] if not check_invoice_id else [0.059, 0.278, 1, 0.1]
-                self.background_color = [0.816, 0.847, 0.961, 1] if not check_invoice_id else [0.059, 0.278, 1, 1]
-                self.status = 2
+                text_color = '0F47FF' if not check_invoice_id else 'D0D8F5'
+                background_color = [0.816, 0.847, 0.961, 1] if not check_invoice_id else [0.059, 0.278, 1, 1]
+                status = 2
 
             elif count_invoice_items == 0:  # #quick drop state 6
-                text_color = [0, 0, 0, 1] if not check_invoice_id else [0, 0, 0, 1]
-                self.background_rgba = [0.9960784314, 1, 0.7176470588, 0.1] if not check_invoice_id else [0.98431373, 1,
-                                                                                                          0, 0.1]
-                self.background_color = [0.9960784314, 1, 0.7176470588, 1] if not check_invoice_id else [0.98431373, 1,
-                                                                                                         0, 1]
-                self.status = 6
+                text_color = '000000'
+                background_color = [0.9960784314, 1, 0.7176470588, 1] if not check_invoice_id else [
+                    0.98431373, 1,
+                    0, 1]
+                status = 6
             else:  # state 1
-                text_color = [0, 0, 0, 1] if not check_invoice_id else [0.898, 0.898, 0.898, 1]
-                self.background_rgba = [0.826, 0.826, 0.826, 0.1] if not check_invoice_id else [0.369, 0.369, 0.369,
-                                                                                                0.1]
-                self.background_color = [0.826, 0.826, 0.826, 1] if not check_invoice_id else [0.369, 0.369, 0.369, 1]
-                self.status = 1
-        tr_1 = Factory.InvoiceTr(on_press=partial(self.invoice_selected, invoice_id),
-                                 group="tr")
-        tr_1.status = self.status
-        tr_1.set_color = self.background_color
-        tr_1.background_color = self.background_rgba
-        label_1 = Label(markup=True,
-                        color=text_color,
-                        text="[b]{}[/b]".format('{0:06d}'.format(invoice_id)))
-        tr_1.ids.invoice_table_row_td.add_widget(label_1)
-        label_2 = Label(markup=True,
-                        color=text_color,
-                        text='[b]{}[/b]'.format(company_name))
-        tr_1.ids.invoice_table_row_td.add_widget(label_2)
-        label_3 = Label(markup=True,
-                        color=text_color,
-                        text='[b]{}[/b]'.format(due_date))
-        tr_1.ids.invoice_table_row_td.add_widget(label_3)
-        label_4 = Label(markup=True,
-                        color=text_color,
-                        text='[b]{}[/b]'.format(rack))
-        tr_1.ids.invoice_table_row_td.add_widget(label_4)
-        label_5 = Label(markup=True,
-                        color=text_color,
-                        text='[b]{}[/b]'.format(quantity))
-        tr_1.ids.invoice_table_row_td.add_widget(label_5)
-        label_6 = Label(markup=True,
-                        color=text_color,
-                        text='[b]{}[/b]'.format(total))
-        tr_1.ids.invoice_table_row_td.add_widget(label_6)
-        if check_invoice_id:
-            tr_1.state = 'down'
-        self.invoice_table_body.add_widget(tr_1)
-        return True
+                text_color = '000000' if not check_invoice_id else 'e5e5e5'
+                background_color = [0.826, 0.826, 0.826, 1] if not check_invoice_id else [0.369, 0.369, 0.369, 1]
+                status = 1
+        return {
+            'text_color': text_color,
+            'background_color': background_color,
+            'status': status
+        }
+
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
         sessions.put('_invoiceId',value=invoice_id)
-        customers = User()
-        cust1 = SYNC.customers_grab(sessions.get('_customerId')['value'])
-        # self.customer_results(cust1)
-        for child in self.invoice_table_body.children:
-            if child.state is 'down':
-                # find status and change the background color
-
-                if child.status is 1:
-                    text_color = [0.898, 0.898, 0.898, 1]
-                    child.background_color = [0.369, 0.369, 0.369, 0.1]
-                    child.set_color = [0.369, 0.369, 0.369, 1]
-                elif child.status is 2:
-                    text_color = [0.8156, 0.847, 0.961, 1]
-                    child.background_color = [0.059, 0.278, 1, 0.1]
-                    child.set_color = [0.059, 0.278, 1, 1]
-                elif child.status is 3:
-                    text_color = [0.847, 0.969, 0.847, 1]
-                    child.background_color = [0, 0.64, 0.149, 0.1]
-                    child.set_color = [0, 0.64, 0.149, 1]
-                elif child.status is 4:
-                    text_color = [1, 0.8, 0.8, 1]
-                    child.background_color = [1, 0, 0, 0.1]
-                    child.set_color = [1, 0, 0, 1]
-                elif child.status is 5:
-                    text_color = [0.898, 0.898, 0.898, 1]
-                    child.background_color = [0.369, 0.369, 0.369, 0.1]
-                    child.set_color = [0.369, 0.369, 0.369, 1]
-                else:
-                    text_color = [0, 0, 0, 1]
-                    child.background_color = [0.98431373, 1, 0, 0.1]
-                    child.set_color = [0.98431373, 1, 0, 1]
-
-
-            else:
-                if child.status is 1:
-                    text_color = [0, 0, 0, 1]
-                    child.background_color = [0.826, 0.826, 0.826, 0.1]
-                    child.set_color = [0.826, 0.826, 0.826, 1]
-                elif child.status is 2:
-                    text_color = [0.059, 0.278, 1, 1]
-                    child.background_color = [0.816, 0.847, 0.961, 0.1]
-                    child.set_color = [0.816, 0.847, 0.961, 1]
-                elif child.status is 3:
-                    text_color = [0, 0.639, 0.149, 1]
-                    child.background_color = [0.847, 0.968, 0.847, 0.1]
-                    child.set_color = [0.847, 0.968, 0.847, 1]
-                elif child.status is 4:
-                    text_color = [1, 0, 0, 1]
-                    child.background_color = [1, 0.717, 0.717, 0.1]
-                    child.set_color = [1, 0.717, 0.717, 1]
-                elif child.status is 5:
-                    text_color = [0, 0, 0, 1]
-                    child.background_color = [0.826, 0.826, 0.826, 0.1]
-                    child.set_color = [0.826, 0.826, 0.826, 1]
-                else:
-                    text_color = [0, 0, 0, 1]
-                    child.background_color = [0.9960784314, 1, 0.7176470588, 0.1]
-                    child.set_color = [0.9960784314, 1, 0.7176470588, 1]
-            for grandchild in child.children:
-                for ggc in grandchild.children:
-                    ggc.color = text_color
-
         # show the edit button
         self.edit_invoice_btn.disabled = False
+        self.update_invoice_rows()
 
     def customer_sync(self):
 
@@ -542,12 +502,9 @@ class SearchScreen(Screen):
 
                     Static.update_last_10(sessions.get('_customerId')['value'],
                                           sessions.get('_last10')['value'])
-                    # clear the current widget
-                    self.invoice_table_body.clear_widgets()
 
-                    if self.get_invoices is not False:
-                        for inv in self.get_invoices:
-                            self.create_invoice_row(inv)
+                    self.update_invoice_rows()
+
 
                     Clock.schedule_once(partial(self.invoice_selected, sessions.get('_invoiceId')['value']))
                     last_drop = 'Not Available'
