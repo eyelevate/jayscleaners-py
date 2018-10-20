@@ -336,7 +336,7 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         print('os and path {}'.format(known_backends[os]))
         if path.exists(known_backends[os]):
             print('exists')
-            backend_location = usb.backend.libusb1.get_backend(find_library=lambda x: known_backends[os])
+            backend_location = usb.backend.libusb01.get_backend(find_library=lambda x: known_backends[os])
             print(backend_location)
             return backend_location
         else:
