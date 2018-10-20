@@ -342,7 +342,7 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
                 backend_location = usb.backend.libusb0.get_backend(find_library=lambda x: known_backends[os])
             else:
                 backend_location = usb.backend.libusb1.get_backend(find_library=lambda x: known_backends[os])
-
+            print(backend_location)
             return backend_location
         else:
             print('does not exist')
