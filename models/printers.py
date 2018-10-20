@@ -329,9 +329,9 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         data_folder = Path("./lib/MS32/dll")
 
         known_backends = {
-            'Linux': data_folder / "libusb-1.0.dll",
-            'Darwin': data_folder / "libusb-1.0.dll",
-            'Windows': data_folder / "libusb-1.0.dll"
+            'Linux': path.abspath(data_folder / "libusb-1.0.dll"),
+            'Darwin': path.abspath(data_folder / "libusb-1.0.dll"),
+            'Windows': "C:/windows/system32/libusb0.dll"
         }
         if path.exists(known_backends[os]):
             print('exists')
