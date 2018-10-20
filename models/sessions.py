@@ -55,6 +55,8 @@ if not sessions.exists('_rowCap'):
     sessions.put('_rowCap', value=0)
 if not sessions.exists('_taxRate'):
     sessions.put('_taxRate', value=1)
+if not sessions.exists('_os'):
+    sessions.put('_os', value=None)
 if not sessions.exists('_paymentId'):
     sessions.put('_paymentId', value=None)
 if not sessions.exists('_profileId'):

@@ -3,6 +3,7 @@ import urllib
 import webbrowser
 import time
 import datetime
+import platform
 from threading import Thread
 from urllib import parse, request
 #!/usr/bin/python
@@ -69,7 +70,11 @@ class MainScreen(Screen):
         SYNC.migrate()
         remember_me = sessions.get('_rememberMe')['value']
         user_id = sessions.get('_userId')['value']
+
+        platform_type = platform.system()
+        sessions.put('_os',value=platform_type)
         if remember_me and user_id is not None:
+            self.reconnect_printers()
             Clock.schedule_once(lambda *args: self.isRemembered())
             pass
         else:
@@ -97,13 +102,46 @@ class MainScreen(Screen):
         return info
 
     def reconnect_printers(self):
+        # determine if we can find our set printers
+        os = sessions.get('_os')['value']
+        backend_location = Printer().backend_location(os)
+        backend = usb.backend.libusb1.get_backend(find_library=lambda x: backend_location)
+        print('backend = {}'.format(backend))
+        # if we cant find our set printers then loop through and find all devices and test them out
         # find USB devices
         dev = usb.core.find(find_all=True)
         # loop through devices, printing vendor and product ids in decimal and hex
+        devices = []
         for cfg in dev:
-            sys.stdout.write('Decimal VendorID=' + str(cfg.idVendor) + ' & ProductID=' + str(cfg.idProduct) + '\n')
-            sys.stdout.write(
-                'Hexadecimal VendorID=' + hex(cfg.idVendor) + ' & ProductID=' + hex(cfg.idProduct) + '\n\n')
+            devices.append({
+                'idVendor': str(cfg.idVendor),
+                'idVendorHex': hex(cfg.idVendor),
+                'idProduct': str(cfg.idProduct),
+                'idProductHex': hex(cfg.idProduct)
+            })
+        known_devices = Printer().printer_list()
+        epson_known_device = known_devices['epson']
+        if epson_known_device:
+            for vendorId, productId in epson_known_device.items():
+                # test if works
+                pass
+        bixolon_known_device = known_devices['bixolon']
+
+        # set final vendorids and productids
+
+        # setup printer
+        # if type == 'all':
+        #     self.print_setup()
+        #     self.print_setup_label()
+        #     self.print_setup_tag()
+        # elif type == 'receipt':
+        #     self.print_setup()
+        # elif type == 'tags':
+        #     self.print_setup_tag()
+        # else:
+        #     self.print_setup_label()
+        pass
+
 
     def login_show(self):
         self.login_popup = Factory.LoginPopup()
@@ -147,18 +185,20 @@ class MainScreen(Screen):
                 sessions.put('_companyId', value=data['company_id'])
                 if not sessions.get('_rememberMe')['value']:
                     sessions.put('remembeMe', value=True)
-                print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
-                if print_data:
-                    for pr in print_data:
-                        self.print_setup(hex(int(pr['vendor_id'], 16)), hex(int(pr['product_id'], 16)))
-                print_data_tag = Printer().where({'company_id': auth_user.company_id, 'type': 2})
-                if print_data_tag:
-                    for prt in print_data_tag:
-                        self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
-                print_data_label = Printer().where({'company_id': auth_user.company_id, 'type': 3})
-                if print_data_label:
-                    for prl in print_data_label:
-                        self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
+
+                self.reconnect_printers()
+                # print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
+                # if print_data:
+                #     for pr in print_data:
+                #         self.print_setup(hex(int(pr['vendor_id'], 16)), hex(int(pr['product_id'], 16)))
+                # print_data_tag = Printer().where({'company_id': auth_user.company_id, 'type': 2})
+                # if print_data_tag:
+                #     for prt in print_data_tag:
+                #         self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
+                # print_data_label = Printer().where({'company_id': auth_user.company_id, 'type': 3})
+                # if print_data_label:
+                #     for prl in print_data_label:
+                #         self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
 
                 SYNC.company_id = data['company_id']
                 SYNC_POPUP.title = 'Authentication Success!'
@@ -177,22 +217,23 @@ class MainScreen(Screen):
                 auth_user.company_id = user.company_id
                 sessions.put('_companyId', value=user.company_id)
                 if not sessions.get('_rememberMe')['value']:
-                    sessions.put('remembeMe', value=True)
+                    sessions.put('rememberMe', value=True)
                 SYNC.company_id = user.company_id
-                print_data = Printer().where({'company_id': user.company_id, 'type': 1})
-                if print_data:
-                    for pr in print_data:
-                        self.print_setup(hex(int(pr['vendor_id'], 16)), hex(int(pr['product_id'], 16)))
-
-                print_data_tag = Printer().where({'company_id': auth_user.company_id, 'type': 2})
-                if print_data_tag:
-                    for prt in print_data_tag:
-                        self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
-
-                print_data_label = Printer().where({'company_id': auth_user.company_id, 'type': 3})
-                if print_data_label:
-                    for prl in print_data_label:
-                        self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
+                self.reconnect_printers()
+                # print_data = Printer().where({'company_id': user.company_id, 'type': 1})
+                # if print_data:
+                #     for pr in print_data:
+                #         self.print_setup(hex(int(pr['vendor_id'], 16)), hex(int(pr['product_id'], 16)))
+                #
+                # print_data_tag = Printer().where({'company_id': auth_user.company_id, 'type': 2})
+                # if print_data_tag:
+                #     for prt in print_data_tag:
+                #         self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
+                #
+                # print_data_label = Printer().where({'company_id': auth_user.company_id, 'type': 3})
+                # if print_data_label:
+                #     for prl in print_data_label:
+                #         self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
                 SYNC_POPUP.title = 'Authentication Success!'
                 SYNC_POPUP.content = Builder.load_string(
                     KV.popup_alert(
@@ -209,31 +250,22 @@ class MainScreen(Screen):
         elif not user.username and not user.password:
 
             self.username.hint_text = "Username must exist"
-
             self.username.hint_text_color = ERROR_COLOR
-
             self.password.hint_text = "Password cannot be left empty"
-
             self.password.hint_text_color = ERROR_COLOR
 
         elif not user.password and user.username:
 
             self.username.hint_text = "Username"
-
             self.username.hint_text_color = DEFAULT_COLOR
-
             self.password.hint_text = "Password cannot be left empty"
-
             self.password.hint_text_color = ERROR_COLOR
 
         else:
 
             self.username.hint_text = "Username must exist"
-
             self.username.hint_text_color = ERROR_COLOR
-
             self.password.hint_text = "Password"
-
             self.password.hint_text_color = DEFAULT_COLOR
 
     def active_state(self):
@@ -271,19 +303,6 @@ class MainScreen(Screen):
         sessions.put('_epson', value=None)
         sessions.put('_bixolon', value=None)
 
-    def db_sync(self, *args, **kwargs):
-
-        # quick sync
-
-        t1 = Thread(target=SYNC.db_sync, args=[sessions.get('_companyId')['value']])
-        t1.start()
-        t1.join()
-        SYNC_POPUP.dismiss()
-        # print('initializing auto-sync every 20 seconds')
-
-        # sync.get_chunk(table='invoice_items',start=140001,end=150000)
-
-        # self.update_label.text = 'Server updated at {}'.format()
 
     def sync_rackable_invoices(self, *args, **kwargs):
         t1 = Thread(target=self.do_rackable_invoices)
