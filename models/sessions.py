@@ -3,6 +3,8 @@ from collections import OrderedDict
 from kivy.storage.dictstore import DictStore
 
 sessions = DictStore('sessions')
+if not sessions.exists('_backend'):
+    sessions.put('_backend', value=None)
 if not sessions.exists('_rememberMe'):
     sessions.put('_rememberMe', value=False)
 if not sessions.exists('_rememberMeTimestamp'):

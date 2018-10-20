@@ -332,13 +332,17 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         known_backends = {
             'Linux': path.abspath(data_folder / "libusb-1.0.dll"),
             'Darwin': path.abspath(data_folder / "libusb-1.0.dll"),
-            'Windows': "C:/windows/system32/libusb0.dll"
+            # "C:/windows/system32/libusb0.dll"
+            'Windows': path.abspath(data_folder / "libusb0.dll")
         }
         print('os and path {}'.format(known_backends[os]))
         if path.exists(known_backends[os]):
             print('exists')
-            backend_location = usb.backend.libusb0.get_backend(find_library=lambda x: known_backends[os])
-            print(backend_location)
+            if os == 'Windows':
+                backend_location = usb.backend.libusb0.get_backend(find_library=lambda x: known_backends[os])
+            else:
+                backend_location = usb.backend.libusb1.get_backend(find_library=lambda x: known_backends[os])
+
             return backend_location
         else:
             print('does not exist')

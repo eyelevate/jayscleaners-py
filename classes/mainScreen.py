@@ -104,8 +104,8 @@ class MainScreen(Screen):
     def reconnect_printers(self):
         # determine if we can find our set printers
         os = sessions.get('_os')['value']
-        backend_location = Printer().backend_location(os)
-        backend = usb.backend.libusb1.get_backend(find_library=lambda x: backend_location)
+        backend = Printer().backend_location(os)
+        sessions.put('_backend',value=backend)
         print('backend = {}'.format(backend))
         # if we cant find our set printers then loop through and find all devices and test them out
         # find USB devices
