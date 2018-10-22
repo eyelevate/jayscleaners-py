@@ -12,9 +12,6 @@ class StatusLabel(Label):
 
     def __init__(self, **kwargs):
         super(StatusLabel, self).__init__(**kwargs)
-        self.canvas.clear()
-        self.canvas_set('disconnected')
-
         Window.bind(on_resize=self.set_resize)
 
     def canvas_set(self, status):

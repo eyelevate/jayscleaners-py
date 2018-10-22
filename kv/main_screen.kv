@@ -96,6 +96,14 @@
             StatusLabel:
                 id: receipt_status
                 size_hint:(1, 1)
+                canvas.before:
+                    Color:
+                        rgba: 1, 0, 0, 1
+                    Ellipse:
+                        size: dp(25), dp(25)
+                        pos: [self.center_x - dp(25)/2, self.center_y - dp(25)/2]
+                        angle_start: 0
+                        angle_end: 360
 
         Label:
             text: 'Receipt Printer Status'
@@ -108,6 +116,14 @@
             StatusLabel:
                 id: tags_status
                 size_hint:(1, 1)
+                canvas.before:
+                    Color:
+                        rgba: 1, 0, 0, 1
+                    Ellipse:
+                        size: dp(25), dp(25)
+                        pos: [self.center_x - dp(25)/2, self.center_y - dp(25)/2]
+                        angle_start: 0
+                        angle_end: 360
 
         Label:
             text: 'Tag Printer Status'
