@@ -209,25 +209,25 @@ class DropoffScreen(Screen):
         sessions.put('_searchResultsStatus', value=True)
 
     def get_store_hours(self):
-        comp = Company()
+
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
-        store_hours = comp.get_store_hours(sessions.get('_companyId')['value'])
-        if store_hours is False:
-            comp.retrieve(sessions.get('_companyId')['value'])
-            store_hours = comp.store_hours
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
 
-        turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
-        new_date = today + datetime.timedelta(days=turn_around_day)
-        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
-                                           turn_around_minutes)
-        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
-        self.date_picker.text = self.due_date_string
+                turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
+                turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+                turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+                turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
+                new_date = today + datetime.timedelta(days=turn_around_day)
+                date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_minutes)
+                self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+                self.date_picker.text = self.due_date_string
 
     def get_colors_main(self):
 
@@ -1438,73 +1438,76 @@ class DropoffScreen(Screen):
 
     def create_calendar_table(self):
         # set the variables
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
-        today_date = datetime.datetime.today()
-        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
-        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
-        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
-        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
+                today_date = datetime.datetime.today()
+                today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+                check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+                due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
+                check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
 
-        self.calendar_layout.clear_widgets()
-        calendars = Calendar()
-        calendars.setfirstweekday(calendar.SUNDAY)
-        selected_month = self.month - 1
-        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
-        th1 = KV.invoice_tr(0, 'Su')
-        th2 = KV.invoice_tr(0, 'Mo')
-        th3 = KV.invoice_tr(0, 'Tu')
-        th4 = KV.invoice_tr(0, 'We')
-        th5 = KV.invoice_tr(0, 'Th')
-        th6 = KV.invoice_tr(0, 'Fr')
-        th7 = KV.invoice_tr(0, 'Sa')
-        self.calendar_layout.add_widget(Builder.load_string(th1))
-        self.calendar_layout.add_widget(Builder.load_string(th2))
-        self.calendar_layout.add_widget(Builder.load_string(th3))
-        self.calendar_layout.add_widget(Builder.load_string(th4))
-        self.calendar_layout.add_widget(Builder.load_string(th5))
-        self.calendar_layout.add_widget(Builder.load_string(th6))
-        self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
-            for month in year_dates[selected_month]:
-                for week in month:
-                    for day in week:
-                        if day[0] > 0:
-                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
-                                                                           Job.date_leading_zeroes(self.month),
-                                                                           Job.date_leading_zeroes(day[0]))
-                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
-                            check_date = today_base.timestamp()
-                            dow_check = today_base.strftime("%w")
-                            # rule #1 remove all past dates so users cannot set a due date previous to today
-                            if check_date < check_today:
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
-                                if check_date == check_today:
-                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                  background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
-                                elif check_date == check_due_date:
-                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(
-                                                                      0.2156862, 0.9921568, 0.98823529, 1),
-                                                                  background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
-                                elif check_today < check_date < check_due_date:
-                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0.878431372549020, 1, 1, 1),
-                                                                  background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
+                self.calendar_layout.clear_widgets()
+                calendars = Calendar()
+                calendars.setfirstweekday(calendar.SUNDAY)
+                selected_month = self.month - 1
+                year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+                th1 = KV.invoice_tr(0, 'Su')
+                th2 = KV.invoice_tr(0, 'Mo')
+                th3 = KV.invoice_tr(0, 'Tu')
+                th4 = KV.invoice_tr(0, 'We')
+                th5 = KV.invoice_tr(0, 'Th')
+                th6 = KV.invoice_tr(0, 'Fr')
+                th7 = KV.invoice_tr(0, 'Sa')
+                self.calendar_layout.add_widget(Builder.load_string(th1))
+                self.calendar_layout.add_widget(Builder.load_string(th2))
+                self.calendar_layout.add_widget(Builder.load_string(th3))
+                self.calendar_layout.add_widget(Builder.load_string(th4))
+                self.calendar_layout.add_widget(Builder.load_string(th5))
+                self.calendar_layout.add_widget(Builder.load_string(th6))
+                self.calendar_layout.add_widget(Builder.load_string(th7))
+                if year_dates[selected_month]:
+                    for month in year_dates[selected_month]:
+                        for week in month:
+                            for day in week:
+                                if day[0] > 0:
+                                    check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                                   Job.date_leading_zeroes(self.month),
+                                                                                   Job.date_leading_zeroes(day[0]))
+                                    today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                                    check_date = today_base.timestamp()
+                                    dow_check = today_base.strftime("%w")
+                                    # rule #1 remove all past dates so users cannot set a due date previous to today
+                                    if check_date < check_today:
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
+                                    elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                        if check_date == check_today:
+                                            item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                          background_normal='',
+                                                                          on_release=partial(self.select_due_date, today_base))
+                                        elif check_date == check_due_date:
+                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(
+                                                                              0.2156862, 0.9921568, 0.98823529, 1),
+                                                                          background_normal='',
+                                                                          on_release=partial(self.select_due_date, today_base))
+                                        elif check_today < check_date < check_due_date:
+                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(0.878431372549020, 1, 1, 1),
+                                                                          background_normal='',
+                                                                          on_release=partial(self.select_due_date, today_base))
+                                        else:
+                                            item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                          on_release=partial(self.select_due_date, today_base))
+                                    else:  # store is closed
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
                                 else:
-                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  on_release=partial(self.select_due_date, today_base))
-                            else:  # store is closed
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                        else:
-                            item = Factory.CalendarButton(disabled=True)
-                        self.calendar_layout.add_widget(item)
+                                    item = Factory.CalendarButton(disabled=True)
+                                self.calendar_layout.add_widget(item)
 
     def prev_month(self, *args, **kwargs):
         if self.month == 1:
@@ -1535,19 +1538,22 @@ class DropoffScreen(Screen):
         self.create_calendar_table()
 
     def select_due_date(self, selected_date, *args, **kwargs):
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
 
-        dow = int(selected_date.strftime("%w"))
-        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
-        date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
-                                           turn_around_minutes)
-        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
-        self.date_picker.text = self.due_date_string
-        self.create_calendar_table()
+                dow = int(selected_date.strftime("%w"))
+                turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+                turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+                turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+                date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_minutes)
+                self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+                self.date_picker.text = self.due_date_string
+                self.create_calendar_table()
 
     def print_selection(self):
         self.print_popup = Popup()
