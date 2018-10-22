@@ -12,14 +12,14 @@ class StatusLabel(Label):
 
     def __init__(self, **kwargs):
         super(StatusLabel, self).__init__(**kwargs)
+        self.canvas.clear()
         self.canvas_set('disconnected')
-        self.set_resize()
+
         Window.bind(on_resize=self.set_resize)
 
     def canvas_set(self, status):
         self.status_color = Constants().colors(key='lime_green') if status == 'connected' else Constants().colors(key='red')
         self.set_resize()
-
 
     def set_resize(self, *args, **kwargs):
         self.canvas.clear()
