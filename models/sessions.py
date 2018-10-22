@@ -77,20 +77,12 @@ if not sessions.exists('_connectedDevices'):
                                               'device': None},
                  bixolon={'productId': None,
                           'vendorId': None,
-                          'backend': None,
-                          'device': None},
+                          'backend': None},
                  zebra={'productId': None,
                         'vendorId': None,
-                        'backend': None,
-                        'device': None}, )
-if not sessions.exists('_epson'):
-    sessions.put('_epson', epson=None)
-if not sessions.exists('_bixolon'):
-    sessions.put('_bixolon', bixolon=None)
+                        'backend': None}, )
 if not sessions.exists('_usDollar'):
     sessions.put('_usDollar', value=0)
-if not sessions.exists('_zebra'):
-    sessions.put('_zebra', zebra=None)
 if not sessions.exists('_usbFactory'):
     sessions.put('_usbFactory', factory=USBFactory)
 # usbFactory = USBFactory()

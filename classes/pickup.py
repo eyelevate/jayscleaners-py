@@ -13,6 +13,7 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen
 from kivy.uix.spinner import Spinner
+from pubsub import pub
 
 from models.cards import Card
 from classes.popups import Popups
@@ -37,7 +38,6 @@ SYNC = Sync()
 SYNC_POPUP = Popup()
 unix = time.time()
 NOW = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-EPSON = sessions.get('_connectedDevices')['epson']['device']
 
 
 class PickupScreen(Screen):
@@ -91,6 +91,15 @@ class PickupScreen(Screen):
     edit_card_billing_last_name = None
     card_box = None
     discount_id = None
+    epson = None
+
+    def __init__(self, **kwargs):
+        super(PickupScreen, self).__init__(**kwargs)
+        pub.subscribe(self.set_epson_printer, "set_epson_printer")
+
+    def set_epson_printer(self, device):
+        self.epson = device
+        print(self.epson)
 
     def reset(self):
         # Pause Schedule
@@ -1345,7 +1354,7 @@ class PickupScreen(Screen):
                         self.finish_popup.dismiss()
 
         if _print == 1:  # customer copy of invoice and finish
-            if EPSON:
+            if self.epson:
                 pr = Printer()
                 companies = Company()
                 comps = SYNC.company_grab(sessions.get('_companyId')['value'])
@@ -1470,40 +1479,40 @@ class PickupScreen(Screen):
                 if print_sync_invoice:  # if invoices synced
 
                     # start invoice
-                    EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
+                    self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                  density=5,
                                                  invert=False, smooth=False, flip=False))
-                    EPSON.write("::Payment Copy::\n")
-                    EPSON.write(
+                    self.epson.write("::Payment Copy::\n")
+                    self.epson.write(
                         pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write("{}\n".format(companies.name))
-                    EPSON.write(
+                    self.epson.write("{}\n".format(companies.name))
+                    self.epson.write(
                         pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write("{}\n".format(companies.street))
-                    EPSON.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                    EPSON.write(
+                    self.epson.write("{}\n".format(companies.street))
+                    self.epson.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                    self.epson.write(
                         pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                     invert=False, smooth=False, flip=False))
 
-                    EPSON.write("{}\n".format(Job.make_us_phone(companies.phone)))
-                    EPSON.write("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                    self.epson.write("{}\n".format(Job.make_us_phone(companies.phone)))
+                    self.epson.write("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                    EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
+                    self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
                                                  density=6,
                                                  invert=False, smooth=False, flip=False))
-                    EPSON.write(
+                    self.epson.write(
                         '{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
-                    EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                    self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                  density=2,
                                                  invert=False, smooth=False, flip=False))
-                    EPSON.write('{}\n'.format(Job.make_us_phone(customers.phone)))
-                    EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                    self.epson.write('{}\n'.format(Job.make_us_phone(customers.phone)))
+                    self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                  density=1,
                                                  invert=False, smooth=False, flip=False))
-                    EPSON.write('-----------------------------------------\n')
+                    self.epson.write('-----------------------------------------\n')
                     for invoice_id, item_id in print_sync_invoice.items():
 
                         if invoice_id in print_sync_invoice:
@@ -1521,92 +1530,92 @@ class PickupScreen(Screen):
                                 string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
                                     Static.us_dollar(item_price)) + 4
                                 string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                EPSON.write('{} {}   {}{}{}\n'.format(item_type,
+                                self.epson.write('{} {}   {}{}{}\n'.format(item_type,
                                                                            item_qty,
                                                                            item_name,
                                                                            ' ' * string_offset,
                                                                            Static.us_dollar(item_price)))
 
                                 if len(item_memo) > 0:
-                                    EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                    self.epson.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                                  height=1,
                                                                  density=5, invert=False, smooth=False, flip=False))
-                                    EPSON.write('     {}\n'.format('/ '.join(item_memo)))
+                                    self.epson.write('     {}\n'.format('/ '.join(item_memo)))
                                 if len(item_color_string) > 0:
-                                    EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                    self.epson.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                                  height=1,
                                                                  density=5, invert=False, smooth=False, flip=False))
-                                    EPSON.write('     {}\n'.format(', '.join(item_color_string)))
+                                    self.epson.write('     {}\n'.format(', '.join(item_color_string)))
 
-                    EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                    self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                  density=1,
                                                  invert=False, smooth=False, flip=False))
-                    EPSON.write('-----------------------------------------\n')
-                    EPSON.write(
+                    self.epson.write('-----------------------------------------\n')
+                    self.epson.write(
                         pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write('{} PCS\n'.format(self.total_quantity))
-                    EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
+                    self.epson.write('{} PCS\n'.format(self.total_quantity))
+                    self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                                  density=1,
                                                  invert=False, smooth=False, flip=False))
-                    EPSON.write('-----------------------------------------\n')
-                    EPSON.write(
+                    self.epson.write('-----------------------------------------\n')
+                    self.epson.write(
                         pr.pcmd_set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write('    SUBTOTAL:')
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    self.epson.write('    SUBTOTAL:')
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(Static.us_dollar(self.total_subtotal))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    EPSON.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.total_subtotal)))
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                    EPSON.write('         TAX:')
+                    self.epson.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.total_subtotal)))
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    self.epson.write('         TAX:')
                     string_length = len(Static.us_dollar(self.total_tax))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
-                    EPSON.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.total_tax)))
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    self.epson.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.total_tax)))
 
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                    EPSON.write('   After Tax:')
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    self.epson.write('   After Tax:')
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(Static.us_dollar(self.total_amount))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    EPSON.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.total_amount)))
+                    self.epson.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.total_amount)))
 
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                    EPSON.write('      Credit:')
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    self.epson.write('      Credit:')
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(Static.us_dollar(self.credits_spent))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    EPSON.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.credits_spent)))
+                    self.epson.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.credits_spent)))
 
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                    EPSON.write('    Discount:')
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    self.epson.write('    Discount:')
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(Static.us_dollar(self.discount_total))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    EPSON.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.discount_total)))
+                    self.epson.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.discount_total)))
 
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                    EPSON.write('         Due:')
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    self.epson.write('         Due:')
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(Static.us_dollar(self.total_due))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    EPSON.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.total_due)))
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                    EPSON.write('     TENDERED:')
+                    self.epson.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(self.total_due)))
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    self.epson.write('     TENDERED:')
                     string_length = len(Static.us_dollar(self.amount_tendered))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    EPSON.write('{}{}\n\n'.format(' ' * string_offset, Static.us_dollar(self.amount_tendered)))
-                    EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                    EPSON.write('     BALANCE:')
+                    self.epson.write('{}{}\n\n'.format(' ' * string_offset, Static.us_dollar(self.amount_tendered)))
+                    self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                    self.epson.write('     BALANCE:')
                     balance = 0 if (
                                            self.amount_tendered - self.total_due) < 0 else self.amount_tendered - self.total_due
                     string_length = len(Static.us_dollar(balance))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                    EPSON.write('{}{}\n\n'.format(' ' * string_offset, Static.us_dollar(balance)))
+                    self.epson.write('{}{}\n\n'.format(' ' * string_offset, Static.us_dollar(balance)))
                     # Cut paper
-                    EPSON.write('\n\n\n\n\n\n')
-                    EPSON.write(pr.pcmd('PARTIAL_CUT'))
+                    self.epson.write('\n\n\n\n\n\n')
+                    self.epson.write(pr.pcmd('PARTIAL_CUT'))
 
             else:
                 Popups.dialog_msg('Printer Error', 'Usb Device not found')

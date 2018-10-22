@@ -31,6 +31,7 @@ from models.sync import Sync
 from models.users import User
 from models.sessions import sessions
 from components.status_label import StatusLabel
+from pubsub import pub
 
 KV = KvString()
 SYNC = Sync()
@@ -71,7 +72,7 @@ class MainScreen(Screen):
         remember_me = sessions.get('_rememberMe')['value']
         user_id = sessions.get('_userId')['value']
         platform_type = platform.system()
-        sessions.put('_os',value=platform_type)
+        sessions.put('_os', value=platform_type)
         if remember_me and user_id is not None:
             Clock.schedule_once(lambda *args: self.isRemembered())
             pass
@@ -125,11 +126,10 @@ class MainScreen(Screen):
                     print('successfully printed and saving epson device')
                     if self.print_setup_test(device, 'epson'):
                         self.receipt_status.canvas_set('connected')
-
+                        pub.sendMessage('set_epson_printer', device=device)
                         sessions.put('_connectedDevices', epson={'productId': productId,
-                                                                  'vendorId': vendorId,
-                                                                  'backend': backend,
-                                                                  'device': device})
+                                                                 'vendorId': vendorId,
+                                                                 'backend': backend})
                         break
         if 'bixolon' in known_devices:
             bixolon_known_device = known_devices['bixolon']
@@ -141,11 +141,11 @@ class MainScreen(Screen):
                     print('successfully printed and saving bixolon device')
                     if self.print_setup_test(device, 'bixolon'):
                         self.tags_status.canvas_set('connected')
+                        pub.sendMessage('set_bixolon_printer', device=device)
                         # sessions.put('_bixolon', bixolon=device)
                         sessions.put('_connectedDevices', bixolon={'productId': productId,
-                                                                    'vendorId': vendorId,
-                                                                    'backend': backend,
-                                                                    'device': device})
+                                                                   'vendorId': vendorId,
+                                                                   'backend': backend})
                         break
 
     def print_setup_test(self, printer, type):
@@ -298,9 +298,6 @@ class MainScreen(Screen):
         sessions.put('_username', value=None)
         sessions.put('_rememberMe', value=False)
         sessions.put('_rememberMeTimestamp', value=None)
-        sessions.put('_epson', value=None)
-        sessions.put('_bixolon', value=None)
-
 
     def sync_rackable_invoices(self, *args, **kwargs):
         t1 = Thread(target=self.do_rackable_invoices)
@@ -577,7 +574,6 @@ class MainScreen(Screen):
             return epson
 
         else:
-
 
             Popups.dialog_msg('Printer Error', 'Receipt printer not found.\\nPlease check settings and try again')
             return None

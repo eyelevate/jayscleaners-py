@@ -21,7 +21,6 @@ from pubsub import pub
 KV = KvString()
 SYNC_POPUP = Popup()
 SYNC = Sync()
-EPSON = sessions.get('_connectedDevices')['epson']['device']
 
 
 class RackScreen(Screen):
@@ -33,10 +32,12 @@ class RackScreen(Screen):
     rack_table_rv = ObjectProperty(None)
     rack_rows = []
     remove_list = []
+    epson = None
 
 
     def __init__(self, **kwargs):
         super(RackScreen, self).__init__(**kwargs)
+        pub.subscribe(self.set_epson_printer, "set_epson_printer")
 
     def attach(self):
         pub.subscribe(self._edit_row, "edit_row")
@@ -45,6 +46,10 @@ class RackScreen(Screen):
     def detach(self):
         pub.unsubscribe(self._edit_row, "edit_row")
         pub.unsubscribe(self._remove_row, 'remove_row')
+
+    def set_epson_printer(self, device):
+        self.epson = device
+        print(self.epson)
 
     def reset(self):
         # Pause sync scheduler
@@ -148,20 +153,20 @@ class RackScreen(Screen):
         else:
             formatted_rack = self.rack_number.text.replace("%R", "")
 
-            if EPSON:
+            if self.epson:
                 try:
                     pr = Printer()
-                    EPSON.write(
+                    self.epson.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=3,
                                     invert=False, smooth=False, flip=False))
                     if self.edited_rack:
-                        EPSON.write('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
+                        self.epson.write('EDITED: {} - (OLD {}) -> (NEW {})\n'.format(
                             self.invoice_number.text,
                             self.edited_rack,
                             formatted_rack))
                         self.edited_rack = False
                     else:
-                        EPSON.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
+                        self.epson.write('{} - {}\n'.format(self.invoice_number.text, formatted_rack))
                 except USBNotFoundError:
                     Popups.dialog_msg('Error: usb not found',
                                     'Could not print rack number due to usb fault. However, rack has been successfully saved in the system. ')
@@ -198,14 +203,14 @@ class RackScreen(Screen):
                 sessions.put('racks', value={})
 
             # Cut paper
-            if EPSON:
+            if self.epson:
                 pr = Printer()
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('{}'.format((datetime.datetime.now().strftime('%a %m/%d/%Y %I:%M %p'))))
-                EPSON.write('\n\n\n\n\n\n')
-                EPSON.write(pr.pcmd('PARTIAL_CUT'))
+                self.epson.write('{}'.format((datetime.datetime.now().strftime('%a %m/%d/%Y %I:%M %p'))))
+                self.epson.write('\n\n\n\n\n\n')
+                self.epson.write(pr.pcmd('PARTIAL_CUT'))
         # set user to go back to search screen
         if sessions.get('_customerId')['value']:
             self.set_result_status()

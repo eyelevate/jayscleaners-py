@@ -85,9 +85,6 @@ workQueue = queue.Queue(10)
 list_len = []
 printer_list = {}
 SYNC_POPUP = Popup()
-EPSON = sessions.get('_connectedDevices')['epson']['device']
-BIXOLON = sessions.get('_connectedDevices')['bixolon']['device']
-ZEBRA = sessions.get('_connectedDevices')['zebra']['device']
 
 
 class SearchScreen(Screen):
@@ -191,15 +188,33 @@ class SearchScreen(Screen):
     barcode_save_data = None
     barcode_input = ObjectProperty(None)
     get_invoices = None
+    epson = None
+    bixolon = None
+    zebra = None
 
     def __init__(self, **kwargs):
         super(SearchScreen, self).__init__(**kwargs)
+        pub.subscribe(self.set_epson_printer, "set_epson_printer")
+        pub.subscribe(self.set_bixolon_printer, "set_bixolon_printer")
+        pub.subscribe(self.set_zebra_printer, "set_zebra_printer")
 
     def attach(self):
         pub.subscribe(self.invoice_selected, "invoice_selected")
 
     def detach(self):
         pub.unsubscribe(self.invoice_selected, "invoice_selected")
+
+    def set_epson_printer(self, device):
+        self.epson = device
+        print(self.epson)
+
+    def set_bixolon_printer(self, device):
+        self.bixolon = device
+        print(self.bixolon)
+
+    def set_zebra_printer(self, device):
+        self.zebra = device
+        print(self.zebra)
 
     def scheduler_stop(self):
         pass
@@ -924,7 +939,7 @@ class SearchScreen(Screen):
         if save_invoice is not False:
 
             # print invoices
-            if sessions.get('_epson')['value']:
+            if self.epson:
                 pr = Printer()
 
                 customers = User()
@@ -963,69 +978,68 @@ class SearchScreen(Screen):
                         customers.important_memo = user['important_memo']
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
-                EPSON = sessions.get('_epson')['value']
-                EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
-                EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                self.epson.write(pr.pcmd('TXT_ALIGN_CT'))
+                self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                              invert=False, smooth=False, flip=False))
-                EPSON.write("QUICK DROP - STORE COPY\n")
-                EPSON.write("{}\n".format(companies.name))
-                EPSON.write(
+                self.epson.write("QUICK DROP - STORE COPY\n")
+                self.epson.write("{}\n".format(companies.name))
+                self.epson.write(
                     pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write("{}\n".format(companies.street))
-                EPSON.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                EPSON.write(
+                self.epson.write("{}\n".format(companies.street))
+                self.epson.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                self.epson.write(
                     pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                 invert=False, smooth=False, flip=False))
 
-                EPSON.write("{}\n".format(Job.make_us_phone(companies.phone)))
-                EPSON.write("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                EPSON.write(
+                self.epson.write("{}\n".format(Job.make_us_phone(companies.phone)))
+                self.epson.write("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                self.epson.write(
                     pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                self.epson.write("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
                                              invert=False, smooth=False, flip=False))
                 padded_customer_id = '{0:05d}'.format(sessions.get('_customerId')['value'])
-                EPSON.write("{}\n".format(padded_customer_id))
+                self.epson.write("{}\n".format(padded_customer_id))
 
                 # Print barcode
-                EPSON.write(pr.pcmd_barcode(str(padded_customer_id)))
+                self.epson.write(pr.pcmd_barcode(str(padded_customer_id)))
 
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
+                self.epson.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('{}\n'.format(Job.make_us_phone(customers.phone)))
-                EPSON.write(
+                self.epson.write('{}\n'.format(Job.make_us_phone(customers.phone)))
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('-----------------------------------------\n')
+                self.epson.write('-----------------------------------------\n')
 
-                EPSON.write(pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                self.epson.write(pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                              invert=False, smooth=False, flip=False))
-                EPSON.write(
+                self.epson.write(
                     '{} PCS\n'.format(
                         self.quick_box.ids.quick_count.text if self.quick_box.ids.quick_count.text else '0'))
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('-----------------------------------------\n')
+                self.epson.write('-----------------------------------------\n')
                 if self.quick_box.ids.quick_invoice_memo.text:
-                    EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                    self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                                  invert=False, smooth=False, flip=False))
-                    EPSON.write('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
+                    self.epson.write('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
 
-                EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
+                self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
                                              invert=False, smooth=False, flip=False))
                 # Cut paper
-                EPSON.write('\n\n\n\n\n\n')
-                EPSON.write(pr.pcmd('PARTIAL_CUT'))
+                self.epson.write('\n\n\n\n\n\n')
+                self.epson.write(pr.pcmd('PARTIAL_CUT'))
 
 
             else:
@@ -1070,7 +1084,7 @@ class SearchScreen(Screen):
         save_invoice = SYNC.create_invoice(data, items)
         if save_invoice is not False:
             # print invoices
-            if sessions.get('_epson')['value']:
+            if sessions.get('_self.epson')['value']:
                 pr = Printer()
                 customers = User()
                 custs = SYNC.customers_grab(sessions.get('_customerId')['value'])
@@ -1109,130 +1123,130 @@ class SearchScreen(Screen):
                         customers.invoice_memo = user['invoice_memo']
                         customers.role_id = user['role_id']
 
-                EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
-                EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                self.epson.write(pr.pcmd('TXT_ALIGN_CT'))
+                self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                              invert=False, smooth=False, flip=False))
-                EPSON.write("QUICK DROP\n")
-                EPSON.write("{}\n".format(companies.name))
-                EPSON.write(
+                self.epson.write("QUICK DROP\n")
+                self.epson.write("{}\n".format(companies.name))
+                self.epson.write(
                     pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write("{}\n".format(companies.street))
-                EPSON.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                EPSON.write(
+                self.epson.write("{}\n".format(companies.street))
+                self.epson.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                self.epson.write(
                     pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                 invert=False, smooth=False, flip=False))
 
-                EPSON.write("{}\n".format(Job.make_us_phone(companies.phone)))
-                EPSON.write("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                EPSON.write(
+                self.epson.write("{}\n".format(Job.make_us_phone(companies.phone)))
+                self.epson.write("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                self.epson.write(
                     pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                self.epson.write("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
                                              invert=False, smooth=False, flip=False))
                 padded_customer_id = '{0:05d}'.format(sessions.get('_customerId')['value'])
-                EPSON.write("{}\n".format(padded_customer_id))
+                self.epson.write("{}\n".format(padded_customer_id))
 
                 # Print barcode
-                EPSON.write(pr.pcmd_barcode(str(padded_customer_id)))
+                self.epson.write(pr.pcmd_barcode(str(padded_customer_id)))
 
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
+                self.epson.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('{}\n'.format(Job.make_us_phone(customers.phone)))
-                EPSON.write(
+                self.epson.write('{}\n'.format(Job.make_us_phone(customers.phone)))
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('-----------------------------------------\n')
+                self.epson.write('-----------------------------------------\n')
 
-                EPSON.write(pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                self.epson.write(pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                              invert=False, smooth=False, flip=False))
-                EPSON.write('{} PCS\n'.format(
+                self.epson.write('{} PCS\n'.format(
                     self.quick_box.ids.quick_count.text if self.quick_box.ids.quick_count.text else '0'))
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('-----------------------------------------\n')
+                self.epson.write('-----------------------------------------\n')
                 if self.quick_box.ids.quick_invoice_memo.text:
-                    EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                    self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                                  invert=False, smooth=False, flip=False))
-                    EPSON.write('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
+                    self.epson.write('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
 
-                EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
+                self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
                                              invert=False, smooth=False, flip=False))
                 # Cut paper
-                EPSON.write('\n\n\n\n\n\n')
-                EPSON.write(pr.pcmd('PARTIAL_CUT'))
+                self.epson.write('\n\n\n\n\n\n')
+                self.epson.write(pr.pcmd('PARTIAL_CUT'))
 
                 # SECOND Copy
-                EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+                self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                              invert=False, smooth=False, flip=False))
-                EPSON.write("QUICK DROP - STORE COPY\n")
-                EPSON.write("{}\n".format(companies.name))
-                EPSON.write(
+                self.epson.write("QUICK DROP - STORE COPY\n")
+                self.epson.write("{}\n".format(companies.name))
+                self.epson.write(
                     pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write("{}\n".format(companies.street))
-                EPSON.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                EPSON.write(
+                self.epson.write("{}\n".format(companies.street))
+                self.epson.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                self.epson.write(
                     pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                 invert=False, smooth=False, flip=False))
 
-                EPSON.write("{}\n".format(Job.make_us_phone(companies.phone)))
-                EPSON.write("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
-                EPSON.write(
+                self.epson.write("{}\n".format(Job.make_us_phone(companies.phone)))
+                self.epson.write("{}\n\n".format(self.now.strftime('%a %m/%d/%Y %I:%M %p')))
+                self.epson.write(
                     pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                self.epson.write("READY BY: {}\n\n".format(self.due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+                self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
                                              invert=False, smooth=False, flip=False))
                 padded_customer_id = '{0:05d}'.format(sessions.get('_customerId')['value'])
-                EPSON.write("{}\n".format(padded_customer_id))
+                self.epson.write("{}\n".format(padded_customer_id))
 
                 # Print barcode
-                EPSON.write(pr.pcmd_barcode(str(padded_customer_id)))
+                self.epson.write(pr.pcmd_barcode(str(padded_customer_id)))
 
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
+                self.epson.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('{}\n'.format(Job.make_us_phone(customers.phone)))
-                EPSON.write(
+                self.epson.write('{}\n'.format(Job.make_us_phone(customers.phone)))
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('-----------------------------------------\n')
+                self.epson.write('-----------------------------------------\n')
 
-                EPSON.write(pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                self.epson.write(pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                              invert=False, smooth=False, flip=False))
-                EPSON.write(
+                self.epson.write(
                     '{} PCS\n'.format(
                         self.quick_box.ids.quick_count.text if self.quick_box.ids.quick_count.text else '0'))
-                EPSON.write(
+                self.epson.write(
                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                 invert=False, smooth=False, flip=False))
-                EPSON.write('-----------------------------------------\n')
+                self.epson.write('-----------------------------------------\n')
                 if self.quick_box.ids.quick_invoice_memo.text:
-                    EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
+                    self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                                  invert=False, smooth=False, flip=False))
-                    EPSON.write('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
+                    self.epson.write('{}\n'.format(self.quick_box.ids.quick_invoice_memo.text))
 
-                EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
+                self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=1, density=1,
                                              invert=False, smooth=False, flip=False))
                 # Cut paper
-                EPSON.write('\n\n\n\n\n\n')
-                EPSON.write(pr.pcmd('PARTIAL_CUT'))
+                self.epson.write('\n\n\n\n\n\n')
+                self.epson.write(pr.pcmd('PARTIAL_CUT'))
 
             else:
                 Popups.dialog_msg(title_string='Printer Error',
@@ -1248,7 +1262,7 @@ class SearchScreen(Screen):
     def reprint_invoice(self, type, *args, **kwargs):
         if sessions.get('_invoiceId')['value']:
             # print invoices
-            if EPSON:
+            if self.epson:
                 pr = Printer()
                 companies = Company()
                 marks = []
@@ -1373,53 +1387,53 @@ class SearchScreen(Screen):
                                     }
                 now = datetime.datetime.now()
                 if type == 2:
-                    EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
-                    EPSON.write(
+                    self.epson.write(pr.pcmd('TXT_ALIGN_CT'))
+                    self.epson.write(
                         pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
                                     density=5, invert=False, smooth=False, flip=False))
-                    EPSON.write("::CUSTOMER::\n")
-                    EPSON.write(
+                    self.epson.write("::CUSTOMER::\n")
+                    self.epson.write(
                         pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write("{}\n".format(companies.name))
-                    EPSON.write(
+                    self.epson.write("{}\n".format(companies.name))
+                    self.epson.write(
                         pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write("{}\n".format(companies.street))
-                    EPSON.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-                    EPSON.write(
+                    self.epson.write("{}\n".format(companies.street))
+                    self.epson.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+                    self.epson.write(
                         pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                     invert=False, smooth=False, flip=False))
 
-                    EPSON.write("{}\n".format(Job.make_us_phone(companies.phone)))
-                    EPSON.write("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
-                    EPSON.write(
+                    self.epson.write("{}\n".format(Job.make_us_phone(companies.phone)))
+                    self.epson.write("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                    self.epson.write(
                         pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2, density=5,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write("READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
+                    self.epson.write("READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                    EPSON.write(
+                    self.epson.write(
                         pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
                                     invert=False, smooth=False, flip=False))
                     padded_customer_id = '{0:05d}'.format(sessions.get('_customerId')['value'])
-                    EPSON.write("{}\n".format(padded_customer_id))
+                    self.epson.write("{}\n".format(padded_customer_id))
 
                     # Print barcode
-                    EPSON.write(pr.pcmd_barcode(str(padded_customer_id)))
+                    self.epson.write(pr.pcmd_barcode(str(padded_customer_id)))
 
-                    EPSON.write(
+                    self.epson.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
+                    self.epson.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
-                    EPSON.write(
+                    self.epson.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write("{}\n".format(Job.make_us_phone(customers.phone)))
-                    EPSON.write(
+                    self.epson.write("{}\n".format(Job.make_us_phone(customers.phone)))
+                    self.epson.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write('-----------------------------------------\n')
+                    self.epson.write('-----------------------------------------\n')
 
                     if sessions.get('_invoiceId')['value'] in print_sync_invoice:
                         item_type = 'D'
@@ -1434,40 +1448,40 @@ class SearchScreen(Screen):
                                 for color_name, color_qty in invoice_item['colors'].items():
                                     if color_name:
                                         item_color_string.append('{}-{}'.format(color_qty, color_name))
-                            EPSON.write('{} {}   {}\n'.format(item_type, item_qty, item_name))
+                            self.epson.write('{} {}   {}\n'.format(item_type, item_qty, item_name))
 
                             if len(item_memo) > 0:
-                                EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                self.epson.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                              height=1,
                                                              density=5, invert=False, smooth=False, flip=False))
-                                EPSON.write('     {}\n'.format('/ '.join(item_memo)))
+                                self.epson.write('     {}\n'.format('/ '.join(item_memo)))
                             if len(item_color_string) > 0:
-                                EPSON.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
+                                self.epson.write(pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                              height=1,
                                                              density=5, invert=False, smooth=False, flip=False))
-                                EPSON.write('     {}\n'.format(', '.join(item_color_string)))
+                                self.epson.write('     {}\n'.format(', '.join(item_color_string)))
 
-                    EPSON.write(
+                    self.epson.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write('-----------------------------------------\n')
-                    EPSON.write(
+                    self.epson.write('-----------------------------------------\n')
+                    self.epson.write(
                         pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write('{} PCS\n'.format(invoice_quantity))
-                    EPSON.write(
+                    self.epson.write('{} PCS\n'.format(invoice_quantity))
+                    self.epson.write(
                         pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                     invert=False, smooth=False, flip=False))
-                    EPSON.write('-----------------------------------------\n')
+                    self.epson.write('-----------------------------------------\n')
 
                     if customers.invoice_memo:
-                        EPSON.write(
+                        self.epson.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                         invert=False, smooth=False, flip=False))
-                        EPSON.write('{}\n'.format(customers.invoice_memo))
+                        self.epson.write('{}\n'.format(customers.invoice_memo))
                     # Cut paper
-                    EPSON.write('\n\n\n\n\n\n')
-                    EPSON.write(pr.pcmd('PARTIAL_CUT'))
+                    self.epson.write('\n\n\n\n\n\n')
+                    self.epson.write(pr.pcmd('PARTIAL_CUT'))
 
                 if type == 1:
                     # Print store copies
@@ -1478,52 +1492,52 @@ class SearchScreen(Screen):
                                 invoice_id = int(invoice_id)
 
                             # start invoice
-                            EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
-                            EPSON.write(
+                            self.epson.write(pr.pcmd('TXT_ALIGN_CT'))
+                            self.epson.write(
                                 pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
                                             density=5, invert=False, smooth=False, flip=False))
-                            EPSON.write("::COPY::\n")
-                            EPSON.write(
+                            self.epson.write("::COPY::\n")
+                            self.epson.write(
                                 pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write("{}\n".format(companies.name))
-                            EPSON.write(
+                            self.epson.write("{}\n".format(companies.name))
+                            self.epson.write(
                                 pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1,
                                             density=5,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write("{}\n".format(Job.make_us_phone(companies.phone)))
-                            EPSON.write("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
-                            EPSON.write(
+                            self.epson.write("{}\n".format(Job.make_us_phone(companies.phone)))
+                            self.epson.write("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+                            self.epson.write(
                                 pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=2,
                                             density=5,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write(
+                            self.epson.write(
                                 "READY BY: {}\n\n".format(invoice_due_date.strftime('%a %m/%d/%Y %I:%M %p')))
 
-                            EPSON.write(
+                            self.epson.write(
                                 pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write("{}\n".format('{0:06d}'.format(invoice_id)))
+                            self.epson.write("{}\n".format('{0:06d}'.format(invoice_id)))
                             # Print barcode
-                            EPSON.write(pr.pcmd_barcode('{}'.format(str('{0:06d}'.format(invoice_id)))))
+                            self.epson.write(pr.pcmd_barcode('{}'.format(str('{0:06d}'.format(invoice_id)))))
 
-                            EPSON.write(
+                            self.epson.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3,
                                             density=6,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write(
+                            self.epson.write(
                                 '{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
-                            EPSON.write(
+                            self.epson.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                             density=2,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write("{}\n".format(Job.make_us_phone(customers.phone)))
-                            EPSON.write(
+                            self.epson.write("{}\n".format(Job.make_us_phone(customers.phone)))
+                            self.epson.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                             density=1,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write('-----------------------------------------\n')
+                            self.epson.write('-----------------------------------------\n')
 
                             if invoice_id in print_sync_invoice:
                                 for item_id, invoice_item in print_sync_invoice[invoice_id].items():
@@ -1540,70 +1554,70 @@ class SearchScreen(Screen):
                                     string_length = len(item_type) + len(str(item_qty)) + len(item_name) + len(
                                         Static.us_dollar(item_price)) + 4
                                     string_offset = 42 - string_length if 42 - string_length > 0 else 0
-                                    EPSON.write('{} {}   {}{}{}\n'.format(item_type,
+                                    self.epson.write('{} {}   {}{}{}\n'.format(item_type,
                                                                                item_qty,
                                                                                item_name,
                                                                                ' ' * string_offset,
                                                                                Static.us_dollar(item_price)))
 
                                     if len(item_memo) > 0:
-                                        EPSON.write(
+                                        self.epson.write(
                                             pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                         height=1,
                                                         density=5, invert=False, smooth=False, flip=False))
-                                        EPSON.write('     {}\n'.format('/ '.join(item_memo)))
+                                        self.epson.write('     {}\n'.format('/ '.join(item_memo)))
                                     if len(item_color_string) > 0:
-                                        EPSON.write(
+                                        self.epson.write(
                                             pr.pcmd_set(align=u'LEFT', font=u'A', text_type=u'NORMAL', width=1,
                                                         height=1,
                                                         density=5, invert=False, smooth=False, flip=False))
-                                        EPSON.write('     {}\n'.format(', '.join(item_color_string)))
+                                        self.epson.write('     {}\n'.format(', '.join(item_color_string)))
 
-                            EPSON.write(
+                            self.epson.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                             density=1,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write('-----------------------------------------\n')
-                            EPSON.write(
+                            self.epson.write('-----------------------------------------\n')
+                            self.epson.write(
                                 pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write('{} PCS\n'.format(invoice_quantity))
-                            EPSON.write(
+                            self.epson.write('{} PCS\n'.format(invoice_quantity))
+                            self.epson.write(
                                 pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1,
                                             density=1,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write('-----------------------------------------\n')
-                            EPSON.write(
+                            self.epson.write('-----------------------------------------\n')
+                            self.epson.write(
                                 pr.pcmd_set(align=u"RIGHT", font=u'A', text_type=u'B', width=1, height=1, density=5,
                                             invert=False, smooth=False, flip=False))
-                            EPSON.write('    SUBTOTAL:')
-                            EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                            self.epson.write('    SUBTOTAL:')
+                            self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                             string_length = len(Static.us_dollar(invoice_subtotal))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            EPSON.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(invoice_subtotal)))
-                            EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                            EPSON.write('         TAX:')
+                            self.epson.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(invoice_subtotal)))
+                            self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                            self.epson.write('         TAX:')
                             string_length = len(Static.us_dollar(invoice_tax))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
-                            EPSON.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(invoice_tax)))
-                            EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                            EPSON.write('       TOTAL:')
-                            EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                            self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
+                            self.epson.write('{}{}\n'.format(' ' * string_offset, Static.us_dollar(invoice_tax)))
+                            self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                            self.epson.write('       TOTAL:')
+                            self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                             string_length = len(Static.us_dollar(invoice_total))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            EPSON.write('{}{}\n'.format(' ' * string_offset,
+                            self.epson.write('{}{}\n'.format(' ' * string_offset,
                                                              Static.us_dollar(invoice_total)))
-                            EPSON.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
-                            EPSON.write('     BALANCE:')
+                            self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
+                            self.epson.write('     BALANCE:')
                             string_length = len(Static.us_dollar(invoice_total))
                             string_offset = 20 - string_length if 20 - string_length >= 0 else 1
-                            EPSON.write('{}{}\n\n'.format(' ' * string_offset, Static.us_dollar(invoice_total)))
+                            self.epson.write('{}{}\n\n'.format(' ' * string_offset, Static.us_dollar(invoice_total)))
                             if customers.invoice_memo:
-                                EPSON.write(
+                                self.epson.write(
                                     pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3, density=5,
                                                 invert=False, smooth=False, flip=False))
-                                EPSON.write('{}\n'.format(customers.invoice_memo))
+                                self.epson.write('{}\n'.format(customers.invoice_memo))
                             if item_type == 'L':
                                 # get customer mark
                                 marks = SYNC.marks_query(sessions.get('_customerId')['value'], 1)
@@ -1611,14 +1625,14 @@ class SearchScreen(Screen):
                                     m_list = []
                                     for mark in marks:
                                         m_list.append(mark['mark'])
-                                    EPSON.write(
+                                    self.epson.write(
                                         pr.pcmd_set(align=u"CENTER", font=u'A', text_type=u'B', width=3, height=4,
                                                     density=8, invert=False, smooth=False, flip=False))
-                                    EPSON.write('{}\n\n'.format(', '.join(m_list)))
+                                    self.epson.write('{}\n\n'.format(', '.join(m_list)))
 
                             # Cut paper
-                            EPSON.write('\n\n\n\n\n\n')
-                            EPSON.write(pr.pcmd('PARTIAL_CUT'))
+                            self.epson.write('\n\n\n\n\n\n')
+                            self.epson.write(pr.pcmd('PARTIAL_CUT'))
             else:
                 Popups.dialog_msg(title_string='Printer Error',
                                   msg_string='No printer found. Please try again.')
@@ -1628,7 +1642,7 @@ class SearchScreen(Screen):
 
     def print_card(self, *args, **kwargs):
 
-        if EPSON:
+        if self.epson:
             pr = Printer()
             companies = Company()
             comps = SYNC.company_grab(sessions.get('_companyId')['value'])
@@ -1679,40 +1693,40 @@ class SearchScreen(Screen):
                     customers.role_id = user['role_id']
 
             now = datetime.datetime.now()
-            EPSON.write(pr.pcmd('TXT_ALIGN_CT'))
-            EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
+            self.epson.write(pr.pcmd('TXT_ALIGN_CT'))
+            self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=1, height=2, density=5,
                                          invert=False, smooth=False, flip=False))
-            EPSON.write("{}\n".format(companies.name))
-            EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+            self.epson.write("{}\n".format(companies.name))
+            self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                          invert=False, smooth=False, flip=False))
-            EPSON.write("{}\n".format(companies.street))
-            EPSON.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
-            EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
+            self.epson.write("{}\n".format(companies.street))
+            self.epson.write("{}, {} {}\n".format(companies.city, companies.state, companies.zip))
+            self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'NORMAL', width=1, height=1, density=5,
                                          invert=False, smooth=False, flip=False))
 
-            EPSON.write("{}\n".format(Job.make_us_phone(companies.phone)))
-            EPSON.write("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
+            self.epson.write("{}\n".format(Job.make_us_phone(companies.phone)))
+            self.epson.write("{}\n\n".format(now.strftime('%a %m/%d/%Y %I:%M %p')))
 
-            EPSON.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
+            self.epson.write(pr.pcmd_set(align=u'CENTER', font=u'A', text_type=u'B', width=4, height=4, density=5,
                                          invert=False, smooth=False, flip=False))
             # Print barcode
             padded_customer_id = '{0:05d}'.format(sessions.get('_customerId')['value'])
-            EPSON.write("{}\n".format(padded_customer_id))
-            EPSON.write(pr.pcmd_barcode(str(padded_customer_id)))
-            EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
+            self.epson.write("{}\n".format(padded_customer_id))
+            self.epson.write(pr.pcmd_barcode(str(padded_customer_id)))
+            self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=2, height=3, density=6,
                                          invert=False, smooth=False, flip=False))
-            EPSON.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
+            self.epson.write('{}, {}\n'.format(customers.last_name.upper(), customers.first_name))
 
-            EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
+            self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=2,
                                          invert=False, smooth=False, flip=False))
-            EPSON.write("{}\n".format(Job.make_us_phone(customers.phone)))
-            EPSON.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
+            self.epson.write("{}\n".format(Job.make_us_phone(customers.phone)))
+            self.epson.write(pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'NORMAL', width=1, height=1, density=1,
                                          invert=False, smooth=False, flip=False))
 
-            EPSON.write('-----------------------------------------\n')
+            self.epson.write('-----------------------------------------\n')
             # Cut paper
-            EPSON.write('\n\n\n\n\n\n')
-            EPSON.write(pr.pcmd('PARTIAL_CUT'))
+            self.epson.write('\n\n\n\n\n\n')
+            self.epson.write(pr.pcmd('PARTIAL_CUT'))
 
         else:
             Popups.dialog_msg('Printer Error', 'No printer found. Please try again.')
@@ -1893,12 +1907,12 @@ class SearchScreen(Screen):
             name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
                                                  phone_number)
 
-            if BIXOLON:
+            if self.bixolon:
 
                 laundry_to_print = []
                 if invoice_items:
-                    # BIXOLON.write('\x1b\x40')
-                    # BIXOLON.write('\x1b\x6d')
+                    # self.bixolon.write('\x1b\x40')
+                    # self.bixolon.write('\x1b\x6d')
                     for ii in invoice_items:
 
                         iitem_id = ii['item_id']
@@ -1913,29 +1927,29 @@ class SearchScreen(Screen):
                         else:
                             for _ in range(tags_to_print):
 
-                                BIXOLON.write('\x1b!\x30')  # QUAD SIZE
-                                BIXOLON.write('{}{}\n'.format(text_left, text_right))
-                                BIXOLON.write('\x1b!\x00')
-                                BIXOLON.write(name_number_string)
-                                BIXOLON.write('\n')
-                                BIXOLON.write('{0:06d}'.format(int(invoice_item_id)))
-                                BIXOLON.write(' {} {}'.format(item_name, item_color))
+                                self.bixolon.write('\x1b!\x30')  # QUAD SIZE
+                                self.bixolon.write('{}{}\n'.format(text_left, text_right))
+                                self.bixolon.write('\x1b!\x00')
+                                self.bixolon.write(name_number_string)
+                                self.bixolon.write('\n')
+                                self.bixolon.write('{0:06d}'.format(int(invoice_item_id)))
+                                self.bixolon.write(' {} {}'.format(item_name, item_color))
                                 if memo_string:
-                                    BIXOLON.write('\n{}'.format(memo_string))
+                                    self.bixolon.write('\n{}'.format(memo_string))
                                     memo_len = '\n\n\n' if len(
                                         memo_string) <= 32 else '\n\n\n' + '\n' * int(
                                         (len(memo_string)) / 32)
-                                    BIXOLON.write(memo_len)
-                                    BIXOLON.write('\x1b\x6d')
+                                    self.bixolon.write(memo_len)
+                                    self.bixolon.write('\x1b\x6d')
 
                                 else:
 
-                                    BIXOLON.write('\n\n\n')
-                                    BIXOLON.write('\x1b\x6d')
+                                    self.bixolon.write('\n\n\n')
+                                    self.bixolon.write('\x1b\x6d')
 
                 if len(laundry_to_print) > 0:
-                    # BIXOLON.write('\x1b\x40')
-                    # BIXOLON.write('\x1b\x6d')
+                    # self.bixolon.write('\x1b\x40')
+                    # self.bixolon.write('\x1b\x6d')
                     laundry_count = len(laundry_to_print)
                     shirt_mark = Custid().getCustomerMark(sessions.get('_customerId')['value'])
                     marks = SYNC.marks_query(sessions.get('_customerId')['value'], 1)
@@ -1964,19 +1978,19 @@ class SearchScreen(Screen):
                             mark_mark_string = '{}'.format(shirt_mark)
                             id_id_string = '{}'.format(invoice_item_id_start)
 
-                        BIXOLON.write('\x1b!\x30')  # QUAD SIZE
-                        BIXOLON.write(mark_mark_string)
-                        BIXOLON.write('\n')
-                        BIXOLON.write('\x1b!\x00')
-                        BIXOLON.write(name_name_string)
-                        BIXOLON.write('\n')
-                        BIXOLON.write(id_id_string)
+                        self.bixolon.write('\x1b!\x30')  # QUAD SIZE
+                        self.bixolon.write(mark_mark_string)
+                        self.bixolon.write('\n')
+                        self.bixolon.write('\x1b!\x00')
+                        self.bixolon.write(name_name_string)
+                        self.bixolon.write('\n')
+                        self.bixolon.write(id_id_string)
 
-                        BIXOLON.write('\n\n\n\x1b\x6d')
+                        self.bixolon.write('\n\n\n\x1b\x6d')
 
                 # FINAL CUT
-                BIXOLON.write('\n\n\n\n\n\n')
-                BIXOLON.write('\x1b\x6d')
+                self.bixolon.write('\n\n\n\n\n\n')
+                self.bixolon.write('\x1b\x6d')
 
         else:
             Popups.dialog_msg('Reprint Error', 'Please select an invoice')
@@ -2044,9 +2058,9 @@ class SearchScreen(Screen):
             name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
                                                  phone_number)
             laundry_to_print = []
-            if BIXOLON:
-                BIXOLON.write('\x1b\x40')
-                BIXOLON.write('\x1b\x6d')
+            if self.bixolon:
+                self.bixolon.write('\x1b\x40')
+                self.bixolon.write('\x1b\x6d')
 
                 for item_id in self.selected_tags_list:
                     inv_items = SYNC.invoice_item_grab(item_id)
@@ -2064,29 +2078,29 @@ class SearchScreen(Screen):
 
                             for _ in range(tags_to_print):
 
-                                BIXOLON.write('\x1b!\x30')  # QUAD SIZE
-                                BIXOLON.write('{}{}\n'.format(text_left, text_right))
-                                BIXOLON.write('\x1b!\x00')
-                                BIXOLON.write(name_number_string)
-                                BIXOLON.write('\n')
-                                BIXOLON.write('{0:06d}'.format(int(invoice_item_id)))
-                                BIXOLON.write(' {} {}'.format(item_name, item_color))
+                                self.bixolon.write('\x1b!\x30')  # QUAD SIZE
+                                self.bixolon.write('{}{}\n'.format(text_left, text_right))
+                                self.bixolon.write('\x1b!\x00')
+                                self.bixolon.write(name_number_string)
+                                self.bixolon.write('\n')
+                                self.bixolon.write('{0:06d}'.format(int(invoice_item_id)))
+                                self.bixolon.write(' {} {}'.format(item_name, item_color))
                                 if memo_string:
-                                    BIXOLON.write('\n{}'.format(memo_string))
+                                    self.bixolon.write('\n{}'.format(memo_string))
                                     memo_len = '\n\n\n' if len(
                                         memo_string) <= 32 else '\n\n\n' + '\n' * int(
                                         (len(memo_string)) / 32)
-                                    BIXOLON.write(memo_len)
-                                    BIXOLON.write('\x1b\x6d')
+                                    self.bixolon.write(memo_len)
+                                    self.bixolon.write('\x1b\x6d')
 
                                 else:
 
-                                    BIXOLON.write('\n\n\n')
-                                    BIXOLON.write('\x1b\x6d')
+                                    self.bixolon.write('\n\n\n')
+                                    self.bixolon.write('\x1b\x6d')
                 if len(laundry_to_print) is 0:
                     # FINAL CUT
-                    BIXOLON.write('\n\n\n\n\n\n')
-                    BIXOLON.write('\x1b\x6d')
+                    self.bixolon.write('\n\n\n\n\n\n')
+                    self.bixolon.write('\x1b\x6d')
                 else:
 
                     laundry_count = len(laundry_to_print)
@@ -2117,19 +2131,19 @@ class SearchScreen(Screen):
                             mark_mark_string = '{}'.format(shirt_mark)
                             id_id_string = '{}'.format(invoice_item_id_start)
 
-                        BIXOLON.write('\x1b!\x30')  # QUAD SIZE
-                        BIXOLON.write(mark_mark_string)
-                        BIXOLON.write('\n')
-                        BIXOLON.write('\x1b!\x00')
-                        BIXOLON.write(name_name_string)
-                        BIXOLON.write('\n')
-                        BIXOLON.write(id_id_string)
+                        self.bixolon.write('\x1b!\x30')  # QUAD SIZE
+                        self.bixolon.write(mark_mark_string)
+                        self.bixolon.write('\n')
+                        self.bixolon.write('\x1b!\x00')
+                        self.bixolon.write(name_name_string)
+                        self.bixolon.write('\n')
+                        self.bixolon.write(id_id_string)
 
-                        BIXOLON.write('\n\n\n\x1b\x6d')
+                        self.bixolon.write('\n\n\n\x1b\x6d')
 
                     # FINAL CUT
-                    BIXOLON.write('\n\n\n\n\n\n')
-                    BIXOLON.write('\x1b\x6d')
+                    self.bixolon.write('\n\n\n\n\n\n')
+                    self.bixolon.write('\x1b\x6d')
             else:
                 Popups.dialog_msg('Reprint Error', 'Tag printer is not available')
 
@@ -2293,7 +2307,7 @@ A{c},20,1,1,1,1,N,"{tag}"
 '''.format(a=inititate,
            b=content,
            c=close)
-                        ZEBRA.write(final_content)
+                        self.zebra.write(final_content)
                         break
 
                 final_content = '''
@@ -2303,7 +2317,7 @@ A{c},20,1,1,1,1,N,"{tag}"
 '''.format(a=inititate,
            b=content,
            c=close)
-            ZEBRA.write(final_content)
+            self.zebra.write(final_content)
         else:
             Popups.dialog_msg('Label Error', 'Please select a customer before printing out a label')
 
