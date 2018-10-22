@@ -348,12 +348,10 @@ WHERE id = ?'''.format(t=table), (self.item_id,
         self.conn.commit()
         self._tearDown()
 
-    def get_image_src(self, item_id, *args, **kwargs):
+    def get_image_src(self, addr, *args, **kwargs):
         src = 'src'
-        inventory_items = self.where({'item_id': item_id})
-        if inventory_items:
-            for inventory_item in inventory_items:
-                img_src = '{}/{}'.format(src, inventory_item['image'])
+        if src:
+            img_src = '{}/{}'.format(src, addr)
         else:
             img_src = '{}/{}'.format(src, 'img/inventory/question.png')
 
