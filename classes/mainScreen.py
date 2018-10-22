@@ -80,6 +80,7 @@ class MainScreen(Screen):
             pass
 
     def isRemembered(self):
+
         self.active_state()
         self.reconnect_printers()
         SYNC_POPUP.title = 'Welcome back!'
@@ -108,6 +109,7 @@ class MainScreen(Screen):
         return info
 
     def reconnect_printers(self):
+        self.receipt_status.set_resize()
         os = sessions.get('_os')['value']
         backend = Printer().backend_location(os)
         print('backend = {}'.format(backend))
