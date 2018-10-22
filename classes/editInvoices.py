@@ -408,7 +408,7 @@ class EditInvoiceScreen(Screen):
                         'text': '[b]{}[/b]\n[i]{}[/i]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
                         'item_id': x['id'],
                         'Image': {
-                            'source': '{}'.format(iitems.get_image_src(x['id'])),
+                            'source': '{}'.format(iitems.get_image_src(x['image'])),
                             'size': '(sp(50),sp(50))',
                             'center_x': 'self.parent.center_x',
                             'center_y': 'self.parent.center_y',
