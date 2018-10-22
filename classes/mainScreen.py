@@ -109,13 +109,13 @@ class MainScreen(Screen):
         return info
 
     def reconnect_printers(self):
-        self.receipt_status.set_resize()
+
         os = sessions.get('_os')['value']
         backend = Printer().backend_location(os)
         print('backend = {}'.format(backend))
         known_devices = Printer().printer_list()
         if 'epson' in known_devices:
-            self.receipt_status.canvas_set('disconnected')
+
             epson_known_device = known_devices['epson']
             for unknown_device in epson_known_device:
                 productId = unknown_device['_productId']
@@ -133,7 +133,6 @@ class MainScreen(Screen):
                         break
         if 'bixolon' in known_devices:
             bixolon_known_device = known_devices['bixolon']
-            self.tags_status.canvas_set('disconnected')
             for unknown_device in bixolon_known_device:
                 productId = unknown_device['_productId']
                 vendorId = unknown_device['_vendorId']
