@@ -120,7 +120,7 @@ class MainScreen(Screen):
             for unknown_device in epson_known_device:
                 productId = unknown_device['_productId']
                 vendorId = unknown_device['_vendorId']
-                device = self.print_setup(hex(vendorId), hex(productId), backend)
+                device = self.print_setup(hex(int(vendorId, 16)), hex(int(productId, 16)), backend)
                 if device:
                     print('successfully printed and saving epson device')
                     if self.print_setup_test(device, 'epson'):
@@ -137,7 +137,7 @@ class MainScreen(Screen):
             for unknown_device in bixolon_known_device:
                 productId = unknown_device['_productId']
                 vendorId = unknown_device['_vendorId']
-                device = self.print_setup_tag(hex(vendorId), hex(productId), backend)
+                device = self.print_setup_tag(hex(int(vendorId, 16)), hex(int(productId, 16)), backend)
                 if device:
                     print('successfully printed and saving bixolon device')
                     if self.print_setup_test(device, 'bixolon'):
