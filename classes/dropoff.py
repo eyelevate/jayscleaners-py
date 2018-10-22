@@ -1009,7 +1009,7 @@ class DropoffScreen(Screen):
         self.adjust_sum_grid = GridLayout(size_hint_y=None,
                                           cols=4,
                                           row_force_default=True,
-                                          row_default_height='60sp')
+                                          row_default_height='50sp')
         self.adjust_sum_grid.bind(minimum_height=self.adjust_sum_grid.setter('height'))
         self.make_adjustment_sum_table()
         adjust_sum_scroll.add_widget(self.adjust_sum_grid)
@@ -1219,8 +1219,6 @@ class DropoffScreen(Screen):
         calculator_top.add_widget(self.calculator_text)
         calculator_main_layout = GridLayout(cols=3,
                                             rows=4,
-                                            row_force_default=True,
-                                            row_default_height='50sp',
                                             size_hint=(1, 0.8))
         calculator_main_layout.add_widget(Button(markup=True,
                                                  text="[b]7[/b]",
