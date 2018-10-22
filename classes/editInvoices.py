@@ -152,181 +152,180 @@ class EditInvoiceScreen(Screen):
         self.memo_list = []
         self.company_ids = []
         self.item_rows = {}
-        comp = Company()
+
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
-        store_hours = comp.get_store_hours(self.invoice_company_id)
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
 
-        if store_hours is False:
-            comp.retrieve(self.invoice_company_id)
-            store_hours = comp.store_hours
+                turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
+                turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+                turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+                turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
+                new_date = today + datetime.timedelta(days=turn_around_day)
+                date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_minutes)
 
-        turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
-        new_date = today + datetime.timedelta(days=turn_around_day)
-        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
-                                           turn_around_minutes)
+                total_tags = InvoiceItem().total_tags(self.invoice_id)
+                invoice_items = []
+                invoices = SYNC.invoice_grab_id(self.invoice_id)
+                if invoices is not False:
+                    invoice_items = invoices['invoice_items']
+                self.invoice_list = OrderedDict()
+                self.invoice_list_copy = OrderedDict()
 
-        total_tags = InvoiceItem().total_tags(self.invoice_id)
-        invoice_items = []
-        invoices = SYNC.invoice_grab_id(self.invoice_id)
-        if invoices is not False:
-            invoice_items = invoices['invoice_items']
-        self.invoice_list = OrderedDict()
-        self.invoice_list_copy = OrderedDict()
+                customers = SYNC.customers_grab(self.customer_id_backup)
+                if customers:
+                    for customer in customers:
+                        self.starch = Static.get_starch_by_code(customer['starch'])
+                else:
+                    self.starch = Static.get_starch_by_code(None)
+                if invoice_items:
+                    for invoice_item in invoice_items:
+                        invoice_items_id = invoice_item['id']
+                        item_id = int(invoice_item['item_id'])
+                        items = SYNC.inventory_items_grab(item_id)
+                        if invoice_item['company_id'] not in self.company_ids:
+                            self.company_ids.append(invoice_item['company_id'])
+                        self.invoice_company_id = invoice_item['company_id']
 
-        customers = SYNC.customers_grab(self.customer_id_backup)
-        if customers:
-            for customer in customers:
-                self.starch = Static.get_starch_by_code(customer['starch'])
-        else:
-            self.starch = Static.get_starch_by_code(None)
-        if invoice_items:
-            for invoice_item in invoice_items:
-                invoice_items_id = invoice_item['id']
-                item_id = int(invoice_item['item_id'])
-                items = SYNC.inventory_items_grab(item_id)
-                if invoice_item['company_id'] not in self.company_ids:
-                    self.company_ids.append(invoice_item['company_id'])
-                self.invoice_company_id = invoice_item['company_id']
+                        if items is not False:
+                            inventory_id = items['inventory_id']
+                            self.inventory_id = inventory_id
 
-                if items is not False:
-                    inventory_id = items['inventory_id']
-                    self.inventory_id = inventory_id
+                            inventories = SYNC.inventory_grab(self.inventory_id)
+                            tags = items['tags']
+                            if inventories:
 
-                    inventories = SYNC.inventory_grab(self.inventory_id)
-                    tags = items['tags']
-                    if inventories:
+                                inventory_init = inventories['name'][:1].capitalize()
+                                laundry = inventories['laundry']
+                            else:
+                                inventory_init = ''
+                                laundry = 0
 
-                        inventory_init = inventories['name'][:1].capitalize()
-                        laundry = inventories['laundry']
-                    else:
-                        inventory_init = ''
-                        laundry = 0
+                            item_name = '{} ({})'.format(items['name'], self.starch) if laundry else items['name']
+                            if int(item_id) in self.invoice_list:
+                                self.invoice_list[item_id].append({
+                                    'invoice_items_id': invoice_items_id,
+                                    'type': inventory_init,
+                                    'inventory_id': inventory_id,
+                                    'item_id': item_id,
+                                    'item_name': item_name,
+                                    'item_price': Decimal(invoice_item['pretax']),
+                                    'color': invoice_item['color'],
+                                    'memo': invoice_item['memo'],
+                                    'qty': int(invoice_item['quantity']),
+                                    'tags': int(tags) if tags else 1,
+                                    'deleted': False
+                                })
+                                self.invoice_list_copy[item_id].append({
+                                    'invoice_items_id': invoice_items_id,
+                                    'type': inventory_init,
+                                    'inventory_id': inventory_id,
+                                    'item_id': item_id,
+                                    'item_name': item_name,
+                                    'item_price': Decimal(invoice_item['pretax']),
+                                    'color': invoice_item['color'],
+                                    'memo': invoice_item['memo'],
+                                    'qty': int(invoice_item['quantity']),
+                                    'tags': int(tags) if tags else 1,
+                                    'deleted': False
+                                })
+                            else:
+                                self.invoice_list[item_id] = [{
+                                    'invoice_items_id': invoice_items_id,
+                                    'type': inventory_init,
+                                    'inventory_id': inventory_id,
+                                    'item_id': item_id,
+                                    'item_name': item_name,
+                                    'item_price': Decimal(invoice_item['pretax']),
+                                    'color': invoice_item['color'],
+                                    'memo': invoice_item['memo'],
+                                    'qty': int(invoice_item['quantity']),
+                                    'tags': int(tags) if tags else 1,
+                                    'deleted': False
+                                }]
+                                self.invoice_list_copy[item_id] = [{
+                                    'invoice_items_id': invoice_items_id,
+                                    'type': inventory_init,
+                                    'inventory_id': inventory_id,
+                                    'item_id': item_id,
+                                    'item_name': item_name,
+                                    'item_price': Decimal(invoice_item['pretax']),
+                                    'color': invoice_item['color'],
+                                    'memo': invoice_item['memo'],
+                                    'qty': int(invoice_item['quantity']),
+                                    'tags': int(tags) if tags else 1,
+                                    'deleted': False
+                                }]
+                        for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
+                            sessions.put('_itemId',value=int(key))
+                            break
 
-                    item_name = '{} ({})'.format(items['name'], self.starch) if laundry else items['name']
-                    if int(item_id) in self.invoice_list:
-                        self.invoice_list[item_id].append({
-                            'invoice_items_id': invoice_items_id,
-                            'type': inventory_init,
-                            'inventory_id': inventory_id,
-                            'item_id': item_id,
-                            'item_name': item_name,
-                            'item_price': Decimal(invoice_item['pretax']),
-                            'color': invoice_item['color'],
-                            'memo': invoice_item['memo'],
-                            'qty': int(invoice_item['quantity']),
-                            'tags': int(tags) if tags else 1,
-                            'deleted': False
-                        })
-                        self.invoice_list_copy[item_id].append({
-                            'invoice_items_id': invoice_items_id,
-                            'type': inventory_init,
-                            'inventory_id': inventory_id,
-                            'item_id': item_id,
-                            'item_name': item_name,
-                            'item_price': Decimal(invoice_item['pretax']),
-                            'color': invoice_item['color'],
-                            'memo': invoice_item['memo'],
-                            'qty': int(invoice_item['quantity']),
-                            'tags': int(tags) if tags else 1,
-                            'deleted': False
-                        })
-                    else:
-                        self.invoice_list[item_id] = [{
-                            'invoice_items_id': invoice_items_id,
-                            'type': inventory_init,
-                            'inventory_id': inventory_id,
-                            'item_id': item_id,
-                            'item_name': item_name,
-                            'item_price': Decimal(invoice_item['pretax']),
-                            'color': invoice_item['color'],
-                            'memo': invoice_item['memo'],
-                            'qty': int(invoice_item['quantity']),
-                            'tags': int(tags) if tags else 1,
-                            'deleted': False
-                        }]
-                        self.invoice_list_copy[item_id] = [{
-                            'invoice_items_id': invoice_items_id,
-                            'type': inventory_init,
-                            'inventory_id': inventory_id,
-                            'item_id': item_id,
-                            'item_name': item_name,
-                            'item_price': Decimal(invoice_item['pretax']),
-                            'color': invoice_item['color'],
-                            'memo': invoice_item['memo'],
-                            'qty': int(invoice_item['quantity']),
-                            'tags': int(tags) if tags else 1,
-                            'deleted': False
-                        }]
-                for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
-                    sessions.put('_itemId',value=int(key))
-                    break
+                if invoices is not False:
 
-        if invoices is not False:
+                    self.due_date = datetime.datetime.strptime(invoices['due_date'], "%Y-%m-%d %H:%M:%S")
+                    self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+                    self.summary_quantity_label.text = '[color=000000]{}[/color]'.format(invoices['quantity'])
+                    self.summary_tags_label.text = '[color=000000]{}[/color]'.format(total_tags)
+                    self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(Static.us_dollar(invoices['pretax']))
+                    self.summary_tax_label.text = '[color=000000]{}[/color]'.format(Static.us_dollar(invoices['tax']))
+                    self.summary_discount_label.text = '[color=000000]($0.00)[/color]'
+                    self.summary_total_label.text = '[color=000000]{}[/color]'.format(Static.us_dollar(invoices['total']))
+                    self.quantity = invoices['quantity']
+                    self.tags = total_tags
+                    self.subtotal = float(invoices['pretax'])
+                    self.tax = float(invoices['tax'])
+                    self.discount = 0
+                    self.total = float(invoices['total'])
+                else:
+                    self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                    self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+                    self.summary_quantity_label.text = '[color=000000]0[/color]'
+                    self.summary_tags_label.text = '[color=000000]0[/color]'
+                    self.summary_subtotal_label.text = '[color=000000]$0.00[/color]'
+                    self.summary_tax_label.text = '[color=000000]$0.00[/color]'
+                    self.summary_discount_label.text = '[color=000000]($0.00)[/color]'
+                    self.summary_total_label.text = '[color=000000]$0.00[/color]'
+                    self.quantity = 0
+                    self.tags = 0
+                    self.subtotal = 0
+                    self.tax = 0
+                    self.discount = 0
+                    self.total = 0
 
-            self.due_date = datetime.datetime.strptime(invoices['due_date'], "%Y-%m-%d %H:%M:%S")
-            self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
-            self.summary_quantity_label.text = '[color=000000]{}[/color]'.format(invoices['quantity'])
-            self.summary_tags_label.text = '[color=000000]{}[/color]'.format(total_tags)
-            self.summary_subtotal_label.text = '[color=000000]{}[/color]'.format(Static.us_dollar(invoices['pretax']))
-            self.summary_tax_label.text = '[color=000000]{}[/color]'.format(Static.us_dollar(invoices['tax']))
-            self.summary_discount_label.text = '[color=000000]($0.00)[/color]'
-            self.summary_total_label.text = '[color=000000]{}[/color]'.format(Static.us_dollar(invoices['total']))
-            self.quantity = invoices['quantity']
-            self.tags = total_tags
-            self.subtotal = float(invoices['pretax'])
-            self.tax = float(invoices['tax'])
-            self.discount = 0
-            self.total = float(invoices['total'])
-        else:
-            self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-            self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
-            self.summary_quantity_label.text = '[color=000000]0[/color]'
-            self.summary_tags_label.text = '[color=000000]0[/color]'
-            self.summary_subtotal_label.text = '[color=000000]$0.00[/color]'
-            self.summary_tax_label.text = '[color=000000]$0.00[/color]'
-            self.summary_discount_label.text = '[color=000000]($0.00)[/color]'
-            self.summary_total_label.text = '[color=000000]$0.00[/color]'
-            self.quantity = 0
-            self.tags = 0
-            self.subtotal = 0
-            self.tax = 0
-            self.discount = 0
-            self.total = 0
+                self.date_picker.text = self.due_date_string
 
-        self.date_picker.text = self.due_date_string
+                self.memo_color_popup.dismiss()
+                self.qty_clicks = 0
+                self.inv_qty = 1
+                self.inv_qty_list = ['1']
+                self.qty_count_label.text = '1'
+                self.memo_text_input.text = ''
+                self.adjust_price = 0
+                self.adjust_price_list = []
+                self.get_inventory()
+                q = threading.Thread(target=self.get_colors_main)
+                r = threading.Thread(target=self.calculate_totals)
+                try:
+                    r.start()
+                    q.start()
 
-        self.memo_color_popup.dismiss()
-        self.qty_clicks = 0
-        self.inv_qty = 1
-        self.inv_qty_list = ['1']
-        self.qty_count_label.text = '1'
-        self.memo_text_input.text = ''
-        self.adjust_price = 0
-        self.adjust_price_list = []
-        self.get_inventory()
-        q = threading.Thread(target=self.get_colors_main)
-        r = threading.Thread(target=self.calculate_totals)
-        try:
-            r.start()
-            q.start()
+                except RuntimeError as e:
+                    pass
 
-        except RuntimeError as e:
-            pass
+                taxes = SYNC.taxes_query(self.invoice_company_id, 1)
+                if taxes:
+                    for tax in taxes:
+                        sessions.put('_taxRate', value=float(tax['rate']))
+                else:
+                    sessions.put('_taxRate', value=0.096)
 
-        taxes = SYNC.taxes_query(self.invoice_company_id, 1)
-        if taxes:
-            for tax in taxes:
-                sessions.put('_taxRate', value=float(tax['rate']))
-        else:
-            sessions.put('_taxRate', value=0.096)
-
-        self.deleted_rows = []
-        self.calculate_totals()
+                self.deleted_rows = []
+                self.calculate_totals()
 
     def set_result_status(self):
         sessions.put('_customerId', value=self.customer_id_backup)
@@ -1530,73 +1529,76 @@ class EditInvoiceScreen(Screen):
     def create_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(self.invoice_company_id)
-        today_date = datetime.datetime.today()
-        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
-        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
-        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
-        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
+                today_date = datetime.datetime.today()
+                today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+                check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+                due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
+                check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
 
-        self.calendar_layout.clear_widgets()
-        calendars = Calendar()
-        calendars.setfirstweekday(calendar.SUNDAY)
-        selected_month = self.month - 1
-        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
-        th1 = KV.invoice_tr(0, 'Su')
-        th2 = KV.invoice_tr(0, 'Mo')
-        th3 = KV.invoice_tr(0, 'Tu')
-        th4 = KV.invoice_tr(0, 'We')
-        th5 = KV.invoice_tr(0, 'Th')
-        th6 = KV.invoice_tr(0, 'Fr')
-        th7 = KV.invoice_tr(0, 'Sa')
-        self.calendar_layout.add_widget(Builder.load_string(th1))
-        self.calendar_layout.add_widget(Builder.load_string(th2))
-        self.calendar_layout.add_widget(Builder.load_string(th3))
-        self.calendar_layout.add_widget(Builder.load_string(th4))
-        self.calendar_layout.add_widget(Builder.load_string(th5))
-        self.calendar_layout.add_widget(Builder.load_string(th6))
-        self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
-            for month in year_dates[selected_month]:
-                for week in month:
-                    for day in week:
-                        if day[0] > 0:
-                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
-                                                                           Job.date_leading_zeroes(self.month),
-                                                                           Job.date_leading_zeroes(day[0]))
-                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
-                            check_date = today_base.timestamp()
-                            dow_check = today_base.strftime("%w")
-                            # rule #1 remove all past dates so users cannot set a due date previous to today
-                            if check_date < check_today:
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
-                                if check_date == check_today:
-                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                  background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
-                                elif check_date == check_due_date:
-                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(
-                                                                      0.2156862, 0.9921568, 0.98823529, 1),
-                                                                  background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
-                                elif check_today < check_date < check_due_date:
-                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0.878431372549020, 1, 1, 1),
-                                                                  background_normal='',
-                                                                  on_release=partial(self.select_due_date, today_base))
+                self.calendar_layout.clear_widgets()
+                calendars = Calendar()
+                calendars.setfirstweekday(calendar.SUNDAY)
+                selected_month = self.month - 1
+                year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+                th1 = KV.invoice_tr(0, 'Su')
+                th2 = KV.invoice_tr(0, 'Mo')
+                th3 = KV.invoice_tr(0, 'Tu')
+                th4 = KV.invoice_tr(0, 'We')
+                th5 = KV.invoice_tr(0, 'Th')
+                th6 = KV.invoice_tr(0, 'Fr')
+                th7 = KV.invoice_tr(0, 'Sa')
+                self.calendar_layout.add_widget(Builder.load_string(th1))
+                self.calendar_layout.add_widget(Builder.load_string(th2))
+                self.calendar_layout.add_widget(Builder.load_string(th3))
+                self.calendar_layout.add_widget(Builder.load_string(th4))
+                self.calendar_layout.add_widget(Builder.load_string(th5))
+                self.calendar_layout.add_widget(Builder.load_string(th6))
+                self.calendar_layout.add_widget(Builder.load_string(th7))
+                if year_dates[selected_month]:
+                    for month in year_dates[selected_month]:
+                        for week in month:
+                            for day in week:
+                                if day[0] > 0:
+                                    check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                                   Job.date_leading_zeroes(self.month),
+                                                                                   Job.date_leading_zeroes(day[0]))
+                                    today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                                    check_date = today_base.timestamp()
+                                    dow_check = today_base.strftime("%w")
+                                    # rule #1 remove all past dates so users cannot set a due date previous to today
+                                    if check_date < check_today:
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
+                                    elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                        if check_date == check_today:
+                                            item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                          background_normal='',
+                                                                          on_release=partial(self.select_due_date, today_base))
+                                        elif check_date == check_due_date:
+                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(
+                                                                              0.2156862, 0.9921568, 0.98823529, 1),
+                                                                          background_normal='',
+                                                                          on_release=partial(self.select_due_date, today_base))
+                                        elif check_today < check_date < check_due_date:
+                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(0.878431372549020, 1, 1, 1),
+                                                                          background_normal='',
+                                                                          on_release=partial(self.select_due_date, today_base))
+                                        else:
+                                            item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                          on_release=partial(self.select_due_date, today_base))
+                                    else:  # store is closed
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
                                 else:
-                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  on_release=partial(self.select_due_date, today_base))
-                            else:  # store is closed
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                        else:
-                            item = Factory.CalendarButton(disabled=True)
-                        self.calendar_layout.add_widget(item)
+                                    item = Factory.CalendarButton(disabled=True)
+                                self.calendar_layout.add_widget(item)
 
     def prev_month(self, *args, **kwargs):
         if self.month == 1:
@@ -1627,19 +1629,22 @@ class EditInvoiceScreen(Screen):
         self.create_calendar_table()
 
     def select_due_date(self, selected_date, *args, **kwargs):
-        store_hours = Company().get_store_hours(self.invoice_company_id)
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
 
-        dow = int(selected_date.strftime("%w"))
-        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
-        date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
-                                           turn_around_minutes)
-        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
-        self.date_picker.text = self.due_date_string
-        self.create_calendar_table()
+                dow = int(selected_date.strftime("%w"))
+                turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+                turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+                turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+                date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_minutes)
+                self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+                self.date_picker.text = self.due_date_string
+                self.create_calendar_table()
 
     def print_selection(self):
         self.print_popup = Popup()
