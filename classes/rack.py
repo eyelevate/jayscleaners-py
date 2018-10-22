@@ -21,7 +21,7 @@ from pubsub import pub
 KV = KvString()
 SYNC_POPUP = Popup()
 SYNC = Sync()
-EPSON = sessions.get('_epson')['value']
+EPSON = sessions.get('_connectedDevices')['epson']['device']
 
 
 class RackScreen(Screen):

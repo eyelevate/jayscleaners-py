@@ -38,8 +38,8 @@ from pubsub import pub
 SYNC_POPUP = Popup()
 SYNC = Sync()
 KV = KvString()
-EPSON = sessions.get('_epson')['value']
-BIXOLON = sessions.get('_bixolon')['value']
+EPSON = sessions.get('_connectedDevices')['epson']['device']
+BIXOLON = sessions.get('_connectedDevices')['bixolon']['device']
 
 
 class DropoffScreen(Screen):

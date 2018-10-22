@@ -39,8 +39,8 @@ KV = KvString()
 Job = Job()
 unix = time.time()
 NOW = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-EPSON = sessions.get('_epson')['value']
-BIXOLON = sessions.get('_bixolon')['value']
+EPSON = sessions.get('_connectedDevices')['epson']['device']
+BIXOLON = sessions.get('_connectedDevices')['bixolon']['device']
 
 class HistoryScreen(Screen):
     history_table_rv = ObjectProperty(None)

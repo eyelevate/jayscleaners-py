@@ -85,9 +85,10 @@ workQueue = queue.Queue(10)
 list_len = []
 printer_list = {}
 SYNC_POPUP = Popup()
-EPSON = sessions.get('_epson')['value']
-BIXOLON = sessions.get('_bixolon')['value']
-ZEBRA = sessions.get('_zebra')['value']
+EPSON = sessions.get('_connectedDevices')['epson']['device']
+BIXOLON = sessions.get('_connectedDevices')['bixolon']['device']
+ZEBRA = sessions.get('_connectedDevices')['zebra']['device']
+
 
 class SearchScreen(Screen):
     id = ObjectProperty(None)

@@ -51,7 +51,7 @@ if not sessions.exists('_racks'):
 if not sessions.exists('_rowGroup'):
     sessions.put('_rowGroup', value=0)
 if not sessions.exists('_rowSearch'):
-    sessions.put('_rowSearch', value=(0,9))
+    sessions.put('_rowSearch', value=(0, 9))
 if not sessions.exists('_rowCap'):
     sessions.put('_rowCap', value=0)
 if not sessions.exists('_taxRate'):
@@ -71,7 +71,18 @@ if not sessions.exists('_threadId'):
 if not sessions.exists('_threads'):
     sessions.put('_threads', value=[])
 if not sessions.exists('_connected_devices'):
-    sessions.put('_connected_devices',epson=None, bixolon=None, zebra=None)
+    sessions.put('_connected_devices', epson={'productId': None,
+                                              'vendorId': None,
+                                              'backend': None,
+                                              'device': None},
+                 bixolon={'productId': None,
+                          'vendorId': None,
+                          'backend': None,
+                          'device': None},
+                 zebra={'productId': None,
+                        'vendorId': None,
+                        'backend': None,
+                        'device': None}, )
 if not sessions.exists('_epson'):
     sessions.put('_epson', epson=None)
 if not sessions.exists('_bixolon'):
@@ -81,6 +92,5 @@ if not sessions.exists('_usDollar'):
 if not sessions.exists('_zebra'):
     sessions.put('_zebra', zebra=None)
 if not sessions.exists('_usbFactory'):
-    sessions.put('_usbFactory',factory=USBFactory)
+    sessions.put('_usbFactory', factory=USBFactory)
 # usbFactory = USBFactory()
-

@@ -43,8 +43,8 @@ SYNC = Sync()
 KV = KvString()
 SYNC_POPUP = Popup()
 Job = Job()
-EPSON = sessions.get('_epson')['value']
-BIXOLON = sessions.get('_bixolon')['value']
+EPSON = sessions.get('_connectedDevices')['epson']['device']
+BIXOLON = sessions.get('_connectedDevices')['bixolon']['device']
 
 
 class EditInvoiceScreen(Screen):
