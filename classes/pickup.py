@@ -37,7 +37,7 @@ SYNC = Sync()
 SYNC_POPUP = Popup()
 unix = time.time()
 NOW = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
-EPSON = sessions.get('_epson')['value']
+EPSON = sessions.get('_connectedDevices')['epson']['device']
 
 
 class PickupScreen(Screen):
