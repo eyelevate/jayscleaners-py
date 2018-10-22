@@ -80,6 +80,7 @@ class MainScreen(Screen):
             pass
 
     def isRemembered(self):
+        self.receipt_status.canvas_set('disconnected')
         self.active_state()
         self.reconnect_printers()
         SYNC_POPUP.title = 'Welcome back!'
@@ -89,6 +90,7 @@ class MainScreen(Screen):
         SYNC_POPUP.open()
 
     def isNotRemembered(self):
+        self.receipt_status.canvas_set('disconnected')
         self.logout_state()
 
     def startUsbParallel(self):
@@ -118,7 +120,7 @@ class MainScreen(Screen):
             for unknown_device in epson_known_device:
                 productId = unknown_device['_productId']
                 vendorId = unknown_device['_vendorId']
-                device = self.print_setup(vendorId, productId, backend)
+                device = self.print_setup(hex(vendorId), hex(productId), backend)
                 if device:
                     print('successfully printed and saving epson device')
                     if self.print_setup_test(device, 'epson'):
@@ -135,7 +137,7 @@ class MainScreen(Screen):
             for unknown_device in bixolon_known_device:
                 productId = unknown_device['_productId']
                 vendorId = unknown_device['_vendorId']
-                device = self.print_setup_tag(vendorId, productId, backend)
+                device = self.print_setup_tag(hex(vendorId), hex(productId), backend)
                 if device:
                     print('successfully printed and saving bixolon device')
                     if self.print_setup_test(device, 'bixolon'):
@@ -518,8 +520,10 @@ class MainScreen(Screen):
         pass
 
     def print_setup_tag(self, vendor_id, product_id, backend):
+        vendor_int = int(vendor_id, 16)
+        product_int = int(product_id, 16)
         # find our device
-        dev = usb.core.find(idVendor=vendor_id, idProduct=product_id, backend=backend)
+        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int, backend=backend)
 
         # was it found?
         if dev is not None:
@@ -547,9 +551,12 @@ class MainScreen(Screen):
             Popups.dialog_msg('Printer Error', 'Tag printer not found. Please check settings and try again')
 
     def print_setup(self, vendor_id, product_id, backend):
+        vendor_int = int(vendor_id, 16)
+        product_int = int(product_id, 16)
+        print('vendor {}, product {}'.format(vendor_id, product_id))
         # find our device
-        dev = usb.core.find(idVendor=vendor_id, idProduct=product_id, backend=backend)
-
+        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int, backend=backend)
+        print(dev)
         # was it found?
         if dev is not None:
             print('Receipt Device Found')
