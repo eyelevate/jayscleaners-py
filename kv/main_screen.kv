@@ -7,6 +7,8 @@
     dropoff_button: dropoff_button
     login_button: login_button
     item_search_button: item_search_button
+    tags_status: tags_status
+    receipt_status: receipt_status
     on_pre_enter: print('now')
     ActionBar:
         id: _action_main
@@ -84,3 +86,31 @@
                 font_size: '20sp'
                 on_press: app.root.current = "update"
                 on_release: root.db_sync()
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1, 0.1
+
+        RelativeLayout:
+            size_hint: (None, 1)
+            size_x: dp(25)
+            StatusLabel:
+                id: receipt_status
+                size_hint:(1, 1)
+
+        Label:
+            text: 'Receipt Printer Status'
+            text_size:self.size
+            halign: 'left'
+            valign: 'middle'
+        RelativeLayout:
+            size_hint: (None, 1)
+            size_x: dp(25)
+            StatusLabel:
+                id: tags_status
+                size_hint:(1, 1)
+
+        Label:
+            text: 'Tag Printer Status'
+            text_size:self.size
+            halign: 'left'
+            valign: 'middle'

@@ -1,10 +1,9 @@
 from collections import OrderedDict
+from classes.USBFactory import USBFactory
 
 from kivy.storage.dictstore import DictStore
 
 sessions = DictStore('sessions')
-if not sessions.exists('_backend'):
-    sessions.put('_backend', value=None)
 if not sessions.exists('_rememberMe'):
     sessions.put('_rememberMe', value=False)
 if not sessions.exists('_rememberMeTimestamp'):
@@ -71,6 +70,8 @@ if not sessions.exists('_threadId'):
     sessions.put('_threadId', value=1)
 if not sessions.exists('_threads'):
     sessions.put('_threads', value=[])
+if not sessions.exists('_connected_devices'):
+    sessions.put('_connected_devices',epson=None, bixolon=None, zebra=None)
 if not sessions.exists('_epson'):
     sessions.put('_epson', value=None)
 if not sessions.exists('_bixolon'):
@@ -79,3 +80,7 @@ if not sessions.exists('_usDollar'):
     sessions.put('_usDollar', value=0)
 if not sessions.exists('_zebra'):
     sessions.put('_zebra', value=None)
+if not sessions.exists('_usbFactory'):
+    sessions.put('_usbFactory',factory=USBFactory)
+# usbFactory = USBFactory()
+

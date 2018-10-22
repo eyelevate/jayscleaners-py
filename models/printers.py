@@ -327,12 +327,9 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
 
     staticmethod
     def backend_location(self, os):
-        data_folder = Path("./lib/MS32/dll")
 
         known_backends = {
-            'Linux': data_folder / "libusb-1.0.dll",
-            'Darwin': data_folder / "libusb-1.0.dll",
-            # "C:/windows/system32/libusb0.dll"
+            'Darwin': path.abspath("/usr/local/lib/libusb-1.0.0.dylib"),
             'Windows': "C:/windows/system32/libusb0.dll"
         }
         print('os and path {}'.format(known_backends[os]))
@@ -344,99 +341,35 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
                 backend_location = usb.backend.libusb1.get_backend(find_library=lambda x: known_backends[os])
             print(backend_location)
             return backend_location
-        else:
-            print('does not exist')
 
-        return False
+        return None
 
     staticmethod
+
     def printer_list(self):
         known_printers = {
-            'epson': {
+            'epson': [{
+                'vendorId': 1208,
+                'productId': 514,
+                '_vendorId': hex(0x04b8),
+                '_productId': hex(0x0202)
+            }],
+            'bixolon': [{
+                'vendorId': 1049,
+                'productId': 15361,
+                '_vendorId': hex(0x0419),
+                '_productId': hex(0x3c01)
+            }],
+            'zebra': [{
                 'vendorId': 1133,
                 'productId': 5047,
                 '_vendorId': hex(0x46d),
                 '_productId': hex(0xc52b)
-            },
-            'bixolon': {
-                'vendorId': 1133,
-                'productId': 5047,
-                '_vendorId': hex(0x46d),
-                '_productId': hex(0xc52b)
-            },
-            'zebra': {
-                'vendorId': 1133,
-                'productId': 5047,
-                '_vendorId': hex(0x46d),
-                '_productId': hex(0xc52b)
-            }
+            }]
         }
 
         return known_printers
 
-    def print_setup_tag(self, vendor_id, product_id):
-        vendor_int = int(vendor_id, 16)
-        product_int = int(product_id, 16)
-        # find our device
-        backend = usb.backend.libusb1.get_backend(find_library=lambda x: "./lib/libusb-1.0.so")
-        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
-
-        # was it found?
-        if dev is not None:
-            print('device found')
-
-            # set the active configuration. With no arguments, the first
-            # configuration will be the active one
-            dev.set_configuration()
-
-            # get an endpoint instance
-            cfg = dev.get_active_configuration()
-            intf = cfg[(0, 0)]
-            bixolon = usb.util.find_descriptor(
-                intf,
-                # match the first OUT endpoint
-                custom_match= \
-                    lambda e: \
-                        usb.util.endpoint_direction(e.bEndpointAddress) == \
-                        usb.util.ENDPOINT_OUT)
-
-            sessions.put('_bixolon', value=bixolon)
-
-        else:
-            sessions.put('_bixolon', value=False)
-            Popups.dialog_msg('Printer Error', 'Tag printer not found. Please check settings and try again')
-
-    def print_setup(self, vendor_id, product_id):
-        vendor_int = int(vendor_id, 16)
-        product_int = int(product_id, 16)
-        # find our device
-        backend = usb.backend.libusb1.get_backend(find_library=lambda x: "../lib/libusb-1.0.so")
-        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int, backend=backend)
-
-        # was it found?
-        if dev is not None:
-            print('Receipt Device Found')
-
-            # set the active configuration. With no arguments, the first
-            # configuration will be the active one
-            dev.set_configuration()
-
-            # get an endpoint instance
-            cfg = dev.get_active_configuration()
-            intf = cfg[(0, 0)]
-            epson = usb.util.find_descriptor(
-                intf,
-                # match the first OUT endpoint
-                custom_match= \
-                    lambda e: \
-                        usb.util.endpoint_direction(e.bEndpointAddress) == \
-                        usb.util.ENDPOINT_OUT)
-            sessions.put('_epson', value=epson)
-
-
-        else:
-            sessions.put('_epson', value=False)
-            Popups.dialog_msg('Printer Error', 'Receipt printer not found. Please check settings and try again')
 
     def get_printer_ids(self, company_id, type):
 

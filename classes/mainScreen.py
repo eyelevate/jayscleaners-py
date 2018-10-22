@@ -6,8 +6,6 @@ import datetime
 import platform
 from threading import Thread
 from urllib import parse, request
-#!/usr/bin/python
-import sys
 import usb.core
 import usb.util
 import usb.backend.libusb1
@@ -19,21 +17,20 @@ from kivy.lang import Builder
 from kivy.properties import ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.label import Label
 from kivy.uix.progressbar import ProgressBar
 from kivy.uix.screenmanager import Screen
 from kivy.uix.checkbox import CheckBox
-from pubsub import pub
 
 from kivy.uix.popup import Popup
 from classes.popups import Popups
+from models.constants import Constants
 from models.invoice_items import InvoiceItem
 from models.invoices import Invoice
 from models.printers import Printer
 from models.sync import Sync
 from models.users import User
 from models.sessions import sessions
+from components.status_label import StatusLabel
 
 KV = KvString()
 SYNC = Sync()
@@ -43,6 +40,7 @@ DEFAULT_COLOR = 0.5, 0.5, 0.5, 1.0
 unix = time.time()
 NOW = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 SYNC_POPUP = Popup()
+usbFactory = sessions.get('_usbFactory')['factory']()
 
 
 class MainScreen(Screen):
@@ -64,17 +62,17 @@ class MainScreen(Screen):
     table_description = ObjectProperty(None)
     item_description = ObjectProperty(None)
     checkbox = CheckBox()
+    tags_status = ObjectProperty(StatusLabel())
+    receipt_status = ObjectProperty(StatusLabel())
 
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
         SYNC.migrate()
         remember_me = sessions.get('_rememberMe')['value']
         user_id = sessions.get('_userId')['value']
-
         platform_type = platform.system()
         sessions.put('_os',value=platform_type)
         if remember_me and user_id is not None:
-            self.reconnect_printers()
             Clock.schedule_once(lambda *args: self.isRemembered())
             pass
         else:
@@ -83,65 +81,88 @@ class MainScreen(Screen):
 
     def isRemembered(self):
         self.active_state()
+        self.reconnect_printers()
         SYNC_POPUP.title = 'Welcome back!'
         content = KV.popup_alert(
             msg='You are now logged in as {}!'.format(sessions.get('_username')['value']))
         SYNC_POPUP.content = Builder.load_string(content)
         SYNC_POPUP.open()
 
-
     def isNotRemembered(self):
         self.logout_state()
 
+    def startUsbParallel(self):
+        usbFactory.work()
+
+    def stopUsbParallel(self):
+        usbFactory.stop_work()
+
+    # todo not being used
     def checkIfPassedRememberMe(self):
         now = datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S')
         # start = datetime.datetime.f
 
+    # todo not being used
     def update_info(self):
         info = "Last updated {}".format("today")
         return info
 
     def reconnect_printers(self):
-        # determine if we can find our set printers
         os = sessions.get('_os')['value']
         backend = Printer().backend_location(os)
-        sessions.put('_backend',value=backend)
         print('backend = {}'.format(backend))
-        # if we cant find our set printers then loop through and find all devices and test them out
-        # find USB devices
-        dev = usb.core.find(find_all=True)
-        # loop through devices, printing vendor and product ids in decimal and hex
-        devices = []
-        for cfg in dev:
-            devices.append({
-                'idVendor': str(cfg.idVendor),
-                'idVendorHex': hex(cfg.idVendor),
-                'idProduct': str(cfg.idProduct),
-                'idProductHex': hex(cfg.idProduct)
-            })
         known_devices = Printer().printer_list()
-        epson_known_device = known_devices['epson']
-        if epson_known_device:
-            for vendorId, productId in epson_known_device.items():
-                # test if works
-                pass
-        bixolon_known_device = known_devices['bixolon']
+        if 'epson' in known_devices:
+            self.receipt_status.canvas_set('disconnected')
+            epson_known_device = known_devices['epson']
+            for unknown_device in epson_known_device:
+                productId = unknown_device['_productId']
+                vendorId = unknown_device['_vendorId']
+                device = self.print_setup(vendorId, productId, backend)
+                if device:
+                    print('successfully printed and saving epson device')
+                    if self.print_setup_test(device, 'epson'):
+                        self.receipt_status.canvas_set('connected')
 
-        # set final vendorids and productids
+                        sessions.put('_connected_devices', epson={'productId': productId,
+                                                                  'vendorId': vendorId,
+                                                                  'backend': backend,
+                                                                  'device': device})
+                        break
+        if 'bixolon' in known_devices:
+            bixolon_known_device = known_devices['bixolon']
+            self.tags_status.canvas_set('disconnected')
+            for unknown_device in bixolon_known_device:
+                productId = unknown_device['_productId']
+                vendorId = unknown_device['_vendorId']
+                device = self.print_setup_tag(vendorId, productId, backend)
+                if device:
+                    print('successfully printed and saving bixolon device')
+                    if self.print_setup_test(device, 'bixolon'):
+                        self.tags_status.canvas_set('connected')
+                        sessions.put('_bixolon', value=device)
+                        sessions.put('_connected_devices', bixolon={'productId': productId,
+                                                                    'vendorId': vendorId,
+                                                                    'backend': backend,
+                                                                    'device': device})
+                        break
+        self.startUsbParallel()
 
-        # setup printer
-        # if type == 'all':
-        #     self.print_setup()
-        #     self.print_setup_label()
-        #     self.print_setup_tag()
-        # elif type == 'receipt':
-        #     self.print_setup()
-        # elif type == 'tags':
-        #     self.print_setup_tag()
-        # else:
-        #     self.print_setup_label()
+    def print_setup_test(self, printer, type):
+        try:
+            printer.write("::Test Print::\n")
+            # Cut paper
+            if type == 'epson':
+                printer.write('\n\n\n\n\n\n')
+                printer.write(Printer().pcmd('PARTIAL_CUT'))
+            else:
+                printer.write('\n\n\n')
+                printer.write('\x1b\x6d')
+            return True
+        except usb.USBError as e:
+            print(e)
+            return False
         pass
-
 
     def login_show(self):
         self.login_popup = Factory.LoginPopup()
@@ -157,7 +178,7 @@ class MainScreen(Screen):
         sessions.put('_rememberMeTimestamp', value=now)
 
     def login(self, *args, **kwargs):
-
+        self.stopUsbParallel()
         user = User()
         self.username = self.login_popup.ids.login_username_input
         self.password = self.login_popup.ids.login_password_input
@@ -187,18 +208,6 @@ class MainScreen(Screen):
                     sessions.put('remembeMe', value=True)
 
                 self.reconnect_printers()
-                # print_data = Printer().where({'company_id': auth_user.company_id, 'type': 1})
-                # if print_data:
-                #     for pr in print_data:
-                #         self.print_setup(hex(int(pr['vendor_id'], 16)), hex(int(pr['product_id'], 16)))
-                # print_data_tag = Printer().where({'company_id': auth_user.company_id, 'type': 2})
-                # if print_data_tag:
-                #     for prt in print_data_tag:
-                #         self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
-                # print_data_label = Printer().where({'company_id': auth_user.company_id, 'type': 3})
-                # if print_data_label:
-                #     for prl in print_data_label:
-                #         self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
 
                 SYNC.company_id = data['company_id']
                 SYNC_POPUP.title = 'Authentication Success!'
@@ -220,20 +229,6 @@ class MainScreen(Screen):
                     sessions.put('rememberMe', value=True)
                 SYNC.company_id = user.company_id
                 self.reconnect_printers()
-                # print_data = Printer().where({'company_id': user.company_id, 'type': 1})
-                # if print_data:
-                #     for pr in print_data:
-                #         self.print_setup(hex(int(pr['vendor_id'], 16)), hex(int(pr['product_id'], 16)))
-                #
-                # print_data_tag = Printer().where({'company_id': auth_user.company_id, 'type': 2})
-                # if print_data_tag:
-                #     for prt in print_data_tag:
-                #         self.print_setup_tag(hex(int(prt['vendor_id'], 16)), hex(int(prt['product_id'], 16)))
-                #
-                # print_data_label = Printer().where({'company_id': auth_user.company_id, 'type': 3})
-                # if print_data_label:
-                #     for prl in print_data_label:
-                #         self.print_setup_label(hex(int(prl['vendor_id'], 16)), hex(int(prl['product_id'], 16)))
                 SYNC_POPUP.title = 'Authentication Success!'
                 SYNC_POPUP.content = Builder.load_string(
                     KV.popup_alert(
@@ -246,6 +241,8 @@ class MainScreen(Screen):
                     KV.popup_alert(msg='Could not find any user with these credentials. '
                                        'Please try again!!'))
                 SYNC_POPUP.open()
+
+            return
 
         elif not user.username and not user.password:
 
@@ -279,6 +276,7 @@ class MainScreen(Screen):
         # self.item_search_button.disabled = False
 
     def logout(self, *args, **kwargs):
+        self.stopUsbParallel()
         if self.username:
             self.username.text = ''
         if self.password:
@@ -519,16 +517,9 @@ class MainScreen(Screen):
         print(server_at)
         pass
 
-    def print_setup_test(self):
-
-        pass
-
-    def print_setup_tag(self, vendor_id, product_id):
-        vendor_int = int(vendor_id, 16)
-        product_int = int(product_id, 16)
+    def print_setup_tag(self, vendor_id, product_id, backend):
         # find our device
-        backend = usb.backend.libusb1.get_backend(find_library=lambda x: "./lib/libusb-1.0.so")
-        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int)
+        dev = usb.core.find(idVendor=vendor_id, idProduct=product_id, backend=backend)
 
         # was it found?
         if dev is not None:
@@ -552,15 +543,12 @@ class MainScreen(Screen):
             sessions.put('_bixolon', value=bixolon)
 
         else:
-            sessions.put('_bixolon', value=False)
+            sessions.put('_bixolon', value=None)
             Popups.dialog_msg('Printer Error', 'Tag printer not found. Please check settings and try again')
 
-    def print_setup(self, vendor_id, product_id):
-        vendor_int = int(vendor_id, 16)
-        product_int = int(product_id, 16)
+    def print_setup(self, vendor_id, product_id, backend):
         # find our device
-        backend = usb.backend.libusb1.get_backend(find_library=lambda x: "./lib/libusb-1.0.so")
-        dev = usb.core.find(idVendor=vendor_int, idProduct=product_int, backend=backend)
+        dev = usb.core.find(idVendor=vendor_id, idProduct=product_id, backend=backend)
 
         # was it found?
         if dev is not None:
@@ -582,10 +570,10 @@ class MainScreen(Screen):
                         usb.util.ENDPOINT_OUT)
             sessions.put('_epson', value=epson)
 
-
         else:
-            sessions.put('_epson', value=False)
-            Popups.dialog_msg('Printer Error', 'Receipt printer not found. Please check settings and try again')
+            sessions.put('_epson', value=None)
+
+            Popups.dialog_msg('Printer Error', 'Receipt printer not found.\\nPlease check settings and try again')
 
     def reports_page(self):
         webbrowser.open("https://www.jayscleaners.com/reports")

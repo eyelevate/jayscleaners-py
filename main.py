@@ -4,6 +4,7 @@ import time
 import os
 from os import path
 from pathlib import Path
+from models.sessions import sessions
 # !/usr/local/bin/python3
 # !/usr/bin/env python3
 from kivy.clock import Clock
@@ -19,10 +20,6 @@ elif platform.system() == 'Linux':  # Linux
 elif platform.system() == 'Windows':  # Windows
     sys.path.append('/')  # TODO
 
-# Models
-from models.sync import Sync
-from models.users import User
-
 # Helpers
 from decimal import *
 
@@ -32,9 +29,11 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager
 
+# start detecting usb events
 
 # SCREEN CLASSES
 from models.listeners import *
+from classes.USBFactory import USBFactory
 from classes.mainScreen import MainScreen
 from classes.colorsScreen import ColorsScreen
 from classes.company import CompanyScreen
@@ -64,8 +63,8 @@ from classes.update import UpdateScreen
 
 
 class ScreenManagement(ScreenManager):
-
     pass
+
 
 data_folder = Path("./kv")
 main_path_relative = data_folder / "main.kv"
@@ -82,3 +81,4 @@ class MainApp(App):
 if __name__ == "__main__":
     MainApp().run()
     pub.sendMessage("checkLoggedIn")
+
