@@ -70,8 +70,8 @@ if not sessions.exists('_threadId'):
     sessions.put('_threadId', value=1)
 if not sessions.exists('_threads'):
     sessions.put('_threads', value=[])
-if not sessions.exists('_connected_devices'):
-    sessions.put('_connected_devices', epson={'productId': None,
+if not sessions.exists('_connectedDevices'):
+    sessions.put('_connectedDevices', epson={'productId': None,
                                               'vendorId': None,
                                               'backend': None,
                                               'device': None},

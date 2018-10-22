@@ -126,7 +126,7 @@ class MainScreen(Screen):
                     if self.print_setup_test(device, 'epson'):
                         self.receipt_status.canvas_set('connected')
 
-                        sessions.put('_connected_devices', epson={'productId': productId,
+                        sessions.put('_connectedDevices', epson={'productId': productId,
                                                                   'vendorId': vendorId,
                                                                   'backend': backend,
                                                                   'device': device})
@@ -142,7 +142,7 @@ class MainScreen(Screen):
                     if self.print_setup_test(device, 'bixolon'):
                         self.tags_status.canvas_set('connected')
                         # sessions.put('_bixolon', bixolon=device)
-                        sessions.put('_connected_devices', bixolon={'productId': productId,
+                        sessions.put('_connectedDevices', bixolon={'productId': productId,
                                                                     'vendorId': vendorId,
                                                                     'backend': backend,
                                                                     'device': device})
