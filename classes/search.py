@@ -1668,7 +1668,7 @@ class SearchScreen(Screen):
                 companies.email = comps['email']
                 companies.phone = comps['phone']
             customers = User()
-            custs = SYNC.customers_grab(sessions.get('_customer_id')['value'])
+            custs = SYNC.customers_grab(sessions.get('_customerId')['value'])
             if custs:
                 for user in custs:
                     customers.id = user['id']
