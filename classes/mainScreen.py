@@ -141,13 +141,12 @@ class MainScreen(Screen):
                     print('successfully printed and saving bixolon device')
                     if self.print_setup_test(device, 'bixolon'):
                         self.tags_status.canvas_set('connected')
-                        sessions.put('_bixolon', value=device)
+                        # sessions.put('_bixolon', bixolon=device)
                         sessions.put('_connected_devices', bixolon={'productId': productId,
                                                                     'vendorId': vendorId,
                                                                     'backend': backend,
                                                                     'device': device})
                         break
-        self.startUsbParallel()
 
     def print_setup_test(self, printer, type):
         try:
@@ -543,11 +542,12 @@ class MainScreen(Screen):
                         usb.util.endpoint_direction(e.bEndpointAddress) == \
                         usb.util.ENDPOINT_OUT)
 
-            sessions.put('_bixolon', value=bixolon)
+            return bixolon
 
         else:
-            sessions.put('_bixolon', value=None)
+
             Popups.dialog_msg('Printer Error', 'Tag printer not found. Please check settings and try again')
+            return None
 
     def print_setup(self, vendor_id, product_id, backend):
         vendor_int = int(vendor_id, 16)
@@ -574,12 +574,13 @@ class MainScreen(Screen):
                     lambda e: \
                         usb.util.endpoint_direction(e.bEndpointAddress) == \
                         usb.util.ENDPOINT_OUT)
-            sessions.put('_epson', value=epson)
+            return epson
 
         else:
-            sessions.put('_epson', value=None)
+
 
             Popups.dialog_msg('Printer Error', 'Receipt printer not found.\\nPlease check settings and try again')
+            return None
 
     def reports_page(self):
         webbrowser.open("https://www.jayscleaners.com/reports")
