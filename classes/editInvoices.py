@@ -1,5 +1,6 @@
 import calendar
 import datetime
+import json
 import sys
 import threading
 import time
@@ -1448,80 +1449,83 @@ class EditInvoiceScreen(Screen):
 
     def make_calendar(self):
 
-        store_hours = Company().get_store_hours(self.invoice_company_id)
-        today = datetime.datetime.today()
-        dow = int(datetime.datetime.today().strftime("%w"))
-        turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
-        new_date = today + datetime.timedelta(days=turn_around_day)
-        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
-                                           turn_around_minutes)
-        due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-        self.month = int(due_date.strftime('%m'))
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
+                today = datetime.datetime.today()
+                dow = int(datetime.datetime.today().strftime("%w"))
+                turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+                turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+                turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+                turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+                new_date = today + datetime.timedelta(days=turn_around_day)
+                date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_minutes)
+                due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                self.month = int(due_date.strftime('%m'))
 
-        popup = Popup()
-        popup.title = 'Calendar'
-        layout = BoxLayout(orientation='vertical')
-        inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
-                                   orientation='vertical')
-        calendar_selection = GridLayout(cols=4,
-                                        rows=1,
-                                        size_hint=(1, 0.1))
-        prev_month = Button(markup=True,
-                            text="<",
-                            font_size="30sp",
-                            on_release=self.prev_month)
-        next_month = Button(markup=True,
-                            text=">",
-                            font_size="30sp",
-                            on_release=self.next_month)
-        select_month = Factory.SelectMonth()
-        self.month_button = Button(text='{}'.format(Static.month_by_number(self.month)),
-                                   on_release=select_month.open)
-        for index in range(12):
-            month_options = Button(text='{}'.format(Static.month_by_number(index)),
-                                   size_hint_y=None,
-                                   height=40,
-                                   on_release=partial(self.select_calendar_month, index))
-            select_month.add_widget(month_options)
+                popup = Popup()
+                popup.title = 'Calendar'
+                layout = BoxLayout(orientation='vertical')
+                inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                           orientation='vertical')
+                calendar_selection = GridLayout(cols=4,
+                                                rows=1,
+                                                size_hint=(1, 0.1))
+                prev_month = Button(markup=True,
+                                    text="<",
+                                    font_size="30sp",
+                                    on_release=self.prev_month)
+                next_month = Button(markup=True,
+                                    text=">",
+                                    font_size="30sp",
+                                    on_release=self.next_month)
+                select_month = Factory.SelectMonth()
+                self.month_button = Button(text='{}'.format(Static.month_by_number(self.month)),
+                                           on_release=select_month.open)
+                for index in range(12):
+                    month_options = Button(text='{}'.format(Static.month_by_number(index)),
+                                           size_hint_y=None,
+                                           height=40,
+                                           on_release=partial(self.select_calendar_month, index))
+                    select_month.add_widget(month_options)
 
-        select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
-        select_year = Factory.SelectMonth()
+                select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+                select_year = Factory.SelectMonth()
 
-        self.year_button = Button(text="{}".format(self.year),
-                                  on_release=select_year.open)
-        for index in range(10):
-            year_options = Button(text='{}'.format(int(self.year) + index),
-                                  size_hint_y=None,
-                                  height=40,
-                                  on_release=partial(self.select_calendar_year, index))
-            select_year.add_widget(year_options)
+                self.year_button = Button(text="{}".format(self.year),
+                                          on_release=select_year.open)
+                for index in range(10):
+                    year_options = Button(text='{}'.format(int(self.year) + index),
+                                          size_hint_y=None,
+                                          height=40,
+                                          on_release=partial(self.select_calendar_year, index))
+                    select_year.add_widget(year_options)
 
-        select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
-        calendar_selection.add_widget(prev_month)
-        calendar_selection.add_widget(self.month_button)
-        calendar_selection.add_widget(self.year_button)
-        calendar_selection.add_widget(next_month)
-        self.calendar_layout = GridLayout(cols=7,
-                                          rows=8,
-                                          size_hint=(1, 0.9))
-        self.create_calendar_table()
+                select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+                calendar_selection.add_widget(prev_month)
+                calendar_selection.add_widget(self.month_button)
+                calendar_selection.add_widget(self.year_button)
+                calendar_selection.add_widget(next_month)
+                self.calendar_layout = GridLayout(cols=7,
+                                                  rows=8,
+                                                  size_hint=(1, 0.9))
+                self.create_calendar_table()
 
-        inner_layout_1.add_widget(calendar_selection)
-        inner_layout_1.add_widget(self.calendar_layout)
-        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
-                                   orientation='horizontal')
-        inner_layout_2.add_widget(Button(markup=True,
-                                         text="Okay",
-                                         on_release=popup.dismiss))
+                inner_layout_1.add_widget(calendar_selection)
+                inner_layout_1.add_widget(self.calendar_layout)
+                inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                           orientation='horizontal')
+                inner_layout_2.add_widget(Button(markup=True,
+                                                 text="Okay",
+                                                 on_release=popup.dismiss))
 
-        layout.add_widget(inner_layout_1)
-        layout.add_widget(inner_layout_2)
-        popup.content = layout
-        popup.open()
+                layout.add_widget(inner_layout_1)
+                layout.add_widget(inner_layout_2)
+                popup.content = layout
+                popup.open()
 
     def create_calendar_table(self):
         # set the variables

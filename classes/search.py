@@ -640,202 +640,211 @@ class SearchScreen(Screen):
 
     def quick_popup(self, *args, **kwargs):
         # setup calendar default date
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
-        today = datetime.datetime.today()
-        dow = int(datetime.datetime.today().strftime("%w"))
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
+                today = datetime.datetime.today()
+                dow = int(datetime.datetime.today().strftime("%w"))
 
-        turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
-        new_date = today + datetime.timedelta(days=turn_around_day)
-        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(
-                                               turn_around_hour) + 12,
-                                           turn_around_minutes)
-        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+                turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
+                turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+                turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+                turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
+                new_date = today + datetime.timedelta(days=turn_around_day)
+                date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(
+                                                       turn_around_hour) + 12,
+                                                   turn_around_minutes)
+                self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
 
-        # create popup
-        self.main_popup.title = 'Quick Ticket'
-        base_layout = BoxLayout(orientation="vertical",
-                                size_hint=(1, 1))
-        self.quick_box = Factory.QuickBox()
-        # add due date
-        self.quick_box.ids.quick_due_date.text = self.due_date_string
-        self.quick_box.ids.quick_due_date.bind(on_press=self.make_calendar)
-        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
-                                   orientation="horizontal")
-        cancel_button = Button(text="Cancel",
-                               markup=True,
-                               on_press=self.main_popup.dismiss)
-        print_button = Button(text="Print",
-                              markup=True,
-                              on_press=self.quick_print)
-        inner_layout_2.add_widget(cancel_button)
-        inner_layout_2.add_widget(print_button)
-        base_layout.add_widget(self.quick_box)
-        base_layout.add_widget(inner_layout_2)
+                # create popup
+                self.main_popup.title = 'Quick Ticket'
+                base_layout = BoxLayout(orientation="vertical",
+                                        size_hint=(1, 1))
+                self.quick_box = Factory.QuickBox()
+                # add due date
+                self.quick_box.ids.quick_due_date.text = self.due_date_string
+                self.quick_box.ids.quick_due_date.bind(on_press=self.make_calendar)
+                inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                           orientation="horizontal")
+                cancel_button = Button(text="Cancel",
+                                       markup=True,
+                                       on_press=self.main_popup.dismiss)
+                print_button = Button(text="Print",
+                                      markup=True,
+                                      on_press=self.quick_print)
+                inner_layout_2.add_widget(cancel_button)
+                inner_layout_2.add_widget(print_button)
+                base_layout.add_widget(self.quick_box)
+                base_layout.add_widget(inner_layout_2)
 
-        self.main_popup.content = base_layout
-        self.main_popup.open()
+                self.main_popup.content = base_layout
+                self.main_popup.open()
 
-        pass
+                pass
 
     def make_calendar(self, *args, **kwargs):
 
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
-        today = datetime.datetime.today()
-        dow = int(datetime.datetime.today().strftime("%w"))
-        turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
-        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
-        new_date = today + datetime.timedelta(days=turn_around_day)
-        date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
-                                           turn_around_minutes)
-        due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-        self.month = int(due_date.strftime('%m'))
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
+                today = datetime.datetime.today()
+                dow = int(datetime.datetime.today().strftime("%w"))
+                turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
+                turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+                turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+                turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
+                new_date = today + datetime.timedelta(days=turn_around_day)
+                date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_minutes)
+                due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                self.month = int(due_date.strftime('%m'))
 
-        popup = Popup()
-        popup.title = 'Calendar'
-        layout = BoxLayout(orientation='vertical')
-        inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
-                                   orientation='vertical')
-        calendar_selection = GridLayout(cols=4,
-                                        rows=1,
-                                        size_hint=(1, 0.1))
-        prev_month = Button(markup=True,
-                            text="<",
-                            font_size="30sp",
-                            on_press=self.prev_month)
-        next_month = Button(markup=True,
-                            text=">",
-                            font_size="30sp",
-                            on_press=self.next_month)
-        select_month = Factory.SelectMonth()
-        self.month_button = Button(text='{}'.format(Static.month_by_number(self.month)),
-                                   on_press=select_month.open)
-        for index in range(12):
-            month_options = Button(text='{}'.format(Static.month_by_number(index)),
-                                   size_hint_y=None,
-                                   height=40,
-                                   on_press=partial(self.select_calendar_month, index))
-            select_month.add_widget(month_options)
+                popup = Popup()
+                popup.title = 'Calendar'
+                layout = BoxLayout(orientation='vertical')
+                inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                           orientation='vertical')
+                calendar_selection = GridLayout(cols=4,
+                                                rows=1,
+                                                size_hint=(1, 0.1))
+                prev_month = Button(markup=True,
+                                    text="<",
+                                    font_size="30sp",
+                                    on_press=self.prev_month)
+                next_month = Button(markup=True,
+                                    text=">",
+                                    font_size="30sp",
+                                    on_press=self.next_month)
+                select_month = Factory.SelectMonth()
+                self.month_button = Button(text='{}'.format(Static.month_by_number(self.month)),
+                                           on_press=select_month.open)
+                for index in range(12):
+                    month_options = Button(text='{}'.format(Static.month_by_number(index)),
+                                           size_hint_y=None,
+                                           height=40,
+                                           on_press=partial(self.select_calendar_month, index))
+                    select_month.add_widget(month_options)
 
-        select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
-        select_year = Factory.SelectMonth()
+                select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+                select_year = Factory.SelectMonth()
 
-        self.year_button = Button(text="{}".format(self.year),
-                                  on_press=select_year.open)
-        for index in range(10):
-            year_options = Button(text='{}'.format(int(self.year) + index),
-                                  size_hint_y=None,
-                                  height=40,
-                                  on_press=partial(self.select_calendar_year, index))
-            select_year.add_widget(year_options)
+                self.year_button = Button(text="{}".format(self.year),
+                                          on_press=select_year.open)
+                for index in range(10):
+                    year_options = Button(text='{}'.format(int(self.year) + index),
+                                          size_hint_y=None,
+                                          height=40,
+                                          on_press=partial(self.select_calendar_year, index))
+                    select_year.add_widget(year_options)
 
-        select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
-        calendar_selection.add_widget(prev_month)
-        calendar_selection.add_widget(self.month_button)
-        calendar_selection.add_widget(self.year_button)
-        calendar_selection.add_widget(next_month)
-        self.calendar_layout = GridLayout(cols=7,
-                                          rows=8,
-                                          size_hint=(1, 0.9))
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
-        today_date = datetime.datetime.today()
-        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
-        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
-        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
-        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
+                select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+                calendar_selection.add_widget(prev_month)
+                calendar_selection.add_widget(self.month_button)
+                calendar_selection.add_widget(self.year_button)
+                calendar_selection.add_widget(next_month)
+                self.calendar_layout = GridLayout(cols=7,
+                                                  rows=8,
+                                                  size_hint=(1, 0.9))
+                store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
+                today_date = datetime.datetime.today()
+                today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+                check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+                due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
+                check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
 
-        self.create_calendar_table()
+                self.create_calendar_table()
 
-        inner_layout_1.add_widget(calendar_selection)
-        inner_layout_1.add_widget(self.calendar_layout)
-        inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
-                                   orientation='horizontal')
-        inner_layout_2.add_widget(Button(markup=True,
-                                         text="Okay",
-                                         on_press=popup.dismiss))
+                inner_layout_1.add_widget(calendar_selection)
+                inner_layout_1.add_widget(self.calendar_layout)
+                inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                           orientation='horizontal')
+                inner_layout_2.add_widget(Button(markup=True,
+                                                 text="Okay",
+                                                 on_press=popup.dismiss))
 
-        layout.add_widget(inner_layout_1)
-        layout.add_widget(inner_layout_2)
-        popup.content = layout
-        popup.open()
+                layout.add_widget(inner_layout_1)
+                layout.add_widget(inner_layout_2)
+                popup.content = layout
+                popup.open()
 
     def create_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
-        today_date = datetime.datetime.today()
-        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
-        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
-        due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
-        check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
+                today_date = datetime.datetime.today()
+                today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+                check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+                due_date_string = self.due_date.strftime('%Y-%m-%d 00:00:00')
+                check_due_date = datetime.datetime.strptime(due_date_string, "%Y-%m-%d %H:%M:%S").timestamp()
 
-        self.calendar_layout.clear_widgets()
-        calendars = Calendar()
-        calendars.setfirstweekday(calendar.SUNDAY)
-        selected_month = self.month - 1
-        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
-        th1 = KV.invoice_tr(0, 'Su')
-        th2 = KV.invoice_tr(0, 'Mo')
-        th3 = KV.invoice_tr(0, 'Tu')
-        th4 = KV.invoice_tr(0, 'We')
-        th5 = KV.invoice_tr(0, 'Th')
-        th6 = KV.invoice_tr(0, 'Fr')
-        th7 = KV.invoice_tr(0, 'Sa')
-        self.calendar_layout.add_widget(Builder.load_string(th1))
-        self.calendar_layout.add_widget(Builder.load_string(th2))
-        self.calendar_layout.add_widget(Builder.load_string(th3))
-        self.calendar_layout.add_widget(Builder.load_string(th4))
-        self.calendar_layout.add_widget(Builder.load_string(th5))
-        self.calendar_layout.add_widget(Builder.load_string(th6))
-        self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
-            for month in year_dates[selected_month]:
-                for week in month:
-                    for day in week:
-                        if day[0] > 0:
-                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
-                                                                           Job.date_leading_zeroes(self.month),
-                                                                           Job.date_leading_zeroes(day[0]))
-                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
-                            check_date = today_base.timestamp()
-                            dow_check = today_base.strftime("%w")
-                            # rule #1 remove all past dates so users cannot set a due date previous to today
-                            if check_date < check_today:
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
-                                if check_date == check_today:
-                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                  background_normal='',
-                                                                  on_press=partial(self.select_due_date, today_base))
-                                elif check_date == check_due_date:
-                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(
-                                                                      0.2156862, 0.9921568, 0.98823529, 1),
-                                                                  background_normal='',
-                                                                  on_press=partial(self.select_due_date, today_base))
-                                elif check_today < check_date < check_due_date:
-                                    item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0.878431372549020, 1, 1, 1),
-                                                                  background_normal='',
-                                                                  on_press=partial(self.select_due_date, today_base))
+                self.calendar_layout.clear_widgets()
+                calendars = Calendar()
+                calendars.setfirstweekday(calendar.SUNDAY)
+                selected_month = self.month - 1
+                year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+                th1 = KV.invoice_tr(0, 'Su')
+                th2 = KV.invoice_tr(0, 'Mo')
+                th3 = KV.invoice_tr(0, 'Tu')
+                th4 = KV.invoice_tr(0, 'We')
+                th5 = KV.invoice_tr(0, 'Th')
+                th6 = KV.invoice_tr(0, 'Fr')
+                th7 = KV.invoice_tr(0, 'Sa')
+                self.calendar_layout.add_widget(Builder.load_string(th1))
+                self.calendar_layout.add_widget(Builder.load_string(th2))
+                self.calendar_layout.add_widget(Builder.load_string(th3))
+                self.calendar_layout.add_widget(Builder.load_string(th4))
+                self.calendar_layout.add_widget(Builder.load_string(th5))
+                self.calendar_layout.add_widget(Builder.load_string(th6))
+                self.calendar_layout.add_widget(Builder.load_string(th7))
+                if year_dates[selected_month]:
+                    for month in year_dates[selected_month]:
+                        for week in month:
+                            for day in week:
+                                if day[0] > 0:
+                                    check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                                   Job.date_leading_zeroes(self.month),
+                                                                                   Job.date_leading_zeroes(day[0]))
+                                    today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                                    check_date = today_base.timestamp()
+                                    dow_check = today_base.strftime("%w")
+                                    # rule #1 remove all past dates so users cannot set a due date previous to today
+                                    if check_date < check_today:
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
+                                    elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                        if check_date == check_today:
+                                            item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                          background_normal='',
+                                                                          on_press=partial(self.select_due_date, today_base))
+                                        elif check_date == check_due_date:
+                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(
+                                                                              0.2156862, 0.9921568, 0.98823529, 1),
+                                                                          background_normal='',
+                                                                          on_press=partial(self.select_due_date, today_base))
+                                        elif check_today < check_date < check_due_date:
+                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(0.878431372549020, 1, 1, 1),
+                                                                          background_normal='',
+                                                                          on_press=partial(self.select_due_date, today_base))
+                                        else:
+                                            item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                          on_press=partial(self.select_due_date, today_base))
+                                    else:  # store is closed
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
                                 else:
-                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  on_press=partial(self.select_due_date, today_base))
-                            else:  # store is closed
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                        else:
-                            item = Factory.CalendarButton(disabled=True)
-                        self.calendar_layout.add_widget(item)
+                                    item = Factory.CalendarButton(disabled=True)
+                                self.calendar_layout.add_widget(item)
 
     def prev_month(self, *args, **kwargs):
         if self.month == 1:
@@ -866,19 +875,22 @@ class SearchScreen(Screen):
         self.create_calendar_table()
 
     def select_due_date(self, selected_date, *args, **kwargs):
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
 
-        dow = int(selected_date.strftime("%w"))
-        turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
-        turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
-        turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
-        date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
-                                           turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
-                                           turn_around_minutes)
-        self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-        self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
-        self.quick_box.ids.quick_due_date.text = self.due_date_string
-        self.create_calendar_table()
+                dow = int(selected_date.strftime("%w"))
+                turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
+                turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
+                turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
+                date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_minutes)
+                self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
+                self.quick_box.ids.quick_due_date.text = self.due_date_string
+                self.create_calendar_table()
 
     def quick_print(self, *args, **kwargs):
         popup = Popup()
@@ -2706,171 +2718,177 @@ A{c},20,1,1,1,1,N,"{tag}"
 
     def get_dropoff_dates(self, *args, **kwargs):
         if self.address_id:
-            store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
-            today = datetime.datetime.today()
-            dow = int(datetime.datetime.today().strftime("%w"))
-            turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
-            turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-            turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-            turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
-            new_date = today + datetime.timedelta(days=turn_around_day)
-            date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                               turn_around_hour if turn_around_ampm == 'am' else int(
-                                                   turn_around_hour) + 12,
-                                               turn_around_minutes)
+            company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+            if company:
+                store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+                if store_hours:
+                    today = datetime.datetime.today()
+                    dow = int(datetime.datetime.today().strftime("%w"))
+                    turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+                    turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+                    turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+                    turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+                    new_date = today + datetime.timedelta(days=turn_around_day)
+                    date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                                       turn_around_hour if turn_around_ampm == 'am' else int(
+                                                           turn_around_hour) + 12,
+                                                       turn_around_minutes)
 
-            self.month = int(today.strftime('%m'))
+                    self.month = int(today.strftime('%m'))
 
-            self.main_popup = Popup()
-            self.main_popup.title = 'Calendar'
-            layout = BoxLayout(orientation='vertical')
-            inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
-                                       orientation='vertical')
-            calendar_selection = GridLayout(cols=4,
-                                            rows=1,
-                                            size_hint=(1, 0.1))
-            prev_month = Button(markup=True,
-                                text="<",
-                                font_size="30sp",
-                                on_press=self.prev_dropoff_month)
-            next_month = Button(markup=True,
-                                text=">",
-                                font_size="30sp",
-                                on_press=self.next_dropoff_month)
-            select_month = Factory.SelectMonth()
-            self.month_button = Button(text='{}'.format(Static.month_by_number(self.month)),
-                                       on_press=select_month.open)
-            for index in range(12):
-                month_options = Button(text='{}'.format(Static.month_by_number(index)),
-                                       size_hint_y=None,
-                                       height=40,
-                                       on_press=partial(self.select_dropoff_calendar_month, index))
-                select_month.add_widget(month_options)
+                    self.main_popup = Popup()
+                    self.main_popup.title = 'Calendar'
+                    layout = BoxLayout(orientation='vertical')
+                    inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                               orientation='vertical')
+                    calendar_selection = GridLayout(cols=4,
+                                                    rows=1,
+                                                    size_hint=(1, 0.1))
+                    prev_month = Button(markup=True,
+                                        text="<",
+                                        font_size="30sp",
+                                        on_press=self.prev_dropoff_month)
+                    next_month = Button(markup=True,
+                                        text=">",
+                                        font_size="30sp",
+                                        on_press=self.next_dropoff_month)
+                    select_month = Factory.SelectMonth()
+                    self.month_button = Button(text='{}'.format(Static.month_by_number(self.month)),
+                                               on_press=select_month.open)
+                    for index in range(12):
+                        month_options = Button(text='{}'.format(Static.month_by_number(index)),
+                                               size_hint_y=None,
+                                               height=40,
+                                               on_press=partial(self.select_dropoff_calendar_month, index))
+                        select_month.add_widget(month_options)
 
-            select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
-            select_year = Factory.SelectMonth()
+                    select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+                    select_year = Factory.SelectMonth()
 
-            self.year_button = Button(text="{}".format(self.year),
-                                      on_press=select_year.open)
-            for index in range(10):
-                year_options = Button(text='{}'.format(int(self.year) + index),
-                                      size_hint_y=None,
-                                      height=40,
-                                      on_press=partial(self.select_dropoff_calendar_year, index))
-                select_year.add_widget(year_options)
+                    self.year_button = Button(text="{}".format(self.year),
+                                              on_press=select_year.open)
+                    for index in range(10):
+                        year_options = Button(text='{}'.format(int(self.year) + index),
+                                              size_hint_y=None,
+                                              height=40,
+                                              on_press=partial(self.select_dropoff_calendar_year, index))
+                        select_year.add_widget(year_options)
 
-            select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
-            calendar_selection.add_widget(prev_month)
-            calendar_selection.add_widget(self.month_button)
-            calendar_selection.add_widget(self.year_button)
-            calendar_selection.add_widget(next_month)
-            self.calendar_layout = GridLayout(cols=7,
-                                              rows=8,
-                                              size_hint=(1, 0.9))
-            today_date = datetime.datetime.today()
-            today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+                    select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+                    calendar_selection.add_widget(prev_month)
+                    calendar_selection.add_widget(self.month_button)
+                    calendar_selection.add_widget(self.year_button)
+                    calendar_selection.add_widget(next_month)
+                    self.calendar_layout = GridLayout(cols=7,
+                                                      rows=8,
+                                                      size_hint=(1, 0.9))
+                    today_date = datetime.datetime.today()
+                    today_string = today_date.strftime('%Y-%m-%d 00:00:00')
 
-            self.create_dropoff_calendar_table()
+                    self.create_dropoff_calendar_table()
 
-            inner_layout_1.add_widget(calendar_selection)
-            inner_layout_1.add_widget(self.calendar_layout)
-            inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
-                                       orientation='horizontal')
-            inner_layout_2.add_widget(Button(markup=True,
-                                             text="Okay",
-                                             on_press=self.main_popup.dismiss))
+                    inner_layout_1.add_widget(calendar_selection)
+                    inner_layout_1.add_widget(self.calendar_layout)
+                    inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                               orientation='horizontal')
+                    inner_layout_2.add_widget(Button(markup=True,
+                                                     text="Okay",
+                                                     on_press=self.main_popup.dismiss))
 
-            layout.add_widget(inner_layout_1)
-            layout.add_widget(inner_layout_2)
-            self.main_popup.content = layout
-            self.main_popup.open()
-        else:
-            Popups.dialog_msg('Delivery Error', 'You must first select an address before selecting a dropoff date.')
-        pass
+                    layout.add_widget(inner_layout_1)
+                    layout.add_widget(inner_layout_2)
+                    self.main_popup.content = layout
+                    self.main_popup.open()
+                else:
+                    Popups.dialog_msg('Delivery Error', 'You must first select an address before selecting a dropoff date.')
+                pass
 
     def get_pickup_dates(self, *args, **kwargs):
         if self.address_id:
-            store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
-            today = datetime.datetime.today()
-            dow = int(datetime.datetime.today().strftime("%w"))
-            turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
-            turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
-            turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
-            turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
-            new_date = today + datetime.timedelta(days=turn_around_day)
-            date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                               turn_around_hour if turn_around_ampm == 'am' else int(
-                                                   turn_around_hour) + 12,
-                                               turn_around_minutes)
+            company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+            if company:
+                store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+                if store_hours:
+                    today = datetime.datetime.today()
+                    dow = int(datetime.datetime.today().strftime("%w"))
+                    turn_around_day = int(store_hours[dow]['turnaround']) if store_hours[dow]['turnaround'] else 0
+                    turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
+                    turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
+                    turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
+                    new_date = today + datetime.timedelta(days=turn_around_day)
+                    date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
+                                                       turn_around_hour if turn_around_ampm == 'am' else int(
+                                                           turn_around_hour) + 12,
+                                                       turn_around_minutes)
 
-            self.month = int(today.strftime('%m'))
+                    self.month = int(today.strftime('%m'))
 
-            self.main_popup = Popup()
-            self.main_popup.title = 'Calendar'
-            layout = BoxLayout(orientation='vertical')
-            inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
-                                       orientation='vertical')
-            calendar_selection = GridLayout(cols=4,
-                                            rows=1,
-                                            size_hint=(1, 0.1))
-            prev_month = Button(markup=True,
-                                text="<",
-                                font_size="30sp",
-                                on_press=self.prev_pickup_month)
-            next_month = Button(markup=True,
-                                text=">",
-                                font_size="30sp",
-                                on_press=self.next_pickup_month)
-            select_month = Factory.SelectMonth()
-            self.month_button = Button(text='{}'.format(Static.month_by_number(self.month)),
-                                       on_press=select_month.open)
-            for index in range(12):
-                month_options = Button(text='{}'.format(Static.month_by_number(index)),
-                                       size_hint_y=None,
-                                       height=40,
-                                       on_press=partial(self.select_pickup_calendar_month, index))
-                select_month.add_widget(month_options)
+                    self.main_popup = Popup()
+                    self.main_popup.title = 'Calendar'
+                    layout = BoxLayout(orientation='vertical')
+                    inner_layout_1 = BoxLayout(size_hint=(1, 0.9),
+                                               orientation='vertical')
+                    calendar_selection = GridLayout(cols=4,
+                                                    rows=1,
+                                                    size_hint=(1, 0.1))
+                    prev_month = Button(markup=True,
+                                        text="<",
+                                        font_size="30sp",
+                                        on_press=self.prev_pickup_month)
+                    next_month = Button(markup=True,
+                                        text=">",
+                                        font_size="30sp",
+                                        on_press=self.next_pickup_month)
+                    select_month = Factory.SelectMonth()
+                    self.month_button = Button(text='{}'.format(Static.month_by_number(self.month)),
+                                               on_press=select_month.open)
+                    for index in range(12):
+                        month_options = Button(text='{}'.format(Static.month_by_number(index)),
+                                               size_hint_y=None,
+                                               height=40,
+                                               on_press=partial(self.select_pickup_calendar_month, index))
+                        select_month.add_widget(month_options)
 
-            select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
-            select_year = Factory.SelectMonth()
+                    select_month.on_select = lambda instance, x: setattr(self.month_button, 'text', x)
+                    select_year = Factory.SelectMonth()
 
-            self.year_button = Button(text="{}".format(self.year),
-                                      on_press=select_year.open)
-            for index in range(10):
-                year_options = Button(text='{}'.format(int(self.year) + index),
-                                      size_hint_y=None,
-                                      height=40,
-                                      on_press=partial(self.select_pickup_calendar_year, index))
-                select_year.add_widget(year_options)
+                    self.year_button = Button(text="{}".format(self.year),
+                                              on_press=select_year.open)
+                    for index in range(10):
+                        year_options = Button(text='{}'.format(int(self.year) + index),
+                                              size_hint_y=None,
+                                              height=40,
+                                              on_press=partial(self.select_pickup_calendar_year, index))
+                        select_year.add_widget(year_options)
 
-            select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
-            calendar_selection.add_widget(prev_month)
-            calendar_selection.add_widget(self.month_button)
-            calendar_selection.add_widget(self.year_button)
-            calendar_selection.add_widget(next_month)
-            self.calendar_layout = GridLayout(cols=7,
-                                              rows=8,
-                                              size_hint=(1, 0.9))
-            today_date = datetime.datetime.today()
-            today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+                    select_year.bind(on_select=lambda instance, x: setattr(self.year_button, 'text', x))
+                    calendar_selection.add_widget(prev_month)
+                    calendar_selection.add_widget(self.month_button)
+                    calendar_selection.add_widget(self.year_button)
+                    calendar_selection.add_widget(next_month)
+                    self.calendar_layout = GridLayout(cols=7,
+                                                      rows=8,
+                                                      size_hint=(1, 0.9))
+                    today_date = datetime.datetime.today()
+                    today_string = today_date.strftime('%Y-%m-%d 00:00:00')
 
-            self.create_pickup_calendar_table()
+                    self.create_pickup_calendar_table()
 
-            inner_layout_1.add_widget(calendar_selection)
-            inner_layout_1.add_widget(self.calendar_layout)
-            inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
-                                       orientation='horizontal')
-            inner_layout_2.add_widget(Button(markup=True,
-                                             text="Okay",
-                                             on_press=self.main_popup.dismiss))
+                    inner_layout_1.add_widget(calendar_selection)
+                    inner_layout_1.add_widget(self.calendar_layout)
+                    inner_layout_2 = BoxLayout(size_hint=(1, 0.1),
+                                               orientation='horizontal')
+                    inner_layout_2.add_widget(Button(markup=True,
+                                                     text="Okay",
+                                                     on_press=self.main_popup.dismiss))
 
-            layout.add_widget(inner_layout_1)
-            layout.add_widget(inner_layout_2)
-            self.main_popup.content = layout
-            self.main_popup.open()
-        else:
-            Popups.dialog_msg('Delivery Error', 'You must first select an address before selecting a dropoff date')
-        pass
+                    layout.add_widget(inner_layout_1)
+                    layout.add_widget(inner_layout_2)
+                    self.main_popup.content = layout
+                    self.main_popup.open()
+                else:
+                    Popups.dialog_msg('Delivery Error', 'You must first select an address before selecting a dropoff date')
+                pass
 
     def set_delivery(self, *args, **kwargs):
         # validate
@@ -3339,196 +3357,202 @@ A{c},20,1,1,1,1,N,"{tag}"
     def create_dropoff_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
-        # schedule dates
-        addresses = Address().where({'address_id': self.address_id})
-        addresses = SYNC.address_grab(self.address_id)
-        zipcode = addresses['zipcode'] if addresses is not False else False
-        delivery_ids = []
-        if zipcode is not False:
-            zips = SYNC.zipcode_query(zipcode)
-            if zips:
-                for zip in zips:
-                    delivery_ids.append(zip['delivery_id'])
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
+                # schedule dates
+                addresses = Address().where({'address_id': self.address_id})
+                addresses = SYNC.address_grab(self.address_id)
+                zipcode = addresses['zipcode'] if addresses is not False else False
+                delivery_ids = []
+                if zipcode is not False:
+                    zips = SYNC.zipcode_query(zipcode)
+                    if zips:
+                        for zip in zips:
+                            delivery_ids.append(zip['delivery_id'])
 
-        # day of the week
-        dow = {}
-        # blackout dates
-        blackout_dates = []
-        if delivery_ids:
-            for delivery_id in delivery_ids:
+                # day of the week
+                dow = {}
+                # blackout dates
+                blackout_dates = []
+                if delivery_ids:
+                    for delivery_id in delivery_ids:
 
-                deliveries = SYNC.delivery_query(delivery_id)
-                if deliveries:
+                        deliveries = SYNC.delivery_query(delivery_id)
+                        if deliveries:
 
-                    dow[deliveries['day']] = delivery_id
-                    try:
-                        blackouts = json.loads(deliveries['blackout']) if deliveries['blackout'] else False
-                        if blackouts:
-                            for blackout in blackouts:
-                                if blackout:
-                                    blackout_dates.append(blackout)
-                    except ValueError as e:
-                        print('no blackout dates')
-        if self.pickup_date:
-            pickup_date = datetime.datetime.strptime(str(self.pickup_date), "%Y-%m-%d %H:%M:%S")
-            today_date = pickup_date if self.pickup_date else datetime.datetime.today()
-            today_string = today_date.strftime('%Y-%m-%d 00:00:00')
-            check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
-        else:
-            today_date = datetime.datetime.today()
-            today_string = today_date.strftime('%Y-%m-%d 00:00:00')
-            check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+                            dow[deliveries['day']] = delivery_id
+                            try:
+                                blackouts = json.loads(deliveries['blackout']) if deliveries['blackout'] else False
+                                if blackouts:
+                                    for blackout in blackouts:
+                                        if blackout:
+                                            blackout_dates.append(blackout)
+                            except ValueError as e:
+                                print('no blackout dates')
+                if self.pickup_date:
+                    pickup_date = datetime.datetime.strptime(str(self.pickup_date), "%Y-%m-%d %H:%M:%S")
+                    today_date = pickup_date if self.pickup_date else datetime.datetime.today()
+                    today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+                    check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+                else:
+                    today_date = datetime.datetime.today()
+                    today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+                    check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
 
-        self.calendar_layout.clear_widgets()
-        calendars = Calendar()
-        calendars.setfirstweekday(calendar.SUNDAY)
-        selected_month = self.month - 1
-        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
-        th1 = KV.invoice_tr(0, 'Su')
-        th2 = KV.invoice_tr(0, 'Mo')
-        th3 = KV.invoice_tr(0, 'Tu')
-        th4 = KV.invoice_tr(0, 'We')
-        th5 = KV.invoice_tr(0, 'Th')
-        th6 = KV.invoice_tr(0, 'Fr')
-        th7 = KV.invoice_tr(0, 'Sa')
-        self.calendar_layout.add_widget(Builder.load_string(th1))
-        self.calendar_layout.add_widget(Builder.load_string(th2))
-        self.calendar_layout.add_widget(Builder.load_string(th3))
-        self.calendar_layout.add_widget(Builder.load_string(th4))
-        self.calendar_layout.add_widget(Builder.load_string(th5))
-        self.calendar_layout.add_widget(Builder.load_string(th6))
-        self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
-            for month in year_dates[selected_month]:
-                for week in month:
-                    for day in week:
-                        if day[0] > 0:
-                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
-                                                                           Job.date_leading_zeroes(self.month),
-                                                                           Job.date_leading_zeroes(day[0]))
+                self.calendar_layout.clear_widgets()
+                calendars = Calendar()
+                calendars.setfirstweekday(calendar.SUNDAY)
+                selected_month = self.month - 1
+                year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+                th1 = KV.invoice_tr(0, 'Su')
+                th2 = KV.invoice_tr(0, 'Mo')
+                th3 = KV.invoice_tr(0, 'Tu')
+                th4 = KV.invoice_tr(0, 'We')
+                th5 = KV.invoice_tr(0, 'Th')
+                th6 = KV.invoice_tr(0, 'Fr')
+                th7 = KV.invoice_tr(0, 'Sa')
+                self.calendar_layout.add_widget(Builder.load_string(th1))
+                self.calendar_layout.add_widget(Builder.load_string(th2))
+                self.calendar_layout.add_widget(Builder.load_string(th3))
+                self.calendar_layout.add_widget(Builder.load_string(th4))
+                self.calendar_layout.add_widget(Builder.load_string(th5))
+                self.calendar_layout.add_widget(Builder.load_string(th6))
+                self.calendar_layout.add_widget(Builder.load_string(th7))
+                if year_dates[selected_month]:
+                    for month in year_dates[selected_month]:
+                        for week in month:
+                            for day in week:
+                                if day[0] > 0:
+                                    check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                                   Job.date_leading_zeroes(self.month),
+                                                                                   Job.date_leading_zeroes(day[0]))
 
-                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
-                            check_date = today_base.timestamp()
-                            dow_check = today_base.strftime("%w")
-                            today_day = today_base.strftime("%A")
-                            # rule #1 remove all past dates so users cannot set a due date previous to today
-                            if check_date < check_today:
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
-                                if check_date == check_today:
-                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                  background_normal='')
-                                elif today_day in dow and check_date_string not in blackout_dates:
-                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  on_press=partial(self.select_dropoff_date,
-                                                                                   today_base, dow[today_day]))
+                                    today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                                    check_date = today_base.timestamp()
+                                    dow_check = today_base.strftime("%w")
+                                    today_day = today_base.strftime("%A")
+                                    # rule #1 remove all past dates so users cannot set a due date previous to today
+                                    if check_date < check_today:
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
+                                    elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                        if check_date == check_today:
+                                            item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                          background_normal='')
+                                        elif today_day in dow and check_date_string not in blackout_dates:
+                                            item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                          on_press=partial(self.select_dropoff_date,
+                                                                                           today_base, dow[today_day]))
+                                        else:
+                                            item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                          disabled=True)
+                                    else:  # store is closed
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
                                 else:
-                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  disabled=True)
-                            else:  # store is closed
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                        else:
-                            item = Factory.CalendarButton(disabled=True)
-                        self.calendar_layout.add_widget(item)
+                                    item = Factory.CalendarButton(disabled=True)
+                                self.calendar_layout.add_widget(item)
 
     def create_pickup_calendar_table(self):
         # set the variables
 
-        store_hours = Company().get_store_hours(sessions.get('_companyId')['value'])
-        # schedule dates
-        addresses = Address().where({'address_id': self.address_id})
-        addresses = SYNC.address_grab(self.address_id)
-        zipcode = False
-        if addresses:
-            zipcode = addresses['zipcode']
-        delivery_ids = []
-        if zipcode:
+        company = SYNC.company_grab(company_id=sessions.get('_companyId')['value'])
+        if company:
+            store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
+            if store_hours:
+                # schedule dates
+                addresses = Address().where({'address_id': self.address_id})
+                addresses = SYNC.address_grab(self.address_id)
+                zipcode = False
+                if addresses:
+                    zipcode = addresses['zipcode']
+                delivery_ids = []
+                if zipcode:
 
-            zips = SYNC.zipcode_query(zipcode)
-            if zips:
-                for zip in zips:
-                    delivery_ids.append(zip['delivery_id'])
-        # day of the week
-        dow = {}
-        # blackout dates
-        blackout_dates = []
-        if delivery_ids:
-            for delivery_id in delivery_ids:
+                    zips = SYNC.zipcode_query(zipcode)
+                    if zips:
+                        for zip in zips:
+                            delivery_ids.append(zip['delivery_id'])
+                # day of the week
+                dow = {}
+                # blackout dates
+                blackout_dates = []
+                if delivery_ids:
+                    for delivery_id in delivery_ids:
 
-                deliveries = SYNC.delivery_grab(delivery_id)
-                if deliveries:
-                    dow[deliveries['day']] = delivery_id
-                    try:
-                        blackouts = json.loads(deliveries['blackout']) if deliveries['blackout'] else False
-                        if blackouts:
-                            for blackout in blackouts:
-                                if blackout:
-                                    blackout_dates.append(blackout)
-                    except ValueError as e:
-                        print('no blackout dates')
+                        deliveries = SYNC.delivery_grab(delivery_id)
+                        if deliveries:
+                            dow[deliveries['day']] = delivery_id
+                            try:
+                                blackouts = json.loads(deliveries['blackout']) if deliveries['blackout'] else False
+                                if blackouts:
+                                    for blackout in blackouts:
+                                        if blackout:
+                                            blackout_dates.append(blackout)
+                            except ValueError as e:
+                                print('no blackout dates')
 
-        today_date = datetime.datetime.today()
-        today_string = today_date.strftime('%Y-%m-%d 00:00:00')
-        check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
+                today_date = datetime.datetime.today()
+                today_string = today_date.strftime('%Y-%m-%d 00:00:00')
+                check_today = datetime.datetime.strptime(today_string, "%Y-%m-%d %H:%M:%S").timestamp()
 
-        self.calendar_layout.clear_widgets()
-        calendars = Calendar()
-        calendars.setfirstweekday(calendar.SUNDAY)
-        selected_month = self.month - 1
-        year_dates = calendars.yeardays2calendar(year=self.year, width=1)
-        th1 = KV.invoice_tr(0, 'Su')
-        th2 = KV.invoice_tr(0, 'Mo')
-        th3 = KV.invoice_tr(0, 'Tu')
-        th4 = KV.invoice_tr(0, 'We')
-        th5 = KV.invoice_tr(0, 'Th')
-        th6 = KV.invoice_tr(0, 'Fr')
-        th7 = KV.invoice_tr(0, 'Sa')
-        self.calendar_layout.add_widget(Builder.load_string(th1))
-        self.calendar_layout.add_widget(Builder.load_string(th2))
-        self.calendar_layout.add_widget(Builder.load_string(th3))
-        self.calendar_layout.add_widget(Builder.load_string(th4))
-        self.calendar_layout.add_widget(Builder.load_string(th5))
-        self.calendar_layout.add_widget(Builder.load_string(th6))
-        self.calendar_layout.add_widget(Builder.load_string(th7))
-        if year_dates[selected_month]:
-            for month in year_dates[selected_month]:
-                for week in month:
-                    for day in week:
-                        if day[0] > 0:
-                            check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
-                                                                           Job.date_leading_zeroes(self.month),
-                                                                           Job.date_leading_zeroes(day[0]))
+                self.calendar_layout.clear_widgets()
+                calendars = Calendar()
+                calendars.setfirstweekday(calendar.SUNDAY)
+                selected_month = self.month - 1
+                year_dates = calendars.yeardays2calendar(year=self.year, width=1)
+                th1 = KV.invoice_tr(0, 'Su')
+                th2 = KV.invoice_tr(0, 'Mo')
+                th3 = KV.invoice_tr(0, 'Tu')
+                th4 = KV.invoice_tr(0, 'We')
+                th5 = KV.invoice_tr(0, 'Th')
+                th6 = KV.invoice_tr(0, 'Fr')
+                th7 = KV.invoice_tr(0, 'Sa')
+                self.calendar_layout.add_widget(Builder.load_string(th1))
+                self.calendar_layout.add_widget(Builder.load_string(th2))
+                self.calendar_layout.add_widget(Builder.load_string(th3))
+                self.calendar_layout.add_widget(Builder.load_string(th4))
+                self.calendar_layout.add_widget(Builder.load_string(th5))
+                self.calendar_layout.add_widget(Builder.load_string(th6))
+                self.calendar_layout.add_widget(Builder.load_string(th7))
+                if year_dates[selected_month]:
+                    for month in year_dates[selected_month]:
+                        for week in month:
+                            for day in week:
+                                if day[0] > 0:
+                                    check_date_string = '{}-{}-{} 00:00:00'.format(self.year,
+                                                                                   Job.date_leading_zeroes(self.month),
+                                                                                   Job.date_leading_zeroes(day[0]))
 
-                            today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
-                            check_date = today_base.timestamp()
-                            dow_check = today_base.strftime("%w")
-                            today_day = today_base.strftime("%A")
-                            # rule #1 remove all past dates so users cannot set a due date previous to today
-                            if check_date < check_today:
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                            elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
-                                if check_date == check_today:
-                                    item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                  background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                  background_normal='')
-                                elif today_day in dow and check_date_string not in blackout_dates:
-                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  on_press=partial(self.select_pickup_date,
-                                                                                   today_base, dow[today_day]))
+                                    today_base = datetime.datetime.strptime(check_date_string, "%Y-%m-%d %H:%M:%S")
+                                    check_date = today_base.timestamp()
+                                    dow_check = today_base.strftime("%w")
+                                    today_day = today_base.strftime("%A")
+                                    # rule #1 remove all past dates so users cannot set a due date previous to today
+                                    if check_date < check_today:
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
+                                    elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                        if check_date == check_today:
+                                            item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                                          background_color=(0, 0.50196078, 0.50196078, 1),
+                                                                          background_normal='')
+                                        elif today_day in dow and check_date_string not in blackout_dates:
+                                            item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                          on_press=partial(self.select_pickup_date,
+                                                                                           today_base, dow[today_day]))
+                                        else:
+                                            item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                          disabled=True)
+                                    else:  # store is closed
+                                        item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
+                                                                      disabled=True)
                                 else:
-                                    item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                  disabled=True)
-                            else:  # store is closed
-                                item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                              disabled=True)
-                        else:
-                            item = Factory.CalendarButton(disabled=True)
-                        self.calendar_layout.add_widget(item)
+                                    item = Factory.CalendarButton(disabled=True)
+                                self.calendar_layout.add_widget(item)
 
     def select_pickup_date(self, pickup_date, delivery_id, *args, **kwargs):
         self.pickup_date = pickup_date
