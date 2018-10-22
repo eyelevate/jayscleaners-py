@@ -36,7 +36,6 @@ printer_list = {}
 Job = Job()
 
 
-
 class EditCustomerScreen(Screen):
     last_name = ObjectProperty(None)
     first_name = ObjectProperty(None)
