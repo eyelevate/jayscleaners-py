@@ -80,7 +80,6 @@ class MainScreen(Screen):
             pass
 
     def isRemembered(self):
-        self.receipt_status.canvas_set('disconnected')
         self.active_state()
         self.reconnect_printers()
         SYNC_POPUP.title = 'Welcome back!'
@@ -90,7 +89,6 @@ class MainScreen(Screen):
         SYNC_POPUP.open()
 
     def isNotRemembered(self):
-        self.receipt_status.canvas_set('disconnected')
         self.logout_state()
 
     def startUsbParallel(self):
