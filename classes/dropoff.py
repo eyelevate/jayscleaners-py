@@ -105,8 +105,10 @@ class DropoffScreen(Screen):
     btn_memos_list = []
     epson = None
     bixolon = None
+    adjust_summary_table = None
+    adjust_individual_table = None
 
-    #stop watch
+    # stop watch
     start = None
     stop = None
     elapsed = None
@@ -120,30 +122,33 @@ class DropoffScreen(Screen):
         pub.subscribe(self.set_item, "set_item")
         pub.subscribe(self.remove_item_row, "remove_item_row")
         pub.subscribe(self.select_item, "select_item")
-
+        pub.subscribe(self.adjustment_calculator, "adjustment_calculator")
+        pub.subscribe(self.item_row_delete_selected, "item_row_delete_selected")
+        pub.subscribe(self.item_row_adjusted_selected, "item_row_adjusted_selected")
 
     def detach(self):
         pub.unsubscribe(self.set_item, "set_item")
         pub.unsubscribe(self.remove_item_row, "remove_item_row")
         pub.unsubscribe(self.select_item, "select_item")
+        pub.unsubscribe(self.adjustment_calculator, "adjustment_calculator")
+        pub.unsubscribe(self.item_row_delete_selected, "item_row_delete_selected")
+        pub.unsubscribe(self.item_row_adjusted_selected, "item_row_adjusted_selected")
 
     def set_epson_printer(self, device):
         self.epson = device
-        print(self.epson)
 
     def set_bixolon_printer(self, device):
         self.bixolon = device
-        print(self.bixolon)
 
     def reset(self):
-        print('start')
         self.start = datetime.datetime.now()
         self.btn_memos_list = []
         self.items_table_rv.data = []
         # self.sync_inventory_items()
         self.inventory_panel.clear_widgets()
         self.colors_table_main.clear_widgets()
-        print('{} (line 134)'.format(str(datetime.datetime.now() - self.start)))
+        self.adjust_summary_table = None
+        self.adjust_individual_table = None
         try:
             o = threading.Thread(target=self.get_store_hours)
             o.start()
@@ -151,7 +156,6 @@ class DropoffScreen(Screen):
             pass
 
         self.memo_color_popup.dismiss()
-        print('{} (line 156)'.format(str(datetime.datetime.now() - self.start)))
         self.qty_clicks = 0
         self.inv_qty = 1
         self.inv_qty_list = ['1']
@@ -176,7 +180,6 @@ class DropoffScreen(Screen):
         self.customer_id_backup = sessions.get('_customerId')['value']
         self.adjust_price_list = []
         sessions.put('_itemId', value=None)
-        print('{} (line 181)'.format(str(datetime.datetime.now() - self.start)))
         self.deleted_rows = []
         self.memo_list = []
         try:
@@ -203,7 +206,6 @@ class DropoffScreen(Screen):
                 self.starch = Static.get_starch_by_code(customer['starch'])
         else:
             self.starch = Static.get_starch_by_code(None)
-        print('{} (end)'.format(str(datetime.datetime.now() - self.start)))
 
     def set_result_status(self):
         sessions.put('_searchResultsStatus', value=True)
@@ -216,14 +218,14 @@ class DropoffScreen(Screen):
         if company:
             store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
             if store_hours:
-
                 turn_around_day = int(store_hours[dow]['turnaround']) if 'turnaround' in store_hours[dow] else 0
                 turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
                 turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
                 turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
                 new_date = today + datetime.timedelta(days=turn_around_day)
                 date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(
+                                                       turn_around_hour) + 12,
                                                    turn_around_minutes)
                 self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
                 self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
@@ -237,7 +239,8 @@ class DropoffScreen(Screen):
             for color in colors:
                 if color['name'] == 'White':
                     color_btn = Button(markup=True,
-                                       text='[color="#000000"][b]{color_name}[/b][/color]'.format(color_name=color['name']))
+                                       text='[color="#000000"][b]{color_name}[/b][/color]'.format(
+                                           color_name=color['name']))
                 else:
                     color_btn = Button(markup=True,
                                        text='[b]{color_name}[/b]'.format(color_name=color['name']))
@@ -303,7 +306,6 @@ class DropoffScreen(Screen):
                 invitems[inventory_id] = None
                 new = []
                 for x in inventory_items:
-
                     new.append({
                         'text': '[b]{}[/b]\n[i]{}[/i]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
                         'item_id': x['id'],
@@ -314,7 +316,7 @@ class DropoffScreen(Screen):
                             'center_y': 'self.parent.center_y',
                             'allow_stretch': 'True'
                         }})
-                    invitems[inventory_id]= new
+                    invitems[inventory_id] = new
                 if idx == 1:
                     self.dryclean_rv.data = new
                 elif idx == 2:
@@ -395,6 +397,7 @@ class DropoffScreen(Screen):
         self.inv_qty = int(inv_str)
 
     def set_item(self, item_id):
+        item_id = int(item_id)
         sessions.put('_itemId', value=int(item_id))
         items = SYNC.inventory_items_grab(item_id)
         check = False
@@ -432,17 +435,7 @@ class DropoffScreen(Screen):
                         'qty': int(item_quantity),
                         'tags': int(item_tags)
                     })
-                    self.invoice_list_copy[item_id].append({
-                        'type': inventory_init,
-                        'inventory_id': inventory_id,
-                        'item_id': item_id,
-                        'item_name': item_name,
-                        'item_price': item_price,
-                        'color': '',
-                        'memo': '',
-                        'qty': int(item_quantity),
-                        'tags': int(item_tags)
-                    })
+
                 else:
                     self.invoice_list[item_id] = [{
                         'type': inventory_init,
@@ -455,22 +448,13 @@ class DropoffScreen(Screen):
                         'qty': int(item_quantity),
                         'tags': int(item_tags)
                     }]
-                    self.invoice_list_copy[item_id] = [{
-                        'type': inventory_init,
-                        'inventory_id': inventory_id,
-                        'item_id': item_id,
-                        'item_name': item_name,
-                        'item_price': item_price,
-                        'color': '',
-                        'memo': '',
-                        'qty': int(item_quantity),
-                        'tags': int(item_tags)
-                    }]
+
         # update dictionary make sure that the most recently selected item is on top
         row = self.invoice_list[sessions.get('_itemId')['value']]
         del self.invoice_list[sessions.get('_itemId')['value']]
-        self.invoice_list[item_id] = row
 
+        self.invoice_list[item_id] = row
+        self.invoice_list_copy = self.invoice_list
         self.set_qty('C')
 
         self.calculate_totals()
@@ -760,8 +744,6 @@ class DropoffScreen(Screen):
         self.memo_color_popup.open()
         self.item_row_selected(row=0)
 
-
-
     def append_memo(self, btn, msg, *args, **kwargs):
         self.memo_list = self._update_memo_btn_statuses()
         self.memo_text_input.text = ''
@@ -799,7 +781,7 @@ class DropoffScreen(Screen):
     def _redo_memo_btn_states(self):
         # set the states of buttons based on row and item previously picked
         if self.item_selected_row in self.memo_list:
-            filtered_list = self.memo_list[self.item_selected_row] if self.memo_list[self.item_selected_row ] else []
+            filtered_list = self.memo_list[self.item_selected_row] if self.memo_list[self.item_selected_row] else []
             if filtered_list:
                 if self.btn_memos_list:
                     for btns in self.btn_memos_list:
@@ -1000,39 +982,19 @@ class DropoffScreen(Screen):
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.9))
-        adjust_sum_section = BoxLayout(orientation='vertical',
-                                       size_hint=(0.5, 1))
-        adjust_sum_title = Label(size_hint=(1, 0.1),
-                                 markup=True,
-                                 text='[b]Adjust Sum Total[/b]')
-        adjust_sum_scroll = ScrollView(size_hint=(1, 0.9))
-        self.adjust_sum_grid = GridLayout(size_hint_y=None,
-                                          cols=4,
-                                          row_force_default=True,
-                                          row_default_height='50sp')
-        self.adjust_sum_grid.bind(minimum_height=self.adjust_sum_grid.setter('height'))
-        self.make_adjustment_sum_table()
-        adjust_sum_scroll.add_widget(self.adjust_sum_grid)
-        adjust_sum_section.add_widget(adjust_sum_title)
-        adjust_sum_section.add_widget(adjust_sum_scroll)
-        inner_layout_1.add_widget(adjust_sum_section)
-        adjust_individual_section = BoxLayout(orientation='vertical',
-                                              size_hint=(0.5, 1))
+        adjust_sum_section = Factory.AdjustSumLayout()
+        self.adjust_summary_table = adjust_sum_section.ids.adjust_summary_table_rv
 
-        adjust_individual_title = Label(size_hint=(1, 0.1),
-                                        markup=True,
-                                        text='[b]Adjust Individual Totals[/b]')
-        adjust_individual_scroll = ScrollView(size_hint=(1, 0.9))
-        self.adjust_individual_grid = GridLayout(size_hint_y=None,
-                                                 cols=5,
-                                                 row_force_default=True,
-                                                 row_default_height='50sp')
-        self.adjust_individual_grid.bind(minimum_height=self.adjust_individual_grid.setter('height'))
+        inner_layout_1.add_widget(adjust_sum_section)
+
+        # finish inserting table rows
+
+        # individual table setup
+        adjust_individual_section = Factory.AdjustIndividualLayout()
+        self.adjust_individual_table = adjust_individual_section.ids.adjust_individual_table_rv
         self.make_adjustment_individual_table()
-        adjust_individual_scroll.add_widget(self.adjust_individual_grid)
-        adjust_individual_section.add_widget(adjust_individual_title)
-        adjust_individual_section.add_widget(adjust_individual_scroll)
         inner_layout_1.add_widget(adjust_individual_section)
+
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(markup=True,
@@ -1046,161 +1008,158 @@ class DropoffScreen(Screen):
         layout.add_widget(inner_layout_2)
         popup.content = layout
         popup.open()
+        self.make_adjustment_sum_table()
+
 
     def make_adjustment_sum_table(self):
-        self.adjust_sum_grid.clear_widgets()
+        self.adjust_summary_table.data = []
+        table_data = []
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
-            if len(self.invoice_list_copy[sessions.get('_itemId')['value']]) > 1:
-                # create th
-                h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
-                h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-                h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
-                h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-                self.adjust_sum_grid.add_widget(Builder.load_string(h1))
-                self.adjust_sum_grid.add_widget(Builder.load_string(h2))
-                self.adjust_sum_grid.add_widget(Builder.load_string(h3))
-                self.adjust_sum_grid.add_widget(Builder.load_string(h4))
+            if len(self.invoice_list_copy[sessions.get('_itemId')['value']]) > 0:
+                colors = {}
+                color_string = []
+                memo_string = []
+                total_qty = 0
+                item_price = 0
+                for key, value in enumerate(self.invoice_list_copy[sessions.get('_itemId')['value']]):
+                    total_qty += value['qty']
+                    item_name = value['item_name']
+                    item_type = value['type']
+                    item_color = value['color']
+                    item_memo = value['memo']
+                    item_price += float(value['item_price']) if value['item_price'] else 0
+                    if value['color']:
+                        if item_color in colors:
+                            colors[item_color] += 1
+                        else:
+                            colors[item_color] = 1
+                    if item_memo:
+                        regexed_memo = item_memo.replace('"', '**Inch(es)')
+                        memo_string.append(regexed_memo)
+                    if colors:
+                        for color_name, color_amount in colors.items():
+                            if color_name:
+                                color_string.append('{}-{}'.format(color_amount, color_name))
 
-                if self.invoice_list:
+                    item_string = '[b]{}[/b] \n{}\n{}'.format(value['item_name'], ', '.join(color_string),
+                                                              '/ '.join(memo_string))
+                table_data.append({
+                    'text': '{}'.format(item_type),
+                    'markup': True,
+                    'size_hint_x': 0.1,
+                    'type': 1,
+                    'price': item_price,
+                    'item_id': value['item_id'],
+                    'row': key
+                })
 
-                    for key, values in OrderedDict(reversed(list(self.invoice_list_copy.items()))).items():
-                        if key == sessions.get('_itemId')['value']:
-                            item_id = key
-                            total_qty = len(values)
-                            colors = {}
-                            item_price = 0
-                            color_string = []
-                            memo_string = []
-                            if values:
-                                for item in values:
-                                    item_name = item['item_name']
-                                    item_type = item['type']
-                                    item_color = item['color']
-                                    item_memo = item['memo']
-                                    item_price += float(item['item_price']) if item['item_price'] else 0
-                                    if item['color']:
-                                        if item_color in colors:
-                                            colors[item_color] += 1
-                                        else:
-                                            colors[item_color] = 1
-                                    if item_memo:
-                                        regexed_memo = item_memo.replace('"', '**Inch(es)')
-                                        memo_string.append(regexed_memo)
-                                if colors:
-                                    for color_name, color_amount in colors.items():
-                                        if color_name:
-                                            color_string.append('{}-{}'.format(color_amount, color_name))
-
-                                item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                                          '/ '.join(memo_string))
-                                tr1 = Button(size_hint_x=0.1,
-                                             markup=True,
-                                             text='{}'.format(item_type),
-                                             on_release=partial(self.adjustment_calculator,
-                                                                1,
-                                                                item_price))
-                                tr2 = Button(size_hint_x=0.1,
-                                             markup=True,
-                                             text='{}'.format(total_qty),
-                                             on_release=partial(self.adjustment_calculator,
-                                                                1,
-                                                                item_price))
-                                tr3 = Factory.LongButton(size_hint_x=0.6,
-                                                         size_hint_y=None,
-                                                         markup=True,
-                                                         text='{}'.format(item_string),
-                                                         on_release=partial(self.adjustment_calculator,
-                                                                            1,
-                                                                            item_price))
-
-                                tr4 = Button(size_hint_x=0.2,
-                                             markup=True,
-                                             text='{}'.format(Static.us_dollar(item_price)),
-                                             on_release=partial(self.adjustment_calculator,
-                                                                1,
-                                                                item_price))
-
-                                self.adjust_sum_grid.add_widget(tr1)
-                                self.adjust_sum_grid.add_widget(tr2)
-                                self.adjust_sum_grid.add_widget(tr3)
-                                self.adjust_sum_grid.add_widget(tr4)
+                table_data.append({
+                    'text': '{}'.format(total_qty),
+                    'markup': True,
+                    'size_hint_x': 0.1,
+                    'font_size': '15sp',
+                    'text_size': 'self.size',
+                    'valign': "middle",
+                    'halign': "center",
+                    'type': 1,
+                    'price': item_price,
+                    'item_id': value['item_id'],
+                    'row': key
+                })
+                table_data.append({
+                    'text': '{}'.format(item_string),
+                    'markup': True,
+                    'size_hint_x': 0.5,
+                    'font_size': '15sp',
+                    'text_size': 'self.size',
+                    'valign': "top",
+                    'halign': "left",
+                    'type': 1,
+                    'price': item_price,
+                    'item_id': value['item_id'],
+                    'row': key
+                })
+                table_data.append({
+                    'text': '{}'.format(Static.us_dollar(item_price)),
+                    'markup': True,
+                    'size_hint_x': 0.3,
+                    'type': 1,
+                    'price': item_price,
+                    'item_id': value['item_id'],
+                    'row': key
+                })
+        self.adjust_summary_table.data = table_data
 
     def make_adjustment_individual_table(self):
-        self.adjust_individual_grid.clear_widgets()
-        # create th
-        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
-        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
-        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-        h5 = KV.sized_invoice_tr(0, 'A', size_hint_x=0.1)
-        self.adjust_individual_grid.add_widget(Builder.load_string(h1))
-        self.adjust_individual_grid.add_widget(Builder.load_string(h2))
-        self.adjust_individual_grid.add_widget(Builder.load_string(h3))
-        self.adjust_individual_grid.add_widget(Builder.load_string(h4))
-        self.adjust_individual_grid.add_widget(Builder.load_string(h5))
 
-        if self.invoice_list:
+        tabled= []
+        inv_list = self.invoice_list
+        item_id = sessions.get('_itemId')['value']
+        if item_id in inv_list:
+            for x, item in enumerate(inv_list[item_id]):
+                item_name = item['item_name']
+                item_type = item['type']
+                item_color = item['color']
+                item_memo = item['memo']
+                item_price = item['item_price'] if item['item_price'] else 0
+                item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, item_color, item_memo)
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '{}'.format(item_type),
+                    'row': x,
+                    'size_hint_x': 0.1,
+                    'column': 1,
+                    'type': 2,
+                    'valign': 'middle',
+                    'halign': 'center',
+                    'price': item_price,
+                })
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '1',
+                    'row': x,
+                    'size_hint_x': 0.1,
+                    'valign': 'middle',
+                    'halign': 'center',
+                    'column': 2,
+                    'type': 2,
+                    'price': item_price,
+                })
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '{}'.format(item_string),
+                    'row': x,
+                    'size_hint_x': 0.5,
+                    'valign': 'top',
+                    'halign': 'left',
+                    'column': 3,
+                    'type': 2,
+                    'price': item_price,
+                })
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '{}'.format(Static.us_dollar(item_price)),
+                    'row': x,
+                    'size_hint_x': 0.2,
+                    'valign': 'middle',
+                    'halign': 'center',
+                    'column': 4,
+                    'type': 2,
+                    'price': item_price,
+                })
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '[color=ff0000][b]-[/b][/color]',
+                    'row': x,
+                    'size_hint_x': 0.1,
+                    'valign': 'middle',
+                    'halign': 'center',
+                    'column': 5,
+                    'type': 2,
+                    'price': item_price
+                })
 
-            for key, values in OrderedDict(reversed(list(self.invoice_list_copy.items()))).items():
-                if key == sessions.get('_itemId')['value']:
-                    idx = -1
-                    for item in values:
-                        idx += 1
-                        item_name = item['item_name']
-                        item_type = item['type']
-                        item_color = item['color']
-                        item_memo = item['memo']
-                        item_price = item['item_price'] if item['item_price'] else 0
-                        item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, item_color, item_memo)
-                        background_color = (
-                            0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
-                            0.89803922, 0.89803922, 0.89803922, 1)
-                        background_normal = ''
-                        text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
-
-                        tr1 = Button(size_hint_x=0.1,
-                                     markup=True,
-                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                     msg=item_type),
-                                     on_press=partial(self.item_row_adjusted_selected, 2, item_price, idx),
-                                     background_color=background_color,
-                                     background_normal=background_normal)
-                        tr2 = Button(size_hint_x=0.1,
-                                     markup=True,
-                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                     msg=1),
-                                     on_press=partial(self.item_row_adjusted_selected, 2, item_price, idx),
-                                     background_color=background_color,
-                                     background_normal=background_normal)
-
-                        tr3 = Factory.LongButton(size_hint_x=0.6,
-                                                 size_hint_y=None,
-                                                 markup=True,
-                                                 text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                                 msg=item_string),
-                                                 on_press=partial(self.item_row_adjusted_selected, 2, item_price, idx),
-                                                 background_color=background_color,
-                                                 background_normal=background_normal)
-                        tr4 = Button(size_hint_x=0.2,
-                                     markup=True,
-                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                     msg=Static.us_dollar(item_price)),
-                                     on_press=partial(self.item_row_adjusted_selected, 2, item_price, idx),
-                                     background_color=background_color,
-                                     background_normal=background_normal)
-
-                        tr5 = Button(size_hint_x=0.1,
-                                     markup=True,
-                                     text='[color=ffffff][b]-[/b][/color]',
-                                     on_release=partial(self.item_row_delete_selected, idx),
-                                     background_color=(1, 0, 0, 1),
-                                     background_normal='')
-
-                        self.adjust_individual_grid.add_widget(tr1)
-                        self.adjust_individual_grid.add_widget(tr2)
-                        self.adjust_individual_grid.add_widget(tr3)
-                        self.adjust_individual_grid.add_widget(tr4)
-                        self.adjust_individual_grid.add_widget(tr5)
+        self.adjust_individual_table.data = tabled
 
     def adjustment_calculator(self, type=None, price=0, row=None, *args, **kwargs):
         self.adjust_price = 0
@@ -1270,7 +1229,7 @@ class DropoffScreen(Screen):
                                   row_default_height='50sp')
         summary_grid.add_widget(Label(markup=True,
                                       text="Original Price"))
-        original_price = Factory.ReadOnlyLabel(text='[color=e5e5e5]{}[/color]'.format(Static.us_dollar(price)))
+        original_price = Factory.ReadOnlyLabel(text='[color=e5e5e5]{}[/color]'.format(Static.us_dollar(float(price))))
         summary_grid.add_widget(original_price)
         summary_grid.add_widget(Label(markup=True,
                                       text="Adjusted Price"))
@@ -1342,9 +1301,15 @@ class DropoffScreen(Screen):
             self.invoice_list = self.invoice_list_copy
             self.calculate_totals()
 
-    def item_row_delete_selected(self, row, *args, **kwargs):
-        del self.invoice_list[sessions.get('_itemId')['value']][row]
-        del self.invoice_list_copy[sessions.get('_itemId')['value']][row]
+    def item_row_delete_selected(self, item_id, row, *args, **kwargs):
+        row = int(row)
+        if item_id in self.invoice_list:
+            for k, v in enumerate(self.invoice_list[item_id]):
+                if k == row:
+                    del self.invoice_list[item_id][k]
+                    break
+
+        self.invoice_list_copy = self.invoice_list
         self.item_selected_row = 0
         self.make_adjustment_sum_table()
         self.make_adjustment_individual_table()
@@ -1352,7 +1317,6 @@ class DropoffScreen(Screen):
 
     def item_row_adjusted_selected(self, type=None, price=0, row=None, *args, **kwargs):
         self.item_selected_row = row
-        self.adjust_individual_grid.clear_widgets()
         self.make_adjustment_individual_table()
 
         self.adjustment_calculator(type=type, price=price, row=row)
@@ -1370,7 +1334,8 @@ class DropoffScreen(Screen):
                 turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
                 new_date = today + datetime.timedelta(days=turn_around_day)
                 date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(
+                                                       turn_around_hour) + 12,
                                                    turn_around_minutes)
                 due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
                 self.month = int(due_date.strftime('%m'))
@@ -1482,26 +1447,31 @@ class DropoffScreen(Screen):
                                     if check_date < check_today:
                                         item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                       disabled=True)
-                                    elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                    elif int(store_hours[int(dow_check)][
+                                                 'status']) > 1:  # check to see if business is open
                                         if check_date == check_today:
-                                            item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                          background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                          background_normal='',
-                                                                          on_release=partial(self.select_due_date, today_base))
+                                            item = Factory.CalendarButton(
+                                                text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                background_color=(0, 0.50196078, 0.50196078, 1),
+                                                background_normal='',
+                                                on_release=partial(self.select_due_date, today_base))
                                         elif check_date == check_due_date:
-                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                          background_color=(
-                                                                              0.2156862, 0.9921568, 0.98823529, 1),
-                                                                          background_normal='',
-                                                                          on_release=partial(self.select_due_date, today_base))
+                                            item = Factory.CalendarButton(
+                                                text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                background_color=(
+                                                    0.2156862, 0.9921568, 0.98823529, 1),
+                                                background_normal='',
+                                                on_release=partial(self.select_due_date, today_base))
                                         elif check_today < check_date < check_due_date:
-                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                          background_color=(0.878431372549020, 1, 1, 1),
-                                                                          background_normal='',
-                                                                          on_release=partial(self.select_due_date, today_base))
+                                            item = Factory.CalendarButton(
+                                                text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                background_color=(0.878431372549020, 1, 1, 1),
+                                                background_normal='',
+                                                on_release=partial(self.select_due_date, today_base))
                                         else:
                                             item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                          on_release=partial(self.select_due_date, today_base))
+                                                                          on_release=partial(self.select_due_date,
+                                                                                             today_base))
                                     else:  # store is closed
                                         item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                       disabled=True)
@@ -1542,13 +1512,13 @@ class DropoffScreen(Screen):
         if company:
             store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
             if store_hours:
-
                 dow = int(selected_date.strftime("%w"))
                 turn_around_hour = store_hours[dow]['due_hour'] if store_hours[dow]['due_hour'] else '4'
                 turn_around_minutes = store_hours[dow]['due_minutes'] if store_hours[dow]['due_minutes'] else '00'
                 turn_around_ampm = store_hours[dow]['due_ampm'] if store_hours[dow]['due_ampm'] else 'pm'
                 date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
-                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(
+                                                       turn_around_hour) + 12,
                                                    turn_around_minutes)
                 self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
                 self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
@@ -1821,7 +1791,6 @@ class DropoffScreen(Screen):
                         save_invoice_items = SYNC.create_invoice_item(data)
                         # save to local db
                         if save_invoice_items is not False:
-                            # print('saved invoice item')
                             pass
             # set invoice_items data to save
             self.print_popup.dismiss()
@@ -1834,7 +1803,6 @@ class DropoffScreen(Screen):
             SYNC_POPUP.dismiss()
 
     def print_function(self, type, print_invoice, print_totals, print_sync_invoice, print_sync_totals, *args, **kwargs):
-        print('sync invoice items now finished')
         companies = Company()
         pr = Printer()
         comps = SYNC.company_grab(sessions.get('_companyId')['value'])
@@ -2068,10 +2036,10 @@ class DropoffScreen(Screen):
                                 Static.us_dollar(item_price)) + 4
                             string_offset = 42 - string_length if 42 - string_length > 0 else 0
                             self.epson.write('{} {}   {}{}{}\n'.format(item_type,
-                                                                  item_qty,
-                                                                  item_name,
-                                                                  ' ' * string_offset,
-                                                                  Static.us_dollar(item_price)))
+                                                                       item_qty,
+                                                                       item_name,
+                                                                       ' ' * string_offset,
+                                                                       Static.us_dollar(item_price)))
 
                             # self.epson.write('\r\x1b@\x1b\x61\x02{}\n'.format(Static.us_dollar(item_price)))
                             if len(item_memo) > 0:
@@ -2109,37 +2077,37 @@ class DropoffScreen(Screen):
                     string_length = len(Static.us_dollar(print_sync_totals[invoice_id]['subtotal']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     self.epson.write('{}{}\n'.format(' ' * string_offset,
-                                                Static.us_dollar(
-                                                    print_sync_totals[invoice_id]['subtotal'])))
+                                                     Static.us_dollar(
+                                                         print_sync_totals[invoice_id]['subtotal'])))
                     self.epson.write('    DISCOUNT:')
                     self.epson.write(
                         pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(Static.us_dollar(print_sync_totals[invoice_id]['discount']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     self.epson.write('{}({})\n'.format(' ' * string_offset,
-                                                  Static.us_dollar(print_sync_totals[invoice_id]['discount'])))
+                                                       Static.us_dollar(print_sync_totals[invoice_id]['discount'])))
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     self.epson.write('         TAX:')
                     string_length = len(Static.us_dollar(print_sync_totals[invoice_id]['tax']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     self.epson.write('{}{}\n'.format(' ' * string_offset,
-                                                Static.us_dollar(print_sync_totals[invoice_id]['tax'])))
+                                                     Static.us_dollar(print_sync_totals[invoice_id]['tax'])))
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     self.epson.write('       TOTAL:')
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(Static.us_dollar(print_sync_totals[invoice_id]['total']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     self.epson.write('{}{}\n'.format(' ' * string_offset,
-                                                Static.us_dollar(
-                                                    print_sync_totals[invoice_id]['total'])))
+                                                     Static.us_dollar(
+                                                         print_sync_totals[invoice_id]['total'])))
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     self.epson.write('     BALANCE:')
                     string_length = len(Static.us_dollar(print_sync_totals[invoice_id]['total']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     self.epson.write('{}{}\n\n'.format(' ' * string_offset,
-                                                  Static.us_dollar(
-                                                      print_sync_totals[invoice_id]['total'])))
+                                                       Static.us_dollar(
+                                                           print_sync_totals[invoice_id]['total'])))
                     if item_type == 'L':
                         # get customer mark
 
@@ -2222,10 +2190,10 @@ class DropoffScreen(Screen):
                                     Static.us_dollar(item_price)) + 4
                                 string_offset = 42 - string_length if 42 - string_length > 0 else 0
                                 self.epson.write('{} {}   {}{}{}\n'.format(item_type,
-                                                                      item_qty,
-                                                                      item_name,
-                                                                      ' ' * string_offset,
-                                                                      Static.us_dollar(item_price)))
+                                                                           item_qty,
+                                                                           item_name,
+                                                                           ' ' * string_offset,
+                                                                           Static.us_dollar(item_price)))
 
                                 if len(item_memo) > 0:
                                     self.epson.write(
@@ -2263,7 +2231,7 @@ class DropoffScreen(Screen):
                     string_length = len(Static.us_dollar(print_totals[invoice_id]['subtotal']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     self.epson.write('{}{}\n'.format(' ' * string_offset,
-                                                Static.us_dollar(print_totals[invoice_id]['subtotal'])))
+                                                     Static.us_dollar(print_totals[invoice_id]['subtotal'])))
                     self.epson.write('    DISCOUNT:')
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(Static.us_dollar(print_totals[invoice_id]['discount']))
@@ -2276,20 +2244,20 @@ class DropoffScreen(Screen):
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     self.epson.write('{}{}\n'.format(' ' * string_offset,
-                                                Static.us_dollar(print_totals[invoice_id]['tax'])))
+                                                     Static.us_dollar(print_totals[invoice_id]['tax'])))
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     self.epson.write('       TOTAL:')
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'NORMAL'))
                     string_length = len(Static.us_dollar(print_totals[invoice_id]['total']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     self.epson.write('{}{}\n'.format(' ' * string_offset,
-                                                Static.us_dollar(print_totals[invoice_id]['total'])))
+                                                     Static.us_dollar(print_totals[invoice_id]['total'])))
                     self.epson.write(pr.pcmd_set(align=u"RIGHT", text_type=u'B'))
                     self.epson.write('     BALANCE:')
                     string_length = len(Static.us_dollar(print_totals[invoice_id]['total']))
                     string_offset = 20 - string_length if 20 - string_length >= 0 else 1
                     self.epson.write('{}{}\n\n'.format(' ' * string_offset,
-                                                  Static.us_dollar(print_totals[invoice_id]['total'])))
+                                                       Static.us_dollar(print_totals[invoice_id]['total'])))
                     if customers.invoice_memo:
                         self.epson.write(
                             pr.pcmd_set(align=u"LEFT", font=u'A', text_type=u'B', width=1, height=3,
@@ -2330,8 +2298,6 @@ class DropoffScreen(Screen):
             # PRINT TAG
 
         if self.bixolon:
-            print('Starting tag printing')
-
             if print_sync_invoice:  # if invoices synced
                 for invoice_id, item_id in print_sync_invoice.items():
                     invoice_id_str = str(invoice_id)

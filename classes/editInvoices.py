@@ -113,6 +113,8 @@ class EditInvoiceScreen(Screen):
     company_ids = []
     epson = None
     bixolon = None
+    adjust_summary_table = None
+    adjust_individual_table = None
 
     def __init__(self, **kwargs):
         super(EditInvoiceScreen, self).__init__(**kwargs)
@@ -123,11 +125,17 @@ class EditInvoiceScreen(Screen):
         pub.subscribe(self.set_item, "set_item")
         pub.subscribe(self.remove_item_row, "remove_item_row")
         pub.subscribe(self.select_item, "select_item")
+        pub.subscribe(self.adjustment_calculator, "adjustment_calculator")
+        pub.subscribe(self.item_row_delete_selected, "item_row_delete_selected")
+        pub.subscribe(self.item_row_adjusted_selected, "item_row_adjusted_selected")
 
     def detach(self):
         pub.unsubscribe(self.set_item, "set_item")
         pub.unsubscribe(self.remove_item_row, "remove_item_row")
         pub.unsubscribe(self.select_item, "select_item")
+        pub.unsubscribe(self.adjustment_calculator, "adjustment_calculator")
+        pub.unsubscribe(self.item_row_delete_selected, "item_row_delete_selected")
+        pub.unsubscribe(self.item_row_adjusted_selected, "item_row_adjusted_selected")
 
     def set_epson_printer(self, device):
         self.epson = device
@@ -152,6 +160,8 @@ class EditInvoiceScreen(Screen):
         self.memo_list = []
         self.company_ids = []
         self.item_rows = {}
+        self.adjust_summary_table = None
+        self.adjust_individual_table = None
 
         today = datetime.datetime.today()
         dow = int(datetime.datetime.today().strftime("%w"))
@@ -221,19 +231,7 @@ class EditInvoiceScreen(Screen):
                                     'tags': int(tags) if tags else 1,
                                     'deleted': False
                                 })
-                                self.invoice_list_copy[item_id].append({
-                                    'invoice_items_id': invoice_items_id,
-                                    'type': inventory_init,
-                                    'inventory_id': inventory_id,
-                                    'item_id': item_id,
-                                    'item_name': item_name,
-                                    'item_price': Decimal(invoice_item['pretax']),
-                                    'color': invoice_item['color'],
-                                    'memo': invoice_item['memo'],
-                                    'qty': int(invoice_item['quantity']),
-                                    'tags': int(tags) if tags else 1,
-                                    'deleted': False
-                                })
+
                             else:
                                 self.invoice_list[item_id] = [{
                                     'invoice_items_id': invoice_items_id,
@@ -248,23 +246,11 @@ class EditInvoiceScreen(Screen):
                                     'tags': int(tags) if tags else 1,
                                     'deleted': False
                                 }]
-                                self.invoice_list_copy[item_id] = [{
-                                    'invoice_items_id': invoice_items_id,
-                                    'type': inventory_init,
-                                    'inventory_id': inventory_id,
-                                    'item_id': item_id,
-                                    'item_name': item_name,
-                                    'item_price': Decimal(invoice_item['pretax']),
-                                    'color': invoice_item['color'],
-                                    'memo': invoice_item['memo'],
-                                    'qty': int(invoice_item['quantity']),
-                                    'tags': int(tags) if tags else 1,
-                                    'deleted': False
-                                }]
+
                         for key, values in OrderedDict(reversed(list(self.invoice_list.items()))).items():
                             sessions.put('_itemId',value=int(key))
                             break
-
+                self.invoice_list_copy = self.invoice_list
                 if invoices is not False:
 
                     self.due_date = datetime.datetime.strptime(invoices['due_date'], "%Y-%m-%d %H:%M:%S")
@@ -520,30 +506,8 @@ class EditInvoiceScreen(Screen):
                         'qty': int(item_quantity),
                         'tags': int(item_tags)
                     })
-                    self.invoice_list_copy[item_id].append({
-                        'type': inventory_init,
-                        'inventory_id': inventory_id,
-                        'item_id': item_id,
-                        'item_name': item_name,
-                        'item_price': item_price,
-                        'color': '',
-                        'memo': '',
-                        'qty': int(item_quantity),
-                        'tags': int(item_tags)
-                    })
                 else:
                     self.invoice_list[item_id] = [{
-                        'type': inventory_init,
-                        'inventory_id': inventory_id,
-                        'item_id': item_id,
-                        'item_name': item_name,
-                        'item_price': item_price,
-                        'color': '',
-                        'memo': '',
-                        'qty': int(item_quantity),
-                        'tags': int(item_tags)
-                    }]
-                    self.invoice_list_copy[item_id] = [{
                         'type': inventory_init,
                         'inventory_id': inventory_id,
                         'item_id': item_id,
@@ -558,7 +522,7 @@ class EditInvoiceScreen(Screen):
         row = self.invoice_list[int(sessions.get('_itemId')['value'])]
         del self.invoice_list[int(sessions.get('_itemId')['value'])]
         self.invoice_list[int(item_id)] = row
-
+        self.invoice_list_copy = self.invoice_list
         self.set_qty('C')
         self.calculate_totals()
 
@@ -1084,39 +1048,19 @@ class EditInvoiceScreen(Screen):
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.9))
-        adjust_sum_section = BoxLayout(orientation='vertical',
-                                       size_hint=(0.5, 1))
-        adjust_sum_title = Label(size_hint=(1, 0.1),
-                                 markup=True,
-                                 text='[b]Adjust Sum Total[/b]')
-        adjust_sum_scroll = ScrollView(size_hint=(1, 0.9))
-        self.adjust_sum_grid = GridLayout(size_hint_y=None,
-                                          cols=4,
-                                          row_force_default=True,
-                                          row_default_height='50sp')
-        self.adjust_sum_grid.bind(minimum_height=self.adjust_sum_grid.setter('height'))
-        self.make_adjustment_sum_table()
-        adjust_sum_scroll.add_widget(self.adjust_sum_grid)
-        adjust_sum_section.add_widget(adjust_sum_title)
-        adjust_sum_section.add_widget(adjust_sum_scroll)
-        inner_layout_1.add_widget(adjust_sum_section)
-        adjust_individual_section = BoxLayout(orientation='vertical',
-                                              size_hint=(0.5, 1))
+        adjust_sum_section = Factory.AdjustSumLayout()
+        self.adjust_summary_table = adjust_sum_section.ids.adjust_summary_table_rv
 
-        adjust_individual_title = Label(size_hint=(1, 0.1),
-                                        markup=True,
-                                        text='[b]Adjust Individual Totals[/b]')
-        adjust_individual_scroll = ScrollView(size_hint=(1, 0.9))
-        self.adjust_individual_grid = GridLayout(size_hint_y=None,
-                                                 cols=5,
-                                                 row_force_default=True,
-                                                 row_default_height='50sp')
-        self.adjust_individual_grid.bind(minimum_height=self.adjust_individual_grid.setter('height'))
+        inner_layout_1.add_widget(adjust_sum_section)
+
+        # finish inserting table rows
+
+        # individual table setup
+        adjust_individual_section = Factory.AdjustIndividualLayout()
+        self.adjust_individual_table = adjust_individual_section.ids.adjust_individual_table_rv
         self.make_adjustment_individual_table()
-        adjust_individual_scroll.add_widget(self.adjust_individual_grid)
-        adjust_individual_section.add_widget(adjust_individual_title)
-        adjust_individual_section.add_widget(adjust_individual_scroll)
         inner_layout_1.add_widget(adjust_individual_section)
+
         inner_layout_2 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.1))
         inner_layout_2.add_widget(Button(markup=True,
@@ -1130,161 +1074,158 @@ class EditInvoiceScreen(Screen):
         layout.add_widget(inner_layout_2)
         popup.content = layout
         popup.open()
+        self.make_adjustment_sum_table()
+
 
     def make_adjustment_sum_table(self):
-
-        self.adjust_sum_grid.clear_widgets()
-
+        self.adjust_summary_table.data = []
+        table_data = []
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
-            # create th
-            h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
-            h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-            h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.6)
-            h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-            self.adjust_sum_grid.add_widget(Builder.load_string(h1))
-            self.adjust_sum_grid.add_widget(Builder.load_string(h2))
-            self.adjust_sum_grid.add_widget(Builder.load_string(h3))
-            self.adjust_sum_grid.add_widget(Builder.load_string(h4))
+            if len(self.invoice_list_copy[sessions.get('_itemId')['value']]) > 0:
+                colors = {}
+                color_string = []
+                memo_string = []
+                total_qty = 0
+                item_price = 0
+                for key, value in enumerate(self.invoice_list_copy[sessions.get('_itemId')['value']]):
+                    total_qty += value['qty']
+                    item_name = value['item_name']
+                    item_type = value['type']
+                    item_color = value['color']
+                    item_memo = value['memo']
+                    item_price += float(value['item_price']) if value['item_price'] else 0
+                    if value['color']:
+                        if item_color in colors:
+                            colors[item_color] += 1
+                        else:
+                            colors[item_color] = 1
+                    if item_memo:
+                        regexed_memo = item_memo.replace('"', '**Inch(es)')
+                        memo_string.append(regexed_memo)
+                    if colors:
+                        for color_name, color_amount in colors.items():
+                            if color_name:
+                                color_string.append('{}-{}'.format(color_amount, color_name))
 
-            if self.invoice_list:
+                    item_string = '[b]{}[/b] \n{}\n{}'.format(value['item_name'], ', '.join(color_string),
+                                                              '/ '.join(memo_string))
+                table_data.append({
+                    'text': '{}'.format(item_type),
+                    'markup': True,
+                    'size_hint_x': 0.1,
+                    'type': 1,
+                    'price': item_price,
+                    'item_id': value['item_id'],
+                    'row': key
+                })
 
-                for key, values in self.invoice_list_copy.items():
-                    if key == sessions.get('_itemId')['value']:
-                        item_id = key
-                        total_qty = len(values)
-                        colors = {}
-                        item_price = 0
-                        color_string = []
-                        memo_string = []
-                        if values:
-                            for item in values:
-                                item_name = item['item_name']
-                                item_type = item['type']
-                                item_color = item['color']
-                                item_memo = item['memo']
-                                item_price += float(item['item_price']) if item['item_price'] else 0
-                                if item['color']:
-                                    if item_color in colors:
-                                        colors[item_color] += 1
-                                    else:
-                                        colors[item_color] = 1
-                                if item_memo:
-                                    regexed_memo = item_memo.replace('"', '**Inch(es)')
-                                    memo_string.append(regexed_memo)
-                            if colors:
-                                for color_name, color_amount in colors.items():
-                                    if color_name:
-                                        color_string.append('{}-{}'.format(color_amount, color_name))
-
-                            item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, ', '.join(color_string),
-                                                                      '/ '.join(memo_string))
-                            tr1 = Button(size_hint_x=0.1,
-                                         markup=True,
-                                         text='{}'.format(item_type),
-                                         on_release=partial(self.adjustment_calculator,
-                                                            1,
-                                                            item_price))
-                            tr2 = Button(size_hint_x=0.1,
-                                         markup=True,
-                                         text='{}'.format(total_qty),
-                                         on_release=partial(self.adjustment_calculator,
-                                                            1,
-                                                            item_price))
-                            tr3 = Factory.LongButton(size_hint_x=0.6,
-                                                     size_hint_y=None,
-                                                     markup=True,
-                                                     text='{}'.format(item_string),
-                                                     on_release=partial(self.adjustment_calculator,
-                                                                        1,
-                                                                        item_price))
-
-                            tr4 = Button(size_hint_x=0.2,
-                                         markup=True,
-                                         text='{}'.format(Static.us_dollar(item_price)),
-                                         on_release=partial(self.adjustment_calculator,
-                                                            1,
-                                                            item_price))
-
-                            self.adjust_sum_grid.add_widget(tr1)
-                            self.adjust_sum_grid.add_widget(tr2)
-                            self.adjust_sum_grid.add_widget(tr3)
-                            self.adjust_sum_grid.add_widget(tr4)
+                table_data.append({
+                    'text': '{}'.format(total_qty),
+                    'markup': True,
+                    'size_hint_x': 0.1,
+                    'font_size': '15sp',
+                    'text_size': 'self.size',
+                    'valign': "middle",
+                    'halign': "center",
+                    'type': 1,
+                    'price': item_price,
+                    'item_id': value['item_id'],
+                    'row': key
+                })
+                table_data.append({
+                    'text': '{}'.format(item_string),
+                    'markup': True,
+                    'size_hint_x': 0.5,
+                    'font_size': '15sp',
+                    'text_size': 'self.size',
+                    'valign': "top",
+                    'halign': "left",
+                    'type': 1,
+                    'price': item_price,
+                    'item_id': value['item_id'],
+                    'row': key
+                })
+                table_data.append({
+                    'text': '{}'.format(Static.us_dollar(item_price)),
+                    'markup': True,
+                    'size_hint_x': 0.3,
+                    'type': 1,
+                    'price': item_price,
+                    'item_id': value['item_id'],
+                    'row': key
+                })
+        self.adjust_summary_table.data = table_data
 
     def make_adjustment_individual_table(self):
-        self.adjust_individual_grid.clear_widgets()
-        # create th
-        h1 = KV.sized_invoice_tr(0, 'Type', size_hint_x=0.1)
-        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.1)
-        h3 = KV.sized_invoice_tr(0, 'Item', size_hint_x=0.5)
-        h4 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-        h5 = KV.sized_invoice_tr(0, 'A', size_hint_x=0.1)
-        self.adjust_individual_grid.add_widget(Builder.load_string(h1))
-        self.adjust_individual_grid.add_widget(Builder.load_string(h2))
-        self.adjust_individual_grid.add_widget(Builder.load_string(h3))
-        self.adjust_individual_grid.add_widget(Builder.load_string(h4))
-        self.adjust_individual_grid.add_widget(Builder.load_string(h5))
 
-        if self.invoice_list is not False:
-            for key, values in self.invoice_list_copy.items():
-                if key == sessions.get('_itemId')['value']:
-                    idx = -1
-                    for item in values:
-                        idx += 1
-                        item_name = item['item_name']
-                        item_type = item['type']
-                        item_color = item['color']
-                        item_memo = item['memo']
-                        item_price = item['item_price'] if item['item_price'] else 0
-                        item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, item_color, item_memo)
-                        background_color = (
-                            0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
-                            0.89803922, 0.89803922, 0.89803922, 1)
-                        background_normal = ''
-                        text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
-                        invoice_items_id = item['invoice_items_id'] if 'invoice_items_id' in item else None
+        tabled= []
+        inv_list = self.invoice_list
+        item_id = sessions.get('_itemId')['value']
+        if item_id in inv_list:
+            for x, item in enumerate(inv_list[item_id]):
+                item_name = item['item_name']
+                item_type = item['type']
+                item_color = item['color']
+                item_memo = item['memo']
+                item_price = item['item_price'] if item['item_price'] else 0
+                item_string = '[b]{}[/b] \n{}\n{}'.format(item_name, item_color, item_memo)
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '{}'.format(item_type),
+                    'row': x,
+                    'size_hint_x': 0.1,
+                    'column': 1,
+                    'type': 2,
+                    'valign': 'middle',
+                    'halign': 'center',
+                    'price': item_price,
+                })
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '1',
+                    'row': x,
+                    'size_hint_x': 0.1,
+                    'valign': 'middle',
+                    'halign': 'center',
+                    'column': 2,
+                    'type': 2,
+                    'price': item_price,
+                })
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '{}'.format(item_string),
+                    'row': x,
+                    'size_hint_x': 0.5,
+                    'valign': 'top',
+                    'halign': 'left',
+                    'column': 3,
+                    'type': 2,
+                    'price': item_price,
+                })
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '{}'.format(Static.us_dollar(item_price)),
+                    'row': x,
+                    'size_hint_x': 0.2,
+                    'valign': 'middle',
+                    'halign': 'center',
+                    'column': 4,
+                    'type': 2,
+                    'price': item_price,
+                })
+                tabled.append({
+                    'item_id': item_id,
+                    'text': '[color=ff0000][b]-[/b][/color]',
+                    'row': x,
+                    'size_hint_x': 0.1,
+                    'valign': 'middle',
+                    'halign': 'center',
+                    'column': 5,
+                    'type': 2,
+                    'price': item_price
+                })
 
-                        tr1 = Button(size_hint_x=0.1,
-                                     markup=True,
-                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                     msg=item_type),
-                                     on_press=partial(self.item_row_adjusted_selected, 2, item_price, idx),
-                                     background_color=background_color,
-                                     background_normal=background_normal)
-                        tr2 = Button(size_hint_x=0.1,
-                                     markup=True,
-                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                     msg=1),
-                                     on_press=partial(self.item_row_adjusted_selected, 2, item_price, idx),
-                                     background_color=background_color,
-                                     background_normal=background_normal)
-                        tr3 = Factory.LongButton(size_hint_x=0.6,
-                                                 size_hint_y=None,
-                                                 markup=True,
-                                                 text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                                 msg=item_string),
-                                                 on_press=partial(self.item_row_adjusted_selected, 2, item_price, idx),
-                                                 background_color=background_color,
-                                                 background_normal=background_normal)
-                        tr4 = Button(size_hint_x=0.2,
-                                     markup=True,
-                                     text='[color={text_color}]{msg}[/color]'.format(text_color=text_color,
-                                                                                     msg=Static.us_dollar(item_price)),
-                                     on_press=partial(self.item_row_adjusted_selected, 2, item_price, idx),
-                                     background_color=background_color,
-                                     background_normal=background_normal)
-
-                        tr5 = Button(size_hint_x=0.1,
-                                     markup=True,
-                                     text='[color=ffffff][b]-[/b][/color]',
-                                     on_release=partial(self.item_row_delete_selected, idx, invoice_items_id),
-                                     background_color=(1, 0, 0, 1),
-                                     background_normal='')
-
-                        self.adjust_individual_grid.add_widget(tr1)
-                        self.adjust_individual_grid.add_widget(tr2)
-                        self.adjust_individual_grid.add_widget(tr3)
-                        self.adjust_individual_grid.add_widget(tr4)
-                        self.adjust_individual_grid.add_widget(tr5)
+        self.adjust_individual_table.data = tabled
 
     def adjustment_calculator(self, type=None, price=0, row=None, *args, **kwargs):
         self.adjust_price = 0
@@ -1425,15 +1366,15 @@ class EditInvoiceScreen(Screen):
                 self.invoice_list[sessions.get('_itemId')['value']][idx]['item_price'] = new_price
             self.calculate_totals()
 
-    def item_row_delete_selected(self, row, invoice_items_id, *args, **kwargs):
-        if sessions.get('_itemId')['value'] in self.invoice_list:
-            print('test1')
-            for item_row in self.invoice_list[int(sessions.get('_itemId')['value'])]:
-                if 'invoice_items_id' in item_row:
-                    if item_row['invoice_items_id'] is invoice_items_id:
-                        self.deleted_rows.append(item_row['invoice_items_id'])
-        del self.invoice_list[sessions.get('_itemId')['value']][row]
-        del self.invoice_list_copy[sessions.get('_itemId')['value']][row]
+    def item_row_delete_selected(self, item_id, row, *args, **kwargs):
+        row = int(row)
+        if item_id in self.invoice_list:
+            for k, v in enumerate(self.invoice_list[item_id]):
+                if k == row:
+                    del self.invoice_list[item_id][k]
+                    break
+
+        self.invoice_list_copy = self.invoice_list
         self.item_selected_row = 0
         self.make_adjustment_sum_table()
         self.make_adjustment_individual_table()
@@ -1441,7 +1382,6 @@ class EditInvoiceScreen(Screen):
 
     def item_row_adjusted_selected(self, type=None, price=0, row=None, *args, **kwargs):
         self.item_selected_row = row
-        self.adjust_individual_grid.clear_widgets()
         self.make_adjustment_individual_table()
 
         self.adjustment_calculator(type=type, price=price, row=row)

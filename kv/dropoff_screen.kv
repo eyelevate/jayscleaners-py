@@ -193,6 +193,17 @@
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
+                    Label:
+                        size_hint_x: 0.1
+                        markup: True
+                        text: "[color=000000][b]A[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
                 RelativeLayout:
                     size_hint: 1, 0.7
                     pos_hint:{'top':1}

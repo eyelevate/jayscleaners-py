@@ -24,6 +24,7 @@
 #: import ItemsTableButton components.items_table_buttons
 #: import ItemsDetailTableButton components.items_detail_table_button
 #: import SelectableGridLayoutRV components.selectable_grid_layout_rv
+#: import SelectableRecycleGridLayoutDuplicate components.selectable_grid_duplicate
 #: import SelectableRecycleBoxLayout components.selectable_rv_boxlayout
 #: import SearchResultsRV components.search_results_rv
 #: import HistoryRecycleGridLayout components.history_items_table_rv
@@ -31,6 +32,8 @@
 #: import DetailsTableLabel components.details_table_label
 #: import SearchTableButton components.search_table_button
 #: import StatusLabel components.status_label
+#: import AdjustSummaryButton components.adjust_summary_button
+#: import AdjustIndividualButton components.adjust_individual_button
 
 <ListItemButton>:
     size: (100, '48dp')
@@ -76,6 +79,10 @@ ScreenManagement:
 #:include ./kv/rack_table_rv.kv
 #:include ./kv/details_table_rv.kv
 #:include ./kv/search_table_rv.kv
+#:include ./kv/adjust_summary_rv.kv
+#:include ./kv/adjust_sum_layout.kv
+#:include ./kv/adjust_individual_rv.kv
+#:include ./kv/adjust_individual_layout.kv
 
 #:include ./kv/main_screen.kv
 #:include ./kv/colors_screen.kv
