@@ -716,7 +716,7 @@ class DropoffScreen(Screen):
         # make items side
         self.items_layout = ScrollView(size_hint=(0.5, 1),
                                        pos_hint={'top': 1})
-        self.items_grid = GridLayout(size_hint_y=None,
+        self.items_grid = GridLayout(size_hint=(1, None),
                                      cols=5,
                                      row_force_default=True,
                                      row_default_height='60sp')

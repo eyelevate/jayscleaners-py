@@ -366,8 +366,9 @@ Label:
     markup: True
     text: "[color=000000][b]{text}[/b][/color]"
     font_size:'15sp'
-    {txt_wrap}
-    valign:"{valign}"
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
     canvas.before:
         Color:
             rgba: 1, 1, 1, 1
