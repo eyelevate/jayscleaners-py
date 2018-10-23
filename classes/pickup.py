@@ -142,7 +142,6 @@ class PickupScreen(Screen):
         # reset payment values
         self.calc_total.text = '[color=000000][b]$0.00[/b][/color]'
         self.calc_amount = []
-        self.pickup_table_rv.data = []
         self.amount_tendered = 0
         self.selected_invoices = []
         self.total_subtotal = 0
@@ -438,7 +437,6 @@ class PickupScreen(Screen):
 
             else:
                 self.selected_invoices.append(invoice_id)
-        print(self.selected_invoices)
         self.discount_total = 0
         self.amount_tendered = 0
         self.total_amount = 0
@@ -494,7 +492,7 @@ class PickupScreen(Screen):
         self.change_due = float("%0.2f" % (self.amount_tendered - self.total_due))
 
         # clear table and update selected rows
-        self.invoice_table.clear_widgets()
+
         self.invoice_create_rows()
 
     def calculator_amounts(self, num):
