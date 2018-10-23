@@ -1,7 +1,7 @@
 <ItemsTableButton>:
     id: items_table_button
     markup: True
-    font_size:sp(15)
+    font_size:sp(14)
     markup: True
     disabled: False
     text_size: self.size
@@ -12,10 +12,10 @@
     viewclass: 'ItemsTableButton'
     SelectableRecycleGridLayout:
         bar_width: dp(5)
-        default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
-        orientation: 'horizontal'
         row_force_default: True,
-        row_default_height: sp(50)
+        row_default_height: sp(60)
+        default_size: None, dp(60)
+        default_size_hint: 1, None
         cols:5
