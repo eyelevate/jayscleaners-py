@@ -363,6 +363,7 @@ Button:
 Label:
     size_hint_x: {hint_x}
     size_hint_y: None
+    height: '25sp'
     markup: True
     text: "[color=000000][b]{text}[/b][/color]"
     font_size:'15sp'
