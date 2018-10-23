@@ -92,10 +92,19 @@ class PickupScreen(Screen):
     card_box = None
     discount_id = None
     epson = None
+    pickup_table_rv = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super(PickupScreen, self).__init__(**kwargs)
         pub.subscribe(self.set_epson_printer, "set_epson_printer")
+
+    def attach(self):
+        pub.subscribe(self.invoice_selected, "invoice_selected")
+
+
+    def detach(self):
+        pub.unsubscribe(self.invoice_selected, "invoice_selected")
+
 
     def set_epson_printer(self, device):
         self.epson = device
@@ -126,8 +135,6 @@ class PickupScreen(Screen):
 
         self.total_credit.text = '[color=0AAC00]{}[/color]'.format('${:,.2f}'.format(Decimal(self.credits)))
         self.selected_invoices = []
-        # setup invoice table
-        self.invoice_table.clear_widgets()
 
         # make headers
         self.invoice_create_rows()
@@ -135,6 +142,7 @@ class PickupScreen(Screen):
         # reset payment values
         self.calc_total.text = '[color=000000][b]$0.00[/b][/color]'
         self.calc_amount = []
+        self.pickup_table_rv.data = []
         self.amount_tendered = 0
         self.selected_invoices = []
         self.total_subtotal = 0
@@ -300,17 +308,7 @@ class PickupScreen(Screen):
         self.main_popup.dismiss()
 
     def invoice_create_rows(self):
-        self.invoice_table.clear_widgets()
-        h1 = KV.sized_invoice_tr(0, '#', size_hint_x=0.2)
-        h2 = KV.sized_invoice_tr(0, 'Qty', size_hint_x=0.2)
-        h3 = KV.sized_invoice_tr(0, 'Due', size_hint_x=0.2)
-        h4 = KV.sized_invoice_tr(0, 'Rack', size_hint_x=0.2)
-        h5 = KV.sized_invoice_tr(0, 'Subtotal', size_hint_x=0.2)
-        self.invoice_table.add_widget(Builder.load_string(h1))
-        self.invoice_table.add_widget(Builder.load_string(h2))
-        self.invoice_table.add_widget(Builder.load_string(h3))
-        self.invoice_table.add_widget(Builder.load_string(h4))
-        self.invoice_table.add_widget(Builder.load_string(h5))
+        table_data = []
         invoices = Invoice()
         invoice_data = SYNC.invoices_grab_pickup(sessions.get('_customerId')['value'])
         if invoice_data:
@@ -328,6 +326,11 @@ class PickupScreen(Screen):
                 total = Static.us_dollar(invoice['total'])
                 rack = invoice['rack']
                 due = invoice['due_date']
+                count_invoice_items = 0
+                if 'invoice_items' in invoice:
+                    iitems = invoice['invoice_items']
+                    if len(iitems) > 0:
+                        count_invoice_items = len(iitems)
                 try:
                     dt = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S")
                 except ValueError:
@@ -341,36 +344,87 @@ class PickupScreen(Screen):
                 now_strtotime = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
                 # check to see if invoice is overdue
 
-                if rack:  # racked and ready
-                    state = 3
-                elif due_strtotime < now_strtotime:  # overdue
-                    state = 2
-                else:  # Not ready yet
-                    state = 1
-
                 selected = True if invoice_id in self.selected_invoices else False
+                invoice_status = int(invoice['status'])
+                row_settings = self._make_row_settings(invoice_status, selected, due_strtotime, now_strtotime,
+                                                       count_invoice_items)
+                if invoice_status < 5:
+                    table_data.append({
+                        'column': 1,
+                        'invoice_id': invoice_id,
+                        'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], '{0:06d}'.format(invoice_id)),
+                        'background_color': row_settings['background_color'],
+                        'background_normal': ''
+                    })
+                    table_data.append({
+                        'column': 2,
+                        'invoice_id': invoice_id,
+                        'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], quantity),
+                        'background_color': row_settings['background_color'],
+                        'background_normal': ''
+                    })
 
-                tr_1 = KV.invoice_tr(state, invoice_id, selected=selected, invoice_id=invoice_id,
-                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
-                                         invoice_id))
-                tr_2 = KV.invoice_tr(state, quantity, selected=selected, invoice_id=invoice_id,
-                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
-                                         invoice_id))
-                tr_3 = KV.invoice_tr(state, due_date, selected=selected, invoice_id=invoice_id,
-                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
-                                         invoice_id))
-                tr_4 = KV.invoice_tr(state, rack, selected=selected, invoice_id=invoice_id,
-                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
-                                         invoice_id))
-                tr_5 = KV.invoice_tr(state, subtotal, selected=selected, invoice_id=invoice_id,
-                                     callback='self.parent.parent.parent.parent.parent.parent.invoice_selected({})'.format(
-                                         invoice_id))
+                    table_data.append({
+                        'column': 3,
+                        'invoice_id': invoice_id,
+                        'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], due_date),
+                        'background_color': row_settings['background_color'],
+                        'background_normal': ''
+                    })
+                    table_data.append({
+                        'column': 4,
+                        'invoice_id': invoice_id,
+                        'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], rack),
+                        'background_color': row_settings['background_color'],
+                        'background_normal': ''
+                    })
+                    table_data.append({
+                        'column': 4,
+                        'invoice_id': invoice_id,
+                        'text': '[color={}][b]${}[/b][/color]'.format(row_settings['text_color'],total),
+                        'background_color': row_settings['background_color'],
+                        'background_normal': ''
+                    })
+        self.pickup_table_rv.data = table_data
 
-                self.invoice_table.add_widget(Builder.load_string(tr_1))
-                self.invoice_table.add_widget(Builder.load_string(tr_2))
-                self.invoice_table.add_widget(Builder.load_string(tr_3))
-                self.invoice_table.add_widget(Builder.load_string(tr_4))
-                self.invoice_table.add_widget(Builder.load_string(tr_5))
+    def _make_row_settings(self, invoice_status, check_invoice_id, due_strtotime, now_strtotime, count_invoice_items):
+
+        if invoice_status is 5:  # state 5
+            text_color = '000000' if not check_invoice_id else 'e5e5e5'
+            background_color = [0.826, 0.826, 0.826, 1] if not check_invoice_id else [0.369, 0.369, 0.369, 1]
+            status = 5
+
+        elif invoice_status is 4 or invoice_status is 3:  # state 4
+            text_color = 'FF0000' if not check_invoice_id else 'FFCCCC'
+            background_color = [1, 0.717, 0.717, 1] if not check_invoice_id else [1, 0, 0, 1]
+            status = 4
+
+        elif invoice_status is 2:  # state 3
+            text_color = '228B22' if not check_invoice_id else 'D8F7D8'
+            background_color = [0.847, 0.968, 0.847, 1] if not check_invoice_id else [0, 0.64, 0.149, 1]
+            status = 3
+
+        else:
+            if due_strtotime < now_strtotime:  # overdue state 2
+                text_color = '0F47FF' if not check_invoice_id else 'D0D8F5'
+                background_color = [0.816, 0.847, 0.961, 1] if not check_invoice_id else [0.059, 0.278, 1, 1]
+                status = 2
+
+            elif count_invoice_items == 0:  # #quick drop state 6
+                text_color = '000000'
+                background_color = [0.9960784314, 1, 0.7176470588, 1] if not check_invoice_id else [
+                    0.98431373, 1,
+                    0, 1]
+                status = 6
+            else:  # state 1
+                text_color = '000000' if not check_invoice_id else 'e5e5e5'
+                background_color = [0.826, 0.826, 0.826, 1] if not check_invoice_id else [0.369, 0.369, 0.369, 1]
+                status = 1
+        return {
+            'text_color': text_color,
+            'background_color': background_color,
+            'status': status
+        }
 
     def set_result_status(self):
         sessions.put('_searchResultsStatus', value= True)

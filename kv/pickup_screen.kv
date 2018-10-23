@@ -1,7 +1,6 @@
 <PickupScreen>:
     id: screen_pickup
     name:"pickup"
-    invoice_table: invoice_table
     quantity_label: quantity_label
     subtotal_label: subtotal_label
     tax_label: tax_label
@@ -18,7 +17,10 @@
     payment_account_header: payment_account_header
     discount_label: discount_label
     total_discount: total_discount
+    pickup_table_rv: pickup_table_rv
     on_enter: root.reset()
+    on_pre_enter: root.attach()
+    on_leave: root.detach()
 
     BoxLayout:
         orientation: 'vertical'
@@ -28,24 +30,70 @@
             BoxLayout:
                 orientation: 'vertical'
                 size_hint: 0.5, 1
-                ScrollView:
-                    size_hint: 1,0.7
-                    GridLayout:
-                        id: invoice_table
-                        size_hint_y:None
-                        size_hint_x:1
-                        height: self.minimum_height
-                        cols: 5
-                        row_force_default: True
-                        row_default_height:'50sp'
+                GridLayout:
+                    cols:5
+                    rows:1
+                    height: self.minimum_height
+                    size_hint: 1, 0.1
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]#[/b][/color]"
+                        font_size:'15sp'
                         canvas.before:
                             Color:
                                 rgba: 1, 1, 1, 1
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Qty[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Due[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Rack[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Subtotal[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                RelativeLayout:
+                    size_hint: 1, 0.6
+                    pos_hint:{'top':1}
+                    PickupTableRV:
+                        id: pickup_table_rv
+                        pos_hint:{'top':1}
                 GridLayout:
-                    size_hint: 1,0.3
+                    pos_hint:{'bottom':1}
+                    size_hint: 1, 0.3
                     cols: 2
                     rows: 7
                     Label:
@@ -55,7 +103,7 @@
                         text_size: self.size
                         halign: 'right'
                         valign: 'middle'
-                        font_size:'20sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -71,7 +119,7 @@
                         text_size: self.size
                         halign: 'left'
                         valign: 'middle'
-                        font_size: '17sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -86,7 +134,7 @@
                         text_size: self.size
                         halign: 'right'
                         valign: 'middle'
-                        font_size:'20sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -102,7 +150,7 @@
                         text_size: self.size
                         halign: 'left'
                         valign: 'middle'
-                        font_size: '17sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -118,7 +166,7 @@
                         text_size: self.size
                         halign: 'right'
                         valign: 'middle'
-                        font_size:'20sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -134,7 +182,7 @@
                         text_size: self.size
                         halign: 'left'
                         valign: 'middle'
-                        font_size: '17sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -149,7 +197,7 @@
                         text_size: self.size
                         halign: 'right'
                         valign: 'middle'
-                        font_size:'20sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -165,7 +213,7 @@
                         text_size: self.size
                         halign: 'left'
                         valign: 'middle'
-                        font_size: '17sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -180,7 +228,7 @@
                         text_size: self.size
                         halign: 'right'
                         valign: 'middle'
-                        font_size:'20sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -196,7 +244,7 @@
                         text_size: self.size
                         halign: 'left'
                         valign: 'middle'
-                        font_size: '17sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -211,7 +259,7 @@
                         text_size: self.size
                         halign: 'right'
                         valign: 'middle'
-                        font_size:'20sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -227,7 +275,7 @@
                         text_size: self.size
                         halign: 'left'
                         valign: 'middle'
-                        font_size: '17sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -243,7 +291,7 @@
                         text_size: self.size
                         halign: 'right'
                         valign: 'middle'
-                        font_size:'20sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -259,7 +307,7 @@
                         text_size: self.size
                         halign: 'left'
                         valign: 'middle'
-                        font_size: '17sp'
+                        font_size:'15sp'
                         padding_x: '20sp'
                         canvas.before:
                             Color:
@@ -267,6 +315,11 @@
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
+
+
+
+
+
             BoxLayout:
                 size_hint: 0.5,1
                 orientation: 'vertical'
