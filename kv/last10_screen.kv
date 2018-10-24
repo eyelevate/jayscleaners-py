@@ -81,10 +81,8 @@
         BoxLayout:
             id: last10_footer
             size_hint: 1,0.1
-            row_force_default: True
-            row_default_height:'65sp'
             Button:
-                size_hint_y: None
+                size_hint: 1, 1
                 markup: True
                 text: 'Cancel'
                 on_press: app.root.current = 'search'
