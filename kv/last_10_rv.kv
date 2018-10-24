@@ -1,0 +1,21 @@
+<Last10Button>:
+    markup: True
+    size_hint: 1, None
+    text_size: self.size
+    valign:'middle'
+    halign:'center'
+    padding_x: sp(4)
+    font_size:sp(15)
+
+<Last10RV@RecycleView>:
+    viewclass: 'Last10Button'
+    SelectableRecycleGridLayout:
+        bar_width: dp(5)
+        size_hint_y: None
+        height: self.minimum_height
+        row_force_default: True,
+        row_default_height: sp(50)
+        default_size: None, dp(50)
+        default_size_hint: 1, None
+        cols:6
+        spacing:1

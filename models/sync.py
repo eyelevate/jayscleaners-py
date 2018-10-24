@@ -1280,6 +1280,22 @@ class Sync:
             print(e.reason)  # could not save this time around because no internet, move on
             return False
 
+    def customers_in(self, ids, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/customers-in'
+        # attempt to connect to server
+        data = parse.urlencode({'ids': json.dumps(ids)}).encode('utf-8')
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is True:
+                return data_1['data']
+            else:
+                return False
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
     def customers_row_cap(self, query, *args, **kwargs):
         list = query.split()
         print(list)

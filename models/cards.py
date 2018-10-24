@@ -1,14 +1,12 @@
 import datetime
 import time
 import sqlite3
-import authorizenet
 from models.model import *
 from models.companies import Company
 
 unix = time.time()
 now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 table = 'cards'
-
 
 class Card:
     id = None
@@ -349,186 +347,188 @@ updated_at = ? WHERE id = ?'''.format(t=table), (self.card_id,
 
 
     def connectAuthNet(self, company_id):
-        payment_api_login = False
-        payment_gateway_id = False
-        comps = Company()
-        companies = comps.where({'id': company_id})
-        if companies:
-            for company in companies:
-                payment_api_login = str(company['payment_api_login'])
-                payment_gateway_id = str(company['payment_gateway_id'])
-        if payment_api_login and payment_gateway_id:
-            authorizenet.Configuration.configure(
-                authorizenet.Environment.PRODUCTION,
-                payment_api_login,
-                payment_gateway_id,
-            )
-            # authorizenet.Configuration.configure(
-            #     authorizenet.Environment.PRODUCTION,
-            #     'api_login_id',
-            #     'api_transaction_key',
-            # )
-
-            return True
-        else:
-            return False
+        pass
+        # payment_api_login = False
+        # payment_gateway_id = False
+        # comps = Company()
+        # companies = comps.where({'id': company_id})
+        # if companies:
+        #     for company in companies:
+        #         payment_api_login = str(company['payment_api_login'])
+        #         payment_gateway_id = str(company['payment_gateway_id'])
+        # if payment_api_login and payment_gateway_id:
+        #
+        #     # authorizenet.Configuration.configure(
+        #     #     authorizenet.Environment.PRODUCTION,
+        #     #     payment_api_login,
+        #     #     payment_gateway_id,
+        #     # )
+        #     # authorizenet.Configuration.configure(
+        #     #     authorizenet.Environment.PRODUCTION,
+        #     #     'api_login_id',
+        #     #     'api_transaction_key',
+        #     # )
+        #
+        #     return True
+        # else:
+        #     return False
 
     def collect(self, company_id, profile_id):
-
-        profile_id = str(profile_id)
-        auth_connect = self.connectAuthNet(company_id)
-        if profile_id and profile_id is not None :
-
-            if auth_connect:
-
-                cards = self.where({'company_id': company_id, 'profile_id': profile_id})
-                cards_update = []
-                if cards:
-                    for card in cards:
-                        payment_id = str(card['payment_id'])
-                        result = authorizenet.CreditCard.details(profile_id, payment_id)
-                        last_four = result.payment_profile.payment.credit_card.card_number
-                        card_type = result.payment_profile.payment.credit_card.card_type
-                        card['last_four'] = last_four
-                        card['card_type'] = card_type
-                        card['first_name'] = result.payment_profile.bill_to.first_name
-                        card['last_name'] = result.payment_profile.bill_to.last_name
-                        cards_update.append(card)
-                print(cards_update)
-                return cards_update
-            else:
-                print('collection failed')
-                return False
-        else:
-            print('no such profile id or paymentid')
-            return False
+        pass
+        # profile_id = str(profile_id)
+        # auth_connect = self.connectAuthNet(company_id)
+        # if profile_id and profile_id is not None :
+        #
+        #     if auth_connect:
+        #
+        #         cards = self.where({'company_id': company_id, 'profile_id': profile_id})
+        #         cards_update = []
+        #         if cards:
+        #             for card in cards:
+        #                 payment_id = str(card['payment_id'])
+        #                 # result = authorizenet.CreditCard.details(profile_id, payment_id)
+        #                 # last_four = result.payment_profile.payment.credit_card.card_number
+        #                 # card_type = result.payment_profile.payment.credit_card.card_type
+        #                 # card['last_four'] = last_four
+        #                 # card['card_type'] = card_type
+        #                 # card['first_name'] = result.payment_profile.bill_to.first_name
+        #                 # card['last_name'] = result.payment_profile.bill_to.last_name
+        #                 # cards_update.append(card)
+        #         print(cards_update)
+        #         return cards_update
+        #     else:
+        #         print('collection failed')
+        #         return False
+        # else:
+        #     print('no such profile id or paymentid')
+        #     return False
 
     def create_profile(self, company_id, data):
 
-        if self.connectAuthNet(company_id):
-            try:
-                result = authorizenet.Customer.create(data)
-                print(result)
-                if result.messages:
-                    for response in result.messages:
-                        if response['result_code'] == 'Ok':
-
-                            return {'status': True,
-                                    'profile_id': result.customer_id,
-                                    'payment_id': result.payment_ids[0]}
-                        else:
-                            return {
-                                'status': False,
-                                'message': result.messages.text
-                            }
-                else:
-                    return {
-                        'status':False,
-                        'message': 'Could not connect to server. Please try again'
-                    }
-            except authorizenet.exceptions.AuthorizeResponseError:
-                return {'status':False,
-                        'message': authorizenet.exceptions.AuthorizeResponseError}
-            except authorizenet.exceptions.AuthorizeInvalidError:
-                error_message = 'There were problems validating your card. Please try again.'
-
-
-                return {'status':False,
-                        'message': error_message}
-
-        else:
-            return {'status':False,
-                    'message': 'Could not authenticate with authorize.net'}
+        # if self.connectAuthNet(company_id):
+        #     try:
+        #         result = authorizenet.Customer.create(data)
+        #         print(result)
+        #         if result.messages:
+        #             for response in result.messages:
+        #                 if response['result_code'] == 'Ok':
+        #
+        #                     return {'status': True,
+        #                             'profile_id': result.customer_id,
+        #                             'payment_id': result.payment_ids[0]}
+        #                 else:
+        #                     return {
+        #                         'status': False,
+        #                         'message': result.messages.text
+        #                     }
+        #         else:
+        #             return {
+        #                 'status':False,
+        #                 'message': 'Could not connect to server. Please try again'
+        #             }
+        #     except authorizenet.exceptions.AuthorizeResponseError:
+        #         return {'status':False,
+        #                 'message': authorizenet.exceptions.AuthorizeResponseError}
+        #     except authorizenet.exceptions.AuthorizeInvalidError:
+        #         error_message = 'There were problems validating your card. Please try again.'
+        #
+        #
+        #         return {'status':False,
+        #                 'message': error_message}
+        #
+        # else:
+        #     return {'status':False,
+        #             'message': 'Could not authenticate with authorize.net'}
         pass
 
     def create_card(self,company_id, profile_id, data):
-
-        if self.connectAuthNet(company_id):
-            try:
-                result = authorizenet.CreditCard.create(str(profile_id), data)
-                print(result)
-                if result.messages:
-                    for response in result.messages:
-                        if response['result_code'] == 'Ok':
-
-                            return {'status': True,
-                                    'profile_id': result.customer_id,
-                                    'payment_id': result.payment_id}
-                        else:
-                            return {
-                                'status': False,
-                                'message': response['messages']
-                            }
-                else:
-                    return {
-                        'status':False,
-                        'message': 'Could not connect to server. Please try again'
-                    }
-
-            except authorizenet.exceptions.AuthorizeResponseError as e:
-                return {'status':False,
-                        'message':e}
-            except authorizenet.exceptions.AuthorizeInvalidError:
-                error_message = ''
-                for key, value in authorizenet.exceptions.AuthorizeInvalidError:
-                    error_message = 'Error: {} field has an error of "{}"'.format(key, value)
-                return {'status':False,
-                        'message':error_message}
-        else:
-            return {'status': False,
-                    'message': 'Could not authenticate with server'}
+        pass
+        # if self.connectAuthNet(company_id):
+        #     try:
+        #         result = authorizenet.CreditCard.create(str(profile_id), data)
+        #         print(result)
+        #         if result.messages:
+        #             for response in result.messages:
+        #                 if response['result_code'] == 'Ok':
+        #
+        #                     return {'status': True,
+        #                             'profile_id': result.customer_id,
+        #                             'payment_id': result.payment_id}
+        #                 else:
+        #                     return {
+        #                         'status': False,
+        #                         'message': response['messages']
+        #                     }
+        #         else:
+        #             return {
+        #                 'status':False,
+        #                 'message': 'Could not connect to server. Please try again'
+        #             }
+        #
+        #     except authorizenet.exceptions.AuthorizeResponseError as e:
+        #         return {'status':False,
+        #                 'message':e}
+        #     except authorizenet.exceptions.AuthorizeInvalidError:
+        #         error_message = ''
+        #         for key, value in authorizenet.exceptions.AuthorizeInvalidError:
+        #             error_message = 'Error: {} field has an error of "{}"'.format(key, value)
+        #         return {'status':False,
+        #                 'message':error_message}
+        # else:
+        #     return {'status': False,
+        #             'message': 'Could not authenticate with server'}
 
     def card_update(self,company_id, profile_id, payment_id, data):
-
-        if self.connectAuthNet(company_id):
-
-            try:
-                result = authorizenet.CreditCard.update(str(profile_id), str(payment_id),data)
-                return {'status':True,
-                        'message':'Successfully updated credit cards with all companies'}
-            except authorizenet.exceptions.AuthorizeResponseError:
-                return {'status':False,
-                        'message':authorizenet.exceptions.AuthorizeResponseError}
-        else:
-            return {'status': False,
-                    'message': 'Could not authenticate with server'}
+        pass
+        # if self.connectAuthNet(company_id):
+        #
+        #     try:
+        #         result = authorizenet.CreditCard.update(str(profile_id), str(payment_id),data)
+        #         return {'status':True,
+        #                 'message':'Successfully updated credit cards with all companies'}
+        #     except authorizenet.exceptions.AuthorizeResponseError:
+        #         return {'status':False,
+        #                 'message':authorizenet.exceptions.AuthorizeResponseError}
+        # else:
+        #     return {'status': False,
+        #             'message': 'Could not authenticate with server'}
 
     def validate_card(self, company_id, profile_id, payment_id):
-
-        if self.connectAuthNet(company_id):
-            try:
-                result = authorizenet.CreditCard.validate(str(profile_id), str(payment_id), {
-                    'validationMode': 'liveMode'
-                })
-                print(result)
-                if result.messages:
-                    for response in result.messages:
-                        if response['result_code'] == 'Ok':
-
-                            return {'status': True,
-                                    'message': 'Card has been validated, and can can be used for this transaction.'}
-                        else:
-                            return {
-                                'status': False,
-                                'message': response['message']['text ']
-                            }
-                else:
-                    return {
-                        'status': False,
-                        'message': 'Could not connect to server. Please try again'
-                    }
-
-            except authorizenet.exceptions.AuthorizeResponseError:
-                return {'status': False,
-                        'message': authorizenet.exceptions.AuthorizeResponseError}
-            except authorizenet.exceptions.AuthorizeInvalidError:
-                error_message = 'Error: there were problems with your validation. please use another card'
-
-                return {'status': False,
-                        'message': error_message}
-        else:
-            return {'status': False,
-                    'message': 'Could not authenticate with server'}
+        pass
+        # if self.connectAuthNet(company_id):
+        #     try:
+        #         result = authorizenet.CreditCard.validate(str(profile_id), str(payment_id), {
+        #             'validationMode': 'liveMode'
+        #         })
+        #         print(result)
+        #         if result.messages:
+        #             for response in result.messages:
+        #                 if response['result_code'] == 'Ok':
+        #
+        #                     return {'status': True,
+        #                             'message': 'Card has been validated, and can can be used for this transaction.'}
+        #                 else:
+        #                     return {
+        #                         'status': False,
+        #                         'message': response['message']['text ']
+        #                     }
+        #         else:
+        #             return {
+        #                 'status': False,
+        #                 'message': 'Could not connect to server. Please try again'
+        #             }
+        #
+        #     except authorizenet.exceptions.AuthorizeResponseError:
+        #         return {'status': False,
+        #                 'message': authorizenet.exceptions.AuthorizeResponseError}
+        #     except authorizenet.exceptions.AuthorizeInvalidError:
+        #         error_message = 'Error: there were problems with your validation. please use another card'
+        #
+        #         return {'status': False,
+        #                 'message': error_message}
+        # else:
+        #     return {'status': False,
+        #             'message': 'Could not authenticate with server'}
 
 
     def truncate(self):

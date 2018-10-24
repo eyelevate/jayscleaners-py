@@ -4,16 +4,76 @@
     last10_table: last10_table
     last10_footer: last10_footer
     on_enter: root.get_last10()
+    on_pre_enter: root.attach()
+    on_leave: root.detach()
     BoxLayout:
         orientation: 'vertical'
         pos_hint: {'top':1}
         GridLayout:
-            id: last10_table
-            size_hint: 1,0.8
-            cols:7
-            rows:11
+            cols: 6
+            size_hint_y:None
+            size_hint_x: 1
+            height: self.minimum_height
+            rows:1
             row_force_default: True
-            row_default_height:'42sp'
+            row_default_height:dp(25)
+            Label:
+                text: '[color=000000]#[/color]'
+                markup: True
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                text: '[color=000000]ID[/color]'
+                markup: True
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                text: '[color=000000]Mark[/color]'
+                markup: True
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                text: '[color=000000]Last[/color]'
+                markup: True
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                text: '[color=000000]First[/color]'
+                markup: True
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                text: '[color=000000]Phone[/color]'
+                markup: True
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+        Last10RV:
+            id: last10_table
 
         BoxLayout:
             id: last10_footer
