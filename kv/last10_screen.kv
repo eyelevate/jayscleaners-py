@@ -7,6 +7,7 @@
     on_pre_enter: root.attach()
     on_leave: root.detach()
     BoxLayout:
+        size_hint: 1, 1
         orientation: 'vertical'
         pos_hint: {'top':1}
         GridLayout:
@@ -71,9 +72,11 @@
                     Rectangle:
                         pos: self.pos
                         size: self.size
-
-        Last10RV:
-            id: last10_table
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 1, 0.8
+            Last10RV:
+                id: last10_table
 
         BoxLayout:
             id: last10_footer
