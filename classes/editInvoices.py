@@ -139,11 +139,9 @@ class EditInvoiceScreen(Screen):
 
     def set_epson_printer(self, device):
         self.epson = device
-        print(self.epson)
 
     def set_bixolon_printer(self, device):
         self.bixolon = device
-        print(self.bixolon)
 
     def reset(self):
         # Pause Schedule
@@ -724,8 +722,9 @@ class EditInvoiceScreen(Screen):
         colors = SYNC.colors_query(sessions.get('_companyId')['value'])
         if colors:
             for color in colors:
+                text_color = '000000' if color == 'white' else 'ffffff'
                 color_btn = Button(markup=True,
-                                   text='[b]{color_name}[/b]'.format(color_name=color['name']),
+                                   text='[color={}][b]{}[/b][/color]'.format(text_color, color['name']),
                                    on_release=partial(self.color_selected, color['name']))
                 color_btn.text_size = color_btn.size
                 color_btn.font_size = '12sp'
@@ -957,8 +956,8 @@ class EditInvoiceScreen(Screen):
                                                background_normal=background_normal)
                 items_tr5 = Button(markup=True,
                                    text='[color=ff0000][b]Edit[b][/color]',
-                                   on_press=partial(self.item_row_selected, idx),
-                                   on_release=partial(self.item_row_edit, idx),
+                                   on_release=partial(self.item_row_selected, idx),
+                                   on_press=partial(self.item_row_edit, idx),
                                    size_hint_x=0.1,
                                    font_size='12sp',
                                    background_color=background_color,
@@ -985,7 +984,7 @@ class EditInvoiceScreen(Screen):
     def item_row_edit(self, row, *args, **kwargs):
         popup = Popup(title='Remove Colors / Memo')
         popup.size_hint = None, None
-        popup.size = 900, 600
+        popup.size = ('600sp', '400sp')
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.7))
@@ -1009,12 +1008,14 @@ class EditInvoiceScreen(Screen):
 
     def remove_color(self, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
-            self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row]['color'] = ''
+            self.invoice_list[sessions.get('_itemId')['value']][self.item_selected_row]['color'] = ''
+            self.invoice_list_copy = self.invoice_list
             self.make_items_table()
 
     def remove_memo(self, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
-            self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row]['memo'] = ''
+            self.invoice_list[sessions.get('_itemId')['value']][self.item_selected_row]['memo'] = ''
+            self.invoice_list_copy = self.invoice_list
             self.make_items_table()
 
     def item_row_selected(self, row, *args, **kwargs):

@@ -4,6 +4,8 @@ import json
 import sys
 import threading
 import time
+
+from models.constants import Constants
 from models.sync import Sync
 from _pydecimal import Decimal
 from calendar import Calendar
@@ -496,7 +498,7 @@ class DropoffScreen(Screen):
                                                               '/ '.join(memo_string))
                     selected = True if sessions.get('_itemId')['value'] == item_id else False
                     text_color = 'e5e5e5' if selected else '000000'
-                    background_rgba = (0.369, 0.369, 0.369, 1) if selected else (0.826, 0.826, 0.826, 1)
+                    background_rgba = Constants().colors('light_gray') if selected else Constants().colors('dark_gray')
                     tr.append({
                         'column': 1,
                         'item_id': item_id,
@@ -654,8 +656,9 @@ class DropoffScreen(Screen):
         colors = SYNC.colors_query(sessions.get('_companyId')['value'])
         if colors:
             for color in colors:
+                text_color = '000000' if color == 'white' else 'ffffff'
                 color_btn = Button(markup=True,
-                                   text='[b]{color_name}[/b]'.format(color_name=color['name']),
+                                   text='[color={}][b]{}[/b][/color]'.format(text_color, color['name']),
                                    on_release=partial(self.color_selected, color['name']))
                 color_btn.text_size = color_btn.size
                 color_btn.font_size = '12sp'
@@ -888,8 +891,8 @@ class DropoffScreen(Screen):
                                                background_normal=background_normal)
                 items_tr5 = Button(markup=True,
                                    text='[color=ff0000][b]Edit[b][/color]',
-                                   on_press=partial(self.item_row_selected, idx),
-                                   on_release=partial(self.item_row_edit, idx),
+                                   on_release=partial(self.item_row_selected, idx),
+                                   on_press=partial(self.item_row_edit, idx),
                                    size_hint_x=0.1,
                                    font_size='12sp',
                                    background_color=background_color,
@@ -899,8 +902,6 @@ class DropoffScreen(Screen):
                 self.items_grid.add_widget(items_tr2)
                 self.items_grid.add_widget(items_tr3)
                 self.items_grid.add_widget(items_tr4)
-                items_tr4.text_size = (items_tr4.width + 200, items_tr4.height)
-
                 self.items_grid.add_widget(items_tr5)
         except KeyError as e:
             Popups.dialog_msg('Selection Error', 'Please select an item before attempting an edit.')
@@ -916,7 +917,7 @@ class DropoffScreen(Screen):
     def item_row_edit(self, row, *args, **kwargs):
         popup = Popup(title='Remove Colors / Memo')
         popup.size_hint = None, None
-        popup.size = 900, 600
+        popup.size = ('600sp', '400sp')
         layout = BoxLayout(orientation='vertical')
         inner_layout_1 = BoxLayout(orientation='horizontal',
                                    size_hint=(1, 0.7))
@@ -940,13 +941,15 @@ class DropoffScreen(Screen):
 
     def remove_color(self, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
-            self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row]['color'] = ''
+            self.invoice_list[sessions.get('_itemId')['value']][self.item_selected_row]['color'] = ''
+            self.invoice_list_copy = self.invoice_list
             self.make_items_table()
 
     def remove_memo(self, *args, **kwargs):
         if sessions.get('_itemId')['value'] in self.invoice_list_copy:
             # self.memo_list = []
-            self.invoice_list_copy[sessions.get('_itemId')['value']][self.item_selected_row]['memo'] = ''
+            self.invoice_list[sessions.get('_itemId')['value']][self.item_selected_row]['memo'] = ''
+            self.invoice_list_copy = self.invoice_list
             self.make_items_table()
 
     def item_row_selected(self, row, *args, **kwargs):
@@ -2323,11 +2326,19 @@ class DropoffScreen(Screen):
                         if invoice_items:
                             for ii in invoice_items:
                                 iitem_id = ii['item_id']
-                                tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                                item_name = InventoryItem().getItemName(iitem_id)
+                                tags_to_print = 1
+                                item_name = ''
+                                if 'inventory_item' in ii:
+                                    if 'tags' in ii['inventory_item']:
+                                        tags_to_print = int(ii['inventory_item']['tags'])
+                                    if 'name' in ii['inventory_item']:
+                                        item_name = ii['inventory_item']['name']
                                 item_color = ii['color']
                                 invoice_item_id = ii['id']
-                                laundry_tag = InventoryItem().getLaundry(iitem_id)
+                                laundry_tag = False
+                                if 'inventory' in ii:
+                                    if 'laundry' in ii['inventory']:
+                                        laundry_tag = ii['inventory']['laundry']
                                 memo_string = ii['memo']
                                 if laundry_tag and tags_to_print > 0:
                                     laundry_to_print.append(invoice_item_id)

@@ -1045,9 +1045,13 @@ class HistoryScreen(Screen):
             if invitems:
                 for ii in invitems:
                     invoice_items_id = ii['id']
-                    iitem_id = ii['item_id']
-                    tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                    item_name = InventoryItem().getItemName(iitem_id)
+                    tags_to_print = 1
+                    item_name = ''
+                    if 'inventory_item' in ii:
+                        if 'tags' in ii['inventory_item']:
+                            tags_to_print = int(ii['inventory_item']['tags'])
+                        if 'name' in ii['inventory_item']:
+                            item_name = ii['inventory_item']['name']
                     item_color = ii['color']
                     item_memo = ii['memo']
                     trtd1 = Button(text=str(invoice_items_id),
@@ -1112,8 +1116,13 @@ class HistoryScreen(Screen):
                 for ii in invitems:
                     invoice_items_id = ii['id']
                     iitem_id = ii['item_id']
-                    tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                    item_name = InventoryItem().getItemName(iitem_id)
+                    tags_to_print = 1
+                    item_name = ''
+                    if 'inventory_item' in ii:
+                        if 'tags' in ii['inventory_item']:
+                            tags_to_print = int(ii['inventory_item']['tags'])
+                        if 'name' in ii['inventory_item']:
+                            item_name = ii['inventory_item']['name']
                     item_color = ii['color']
                     item_memo = ii['memo']
                     if invoice_items_id in self.selected_tags_list:
@@ -1215,8 +1224,13 @@ class HistoryScreen(Screen):
                 for ii in invoice_items:
 
                     iitem_id = ii['item_id']
-                    tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                    item_name = InventoryItem().getItemName(iitem_id)
+                    tags_to_print = 1
+                    item_name = ''
+                    if 'inventory_item' in ii:
+                        if 'tags' in ii['inventory_item']:
+                            tags_to_print = int(ii['inventory_item']['tags'])
+                        if 'name' in ii['inventory_item']:
+                            item_name = ii['inventory_item']['name']
                     item_color = ii['color']
                     invoice_item_id = ii['id']
                     laundry_tag = InventoryItem().getLaundry(iitem_id)
@@ -1362,38 +1376,46 @@ class HistoryScreen(Screen):
 
                     inv_items = SYNC.invoice_item_grab(item_id)
                     if inv_items:
-                        iitem_id = inv_items['item_id']
-                        tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                        item_name = InventoryItem().getItemName(iitem_id)
-                        item_color = inv_items['color']
-                        invoice_item_id = inv_items['id']
-                        laundry_tag = InventoryItem().getLaundry(iitem_id)
-                        memo_string = inv_items['memo']
-                        if laundry_tag:
-                            laundry_to_print.append(invoice_item_id)
-                        else:
+                        for ii in inv_items:
+                            tags_to_print = 1
+                            item_name = ''
+                            if 'inventory_item' in ii:
+                                if 'tags' in ii['inventory_item']:
+                                    tags_to_print = int(ii['inventory_item']['tags'])
+                                if 'name' in ii['inventory_item']:
+                                    item_name = ii['inventory_item']['name']
+                            item_color = ii['color']
+                            invoice_item_id = ii['id']
+                            laundry_tag = False
+                            if 'inventory' in ii:
+                                if 'laundry' in ii['inventory']:
+                                    laundry_tag = ii['inventory']['laundry']
+                            memo_string = ii['memo']
+                            if laundry_tag:
+                                laundry_to_print.append(invoice_item_id)
+                            else:
 
-                            for _ in range(tags_to_print):
+                                for _ in range(tags_to_print):
 
-                                self.bixolon.write('\x1b!\x30')  # QUAD SIZE
-                                self.bixolon.write('{}{}\n'.format(text_left, text_right))
-                                self.bixolon.write('\x1b!\x00')
-                                self.bixolon.write(name_number_string)
-                                self.bixolon.write('\n')
-                                self.bixolon.write('{0:06d}'.format(int(invoice_item_id)))
-                                self.bixolon.write(' {} {}'.format(item_name, item_color))
-                                if memo_string:
-                                    self.bixolon.write('\n{}'.format(memo_string))
-                                    memo_len = '\n\n\n' if len(
-                                        memo_string) <= 32 else '\n\n\n' + '\n' * int(
-                                        (len(memo_string)) / 32)
-                                    self.bixolon.write(memo_len)
-                                    self.bixolon.write('\x1b\x6d')
+                                    self.bixolon.write('\x1b!\x30')  # QUAD SIZE
+                                    self.bixolon.write('{}{}\n'.format(text_left, text_right))
+                                    self.bixolon.write('\x1b!\x00')
+                                    self.bixolon.write(name_number_string)
+                                    self.bixolon.write('\n')
+                                    self.bixolon.write('{0:06d}'.format(int(invoice_item_id)))
+                                    self.bixolon.write(' {} {}'.format(item_name, item_color))
+                                    if memo_string:
+                                        self.bixolon.write('\n{}'.format(memo_string))
+                                        memo_len = '\n\n\n' if len(
+                                            memo_string) <= 32 else '\n\n\n' + '\n' * int(
+                                            (len(memo_string)) / 32)
+                                        self.bixolon.write(memo_len)
+                                        self.bixolon.write('\x1b\x6d')
 
-                                else:
+                                    else:
 
-                                    self.bixolon.write('\n\n\n')
-                                    self.bixolon.write('\x1b\x6d')
+                                        self.bixolon.write('\n\n\n')
+                                        self.bixolon.write('\x1b\x6d')
             if len(laundry_to_print) is 0:
                 # FINAL CUT
                 self.bixolon.write('\n\n\n\n\n\n')
