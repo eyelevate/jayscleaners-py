@@ -673,17 +673,19 @@ class EditInvoiceScreen(Screen):
         for x in list:
             inventory_id = int(x['inventory_id'])
             disc = sessions.get('_discounts')['value']
-            if disc[inventory_id] is not False and inventory_id in disc:
-                for discount in disc[inventory_id]:
-                    discount_rate = float(discount['rate'])
-                    discount_price = float(discount['discount'])
-                    self.discount_id = discount['discount_id']
-                    if discount_rate > 0:
-                        self.discount += (float(x['item_price'] * discount_rate))
-                    elif discount_rate is 0 and discount_price > 0:
-                        self.discount += (float(x['item_price']) - discount_price)
-                    else:
-                        self.discount += 0
+            if inventory_id in disc:
+                if disc[inventory_id] is not False:
+                    for discount in disc[inventory_id]:
+
+                            discount_rate = float(discount['rate'])
+                            discount_price = float(discount['discount'])
+                            self.discount_id = discount['discount_id']
+                            if discount_rate > 0:
+                                self.discount += (float(x['item_price'] * discount_rate))
+                            elif discount_rate is 0 and discount_price > 0:
+                                self.discount += (float(x['item_price']) - discount_price)
+                            else:
+                                self.discount += 0
 
     def create_summary_totals(self):
 

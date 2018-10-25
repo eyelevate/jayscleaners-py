@@ -3,10 +3,8 @@
     name:"main"
     settings_button: settings_button
     reports_button: reports_button
-    delivery_button: delivery_button
     dropoff_button: dropoff_button
     login_button: login_button
-    item_search_button: item_search_button
     tags_status: tags_status
     receipt_status: receipt_status
     ActionBar:
@@ -38,7 +36,7 @@
         size_hint: 1,0.8
         pos_hint: {'top':0.9}
         GridLayout:
-            cols: 3
+            cols: 2
             rows: 2
             size_hint_y: 3
             Button:
@@ -49,24 +47,18 @@
                 disabled: True
                 font_size:'20sp'
 
-            Button:
-                id: reports_button
-                on_release: root.reports_page()
-                text: "[color=#AED6F1]Reports[/color]"
-                markup:True
-                underline:True
-                disabled: True
-                font_size:'20sp'
+
             Button:
                 id: dropoff_button
                 disabled: True
                 font_size:'20sp'
                 on_release: app.root.current = "search"
                 text: "Drop / Pickup"
+
             Button:
-                id: delivery_button
-                on_release: root.delivery_page()
-                text: "[color=#AED6F1]Delivery[/color]"
+                id: reports_button
+                on_release: root.reports_page()
+                text: "[color=#AED6F1]Reports[/color]"
                 markup:True
                 underline:True
                 disabled: True
@@ -78,13 +70,6 @@
                 font_size:'20sp'
                 on_release: root.login_show()
 
-            Button:
-                id: item_search_button
-                disabled: True
-                text: "Invoice Item Update"
-                font_size: '20sp'
-                on_press: app.root.current = "update"
-                on_release: root.db_sync()
     GridLayout:
         size_hint: 1, 0.1
         cols: 4

@@ -118,7 +118,6 @@ class SearchScreen(Screen):
     search_popup = ObjectProperty(None)
     search_results_table = ObjectProperty(None)
     search_results_footer = ObjectProperty(None)
-    view_deliveries_btn = ObjectProperty(None)
     main_popup = Popup()
     date_picker = ObjectProperty(None)
     due_date = None
@@ -227,8 +226,6 @@ class SearchScreen(Screen):
     def reset(self, *args, **kwargs):
 
         # reset member variables
-        sessions.put('_rowSearch',value=(0,10))
-        sessions.put('_rowCap', value=0)
         sessions.put('_searchText', value=None)
         self.invitems = None
         self.quick_box = None
@@ -266,7 +263,6 @@ class SearchScreen(Screen):
         self.zipcode_input = None
         self.concierge_name_input = None
         self.concierge_number_input = None
-        self.view_deliveries_btn.text = 'View Delivery Schedule'
         self.root_payment_id = None
         self.credit_reason = None
         self.credit_amount = None
@@ -306,7 +302,6 @@ class SearchScreen(Screen):
             self.history_btn.disabled = True
             self.edit_invoice_btn.disabled = True
             self.edit_customer_btn.disabled = True
-            self.delivery_btn.disabled = True
             self.reprint_btn.disabled = True
             self.quick_btn.disabled = True
             self.pickup_btn.disabled = True
@@ -482,7 +477,6 @@ class SearchScreen(Screen):
             'status': status
         }
 
-
     def invoice_selected(self, invoice_id, *args, **kwargs):
         sessions.put('_invoiceId',value=invoice_id)
         # show the edit button
@@ -568,7 +562,6 @@ class SearchScreen(Screen):
                 # show the proper buttons
                 self.history_btn.disabled = False
                 self.edit_customer_btn.disabled = False
-                # self.delivery_btn.disabled = False
                 self.reprint_btn.disabled = False
                 self.quick_btn.disabled = False
                 self.pickup_btn.disabled = False

@@ -49,14 +49,12 @@ class MainScreen(Screen):
     login_button = ObjectProperty(None)
     settings_button = ObjectProperty(None)
     reports_button = ObjectProperty(None)
-    delivery_button = ObjectProperty(None)
     dropoff_button = ObjectProperty(None)
     # update_button = ObjectProperty(None)
     username = ObjectProperty(None)
     password = ObjectProperty(None)
     login_popup = ObjectProperty(None)
     login_button = ObjectProperty(None)
-    item_search_button = ObjectProperty(None)
     main_popup = Popup()
     pb_table = ObjectProperty(None)
     pb_items = ObjectProperty(None)
@@ -109,8 +107,7 @@ class MainScreen(Screen):
         return info
 
     def reconnect_printers(self):
-        self.receipt_status.canvas_set('disconnected')
-        self.tags_status.canvas_set('disconnected')
+
         os = sessions.get('_os')['value']
         backend = Printer().backend_location(os)
         print('backend = {}'.format(backend))
@@ -272,7 +269,6 @@ class MainScreen(Screen):
         self.settings_button.disabled = False
         self.reports_button.disabled = False
         self.dropoff_button.disabled = False
-        self.delivery_button.disabled = False
         # self.item_search_button.disabled = False
 
     def logout(self, *args, **kwargs):
@@ -292,7 +288,6 @@ class MainScreen(Screen):
         self.settings_button.disabled = True
         self.reports_button.disabled = True
         self.dropoff_button.disabled = True
-        self.delivery_button.disabled = True
         sessions.put('_companyId', value=None)
         sessions.put('_userId', value=None)
         sessions.put('_username', value=None)

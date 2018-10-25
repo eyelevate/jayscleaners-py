@@ -1,3 +1,5 @@
+import threading
+
 from kivy.metrics import dp, sp
 from kivy.properties import BooleanProperty, Clock
 from kivy.uix.label import Label
@@ -12,6 +14,7 @@ class StatusLabel(Label):
     h = dp(25)
     w = dp(25)
     s = dp(100)
+
     def __init__(self, **kwargs):
         super(StatusLabel, self).__init__(**kwargs)
         self.canvas.clear()
@@ -19,7 +22,12 @@ class StatusLabel(Label):
         self.size_hint = (None, None)
 
         Window.bind(on_resize=self.set_resize)
-        Clock.schedule_once(lambda *args: self.set_resize(), 5)
+
+        Clock.schedule_once(lambda *args: self._reset(), 1)
+
+    def _reset(self):
+
+        Clock.schedule_once(lambda *args: self.set_resize())
 
     def canvas_set(self, status):
         self.canvas.clear()

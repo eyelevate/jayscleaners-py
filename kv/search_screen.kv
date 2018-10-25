@@ -19,7 +19,6 @@
     history_btn: history_btn
     edit_invoice_btn: edit_invoice_btn
     edit_customer_btn: edit_customer_btn
-    delivery_btn: delivery_btn
     reprint_btn: reprint_btn
     quick_btn: quick_btn
     pickup_btn: pickup_btn
@@ -27,7 +26,6 @@
     search_popup: search_popup
     search_results_table: search_results_table
     search_results_footer: search_results_footer
-    view_deliveries_btn: view_deliveries_btn
     search_table_rv: search_table_rv
     name:"search"
     on_enter: root.reset()
@@ -236,14 +234,6 @@
                         on_release: root.add_store_credit_popup()
 
 
-                    BottomLeftFormLabel:
-                        text: "Delivery Scheduled"
-
-                    Button:
-                        id: view_deliveries_btn
-                        text:'View Delivery Schedule'
-                        font_size:sp(20)
-                        on_release: root.view_deliveries()
                     Label:
                         text: ""
                         font_size: '20sp'
@@ -328,12 +318,7 @@
                     font_size:'20sp'
                     text: "Reprint"
                     disabled: True
-                Button:
-                    id: delivery_btn
-                    on_release: root.delivery_setup()
-                    font_size: sp(15)
-                    text: "Delivery"
-                    disabled: True
+
 
                 Button:
                     id: edit_invoice_btn
