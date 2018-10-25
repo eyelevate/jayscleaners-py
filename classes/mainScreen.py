@@ -147,7 +147,6 @@ class MainScreen(Screen):
 
     def print_setup_test(self, printer, type):
         try:
-            printer.write("::Test Print::\n")
             # Cut paper
             if type == 'epson':
                 printer.write('\n\n\n\n\n\n')
