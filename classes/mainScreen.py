@@ -81,14 +81,13 @@ class MainScreen(Screen):
             pass
 
     def isRemembered(self):
-
         self.active_state()
         self.reconnect_printers()
-        SYNC_POPUP.title = 'Welcome back!'
-        content = KV.popup_alert(
-            msg='You are now logged in as {}!'.format(sessions.get('_username')['value']))
-        SYNC_POPUP.content = Builder.load_string(content)
-        SYNC_POPUP.open()
+        # SYNC_POPUP.title = 'Welcome back!'
+        # content = KV.popup_alert(
+        #     msg='You are now logged in as {}!'.format(sessions.get('_username')['value']))
+        # SYNC_POPUP.content = Builder.load_string(content)
+        # SYNC_POPUP.open()
 
     def isNotRemembered(self):
         self.logout_state()
@@ -110,7 +109,8 @@ class MainScreen(Screen):
         return info
 
     def reconnect_printers(self):
-
+        self.receipt_status.canvas_set('disconnected')
+        self.tags_status.canvas_set('disconnected')
         os = sessions.get('_os')['value']
         backend = Printer().backend_location(os)
         print('backend = {}'.format(backend))
