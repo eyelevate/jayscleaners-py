@@ -1923,9 +1923,12 @@ class SearchScreen(Screen):
                         item_name = InventoryItem().getItemName(iitem_id)
                         item_color = ii['color']
                         invoice_item_id = ii['id']
-                        laundry_tag = InventoryItem().getLaundry(iitem_id)
+                        check_laundry = False
+                        if 'inventory' in ii:
+                            if 'laundry' in ii['inventory']:
+                                check_laundry = True if ii['inventory']['laundry'] else False
                         memo_string = ii['memo']
-                        if laundry_tag:
+                        if check_laundry:
                             laundry_to_print.append(invoice_item_id)
                         else:
                             for _ in range(tags_to_print):
@@ -1954,7 +1957,7 @@ class SearchScreen(Screen):
                     # self.bixolon.write('\x1b\x40')
                     # self.bixolon.write('\x1b\x6d')
                     laundry_count = len(laundry_to_print)
-                    shirt_mark = Custid().getCustomerMark(sessions.get('_customerId')['value'])
+                    shirt_mark = ''
                     marks = SYNC.marks_query(sessions.get('_customerId')['value'], 1)
                     if marks is not False:
                         for mark in marks:
@@ -2043,63 +2046,67 @@ class SearchScreen(Screen):
             invoice_id_str = str(sessions.get('_invoiceId')['value'])
             invs = SYNC.invoice_grab_id(sessions.get('_invoiceId')['value'])
             due_date = 'SUN'
-            inv_items = []
             if invs:
                 dt = datetime.datetime.strptime(invs['due_date'], "%Y-%m-%d %H:%M:%S")
                 due_date = dt.strftime('%a').upper()
-                inv_items = invs['invoice_items']
-            invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
-            text_left = "{} {}".format(invoice_last_four,
-                                       due_date)
-            text_right = "{} {}".format(due_date,
-                                        invoice_last_four)
-            text_name = "{}, {}".format(customers.last_name.upper(),
-                                        customers.first_name.upper()[:1])
-            phone_number = Job.make_us_phone(customers.phone)
-            total_length = 32
-            text_offset = total_length - len(text_name) - len(phone_number)
-            name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
-                                                 phone_number)
-            laundry_to_print = []
-            if self.bixolon:
-                self.bixolon.write('\x1b\x40')
-                self.bixolon.write('\x1b\x6d')
+                invoice_last_four = '{0:04d}'.format(int(invoice_id_str[-4:]))
+                text_left = "{} {}".format(invoice_last_four,
+                                           due_date)
+                text_right = "{} {}".format(due_date,
+                                            invoice_last_four)
+                text_name = "{}, {}".format(customers.last_name.upper(),
+                                            customers.first_name.upper()[:1])
+                phone_number = Job.make_us_phone(customers.phone)
+                total_length = 32
+                text_offset = total_length - len(text_name) - len(phone_number)
+                name_number_string = '{}{}{}'.format(text_name, ' ' * text_offset,
+                                                     phone_number)
+                laundry_to_print = []
+                invoice_items = invs['invoice_items'] if 'invoice_items' in invs else []
+                if self.bixolon:
+                    self.bixolon.write('\x1b\x40')
+                    self.bixolon.write('\x1b\x6d')
 
-                for item_id in self.selected_tags_list:
-                    inv_items = SYNC.invoice_item_grab(item_id)
-                    if inv_items:
-                        iitem_id = inv_items['item_id']
-                        tags_to_print = InventoryItem().tagsToPrint(iitem_id)
-                        item_name = InventoryItem().getItemName(iitem_id)
-                        item_color = inv_items['color']
-                        invoice_item_id = inv_items['id']
-                        laundry_tag = InventoryItem().getLaundry(iitem_id)
-                        memo_string = inv_items['memo']
-                        if laundry_tag:
-                            laundry_to_print.append(invoice_item_id)
-                        else:
+                    for ii in invoice_items:
+                        if int(ii['id']) in self.selected_tags_list:
+                            tags_to_print = 1
+                            item_name = ''
+                            if 'inventory_item' in ii:
+                                tags_to_print = int(ii['inventory_item']['tags']) if 'tags' in ii['inventory_item'] else 1
+                                item_name = ii['inventory_item']['name'] if 'name' in ii['inventory_item'] else ''
+                            item_color = ii['color']
+                            invoice_item_id = ii['id']
+                            laundry_tag = False
+                            if 'inventory' in ii:
+                                if 'laundry' in ii['inventory']:
+                                    laundry_tag = True if ii['inventory']['laundry'] else False
+                            memo_string = ii['memo']
+                            if laundry_tag:
+                                laundry_to_print.append(invoice_item_id)
+                            else:
 
-                            for _ in range(tags_to_print):
+                                for _ in range(tags_to_print):
 
-                                self.bixolon.write('\x1b!\x30')  # QUAD SIZE
-                                self.bixolon.write('{}{}\n'.format(text_left, text_right))
-                                self.bixolon.write('\x1b!\x00')
-                                self.bixolon.write(name_number_string)
-                                self.bixolon.write('\n')
-                                self.bixolon.write('{0:06d}'.format(int(invoice_item_id)))
-                                self.bixolon.write(' {} {}'.format(item_name, item_color))
-                                if memo_string:
-                                    self.bixolon.write('\n{}'.format(memo_string))
-                                    memo_len = '\n\n\n' if len(
-                                        memo_string) <= 32 else '\n\n\n' + '\n' * int(
-                                        (len(memo_string)) / 32)
-                                    self.bixolon.write(memo_len)
-                                    self.bixolon.write('\x1b\x6d')
+                                    self.bixolon.write('\x1b!\x30')  # QUAD SIZE
+                                    self.bixolon.write('{}{}\n'.format(text_left, text_right))
+                                    self.bixolon.write('\x1b!\x00')
+                                    self.bixolon.write(name_number_string)
+                                    self.bixolon.write('\n')
+                                    self.bixolon.write('{0:06d}'.format(int(invoice_item_id)))
+                                    self.bixolon.write(' {} {}'.format(item_name, item_color))
+                                    if memo_string:
+                                        self.bixolon.write('\n{}'.format(memo_string))
+                                        memo_len = '\n\n\n' if len(
+                                            memo_string) <= 32 else '\n\n\n' + '\n' * int(
+                                            (len(memo_string)) / 32)
+                                        self.bixolon.write(memo_len)
+                                        self.bixolon.write('\x1b\x6d')
 
-                                else:
+                                    else:
 
-                                    self.bixolon.write('\n\n\n')
-                                    self.bixolon.write('\x1b\x6d')
+                                        self.bixolon.write('\n\n\n')
+                                        self.bixolon.write('\x1b\x6d')
+
                 if len(laundry_to_print) is 0:
                     # FINAL CUT
                     self.bixolon.write('\n\n\n\n\n\n')
@@ -2107,7 +2114,7 @@ class SearchScreen(Screen):
                 else:
 
                     laundry_count = len(laundry_to_print)
-                    shirt_mark = Custid().getCustomerMark(sessions.get('_customerId')['value'])
+                    shirt_mark = ''
                     marks = SYNC.marks_query(sessions.get('_customerId')['value'], 1)
                     if marks is not False:
                         for mark in marks:

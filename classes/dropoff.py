@@ -2339,7 +2339,7 @@ class DropoffScreen(Screen):
                                 laundry_tag = False
                                 if 'inventory' in ii:
                                     if 'laundry' in ii['inventory']:
-                                        laundry_tag = ii['inventory']['laundry']
+                                        laundry_tag = True if ii['inventory']['laundry'] else False
                                 memo_string = ii['memo']
                                 if laundry_tag and tags_to_print > 0:
                                     laundry_to_print.append(invoice_item_id)
@@ -2373,8 +2373,8 @@ class DropoffScreen(Screen):
 
             else:
                 laundry_count = len(laundry_to_print)
-                shirt_mark = Custid().getCustomerMark(self.customer_id_backup)
-                marks = SYNC.marks_query(self.customer_id_backup, 1);
+                shirt_mark = ''
+                marks = ''
                 if marks is not False:
                     for mark in marks:
                         shirt_mark = mark['mark']

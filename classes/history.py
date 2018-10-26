@@ -1222,8 +1222,6 @@ class HistoryScreen(Screen):
             if len(invoice_items) > 0:
 
                 for ii in invoice_items:
-
-                    iitem_id = ii['item_id']
                     tags_to_print = 1
                     item_name = ''
                     if 'inventory_item' in ii:
@@ -1233,9 +1231,12 @@ class HistoryScreen(Screen):
                             item_name = ii['inventory_item']['name']
                     item_color = ii['color']
                     invoice_item_id = ii['id']
-                    laundry_tag = InventoryItem().getLaundry(iitem_id)
+                    check_laundry = False
+                    if 'inventory' in ii:
+                        if 'laundry' in ii['inventory']:
+                            check_laundry = True if ii['inventory']['laundry'] else False
                     memo_string = ii['memo']
-                    if laundry_tag:
+                    if check_laundry:
                         laundry_to_print.append(invoice_item_id)
                     else:
                         for _ in range(tags_to_print):
@@ -1263,7 +1264,7 @@ class HistoryScreen(Screen):
 
             if len(laundry_to_print) > 0:
                 laundry_count = len(laundry_to_print)
-                shirt_mark = Custid().getCustomerMark(sessions.get('_customerId')['value'])
+                shirt_mark = ''
                 marks = SYNC.marks_query(sessions.get('_customerId')['value'], 1)
                 if marks is not False:
                     for mark in marks:
