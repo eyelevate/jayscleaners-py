@@ -679,9 +679,9 @@ class EditInvoiceScreen(Screen):
 
                             discount_rate = float(discount['rate'])
                             discount_price = float(discount['discount'])
-                            self.discount_id = discount['discount_id']
+                            self.discount_id = discount['id']
                             if discount_rate > 0:
-                                self.discount += (float(x['item_price'] * discount_rate))
+                                self.discount += (float(x['item_price']) * discount_rate)
                             elif discount_rate is 0 and discount_price > 0:
                                 self.discount += (float(x['item_price']) - discount_price)
                             else:
