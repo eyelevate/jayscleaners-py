@@ -1703,7 +1703,6 @@ class EditInvoiceScreen(Screen):
                             print('invoice item updated')
 
                     else:
-                        print('Here...')
 
                         data = {
                             'company_id': self.invoice_company_id,
@@ -2200,13 +2199,13 @@ class EditInvoiceScreen(Screen):
 
     def update_invoice(self, *arkgs, **kwargs):
         print('starting update on invoice - {}'.format(self.invoice_id))
-
         data = {
             'company_id': self.invoice_company_id,
             'customer_id': sessions.get('_customerId')['value'],
             'quantity': self.tags,
             'pretax': '{0:.2f}'.format(float(self.subtotal)),
             'tax': '{0:.2f}'.format(float(self.tax)),
+            'discount_amount': self.discount,
             'discount_id': self.discount_id if self.discount_id is not None else '',
             'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S")),
             'total': '{0:.2f}'.format(float(self.total))

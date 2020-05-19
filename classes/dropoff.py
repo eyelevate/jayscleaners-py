@@ -1634,6 +1634,7 @@ class DropoffScreen(Screen):
                         'customer_id': sessions.get('_customerId')['value'],
                         'quantity': save_totals[inventory_id]['quantity'],
                         'pretax': str(save_totals[inventory_id]['subtotal']),
+                        'discount_amount': inventory_discount,
                         'discount_id': self.discount_id if self.discount_id is not None else '',
                         'memo': '',
                         'due_date': '{}'.format(self.due_date.strftime("%Y-%m-%d %H:%M:%S")),
@@ -1648,7 +1649,7 @@ class DropoffScreen(Screen):
                         print_totals[save_invoice_check['id']] = {
                             'quantity': save_invoice_check['quantity'],
                             'subtotal': save_invoice_check['pretax'],
-                            'discount': float('%.2f' % (inventory_discount)),
+                            'discount': float('%.2f' % inventory_discount),
                             'tax': save_invoice_check['tax'],
                             'total': save_invoice_check['total']
                         }
@@ -1714,10 +1715,9 @@ class DropoffScreen(Screen):
                             if discounts:
                                 discount_rate = float(discounts['rate'])
                                 discount_price = float(discounts['discount'])
-                                inventory_discount_id = discounts['discount_id']
+                                inventory_discount_id = discounts['id']
                                 if discount_rate > 0:
-                                    invoice_discount = (
-                                        float(invoices['pretax'] * discount_rate))
+                                    invoice_discount = (float(invoices['pretax']) * discount_rate)
                                 elif discount_rate is 0 and discount_price > 0:
                                     invoice_discount = (
                                             float(invoices['pretax']) - discount_price)
