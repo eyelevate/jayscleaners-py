@@ -66,10 +66,12 @@ class ScreenManagement(ScreenManager):
     pass
 
 
+
 data_folder = Path("./kv")
 main_path_relative = data_folder / "main.kv"
 KV_PATH = path.abspath(main_path_relative)
-presentation = Builder.load_file(KV_PATH)
+presentation = Builder.load_file("./kv/main.kv") if platform.system() == 'Darwin' else Builder.load_file(KV_PATH)
+
 
 class MainApp(App):
 

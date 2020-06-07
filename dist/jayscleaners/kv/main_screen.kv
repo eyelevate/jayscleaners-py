@@ -1,0 +1,122 @@
+<MainScreen>:
+    id:screen_main
+    name:"main"
+    settings_button: settings_button
+    reports_button: reports_button
+    dropoff_button: dropoff_button
+    login_button: login_button
+    tags_status: tags_status
+    receipt_status: receipt_status
+    ActionBar:
+        id: _action_main
+        size_hint: 1,0.1
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            title: 'Jays Cleaners POS'
+            ActionPrevious:
+                title: 'Jays Cleaners POS'
+                with_previous: False
+                previous_image: ''
+                on_release: root.manager.current = "main"
+            ActionGroup:
+                text: '               File               '
+                mode: 'spinner'
+                width: 900
+                ActionButton:
+                    text: 'Reconnect Printers'
+                    on_release: root.reconnect_printers()
+                ActionButton:
+                    text: 'Quit'
+                    on_release: app.get_running_app().stop()
+
+    GridLayout:
+        cols: 1
+        rows: 2
+        size_hint: 1,0.8
+        pos_hint: {'top':0.9}
+        GridLayout:
+            cols: 2
+            rows: 2
+            size_hint_y: 3
+            Button:
+                id: settings_button
+                on_release: root.settings_page()
+                markup:True
+                text: "[color=#AED6F1]Settings[/color]"
+                disabled: True
+                font_size:'20sp'
+
+
+            Button:
+                id: dropoff_button
+                disabled: True
+                font_size:'20sp'
+                on_release: app.root.current = "search"
+                text: "Drop / Pickup"
+
+            Button:
+                id: reports_button
+                on_release: root.reports_page()
+                text: "[color=#AED6F1]Reports[/color]"
+                markup:True
+                underline:True
+                disabled: True
+                font_size:'20sp'
+
+            Button:
+                id: login_button
+                text: "Login"
+                font_size:'20sp'
+                on_release: root.login_show()
+
+    GridLayout:
+        size_hint: 1, 0.1
+        cols: 4
+        rows: 1
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: None, 1
+            size_x: dp(25)
+
+            RelativeLayout:
+                size: self.parent.size
+                pos: self.parent.pos
+
+                StatusLabel:
+                    id: receipt_status
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+
+
+        Label:
+            text: 'Receipt Printer Status'
+            text_size:self.size
+            halign: 'left'
+            valign: 'middle'
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: None, 1
+            size_x: dp(25)
+            RelativeLayout:
+                size: self.parent.size
+                pos: self.parent.pos
+
+                StatusLabel:
+                    id: tags_status
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+
+
+
+
+        Label:
+            text: 'Tag Printer Status'
+            text_size:self.size
+            halign: 'left'
+            valign: 'middle'

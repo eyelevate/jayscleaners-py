@@ -1,0 +1,205 @@
+<NewCustomerScreen>:
+    id: screen_new_customer
+    name: "new_customer"
+    main_grid: main_grid
+#    last_name: last_name
+#    first_name: first_name
+#    phone: phone
+#    email: email
+#    important_memo: important_memo
+#    invoice_memo: invoice_memo
+#    default_shirts_finish: default_shirts_finish
+#    default_shirts_preference: default_shirts_preference
+    is_delivery: is_delivery
+    is_account: is_account
+    street: street
+    suite: suite
+    city: city
+    zipcode: zipcode
+    concierge_name: concierge_name
+    concierge_number: concierge_number
+    special_instructions: special_instructions
+    new_customer_panel: new_customer_panel
+    tab_new_customer: tab_new_customer
+    on_enter:root.reset()
+
+    TabbedPanel:
+        id: new_customer_panel
+        do_default_tab: False
+        TabbedPanelItem:
+            id: tab_new_customer
+            text: 'General'
+            BoxLayout:
+                orientation: 'vertical'
+                RelativeLayout:
+                    size_hint: 1,0.9
+                    ScrollView:
+                        size_hint:(1,1)
+                        GridLayout:
+                            id: main_grid
+                            size_hint_y:None
+                            height: self.minimum_height
+                            cols: 1
+                            row_force_default: True
+                            row_default_height:sp(50)
+                BoxLayout:
+                    size_hint: 1,0.1
+                    Button:
+                        id: cancel
+                        on_release: app.root.current = "search"
+                        font_size:'20sp'
+                        text: "Cancel"
+                        disabled: False
+                    Button:
+                        id: save
+                        on_release: root.validate()
+                        text: "Save"
+                        font_size:'20sp'
+                        disabled: False
+        TabbedPanelItem:
+            id: tab_delivery_customer
+            text: 'Delivery'
+            BoxLayout:
+                orientation: 'vertical'
+                RelativeLayout:
+                    size_hint: 1,0.9
+                    ScrollView:
+                        size_hint:(1,1)
+                        GridLayout:
+                            size_hint_y:None
+                            height: self.minimum_height
+                            cols: 1
+                            row_force_default: True
+                            row_default_height:sp(50)
+
+                            BottomLeftFormLabel:
+                                text: "Delivery?"
+                            Switch:
+                                id: is_delivery
+                                active: False
+                                on_active: root.set_delivery()
+
+                            BottomLeftFormLabel:
+                                text: "Concierge"
+                            CenterVerticalTextInput:
+                                id: concierge_name
+                                hint_text: "Concierge Name"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Concierge Number"
+                            CenterVerticalTextInput:
+                                id: concierge_number
+                                hint_text: "Concierge Number"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Special Instructions"
+                            CenterVerticalTextInput:
+                                id: special_instructions
+                                hint_text: "Special Instructions"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: ""
+                            BottomLeftFormLabel:
+                                text: ""
+                BoxLayout:
+                    size_hint: 1,0.1
+                    Button:
+                        id: cancel
+                        on_release: app.root.current = "search"
+                        font_size:'20sp'
+                        text: "Cancel"
+                        disabled: False
+                    Button:
+                        id: save
+                        on_release: root.validate()
+                        text: "Save"
+                        font_size:'20sp'
+                        disabled: False
+        TabbedPanelItem:
+            id: tab_account_customer
+            text: 'Account'
+            BoxLayout:
+                orientation: 'vertical'
+                RelativeLayout:
+                    size_hint: 1,0.9
+                    ScrollView:
+                        size_hint:(1,1)
+                        GridLayout:
+                            size_hint_y:None
+                            height: self.minimum_height
+                            cols: 1
+                            row_force_default: True
+                            row_default_height:sp(50)
+                            BottomLeftFormLabel:
+                                text: "Account?"
+                            Switch:
+                                id: is_account
+                                active: False
+                                on_active: root.set_account()
+                            BottomLeftFormLabel:
+                                text: "Street"
+                            CenterVerticalTextInput:
+                                id: street
+                                hint_text: "Street"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+
+                            BottomLeftFormLabel:
+                                text: "Suite"
+                            CenterVerticalTextInput:
+                                id: suite
+                                hint_text: "Suite"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "City"
+                            CenterVerticalTextInput:
+                                id: city
+                                hint_text: "City"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                            BottomLeftFormLabel:
+                                text: "Zipcode"
+                            CenterVerticalTextInput:
+                                id: zipcode
+                                hint_text: "Zipcode"
+                                font_size:'20sp'
+                                multiline: False
+                                padding: [5,5,5,5]
+                                disabled: True
+                                text: ''
+                BoxLayout:
+                    size_hint: 1,0.1
+                    Button:
+                        id: cancel
+                        on_release: app.root.current = "search"
+                        font_size:'20sp'
+                        text: "Cancel"
+                        disabled: False
+                    Button:
+                        id: save
+                        on_release: root.validate()
+                        text: "Save"
+                        font_size:'20sp'
+                        disabled: False

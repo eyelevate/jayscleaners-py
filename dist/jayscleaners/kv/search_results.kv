@@ -1,0 +1,34 @@
+<SearchResultsScreen>:
+    id: screen_search_results
+    search_results_rv: search_results_rv
+    search_results_selectable_button: search_results_selectable_button
+    search_results_input: search_results_input
+    name: "search_results"
+    on_enter: root.get_results()
+    BoxLayout:
+        orientation: 'vertical'
+        SelectableButton:
+            id: search_results_selectable_button
+            text: '[b]Please Select A Customer[/b]'
+            size_hint: (1,0.1)
+
+        SearchResultsRV:
+            size_hint: 1,0.8
+            id: search_results_rv
+        GridLayout:
+            size_hint: 1,0.2
+            cols:1
+            rows:2
+            CenterVerticalTextInput:
+                id:search_results_input
+                markup: True
+                write_tab: False
+                multiline: False
+                hint_text: 'Filter Out Results Here'
+                font_size:sp(20)
+                padding: [10, ( self.height - self.line_height ) / 2]
+                on_text_validate: screen_search_results.filter()
+            Button:
+                markup: True
+                text: 'Cancel'
+                on_release: app.root.current = 'search'

@@ -4,6 +4,7 @@ import webbrowser
 import time
 import datetime
 import platform
+from collections import OrderedDict
 from threading import Thread
 from urllib import parse, request
 import usb.core
@@ -11,6 +12,7 @@ import usb.util
 import usb.backend.libusb1
 from kivy.clock import Clock
 
+from classes.USBFactory import USBFactory
 from models.kv_generator import KvString
 from kivy.factory import Factory
 from kivy.lang import Builder
@@ -69,8 +71,7 @@ class MainScreen(Screen):
         SYNC.migrate()
         remember_me = sessions.get('_rememberMe')['value']
         user_id = sessions.get('_userId')['value']
-        platform_type = platform.system()
-        sessions.put('_os', value=platform_type)
+        sessions.put('_os', value=platform.system())
         if remember_me and user_id is not None:
             Clock.schedule_once(lambda *args: self.isRemembered())
             pass
@@ -78,9 +79,60 @@ class MainScreen(Screen):
             Clock.schedule_once(lambda *args: self.isNotRemembered())
             pass
 
+    @staticmethod
+    def restoreDroppedSessions():
+        sessions.clear()
+        sessions.put('_os', value=platform.system())
+        sessions.put('_rememberMe', value=False)
+        sessions.put('_rememberMeTimestamp', value=False)
+        sessions.put('_customerId', value=None)
+        sessions.put('_discounts', value=None)
+        sessions.put('_username', value=None)
+        sessions.put('_userId', value=None)
+        sessions.put('_companyId', value=None)
+        sessions.put('_invoiceId', value=False)
+        sessions.put('_invoiceItemsId', value=None)
+        sessions.put('_itemId', value=None)
+        sessions.put('_items', value=None)
+        sessions.put('_inventories', value=None)
+        sessions.put('_inventoryTimestamp', value=None)
+        sessions.put('_inventoryItems', value=[])
+        sessions.put('_mappedHistory', value={})
+        sessions.put('_searchNew', value=False)
+        sessions.put('_last10', value=[])
+        sessions.put('_searchResults', value=[])
+        sessions.put('_filteredSearchResults', value=[])
+        sessions.put('_searchResultsStatus', value=False)
+        sessions.put('_searchText', value=False)
+        sessions.put('_racks', value=OrderedDict())
+        sessions.put('_rowGroup', value=0)
+        sessions.put('_rowSearch', value=(0, 9))
+        sessions.put('_rowCap', value=0)
+        sessions.put('_taxRate', value=1)
+        sessions.put('_os', value=None)
+        sessions.put('_paymentId', value=None)
+        sessions.put('_profileId', value=None)
+        sessions.put('_workList', value=[])
+        sessions.put('_exitFlag', value=False)
+        sessions.put('_threadId', value=1)
+        sessions.put('_threads', value=[])
+        sessions.put('_connectedDevices', epson={'productId': None,
+                                                 'vendorId': None,
+                                                 'backend': None,
+                                                 'device': None},
+                     bixolon={'productId': None,
+                              'vendorId': None,
+                              'backend': None},
+                     zebra={'productId': None,
+                            'vendorId': None,
+                            'backend': None}, )
+        sessions.put('_usDollar', value=0)
+        sessions.put('_usbFactory', factory=USBFactory)
+
     def isRemembered(self):
         self.active_state()
         self.reconnect_printers()
+        print('reconnect - 0')
         # SYNC_POPUP.title = 'Welcome back!'
         # content = KV.popup_alert(
         #     msg='You are now logged in as {}!'.format(sessions.get('_username')['value']))
@@ -108,7 +160,7 @@ class MainScreen(Screen):
 
     def reconnect_printers(self):
 
-        os = sessions.get('_os')['value']
+        os = platform.system()
         backend = Printer().backend_location(os)
         print('backend = {}'.format(backend))
         known_devices = Printer().printer_list()
@@ -161,6 +213,7 @@ class MainScreen(Screen):
         pass
 
     def login_show(self):
+        self.restoreDroppedSessions()
         self.login_popup = Factory.LoginPopup()
         self.login_popup.ids.login_username_input.bind(on_text_validate=self.login)
         self.login_popup.ids.login_password_input.bind(on_text_validate=self.login)
@@ -201,9 +254,11 @@ class MainScreen(Screen):
                 auth_user.company_id = data['company_id']
                 sessions.put('_companyId', value=data['company_id'])
                 if not sessions.get('_rememberMe')['value']:
-                    sessions.put('remembeMe', value=True)
+                    sessions.put('_rememberMe', value=True)
+                # if not sessions.exists('_rememberMe'):
 
                 self.reconnect_printers()
+                print('reconnect-2')
 
                 SYNC.company_id = data['company_id']
                 SYNC_POPUP.title = 'Authentication Success!'
@@ -225,6 +280,7 @@ class MainScreen(Screen):
                     sessions.put('rememberMe', value=True)
                 SYNC.company_id = user.company_id
                 self.reconnect_printers()
+                print('reconnect-1')
                 SYNC_POPUP.title = 'Authentication Success!'
                 SYNC_POPUP.content = Builder.load_string(
                     KV.popup_alert(
@@ -280,8 +336,9 @@ class MainScreen(Screen):
         auth_user.user_id = None
         auth_user.username = None
         self.login_button.text = "Login"
-        self.login_button.bind(on_release=self.login)
+        # self.login_button.bind(on_release=self.login_show)
         self.logout_state()
+
 
     def logout_state(self):
         self.settings_button.disabled = True

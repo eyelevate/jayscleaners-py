@@ -98,7 +98,7 @@ created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)'''.format(t=table), (self.p
         self._tearDown()
         return True
 
-    def put(self, where = False, data = False):
+    def put(self, where=False, data=False):
         unix = time.time()
         now = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
         self.updated_at = now
@@ -319,13 +319,13 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         self.conn.commit()
         self._tearDown()
 
-
     def find_printers(self):
         printers = []
 
         return printers
 
     staticmethod
+
     def backend_location(self, os):
 
         known_backends = {
@@ -370,7 +370,6 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
 
         return known_printers
 
-
     def get_printer_ids(self, company_id, type):
 
         printers = self.where({'company_id': company_id,
@@ -394,75 +393,73 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         _SET_BARCODE_TXT_POS = lambda n: GS + b'H' + n
         _SET_HRI_FONT = lambda n: GS + b'f' + n
 
-
-
         data = {
-            'HT':b'\x09', # Horizontal Tab
-            'LF':b'\n', # Print and Line Feed
-            'CR': b'\r', # Print and Carriage Return
-            'PFL': ESC + b'\x60\n', # print and feed line
-            'INIT': ESC + b'\x40', # Initialize Printer
-            'PARTIAL_CUT':b'\x1b\x6d', # Partial Cut
-            'INCH1' : ESC + b'\x31', # 1/9 inch paper feed
-            'INCH2': ESC +  b'\x32',  # 2/9 inch paper feed
-            'TXTTALL':ESC + b'!\x10', # TALL text
-            'TXTNORM':ESC + b'!\x00', # Normal text
+            'HT': b'\x09',  # Horizontal Tab
+            'LF': b'\n',  # Print and Line Feed
+            'CR': b'\r',  # Print and Carriage Return
+            'PFL': ESC + b'\x60\n',  # print and feed line
+            'INIT': ESC + b'\x40',  # Initialize Printer
+            'PARTIAL_CUT': b'\x1b\x6d',  # Partial Cut
+            'INCH1': ESC + b'\x31',  # 1/9 inch paper feed
+            'INCH2': ESC + b'\x32',  # 2/9 inch paper feed
+            'TXTTALL': ESC + b'!\x10',  # TALL text
+            'TXTNORM': ESC + b'!\x00',  # Normal text
             'ALGNLEFT': ESC + b'\x61\x00',  # Left justification
             'ALGNCENTER': ESC + b'\x61\x01',  # Centering
-            'ALGNRIGHT':  ESC + b'\x61\x02',  # Right justification
+            'ALGNRIGHT': ESC + b'\x61\x02',  # Right justification
 
             'TXT_NORMAL': ESC + b'!\x00',  # Normal text
-            'TXT_2HEIGHT' : ESC + b'!\x10',  # Double height text
-            'TXT_2WIDTH' : ESC + b'!\x20',  # Double width text
-            'TXT_4SQUARE' : ESC + b'!\x30',  # Quad area text
-            'TXT_UNDERL_OFF' : ESC + b'\x2d\x00',  # Underline font OFF
-            'TXT_UNDERL_ON' : ESC + b'\x2d\x01',  # Underline font 1-dot ON
-            'TXT_UNDERL2_ON' : ESC + b'\x2d\x02',  # Underline font 2-dot ON
-            'TXT_BOLD_OFF' : ESC + b'\x45\x00',  # Bold font OFF
-            'TXT_BOLD_ON' : ESC + b'\x45\x01',  # Bold font ON
-            'TXT_FONT_A' : ESC + b'\x4d\x00',  # Font type A
-            'TXT_FONT_B' : ESC + b'\x4d\x01',  # Font type B
-            'TXT_ALIGN_LT' : ESC + b'\x61\x00',  # Left justification
-            'TXT_ALIGN_CT' : ESC + b'\x61\x01',  # Centering
-            'TXT_ALIGN_RT' : ESC + b'\x61\x02',  # Right justification
-            'TXT_INVERT_ON' : GS + b'\x42\x01',  # Inverse Printing ON
-            'TXT_INVERT_OFF' : GS + b'\x42\x00',  # Inverse Printing OFF
-            'BARCODE_TXT_OFF' : _SET_BARCODE_TXT_POS(b'\x00'),  # HRI barcode chars OFF
-            'BARCODE_TXT_ABV' : _SET_BARCODE_TXT_POS(b'\x01'),  # HRI barcode chars above
-            'BARCODE_TXT_BLW' : _SET_BARCODE_TXT_POS(b'\x02'),  # HRI barcode chars below
-            'BARCODE_TXT_BTH' : _SET_BARCODE_TXT_POS(b'\x03'),  # HRI both above and below
-            'BARCODE_FONT_A' : _SET_HRI_FONT(b'\x00'),  # Font type A for HRI barcode chars
-            'BARCODE_FONT_B' : _SET_HRI_FONT(b'\x01'),  # Font type B for HRI barcode chars'
-            'TXT_FLIP_ON' : ESC + b'\x7b\x01',
-            'TXT_FLIP_OFF' : ESC + b'\x7b\x00',
-            'TXT_SMOOTH_ON' : GS + b'\x62\x01',
-            'TXT_SMOOTH_OFF' : GS + b'\x62\x00',
-            'TXT_SIZE' : GS + b'!',
-            'TXT_WIDTH' : {1: 0x00,
-                         2: 0x10,
-                         3: 0x20,
-                         4: 0x30,
-                         5: 0x40,
-                         6: 0x50,
-                         7: 0x60,
-                         8: 0x70},
-            'TXT_HEIGHT' : {1: 0x00,
-                          2: 0x01,
-                          3: 0x02,
-                          4: 0x03,
-                          5: 0x04,
-                          6: 0x05,
-                          7: 0x06,
-                          8: 0x07},
-            'PD_N50' : GS + b'\x7c\x00',  # Printing Density -50%
-            'PD_N37' : GS + b'\x7c\x01',  # Printing Density -37.5%
-            'PD_N25' : GS + b'\x7c\x02',  # Printing Density -25%
-            'PD_N12' : GS + b'\x7c\x03',  # Printing Density -12.5%
-            'PD_0' : GS + b'\x7c\x04',  # Printing Density  0%
-            'PD_P50' : GS + b'\x7c\x08',  # Printing Density +50%
-            'PD_P37' : GS + b'\x7c\x07',  # Printing Density +37.5%
-            'PD_P25' : GS + b'\x7c\x06',  # Printing Density +25%
-            'PD_P12' : GS + b'\x7c\x05'  # Printing Density +12.5%
+            'TXT_2HEIGHT': ESC + b'!\x10',  # Double height text
+            'TXT_2WIDTH': ESC + b'!\x20',  # Double width text
+            'TXT_4SQUARE': ESC + b'!\x30',  # Quad area text
+            'TXT_UNDERL_OFF': ESC + b'\x2d\x00',  # Underline font OFF
+            'TXT_UNDERL_ON': ESC + b'\x2d\x01',  # Underline font 1-dot ON
+            'TXT_UNDERL2_ON': ESC + b'\x2d\x02',  # Underline font 2-dot ON
+            'TXT_BOLD_OFF': ESC + b'\x45\x00',  # Bold font OFF
+            'TXT_BOLD_ON': ESC + b'\x45\x01',  # Bold font ON
+            'TXT_FONT_A': ESC + b'\x4d\x00',  # Font type A
+            'TXT_FONT_B': ESC + b'\x4d\x01',  # Font type B
+            'TXT_ALIGN_LT': ESC + b'\x61\x00',  # Left justification
+            'TXT_ALIGN_CT': ESC + b'\x61\x01',  # Centering
+            'TXT_ALIGN_RT': ESC + b'\x61\x02',  # Right justification
+            'TXT_INVERT_ON': GS + b'\x42\x01',  # Inverse Printing ON
+            'TXT_INVERT_OFF': GS + b'\x42\x00',  # Inverse Printing OFF
+            'BARCODE_TXT_OFF': _SET_BARCODE_TXT_POS(b'\x00'),  # HRI barcode chars OFF
+            'BARCODE_TXT_ABV': _SET_BARCODE_TXT_POS(b'\x01'),  # HRI barcode chars above
+            'BARCODE_TXT_BLW': _SET_BARCODE_TXT_POS(b'\x02'),  # HRI barcode chars below
+            'BARCODE_TXT_BTH': _SET_BARCODE_TXT_POS(b'\x03'),  # HRI both above and below
+            'BARCODE_FONT_A': _SET_HRI_FONT(b'\x00'),  # Font type A for HRI barcode chars
+            'BARCODE_FONT_B': _SET_HRI_FONT(b'\x01'),  # Font type B for HRI barcode chars'
+            'TXT_FLIP_ON': ESC + b'\x7b\x01',
+            'TXT_FLIP_OFF': ESC + b'\x7b\x00',
+            'TXT_SMOOTH_ON': GS + b'\x62\x01',
+            'TXT_SMOOTH_OFF': GS + b'\x62\x00',
+            'TXT_SIZE': GS + b'!',
+            'TXT_WIDTH': {1: 0x00,
+                          2: 0x10,
+                          3: 0x20,
+                          4: 0x30,
+                          5: 0x40,
+                          6: 0x50,
+                          7: 0x60,
+                          8: 0x70},
+            'TXT_HEIGHT': {1: 0x00,
+                           2: 0x01,
+                           3: 0x02,
+                           4: 0x03,
+                           5: 0x04,
+                           6: 0x05,
+                           7: 0x06,
+                           8: 0x07},
+            'PD_N50': GS + b'\x7c\x00',  # Printing Density -50%
+            'PD_N37': GS + b'\x7c\x01',  # Printing Density -37.5%
+            'PD_N25': GS + b'\x7c\x02',  # Printing Density -25%
+            'PD_N12': GS + b'\x7c\x03',  # Printing Density -12.5%
+            'PD_0': GS + b'\x7c\x04',  # Printing Density  0%
+            'PD_P50': GS + b'\x7c\x08',  # Printing Density +50%
+            'PD_P37': GS + b'\x7c\x07',  # Printing Density +37.5%
+            'PD_P25': GS + b'\x7c\x06',  # Printing Density +25%
+            'PD_P12': GS + b'\x7c\x05'  # Printing Density +12.5%
 
         }
 
@@ -471,10 +468,10 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
     def pcmd_set(self, align='left', font='a', text_type='normal', width=1, height=1, density=9, invert=False,
                  smooth=False, flip=False):
         cmd = ''
-        
+
         # Width
         if height == 2 and width == 2:
-            cmd += '{} {} '.format(self.pcmd('TXT_NORMAL').decode(),self.pcmd('TXT_4SQUARE').decode())
+            cmd += '{} {} '.format(self.pcmd('TXT_NORMAL').decode(), self.pcmd('TXT_4SQUARE').decode())
         elif height == 2 and width == 1:
             cmd += '{} {} '.format(self.pcmd('TXT_NORMAL').decode(), self.pcmd('TXT_2HEIGHT').decode())
         elif width == 2 and height == 1:
@@ -488,7 +485,7 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         # Upside down
         if flip:
             cmd += '{}'.format(self.pcmd('TXT_FLIP_ON').decode())
-            
+
         else:
             cmd += '{}'.format(self.pcmd('TXT_FLIP_OFF').decode())
         # Smoothing
@@ -500,7 +497,7 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         if text_type.upper() == "B":
             cmd += '{}'.format(self.pcmd('TXT_BOLD_ON').decode())
             cmd += '{}'.format(self.pcmd('TXT_UNDERL_OFF').decode())
-            
+
         elif text_type.upper() == "U":
             cmd += '{}'.format(self.pcmd('TXT_BOLD_OFF').decode())
             cmd += '{}'.format(self.pcmd('TXT_UNDERL_ON').decode())
@@ -529,10 +526,10 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
         # Align
         if align.upper() == "CENTER":
             cmd += '{}'.format(self.pcmd('TXT_ALIGN_CT').decode())
-            
+
         elif align.upper() == "RIGHT":
             cmd += '{}'.format(self.pcmd('TXT_ALIGN_RT').decode())
-            
+
         elif align.upper() == "LEFT":
             cmd += '{}'.format(self.pcmd('TXT_ALIGN_LT').decode())
         # Density
@@ -573,8 +570,8 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
             cmd += '{}'.format(self.pcmd('TXT_INVERT_OFF').decode())
 
         return cmd
-    
-    def pcmd_barcode(self, text, type="CODE39", height = 64, width = 2, alignment = 'CENTER', font="B", pos="OFF"):
+
+    def pcmd_barcode(self, text, type="CODE39", height=64, width=2, alignment='CENTER', font="B", pos="OFF"):
         _SET_HRI_FONT = lambda n: b'\x1d' + b'f' + n
         BARCODE_FONT_A = _SET_HRI_FONT(b'\x00')  # Font type A for HRI barcode chars
         BARCODE_FONT_B = _SET_HRI_FONT(b'\x01')  # Font type B for HRI barcode chars
@@ -606,7 +603,6 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
             'GS1 DATABAR LIMITED': _SET_BARCODE_TYPE(77),
             'GS1 DATABAR EXPANDED': _SET_BARCODE_TYPE(78),
         }
-
 
         cmd = ''
         # Align Bar Code()
@@ -644,7 +640,6 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
 
         else:  # DEFAULT POSITION: BELOW
             cmd += '{}'.format(BARCODE_TXT_BLW.decode('utf-8'))
-
 
         # BARCODE TYPE SET
         bc_types = BARCODE_TYPE[type.upper()]

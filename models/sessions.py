@@ -4,6 +4,7 @@ from classes.USBFactory import USBFactory
 from kivy.storage.dictstore import DictStore
 
 sessions = DictStore('sessions')
+
 if not sessions.exists('_rememberMe'):
     sessions.put('_rememberMe', value=False)
 if not sessions.exists('_rememberMeTimestamp'):

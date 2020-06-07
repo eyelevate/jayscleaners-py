@@ -1,0 +1,597 @@
+
+<LongButton@Button>:
+    size_hint_x: 1
+    markup: True
+    font_size:'17sp'
+    text_size: self.size
+    valign: "top"
+    halign: "left"
+<CalendarButton@Button>:
+    markup: True
+    font_size:'20sp'
+    text_size: self.size
+    valign: "top"
+    halign: "left"
+
+<CalendarSelectedButton@Button>:
+    markup: True
+    font_size:'20sp'
+    text_size: self.size
+    valign: "top"
+    halign: "left"
+<CenteredLabel@Label>:
+    markup:True
+    text_size:self.size
+    halign: 'center'
+    valign: 'middle'
+    font_size: sp(30)
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+<CenteredFormLabel@Label>:
+    markup: True
+    text_size: self.size
+    halign: 'right'
+    valign: 'middle'
+    font_size:'20sp'
+    size_hint_x: None
+    width: '175sp'
+    padding_x: '20sp'
+<BottomLeftFormLabel@Label>
+    markup:True
+    text_size:self.size
+    halign:'left'
+    valign:'bottom'
+    font_size:sp(20)
+    padding_x: sp(5)
+    padding_y: sp(2)
+<MiddleLeftFormLabel@Label>
+    markup:True
+    text_size:self.size
+    halign:'left'
+    valign:'middle'
+    font_size:sp(20)
+    padding_x: sp(5)
+    padding_y: sp(2)
+<TopLeftFormLabel@Label>
+    markup:True
+    text_size:self.size
+    halign:'left'
+    valign:'top'
+    font_size:sp(15)
+    padding_x: sp(5)
+    padding_y: sp(2)
+<TopLeftFormButton@Button>
+    markup:True
+    text_size:self.size
+    halign:'left'
+    valign:'top'
+    font_size:sp(15)
+    padding_x: sp(5)
+    padding_y: sp(2)
+
+<CenteredHighlightedLabel@Label>:
+    markup:True
+    text_size:self.size
+    halign: 'center'
+    valign: 'middle'
+    font_size: '30sp'
+    canvas.before:
+        Color:
+            rgba: 0.8, 0.8, 0.8, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<PrintButton@Button>:
+    markup: True
+    on_release: app.root.current = "search"
+
+
+<ReadOnlyLabel@Label>
+    markup:True
+    text_size:self.size
+    halign: 'center'
+    valign: 'middle'
+    font_size: '20sp'
+    canvas.before:
+        Color:
+            rgba: 0.2, 0.2, 0.2, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+<OkayLabel@Label>
+    markup:True
+    text_size:self.size
+    halign: 'center'
+    valign: 'middle'
+    font_size: '20sp'
+    text: '[color=0AAC00][b]Ok[/b][/color]'
+    canvas.before:
+        Color:
+            rgba: 0.73725490, 1, 0.72156863, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+<SelectMonth@DropDown>
+    on_parent: self.dismiss
+
+<CenterVerticalTextInput@TextInput>
+    write_tab: False
+    font_size: '20sp'
+    multiline: False
+    padding: [5, ( self.height - self.line_height ) / 2]
+
+<CenterGlyphUpButton@Button>
+    markup: True
+    font_size:'15sp'
+    markup:True
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    background_color: 1,1,1,1
+    Image:
+        size: '20sp','20sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y
+        allow_stretch: True
+        source: 'src/glyphicons-white/arrow-up.png'
+
+<CenterGlyphDownButton@Button>
+    markup: True
+    font_size:'15sp'
+    markup:True
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    background_color: 1,1,1,1
+
+    Image:
+        size: '20sp','20sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y
+        allow_stretch: True
+        source: 'src/glyphicons-white/arrow-down.png'
+
+<GridLayoutForScrollView@GridLayout>
+    size_hint_y:None
+    height: self.minimum_height
+    cols:6
+    spacing:sp(3)
+    row_force_default: True
+    row_default_height:'150sp'
+
+<ItemsButton@Button>
+    id: inventory_button
+    font_size:'17sp'
+    markup:True
+    text: ''
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    background_rgba:(.7,.3,.5,1)
+    Image:
+        id: items_image
+        source: ''
+        size: '50sp','50sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        allow_stretch: True
+
+<ItemsFromButton@Button>
+    id: inventory_button
+    font_size:'17sp'
+    markup:True
+    text: ''
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    background_color: 0,0.64,0.149,0.1
+    canvas.before:
+        Color:
+            rgba: 0,0.64,0.149,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    Image:
+        id: items_image
+        source: ''
+        size: '50sp','50sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        allow_stretch: True
+
+<ColorsFromButton@Button>
+    id: color_button
+    font_size:'17sp'
+    markup:True
+    text: ''
+    disabled: False
+    text_size:self.size
+    valign:'bottom'
+    halign:'center'
+    Label:
+        id: color_label
+        size: '50sp','50sp'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        canvas.before:
+            Color:
+                rgba: 0,0.64,0.149,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+<ImageFileChooser@BoxLayout>
+    orientation: 'vertical'
+    Image:
+        id: inventory_image
+        source: ''
+        size_hint: 0.7,0.4
+        allow_stretch: True
+        keep_ratio: False
+    FileChooser:
+        id: fc
+        rootpath: 'src/imgs'
+        on_selection: inventory_image.source = self.selection and self.selection[0] or ''
+        FileChooserListLayout
+#        FileChooserIconLayout
+#        FileChooserListLayout
+
+
+<CreditCardDropDown@DropDown>
+
+    Button:
+        id: btn
+        text: 'Select Card'
+        on_release: dropdown.open(self)
+        size_hint_y: None
+        size_hint_x: 1
+        height: sp(40)
+
+    DropDown:
+        size_hint: (1,1)
+        id: dropdown
+        on_parent: self.dismiss()
+        on_select: btn.text = '{}'.format(args[1])
+
+<ValidateBox@BoxLayout>
+    orientation:'vertical'
+    size_hint:(1,1)
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    GridLayout:
+        cols:2
+        rows:3
+        row_default_height:sp(44)
+        row_force_default:True
+        Label:
+            id:credit_card_number
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            width: '200sp'
+            padding_x: '20sp'
+            text:'[color=5e5e5e]XXXX 0270[/color]'
+        Label:
+            id:credit_card_type
+            text: '[color=5e5e5e]Visa[/color]'
+            markup: True
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_y:0.2
+            padding_x: '20sp'
+        Label:
+            id:credit_card_full_name
+            text: '[color=5e5e5e]Wondo Choung[/color]'
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            size_hint_y:0.8
+            padding_x: '20sp'
+            width:sp(200)
+        Label:
+            id:credit_card_exp_date
+            text:"[color=5e5e5e][b]EXP:[/b] 07/2020[/color]"
+            markup: True
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_y:0.2
+            padding_x: '20sp'
+        Label:
+            id:credit_billing_address
+            text:'[color=5e5e5e]2350 24th Ave E Seattle, WA 98112[/color]'
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            size_hint_y:0.8
+            width:sp(200)
+            padding_x: '20sp'
+        Label:
+            id:credit_card_cvv
+            text:'[color=5e5e5e]XXX[/color]'
+            markup: True
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_y:0.2
+            padding_x: '20sp'
+    BoxLayout:
+        orientation:'horizontal'
+        Button:
+            id: validate_button
+            markup:True
+            text:'Validate'
+    GridLayout:
+        cols:2
+        rows:2
+        Label:
+            markup: True
+            text:'[color=5e5e5e][b]Status[/b][/color]'
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            width: '175sp'
+            padding_x: '20sp'
+        TextInput:
+            id:card_status
+            markup:True
+            write_tab: False
+            disabled: True
+            font_size: '20sp'
+            multiline: False
+            padding: [5, ( self.height - self.line_height ) / 2]
+        Label:
+            markup: True
+            text:'[color=5e5e5e][b]Message[/b][/color]'
+            text_size: self.size
+            halign: 'right'
+            valign: 'middle'
+            font_size:'20sp'
+            size_hint_x: None
+            width: '175sp'
+            padding_x: '20sp'
+        TextInput:
+            id:card_message
+            markup:True
+            write_tab: False
+            disabled: True
+            font_size: '20sp'
+            multiline: False
+            padding: [5, ( self.height - self.line_height ) / 2]
+
+<QuickBox@GridLayout>
+    cols:1
+    rows:2
+    spacing:sp(10)
+    size_hint:(1,1)
+    row_force_default: True
+    row_default_height:sp(125)
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    GridLayout:
+        cols:2
+        rows:2
+        row_default_height:sp(44)
+        row_force_default:True
+        spacing:sp(5)
+        Label:
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            width: '200sp'
+            padding_x: '20sp'
+            text:'[color=5e5e5e]Dropoff Count[/color]'
+
+        TextInput:
+            id:quick_count
+            markup:True
+            write_tab: False
+            font_size: '20sp'
+            multiline: False
+            hint_text:'Enter dropoff count'
+            padding: [5, ( self.height - self.line_height ) / 2]
+        Label:
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            width: '200sp'
+            padding_x: '20sp'
+            text:'[color=5e5e5e]Due Date[/color]'
+
+        Button:
+            id:quick_due_date
+            text:'[color=ffffff][b]Mon 10/10[/b][/color]'
+            markup:True
+            write_tab: False
+            font_size: '20sp'
+    GridLayout:
+        cols:2
+        rows:3
+        row_default_height:sp(100)
+        row_force_default:True
+        Label:
+            markup: True
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            font_size:'20sp'
+            width: '200sp'
+            padding_x: '20sp'
+            text:'[color=5e5e5e]Invoice Memo[/color]'
+
+        TextInput:
+            id:quick_invoice_memo
+            markup:True
+            write_tab: False
+            font_size: '20sp'
+            multiline: True
+
+<CalculatorGrid@RelativeLayout>
+    size_hint: 0.3,1
+    ScrollView:
+        size_hint:(1,1)
+        GridLayout:
+            id: summary_table
+            size_hint_y:None
+            height: self.minimum_height
+            cols:2
+            row_force_default: True
+            row_default_height:sp(44)
+
+<ScrollGrid@RelativeLayout>
+    size_hint: 1,0.9
+    ScrollView:
+        size_hint:(1,1)
+        GridLayout:
+            id: main_table
+            size_hint_y:None
+            height: self.minimum_height
+            row_force_default: True
+            row_default_height:sp(44)
+
+<DeliveryGrid@RelativeLayout>
+    size_hint: 1,0.9
+    ScrollView:
+        size_hint:(1,1)
+        GridLayout:
+            id: delivery_table
+            size_hint_y:None
+            height: self.minimum_height
+            cols:1
+            row_force_default: True
+            row_default_height:sp(44)
+
+<TagsGrid@RelativeLayout>
+    ScrollView:
+        size_hint:(1,1)
+        GridLayout:
+            id: tags_table
+            size_hint_y:None
+            height: self.minimum_height
+            cols:5
+            row_force_default: True
+            row_default_height:sp(44)
+            Label:
+                markup:True,
+                text:'[color=#000000]ID[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                markup:True,
+                text:'[color=#000000]Item[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                markup:True,
+                text:'[color=#000000]Color[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                markup:True,
+                text:'[color=#000000]Memo[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                markup:True,
+                text:'[color=#000000]Tags[/color]'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+<TagsGridHeaders@Label>
+    markup:True,
+    text:'[color=#000000]ID[/color]'
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<TagsSelectedButton@Button>
+    markup:True
+    text: ''
+    disabled: False
+    background_color: 0,0.64,0.149,0.1
+    canvas.before:
+        Color:
+            rgba: 0,0.64,0.149,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<InvoiceTr@ToggleButton>
+    status: 1
+    set_color: []
+    markup: True
+    font_size:'15sp'
+    background_color:[]
+    canvas.before:
+        Color:
+            rgba: root.set_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    GridLayout:
+        id: invoice_table_row_td
+        height: self.parent.height
+        width: self.parent.width
+        rows: 1
+        cols: 6
+        spacing: 2
+        pos: self.parent.pos
+

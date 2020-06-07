@@ -945,7 +945,7 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
 
-/* Has stdatomic.h, atomic_int and _Atomic void* types work */
+/* Has stdatomic.h with atomic_int */
 /* #undef HAVE_STD_ATOMIC */
 
 /* Define to 1 if you have the `strdup' function. */

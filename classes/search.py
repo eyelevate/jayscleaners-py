@@ -366,7 +366,7 @@ class SearchScreen(Screen):
                 invoice_id = inv['id']
 
                 company_id = inv['company_id']
-                company_name = 'R' if company_id is 1 else 'M'
+                company_name = 'R' if company_id is '1' else 'M'
                 quantity = inv['quantity']
                 rack = inv['rack']
                 total = Static.us_dollar(inv['total'])

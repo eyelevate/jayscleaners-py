@@ -1,0 +1,443 @@
+#:import ScrollEffect  kivy.effects.scroll.ScrollEffect
+#: import Window kivy.core.window.Window
+
+
+<DropoffScreen>:
+    name:"dropoff"
+    inventory_panel: inventory_panel
+    qty_count_label: qty_count_label
+    summary_table: summary_table
+    summary_quantity_label: summary_quantity_label
+    summary_tags_label: summary_tags_label
+    summary_subtotal_label: summary_subtotal_label
+    summary_tax_label: summary_tax_label
+    summary_discount_label: summary_discount_label
+    summary_total_label: summary_total_label
+    date_picker: date_picker
+    colors_table_main: colors_table_main
+    dryclean_tab: dryclean_tab
+    laundry_tab: laundry_tab
+    alterations_tab: alterations_tab
+    household_tab: household_tab
+    other_tab: other_tab
+    dryclean_rv: dryclean_rv
+    laundry_rv: laundry_rv
+    alterations_rv: alterations_rv
+    household_rv: household_rv
+    other_rv: other_rv
+    items_table_rv: items_table_rv
+
+    on_enter: root.reset()
+    on_pre_enter: root.attach()
+    on_leave: root.detach()
+    BoxLayout:
+        orientation: 'vertical'
+        GridLayout:
+            size_hint: 1,0.1
+            cols:12
+            Label:
+                id: qty_count_label
+                markup:True
+                text: '1'
+            Button:
+                markup: True
+                on_release: root.set_qty(1)
+                text: '1'
+            Button:
+                markup: True
+                on_release: root.set_qty(2)
+                text: '2'
+            Button:
+                markup: True
+                on_release: root.set_qty(3)
+                text: '3'
+            Button:
+                markup: True
+                on_release: root.set_qty(4)
+                text: '4'
+            Button:
+                markup: True
+                on_release: root.set_qty(5)
+                text: '5'
+            Button:
+                markup: True
+                on_release: root.set_qty(6)
+                text: '6'
+            Button:
+                markup: True
+                on_release: root.set_qty(7)
+                text: '7'
+            Button:
+                markup: True
+                on_release: root.set_qty(8)
+                text: '8'
+            Button:
+                markup: True
+                on_release: root.set_qty(9)
+                text: '9'
+            Button:
+                markup: True
+                on_release: root.set_qty(0)
+                text: '0'
+            Button:
+                markup: True
+                on_release: root.set_qty('C')
+                text: 'C'
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1,0.9
+            pos_hint: {'top':1}
+            TabbedPanel:
+                id: inventory_panel
+                do_default_tab: False
+                size_hint: 0.5,1
+
+                TabbedPanelItem:
+                    id: dryclean_tab
+                    text: 'Dry Clean'
+                    InventoryItemRecycleView:
+                        id: dryclean_rv
+                TabbedPanelItem:
+                    id: laundry_tab
+                    text: 'Laundry'
+                    InventoryItemRecycleView:
+                        id: laundry_rv
+                TabbedPanelItem:
+                    id: alterations_tab
+                    text: 'Alterations'
+                    InventoryItemRecycleView:
+                        id: alterations_rv
+                TabbedPanelItem:
+                    id: household_tab
+                    text: 'Household'
+                    InventoryItemRecycleView:
+                        id: household_rv
+                TabbedPanelItem:
+                    id: other_tab
+                    text: 'Other'
+                    InventoryItemRecycleView:
+                        id: other_rv
+            RelativeLayout:
+                size_hint: 0.1,1
+                ScrollView:
+                    size_hint:(1,1)
+                    pos_hint:{'top':1}
+                    GridLayout:
+                        cols:1
+                        id:colors_table_main
+                        row_force_default: True
+                        row_default_height: sp(50)
+                        size_hint_y:None
+                        height: self.minimum_height
+
+
+            BoxLayout:
+                pos_hint:{'top':1}
+                size_hint: 0.4,1
+                orientation:'vertical'
+                canvas.before:
+                    Color:
+                        rgba: .75, .75, .75, 0.3
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                GridLayout:
+                    id: summary_table
+                    height: self.minimum_height
+                    cols:5
+                    rows:1
+                    size_hint: 1, 0.1
+                    Label:
+                        size_hint_x: 0.1
+                        markup: True
+                        text: "[color=000000][b]Type[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+
+                        size_hint_x: 0.1
+                        markup: True
+                        text: "[color=000000][b]Qty[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+
+                        size_hint_x: 0.6
+                        markup: True
+                        text: "[color=000000][b]Item[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        size_hint_x: 0.2
+                        markup: True
+                        text: "[color=000000][b]Subtotal[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        size_hint_x: 0.1
+                        markup: True
+                        text: "[color=000000][b]A[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                RelativeLayout:
+                    size_hint: 1, 0.7
+                    pos_hint:{'top':1}
+
+                    ItemsTableRecycleView:
+                        id: items_table_rv
+                        pos_hint:{'top':1}
+                GridLayout:
+                    pos_hint:{'bottom':1}
+                    size_hint: 1, 0.2
+                    cols:2
+                    rows:6
+
+                    Label:
+                        padding_x:20
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.8
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000][b]Qty[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: summary_quantity_label
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.2
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000]0[/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        padding_x:20
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.8
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000][b]Tags[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: summary_tags_label
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.2
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000]0[/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        padding_x:20
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.8
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000][b]Subtotal[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: summary_subtotal_label
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.2
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000]$0.00[/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        padding_x:20
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.8
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000][b]Discount[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: summary_discount_label
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.2
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000]($0.00)[/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        padding_x:20
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.8
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000][b]Tax[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: summary_tax_label
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.2
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000]$0.00[/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+
+                    Label:
+                        padding_x:20
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.8
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000][b]Total[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: summary_total_label
+                        size_hint_y: '20sp'
+                        size_hint_x: 0.2
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        markup: True
+                        text: "[color=000000][b]$0.00[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+
+        GridLayout:
+            rows: 1
+            cols: 5
+            spacing: 2
+            padding: 3
+            size_hint: 1,0.1
+            Button:
+                markup:True
+                text:'Cancel'
+                on_press: root.set_result_status()
+                on_release: app.root.current = "search"
+            Button:
+                id: date_picker
+                markup:True
+                text:'6/4 Tue'
+                on_release: root.make_calendar()
+            Button:
+                markup: True
+                text:'+/- Memo,Color'
+                on_release: root.make_memo_color()
+            Button:
+                markup: True
+                text: 'Adjust'
+                on_release: root.make_adjust()
+
+            Button:
+                markup: True
+                text: 'Print'
+                on_release: root.print_selection()
+

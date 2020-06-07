@@ -1,0 +1,23 @@
+<HistoryItemsTableButton>:
+    id: history_items_table_button
+    markup: True
+    font_size:sp(14)
+    markup: True
+    disabled: False
+    text_size: self.size
+    valign: 'middle'
+    halign: 'center'
+    default_size: None , dp(32)
+    spacing: 0
+
+<HistoryTableRV@RecycleView>:
+    viewclass: 'HistoryItemsTableButton'
+    HistoryRecycleGridLayout:
+        id: test
+        bar_width: dp(5)
+        default_size: None, dp(50)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        spacing: 1
+        cols:6

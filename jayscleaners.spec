@@ -3,11 +3,11 @@
 block_cipher = None
 
 
-a = Analysis(['main.py'],
+a = Analysis(['/Users/wondochoung/Documents/python/pycharm/jayscleaners-py/main.py'],
              pathex=['/Users/wondochoung/Documents/python/pycharm/jayscleaners-py'],
              binaries=[],
-             datas=[( 'src/img/inventory', 'src/img/inventory' )],
-             hiddenimports=[],
+             datas=[( 'src/img/inventory', 'src/img/inventory' ), ('kv','kv'), ('components','components')],
+             hiddenimports=['usb'],
              hookspath=[],
              runtime_hooks=[],
              excludes=['_tkinter', 'Tkinter', 'enchant', 'twisted'],

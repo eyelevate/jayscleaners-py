@@ -1,0 +1,115 @@
+#: import FadeTransition kivy.uix.screenmanager.FadeTransition
+#: import NoTransition kivy.uix.screenmanager.NoTransition
+#: import WipeTransition kivy.uix.screenmanager.WipeTransition
+#: import SwapTransition kivy.uix.screenmanager.SwapTransition
+#: import FallOutTransition kivy.uix.screenmanager.FallOutTransition
+#: import RiseInTransition kivy.uix.screenmanager.RiseInTransition
+#: import DropDown kivy.uix.dropdown
+#: import Popup kivy.uix.popup.Popup
+#: import ListView kivy.uix.listview
+#: import DictAdapter kivy.adapters.listadapter.ListAdapter
+#: import ListAdapter kivy.adapters.listadapter.ListAdapter
+#: import ListItemButton kivy.uix.listview.ListItemButton
+#: import ScrollView kivy.uix.scrollview
+#: import FileChooser kivy.uix.filechooser
+#: import FileChooserListView kivy.uix.filechooser
+#: import FileChooserIconView kivy.uix.filechooser
+#: import ColorPicker kivy.uix.colorpicker
+#: import RecycleView kivy.uix.recycleview
+#: import LayoutSelectionBehavior kivy.uix.recycleview.layout
+#: import SelectableButton components.selectable_button
+#: import HistoryItemsTableButton components.history_items_table_button
+#: import HistoryInvoiceItemsTableButton components.history_invoice_items_table_button
+#: import InventoryItemsButton components.inventory_items_button
+#: import ItemsTableButton components.items_table_buttons
+#: import ItemsDetailTableButton components.items_detail_table_button
+#: import SelectableGridLayoutRV components.selectable_grid_layout_rv
+#: import SelectableRecycleGridLayoutDuplicate components.selectable_grid_duplicate
+#: import SelectableRecycleBoxLayout components.selectable_rv_boxlayout
+#: import SearchResultsRV components.search_results_rv
+#: import HistoryRecycleGridLayout components.history_items_table_rv
+#: import RackTableButton components.rack_table_button
+#: import DetailsTableLabel components.details_table_label
+#: import SearchTableButton components.search_table_button
+#: import StatusLabel components.status_label
+#: import AdjustSummaryButton components.adjust_summary_button
+#: import AdjustIndividualButton components.adjust_individual_button
+#: import PickupTableButton components.pickup_table_button
+#: import Last10Button components.last_10_button
+
+<ListItemButton>:
+    size: (100, '48dp')
+
+ScreenManagement:
+    transition: NoTransition()
+    MainScreen:
+    ColorsScreen:
+    CompanyScreen:
+    DeliveryScreen:
+    DropoffScreen:
+    EditInvoiceScreen:
+    EditCustomerScreen:
+    EmployeesScreen:
+    HistoryScreen:
+    InventoriesScreen:
+    InventoryItemsScreen:
+    InvoiceDetailsScreen:
+    ItemDetailsScreen:
+    Last10Screen:
+    MemosScreen:
+    NewCustomerScreen:
+    PickupScreen:
+    PrinterScreen:
+    RackScreen:
+    ReportsScreen:
+    SearchScreen:
+    SearchResultsScreen:
+    SettingsScreen:
+    UpdateScreen:
+    TaxesScreen:
+
+
+#:include ./kv/remember_me_checkbox.kv
+#:include ./kv/library.kv
+#:include ./kv/login_popup.kv
+#:include ./kv/search_results_rv.kv
+#:include ./kv/inventory_items_rv.kv
+#:include ./kv/items_table_rv.kv
+#:include ./kv/history_table_rv.kv
+#:include ./kv/history_items_table_rv.kv
+#:include ./kv/item_details_table_rv.kv
+#:include ./kv/rack_table_rv.kv
+#:include ./kv/details_table_rv.kv
+#:include ./kv/search_table_rv.kv
+#:include ./kv/adjust_summary_rv.kv
+#:include ./kv/adjust_sum_layout.kv
+#:include ./kv/adjust_individual_rv.kv
+#:include ./kv/adjust_individual_layout.kv
+#:include ./kv/pickup_table_rv.kv
+#:include ./kv/last_10_rv.kv
+
+#:include ./kv/main_screen.kv
+#:include ./kv/colors_screen.kv
+#:include ./kv/company_screen.kv
+#:include ./kv/delivery_screen.kv
+#:include ./kv/dropoff_screen.kv
+#:include ./kv/edit_customer_screen.kv
+#:include ./kv/edit_invoice_screen.kv
+#:include ./kv/employees_screen.kv
+#:include ./kv/history_screen.kv
+#:include ./kv/inventories_screen.kv
+#:include ./kv/inventory_items_screen.kv
+#:include ./kv/invoice_details_screen.kv
+#:include ./kv/item_details_screen.kv
+#:include ./kv/last10_screen.kv
+#:include ./kv/memos_screen.kv
+#:include ./kv/new_customer_screen.kv
+#:include ./kv/pickup_screen.kv
+#:include ./kv/printer_screen.kv
+#:include ./kv/rack_screen.kv
+#:include ./kv/reports_screen.kv
+#:include ./kv/search_screen.kv
+#:include ./kv/search_results.kv
+#:include ./kv/settings_screen.kv
+#:include ./kv/update_screen.kv
+#:include ./kv/taxes_screen.kv

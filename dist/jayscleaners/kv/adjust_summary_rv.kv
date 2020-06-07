@@ -1,0 +1,18 @@
+<AdjustSummaryButton>:
+    id: adjust_summary_button
+    markup: True
+    font_size:sp(15)
+    disabled: False
+    text_size: self.size
+    valign: 'middle'
+    halign: 'center'
+
+<AdjustSummaryTableRV@RecycleView>:
+    viewclass: 'AdjustSummaryButton'
+    SelectableRecycleGridLayout:
+        bar_width: dp(5)
+        default_size: None, dp(60)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        cols:4

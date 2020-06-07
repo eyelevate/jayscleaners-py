@@ -1,0 +1,55 @@
+<ItemDetailsScreen>:
+    id: screen_item_details
+    name:"item_details"
+    items_detail_table_rv: items_detail_table_rv
+
+    on_enter: root.get_details()
+
+    BoxLayout:
+        orientation: 'horizontal'
+        pos_hint: {'top':1}
+        size_hint: 1,0.9
+        BoxLayout:
+            orientation:'vertical'
+            size_hint: 1,1
+            GridLayout:
+                size_hint_y:None
+                size_hint_x: 1
+                height: self.minimum_height
+                cols:4
+                rows:1
+                row_force_default: True
+                row_default_height:dp(25)
+                CenteredLabel:
+                    text: '[color=000000]ID[/color]'
+                    size_hint_x: 0.2
+                    font_size: sp(15)
+                    text_size: self.size
+                CenteredLabel:
+                    text: '[color=000000]QTY[/color]'
+                    size_hint_x: 0.1
+                    font_size: sp(15)
+                    text_size: self.size
+                CenteredLabel:
+                    text: '[color=000000]ITEM[/color]'
+                    size_hint_x: 0.5
+                    font_size: sp(15)
+                    text_size: self.size
+                CenteredLabel:
+                    text: '[color=000000]SUBTOTAL[/color]'
+                    size_hint_x: 0.2
+                    font_size: sp(15)
+                    text_size: self.size
+
+            ItemsDetailTableRV:
+                id: items_detail_table_rv
+
+
+    BoxLayout:
+        size_hint: 1,0.1
+        Button:
+            id: cancel
+            on_release: app.root.current = "history"
+            font_size:sp(20)
+            text: "Cancel"
+            disabled: False
