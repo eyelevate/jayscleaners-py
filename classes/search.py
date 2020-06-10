@@ -657,7 +657,7 @@ class SearchScreen(Screen):
         inner_layout_1.add_widget(Factory.ReadOnlyLabel(text="Customer : {}, {}".format(self.cust_last_name.text,
                                                                                         self.cust_first_name.text)))
 
-        inner_layout_1.add_widget(Factory.ReadOnlyLabel(text="Customer mobile number"))
+        inner_layout_1.add_widget(Factory.ReadOnlyLabel(text="Ask if customer mobile #"))
         self.invite_mobile_input = Factory.CenterVerticalTextInput()
         self.invite_mobile_input.text = self.invite_mobile_number
         self.invite_mobile_input_error = Factory.ReadOnlyLabel(text="[color=FF0000]{}[/color]".format(""))
