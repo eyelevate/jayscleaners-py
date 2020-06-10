@@ -647,7 +647,7 @@ class SearchScreen(Screen):
         self.reset()
 
     def invite_popup_setup(self):
-        self.invite_popup.title = 'Invite to Storefront'
+        self.invite_popup.title = 'Invite to Connect'
         self.invite_popup.size_hint = (None, None)
         self.invite_popup.size = (sp(400), sp(250))
         base_layout = BoxLayout(orientation="vertical",
