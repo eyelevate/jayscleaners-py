@@ -109,7 +109,7 @@ class DropoffScreen(Screen):
     bixolon = None
     adjust_summary_table = None
     adjust_individual_table = None
-
+    laundry_to_print = []
     # stop watch
     start = None
     stop = None
@@ -184,6 +184,7 @@ class DropoffScreen(Screen):
         sessions.put('_itemId', value=None)
         self.deleted_rows = []
         self.memo_list = []
+        self.laundry_to_print = []
         try:
             p = threading.Thread(target=self.get_inventory)
             q = threading.Thread(target=self.get_colors_main)
@@ -1574,7 +1575,7 @@ class DropoffScreen(Screen):
         self.now = datetime.datetime.now()
         # determine the types of invoices we need to print
         # set the printer data
-        laundry_to_print = []
+        self.laundry_to_print = []
         printers = Printer()
         thermal_printers = printers.get_printer_ids(sessions.get('_companyId')['value'], 1)
 
@@ -2323,7 +2324,7 @@ class DropoffScreen(Screen):
                     invoices = SYNC.invoice_grab_id(invoice_id)
                     if invoices is not False:
                         invoice_items = invoices['invoice_items']
-                        laundry_to_print = []
+                        self.laundry_to_print = []
                         if invoice_items:
                             for ii in invoice_items:
                                 iitem_id = ii['item_id']
@@ -2342,7 +2343,7 @@ class DropoffScreen(Screen):
                                         laundry_tag = True if ii['inventory']['laundry'] else False
                                 memo_string = ii['memo']
                                 if laundry_tag and tags_to_print > 0:
-                                    laundry_to_print.append(invoice_item_id)
+                                    self.laundry_to_print.append(invoice_item_id)
                                 else:
                                     for _ in range(tags_to_print):
 
@@ -2366,49 +2367,49 @@ class DropoffScreen(Screen):
                                             self.bixolon.write('\n\n\n')
                                             self.bixolon.write('\x1b\x6d')
 
-                        if len(laundry_to_print) is 0:
-                            # FINAL CUT
-                            self.bixolon.write('\n\n\n\n\n\n')
-                            self.bixolon.write('\x1b\x6d')
+            if len(self.laundry_to_print) is 0:
+                # FINAL CUT
+                self.bixolon.write('\n\n\n\n\n\n')
+                self.bixolon.write('\x1b\x6d')
 
-                        else:
-                            laundry_count = len(laundry_to_print)
-                            shirt_mark = ''
-                            marks = ''
-                            if marks is not False:
-                                for mark in marks:
-                                    shirt_mark = mark['mark']
-                            name_text_offset = total_length - len(text_name) - len(text_name)
-                            shirt_mark_length = len(shirt_mark)
-                            mark_text_offset = 16 - (shirt_mark_length * 2)
-                            if sessions.get('_companyId')[
-                                'value'] is 1:  # hard code montlake store does not use this. REMOVE LATER TODO
-                                for i in range(0, laundry_count, 2):
-                                    start = i
-                                    end = i + 1
-                                    invoice_item_id_start = '{0:06d}'.format(int(laundry_to_print[start]))
-                                    id_offset = total_length - 12
-                                    try:
-                                        invoice_item_id_end = '{0:06d}'.format(int(laundry_to_print[end]))
-                                        name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
-                                        mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
-                                        id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset,
-                                                                       invoice_item_id_end)
+            else:
+                laundry_count = len(self.laundry_to_print)
+                shirt_mark = ''
+                marks = ''
+                if marks is not False:
+                    for mark in marks:
+                        shirt_mark = mark['mark']
+                name_text_offset = total_length - len(text_name) - len(text_name)
+                shirt_mark_length = len(shirt_mark)
+                mark_text_offset = 16 - (shirt_mark_length * 2)
+                if sessions.get('_companyId')[
+                    'value'] is 1:  # hard code montlake store does not use this. REMOVE LATER TODO
+                    for i in range(0, laundry_count, 2):
+                        start = i
+                        end = i + 1
+                        invoice_item_id_start = '{0:06d}'.format(int(self.laundry_to_print[start]))
+                        id_offset = total_length - 12
+                        try:
+                            invoice_item_id_end = '{0:06d}'.format(int(self.laundry_to_print[end]))
+                            name_name_string = '{}{}{}'.format(text_name, ' ' * name_text_offset, text_name)
+                            mark_mark_string = '{}{}{}'.format(shirt_mark, ' ' * mark_text_offset, shirt_mark)
+                            id_id_string = '{}{}{}'.format(invoice_item_id_start, ' ' * id_offset,
+                                                           invoice_item_id_end)
 
-                                    except IndexError:
-                                        name_name_string = '{}'.format(text_name)
-                                        mark_mark_string = '{}'.format(shirt_mark)
-                                        id_id_string = '{}'.format(invoice_item_id_start)
+                        except IndexError:
+                            name_name_string = '{}'.format(text_name)
+                            mark_mark_string = '{}'.format(shirt_mark)
+                            id_id_string = '{}'.format(invoice_item_id_start)
 
-                                    self.bixolon.write('\x1b!\x30')  # QUAD SIZE
-                                    self.bixolon.write(mark_mark_string)
-                                    self.bixolon.write('\n')
-                                    self.bixolon.write('\x1b!\x00')
-                                    self.bixolon.write(name_name_string)
-                                    self.bixolon.write('\n')
-                                    self.bixolon.write(id_id_string)
+                        self.bixolon.write('\x1b!\x30')  # QUAD SIZE
+                        self.bixolon.write(mark_mark_string)
+                        self.bixolon.write('\n')
+                        self.bixolon.write('\x1b!\x00')
+                        self.bixolon.write(name_name_string)
+                        self.bixolon.write('\n')
+                        self.bixolon.write(id_id_string)
 
-                                    self.bixolon.write('\n\n\n\x1b\x6d')
-                            # FINAL CUT
-                            self.bixolon.write('\n\n\n\n\n\n')
-                            self.bixolon.write('\x1b\x6d')
+                        self.bixolon.write('\n\n\n\x1b\x6d')
+                # FINAL CUT
+                self.bixolon.write('\n\n\n\n\n\n')
+                self.bixolon.write('\x1b\x6d')
