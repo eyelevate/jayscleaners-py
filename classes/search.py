@@ -5,6 +5,7 @@ import os
 
 # !/usr/local/bin/python3
 # !/usr/bin/env python3
+from kivy.metrics import sp
 
 os.environ['TZ'] = 'US/Pacific'
 if platform.system() == 'Darwin':  # Mac
@@ -28,7 +29,6 @@ from models.kv_generator import KvString
 from models.jobs import Job
 import threading
 import queue
-
 
 import calendar
 import datetime
@@ -119,6 +119,7 @@ class SearchScreen(Screen):
     search_results_table = ObjectProperty(None)
     search_results_footer = ObjectProperty(None)
     main_popup = Popup()
+    invite_popup = Popup()
     date_picker = ObjectProperty(None)
     due_date = None
     due_date_string = None
@@ -192,12 +193,18 @@ class SearchScreen(Screen):
     bixolon = None
     zebra = None
     invitems = None
+    invite_mobile_number = None
+    invite_mobile_input = None
+    invite_mobile_input_error = None
 
     def __init__(self, **kwargs):
         super(SearchScreen, self).__init__(**kwargs)
         pub.subscribe(self.set_epson_printer, "set_epson_printer")
         pub.subscribe(self.set_bixolon_printer, "set_bixolon_printer")
         pub.subscribe(self.set_zebra_printer, "set_zebra_printer")
+        pub.subscribe(self.invite_callback_completed, "invite_callback_completed")
+        pub.subscribe(self.invite_callback_failed, "invite_callback_failed")
+
 
     def attach(self):
         pub.subscribe(self.invoice_selected, "invoice_selected")
@@ -278,12 +285,14 @@ class SearchScreen(Screen):
         self.barcode_save_data = {}
         self.get_invoices = None
         self.search.text = ''
+        self.invite_mobile_number = None
+        self.invite_mobile_input = None
         if sessions.get('_searchResultsStatus')['value']:
             users = SYNC.customers_grab(sessions.get('_customerId')['value'])
             Clock.schedule_once(partial(self.customer_results, users), 1)
 
         else:
-            sessions.put('_customerId',value=None)
+            sessions.put('_customerId', value=None)
             sessions.put('_invoiceId', value=None)
 
             self.customer_mark_l.text = ''
@@ -312,7 +321,7 @@ class SearchScreen(Screen):
             self.search_table_rv.data = []
             self.due_date = None
             self.due_date_string = None
-            sessions.put('_searchResultsStatus',value=False)
+            sessions.put('_searchResultsStatus', value=False)
 
         Clock.schedule_once(self.focus_input)
         self.close_initial_popup()
@@ -355,7 +364,7 @@ class SearchScreen(Screen):
                 check_invoice_id = False
                 try:
                     check_invoice_id = True if (
-                                int(sessions.get('_invoiceId')['value']) - int(inv['id']) == 0) else False
+                            int(sessions.get('_invoiceId')['value']) - int(inv['id']) == 0) else False
                     if check_invoice_id:
                         self.edit_invoice_btn.disabled = False
                 except ValueError:
@@ -392,12 +401,14 @@ class SearchScreen(Screen):
                 # check to see if invoice is overdue
 
                 invoice_status = int(inv['status'])
-                row_settings = self._make_row_settings(invoice_status, check_invoice_id, due_strtotime, now_strtotime, count_invoice_items)
+                row_settings = self._make_row_settings(invoice_status, check_invoice_id, due_strtotime, now_strtotime,
+                                                       count_invoice_items)
 
                 self.invoice_table_rows.append({
                     'column': 1,
                     'invoice_id': invoice_id,
-                    'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'], '{0:06d}'.format(invoice_id)),
+                    'text': '[color={}][b]{}[/b][/color]'.format(row_settings['text_color'],
+                                                                 '{0:06d}'.format(invoice_id)),
                     'background_color': row_settings['background_color'],
                     'background_normal': ''
                 })
@@ -432,7 +443,7 @@ class SearchScreen(Screen):
                 self.invoice_table_rows.append({
                     'column': 6,
                     'invoice_id': invoice_id,
-                    'text': '[color={}][b]${}[/b][/color]'.format(row_settings['text_color'],total),
+                    'text': '[color={}][b]${}[/b][/color]'.format(row_settings['text_color'], total),
                     'background_color': row_settings['background_color'],
                     'background_normal': ''
                 })
@@ -478,7 +489,7 @@ class SearchScreen(Screen):
         }
 
     def invoice_selected(self, invoice_id, *args, **kwargs):
-        sessions.put('_invoiceId',value=invoice_id)
+        sessions.put('_invoiceId', value=invoice_id)
         # show the edit button
         self.edit_invoice_btn.disabled = False
         self.update_invoice_rows()
@@ -491,8 +502,8 @@ class SearchScreen(Screen):
     def customer_select(self, customer_id):
         customers = SYNC.customers_grab(customer_id)
         self.customer_results(customers)
-        sessions.put('_customerId',value=customer_id)
-        sessions.put('_searchResultsStatus',value=True)
+        sessions.put('_customerId', value=customer_id)
+        sessions.put('_searchResultsStatus', value=True)
         Clock.schedule_once(self.focus_input)
 
     def customer_results(self, data, *args, **kwargs):
@@ -502,11 +513,11 @@ class SearchScreen(Screen):
         if data is not False:
             if len(data) == 1:
                 if len(self.search.text) == 6:
-                    sessions.put('_invoiceId',value=self.search.text)
+                    sessions.put('_invoiceId', value=self.search.text)
                 Clock.schedule_once(self.focus_input)
                 for result in data:
-                    sessions.put('_customerId',value=result['id'])
-                    sessions.put('_searchResultsStatus',value=True if sessions.get('_customerId')['value'] else False)
+                    sessions.put('_customerId', value=result['id'])
+                    sessions.put('_searchResultsStatus', value=True if sessions.get('_customerId')['value'] else False)
 
                     # start syncing in background
                     self.customer_sync()
@@ -517,7 +528,6 @@ class SearchScreen(Screen):
                                           sessions.get('_last10')['value'])
 
                     self.update_invoice_rows()
-
 
                     Clock.schedule_once(partial(self.invoice_selected, sessions.get('_invoiceId')['value']))
                     last_drop = 'Not Available'
@@ -537,10 +547,12 @@ class SearchScreen(Screen):
                                                                                                   result[
                                                                                                       'account'] is 1 else 'Customer Info:'
                     self.cust_mark_label.text = custid_string
-                    self.customer_id_ti.text = str(sessions.get('_customerId')['value']) if sessions.get('_customerId')['value'] else ''
+                    self.customer_id_ti.text = str(sessions.get('_customerId')['value']) if sessions.get('_customerId')[
+                        'value'] else ''
                     self.cust_last_name.text = result['last_name'] if result['last_name'] else ''
                     self.cust_first_name.text = result['first_name'] if result['first_name'] else ''
                     self.cust_phone.text = Job.make_us_phone(result['phone']) if result['phone'] else ''
+                    self.invite_mobile_number = result['phone']
                     self.cust_last_drop.text = last_drop
                     self.cust_starch.text = self.get_starch_by_id(result['starch'])
                     self.cust_credit_label.bind(on_ref_press=self.credit_history)
@@ -578,9 +590,9 @@ class SearchScreen(Screen):
                               msg_string='No customers found! Please try again!')
 
     def search_results(self):
-        sessions.put('_searchText',value= self.search.text)
+        sessions.put('_searchText', value=self.search.text)
         results = SYNC.customers_search_results(sessions.get('_searchText')['value'])
-        sessions.put('_searchResults',value=results)
+        sessions.put('_searchResults', value=results)
         if sessions.get('_searchResults')['value'] is not False:
 
             self.parent.current = 'search_results'
@@ -631,8 +643,57 @@ class SearchScreen(Screen):
 
     def close_reprint_popup(self, *args, **kwargs):
         self.repopup.dismiss()
-        sessions.put('_searchResultsStatus',value=True)
+        sessions.put('_searchResultsStatus', value=True)
         self.reset()
+
+    def invite_popup_setup(self):
+        self.invite_popup.title = 'Invite to Storefront'
+        self.invite_popup.size_hint = (None, None)
+        self.invite_popup.size = (sp(400), sp(250))
+        base_layout = BoxLayout(orientation="vertical",
+                                size_hint=(1, 1))
+        inner_layout_1 = BoxLayout(size_hint=(1, 0.8),
+                                   orientation="vertical")
+        inner_layout_1.add_widget(Factory.ReadOnlyLabel(text="Customer : {}, {}".format(self.cust_last_name.text,
+                                                                                        self.cust_first_name.text)))
+
+        inner_layout_1.add_widget(Factory.ReadOnlyLabel(text="Customer mobile number"))
+        self.invite_mobile_input = Factory.CenterVerticalTextInput()
+        self.invite_mobile_input.text = self.invite_mobile_number
+        self.invite_mobile_input_error = Factory.ReadOnlyLabel(text="[color=FF0000]{}[/color]".format(""))
+        inner_layout_1.add_widget(self.invite_mobile_input)
+        inner_layout_1.add_widget(self.invite_mobile_input_error)
+        inner_layout_2 = BoxLayout(size_hint=(1, 0.2),
+                                   orientation="horizontal")
+        cancel_button = Button(text="Cancel",
+                               markup=True,
+                               on_press=self.invite_popup.dismiss)
+        print_button = Button(text="Invite",
+                              markup=True,
+                              on_press=self.invite)
+        inner_layout_2.add_widget(cancel_button)
+        inner_layout_2.add_widget(print_button)
+        base_layout.add_widget(inner_layout_1)
+        base_layout.add_widget(inner_layout_2)
+
+        self.invite_popup.content = base_layout
+        self.invite_popup.open()
+
+    def invite(self, *args, **kwargs):
+        customer_id = sessions.get('_customerId')['value']
+        company_id = sessions.get('_companyId')['value']
+        mobile_number = self.invite_mobile_input.text
+        if customer_id and mobile_number:
+            SYNC.create_invite(company_id, customer_id, mobile_number)
+        else:
+            self.invite_mobile_input_error.text = "[color=FF0000]{}[/color]".format("mobile number is required")
+
+    def invite_callback_completed(self, *args, **kwargs):
+        self.invite_mobile_input_error.text = "[color=00FF00]{}[/color]".format("Successfully sent invite")
+        self.invite_popup.dismiss()
+
+    def invite_callback_failed(self, *args, **kwargs):
+        self.invite_mobile_input_error.text = "[color=FF0000]{}[/color]".format("Failed sending invite. Try again.")
 
     def quick_popup(self, *args, **kwargs):
         # setup calendar default date
@@ -695,7 +756,8 @@ class SearchScreen(Screen):
                 turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
                 new_date = today + datetime.timedelta(days=turn_around_day)
                 date_string = '{} {}:{}:00'.format(new_date.strftime("%Y-%m-%d"),
-                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(
+                                                       turn_around_hour) + 12,
                                                    turn_around_minutes)
                 due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
                 self.month = int(due_date.strftime('%m'))
@@ -815,26 +877,31 @@ class SearchScreen(Screen):
                                     if check_date < check_today:
                                         item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                       disabled=True)
-                                    elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                    elif int(store_hours[int(dow_check)][
+                                                 'status']) > 1:  # check to see if business is open
                                         if check_date == check_today:
-                                            item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                          background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                          background_normal='',
-                                                                          on_press=partial(self.select_due_date, today_base))
+                                            item = Factory.CalendarButton(
+                                                text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                background_color=(0, 0.50196078, 0.50196078, 1),
+                                                background_normal='',
+                                                on_press=partial(self.select_due_date, today_base))
                                         elif check_date == check_due_date:
-                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                          background_color=(
-                                                                              0.2156862, 0.9921568, 0.98823529, 1),
-                                                                          background_normal='',
-                                                                          on_press=partial(self.select_due_date, today_base))
+                                            item = Factory.CalendarButton(
+                                                text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                background_color=(
+                                                    0.2156862, 0.9921568, 0.98823529, 1),
+                                                background_normal='',
+                                                on_press=partial(self.select_due_date, today_base))
                                         elif check_today < check_date < check_due_date:
-                                            item = Factory.CalendarButton(text="[color=008080][b]{}[/b][/color]".format(day[0]),
-                                                                          background_color=(0.878431372549020, 1, 1, 1),
-                                                                          background_normal='',
-                                                                          on_press=partial(self.select_due_date, today_base))
+                                            item = Factory.CalendarButton(
+                                                text="[color=008080][b]{}[/b][/color]".format(day[0]),
+                                                background_color=(0.878431372549020, 1, 1, 1),
+                                                background_normal='',
+                                                on_press=partial(self.select_due_date, today_base))
                                         else:
                                             item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
-                                                                          on_press=partial(self.select_due_date, today_base))
+                                                                          on_press=partial(self.select_due_date,
+                                                                                           today_base))
                                     else:  # store is closed
                                         item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                       disabled=True)
@@ -875,13 +942,13 @@ class SearchScreen(Screen):
         if company:
             store_hours = json.loads(company['store_hours']) if company['store_hours'] else None
             if store_hours:
-
                 dow = int(selected_date.strftime("%w"))
                 turn_around_hour = store_hours[dow]['due_hour'] if 'due_hour' in store_hours[dow] else '4'
                 turn_around_minutes = store_hours[dow]['due_minutes'] if 'due_minutes' in store_hours[dow] else '00'
                 turn_around_ampm = store_hours[dow]['due_ampm'] if 'due_ampm' in store_hours[dow] else 'pm'
                 date_string = '{} {}:{}:00'.format(selected_date.strftime("%Y-%m-%d"),
-                                                   turn_around_hour if turn_around_ampm == 'am' else int(turn_around_hour) + 12,
+                                                   turn_around_hour if turn_around_ampm == 'am' else int(
+                                                       turn_around_hour) + 12,
                                                    turn_around_minutes)
                 self.due_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
                 self.due_date_string = '{}'.format(self.due_date.strftime('%a %m/%d %I:%M%p'))
@@ -1374,13 +1441,16 @@ class SearchScreen(Screen):
                             item_subtotal = Decimal(invoice_item['pretax'])
                             if sessions.get('_invoiceId')['value'] in print_sync_invoice:
                                 if item_id in print_sync_invoice[sessions.get('_invoiceId')['value']]:
-                                    print_sync_invoice[sessions.get('_invoiceId')['value']][item_id]['item_price'] += item_subtotal
+                                    print_sync_invoice[sessions.get('_invoiceId')['value']][item_id][
+                                        'item_price'] += item_subtotal
                                     print_sync_invoice[sessions.get('_invoiceId')['value']][item_id]['qty'] += 1
                                     if item_memo:
-                                        print_sync_invoice[sessions.get('_invoiceId')['value']][item_id]['memos'].append(item_memo)
+                                        print_sync_invoice[sessions.get('_invoiceId')['value']][item_id][
+                                            'memos'].append(item_memo)
 
                                     if item_id in colors:
-                                        print_sync_invoice[sessions.get('_invoiceId')['value']][item_id]['colors'] = colors[item_id]
+                                        print_sync_invoice[sessions.get('_invoiceId')['value']][item_id]['colors'] = \
+                                        colors[item_id]
                                     else:
                                         print_sync_invoice[sessions.get('_invoiceId')['value']][item_id]['colors'] = []
                                 else:
@@ -1822,7 +1892,7 @@ class SearchScreen(Screen):
                     trtd3 = Button(text='[color=ffffff][b]{}[/b][/color]'.format(str(item_color)),
                                    markup=True,
                                    on_press=partial(self.select_tag, invoice_items_id),
-                                   background_color = Constants().colors('lime_green'))
+                                   background_color=Constants().colors('lime_green'))
                     trtd4 = Button(text='[color=ffffff][b]{}[/b][/color]'.format(str(item_memo)),
                                    markup=True,
                                    on_press=partial(self.select_tag, invoice_items_id),
@@ -1836,7 +1906,6 @@ class SearchScreen(Screen):
                 self.tags_grid.ids.tags_table.add_widget(trtd3)
                 self.tags_grid.ids.tags_table.add_widget(trtd4)
                 self.tags_grid.ids.tags_table.add_widget(trtd5)
-
 
     def select_tag(self, item_id, *args, **kwargs):
 
@@ -2072,7 +2141,8 @@ class SearchScreen(Screen):
                             tags_to_print = 1
                             item_name = ''
                             if 'inventory_item' in ii:
-                                tags_to_print = int(ii['inventory_item']['tags']) if 'tags' in ii['inventory_item'] else 1
+                                tags_to_print = int(ii['inventory_item']['tags']) if 'tags' in ii[
+                                    'inventory_item'] else 1
                                 item_name = ii['inventory_item']['name'] if 'name' in ii['inventory_item'] else ''
                             item_color = ii['color']
                             invoice_item_id = ii['id']
@@ -2223,7 +2293,8 @@ class SearchScreen(Screen):
     def save_barcodes(self, *args, **kwargs):
         # save
         t1 = Thread(target=InvoiceItem().set_barcodes, args=[sessions.get('_invoiceId')['value'],
-                    sessions.get('_companyId')['value'], self.barcode_save_data])
+                                                             sessions.get('_companyId')['value'],
+                                                             self.barcode_save_data])
         t1.start()
 
         self.main_popup.dismiss()
@@ -2513,14 +2584,14 @@ A{c},20,1,1,1,1,N,"{tag}"
         cards_label = Factory.BottomLeftFormLabel(text="[b](1)[/b] Select Card On File",
                                                   markup=True)
         # create cards spinner
-        sessions.put('_profileId',value = None)
-        sessions.put('_paymentId', value = None)
+        sessions.put('_profileId', value=None)
+        sessions.put('_paymentId', value=None)
         pro = Profile()
         profiles = pro.where({'user_id': sessions.get('_customerId')['value'],
                               'company_id': sessions.get('_companyId')['value']})
         if profiles:
             for profile in profiles:
-                sessions.put('_profileId', value = profile['profile_id'])
+                sessions.put('_profileId', value=profile['profile_id'])
             try:
                 cards_db = Card()
                 self.cards = cards_db.collect(sessions.get('_companyId')['value'], sessions.get('_profileId')['value'])
@@ -2798,7 +2869,8 @@ A{c},20,1,1,1,1,N,"{tag}"
                     self.main_popup.content = layout
                     self.main_popup.open()
                 else:
-                    Popups.dialog_msg('Delivery Error', 'You must first select an address before selecting a dropoff date.')
+                    Popups.dialog_msg('Delivery Error',
+                                      'You must first select an address before selecting a dropoff date.')
                 pass
 
     def get_pickup_dates(self, *args, **kwargs):
@@ -2885,7 +2957,8 @@ A{c},20,1,1,1,1,N,"{tag}"
                     self.main_popup.content = layout
                     self.main_popup.open()
                 else:
-                    Popups.dialog_msg('Delivery Error', 'You must first select an address before selecting a dropoff date')
+                    Popups.dialog_msg('Delivery Error',
+                                      'You must first select an address before selecting a dropoff date')
                 pass
 
     def set_delivery(self, *args, **kwargs):
@@ -3082,7 +3155,8 @@ A{c},20,1,1,1,1,N,"{tag}"
                     cards.company_id = company_id
                     cards.user_id = sessions.get('_customerId')['value']
                     # search for a profile
-                    profiles = Profile().where({'company_id': company_id, 'user_id': sessions.get('_customerId')['value']})
+                    profiles = Profile().where(
+                        {'company_id': company_id, 'user_id': sessions.get('_customerId')['value']})
                     profile_id = False
                     if profiles:
                         for profile in profiles:
@@ -3227,13 +3301,15 @@ A{c},20,1,1,1,1,N,"{tag}"
 
                 self.main_popup.dismiss()
 
-                profiles = SYNC.profiles_query(sessions.get('_companyrId')['value'], sessions.get('_customerId')['value'])
+                profiles = SYNC.profiles_query(sessions.get('_companyrId')['value'],
+                                               sessions.get('_customerId')['value'])
                 if profiles:
                     for profile in profiles:
-                        sessions.put('_profileId', value = profile['profile_id'])
+                        sessions.put('_profileId', value=profile['profile_id'])
 
                     cards_db = Card()
-                    self.cards = cards_db.collect(sessions.get('_companyId')['value'], sessions.get('_profileId')['value'])
+                    self.cards = cards_db.collect(sessions.get('_companyId')['value'],
+                                                  sessions.get('_profileId')['value'])
                 else:
                     self.cards = False
                 self.card_string = []
@@ -3435,11 +3511,13 @@ A{c},20,1,1,1,1,N,"{tag}"
                                     if check_date < check_today:
                                         item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                       disabled=True)
-                                    elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                    elif int(store_hours[int(dow_check)][
+                                                 'status']) > 1:  # check to see if business is open
                                         if check_date == check_today:
-                                            item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                          background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                          background_normal='')
+                                            item = Factory.CalendarButton(
+                                                text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                background_color=(0, 0.50196078, 0.50196078, 1),
+                                                background_normal='')
                                         elif today_day in dow and check_date_string not in blackout_dates:
                                             item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                           on_press=partial(self.select_dropoff_date,
@@ -3533,11 +3611,13 @@ A{c},20,1,1,1,1,N,"{tag}"
                                     if check_date < check_today:
                                         item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                       disabled=True)
-                                    elif int(store_hours[int(dow_check)]['status']) > 1:  # check to see if business is open
+                                    elif int(store_hours[int(dow_check)][
+                                                 'status']) > 1:  # check to see if business is open
                                         if check_date == check_today:
-                                            item = Factory.CalendarButton(text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
-                                                                          background_color=(0, 0.50196078, 0.50196078, 1),
-                                                                          background_normal='')
+                                            item = Factory.CalendarButton(
+                                                text="[color=37FDFC][b]{}[/b][/color]".format(day[0]),
+                                                background_color=(0, 0.50196078, 0.50196078, 1),
+                                                background_normal='')
                                         elif today_day in dow and check_date_string not in blackout_dates:
                                             item = Factory.CalendarButton(text="[b]{}[/b]".format(day[0]),
                                                                           on_press=partial(self.select_pickup_date,
@@ -3956,9 +4036,9 @@ A{c},20,1,1,1,1,N,"{tag}"
 
             if edit_credit is not False:
                 sessions.put('_searchResultsStatus', value=True)
-                sessions.put('_rowCap',value=0)
-                sessions.put('_invoiceId',value=None)
-                sessions.put('_rowSearch',value=(0,9))
+                sessions.put('_rowCap', value=0)
+                sessions.put('_invoiceId', value=None)
+                sessions.put('_rowSearch', value=(0, 9))
                 self.reset()
                 # last 10 setup
                 Static.update_last_10(sessions.get('_customerId')['value'],
@@ -4252,16 +4332,18 @@ A{c},20,1,1,1,1,N,"{tag}"
 
         # save data
         if errors is 0:
-            edit_transaction = SYNC.pay_account(self.selected_account_tr, self.tendered_input.text, sessions.get('_customerId')['value'])
+            edit_transaction = SYNC.pay_account(self.selected_account_tr, self.tendered_input.text,
+                                                sessions.get('_customerId')['value'])
             if edit_transaction is not False:
                 Popups.dialog_msg('Account Transaction Paid!', 'Successfully paid account transaction.')
 
                 self.payment_popup.dismiss()
                 self.main_popup.dismiss()
-                sessions.put('_searchResultsStatus',value=True)
+                sessions.put('_searchResultsStatus', value=True)
                 self.reset()
             else:
-                Popups.dialog_msg('Could not save user data', 'User table error, could not save. Please contact administrator')
+                Popups.dialog_msg('Could not save user data',
+                                  'User table error, could not save. Please contact administrator')
 
                 self.payment_popup.dismiss()
                 self.main_popup.dismiss()
@@ -4471,6 +4553,7 @@ A{c},20,1,1,1,1,N,"{tag}"
         layout.add_widget(inner_layout_2)
         popup.content = layout
         popup.open()
+
 
 class TextForm(TextInput):
     def __init__(self, **kwargs):

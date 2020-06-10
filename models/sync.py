@@ -27,6 +27,7 @@ from models.taxes import Tax
 from models.transactions import Transaction
 from models.users import User
 from models.zipcodes import Zipcode
+from pubsub import pub
 
 import urllib
 from urllib import error, request, parse
@@ -41,339 +42,134 @@ class Sync:
     customer_id = None
     server_at = None
 
+    # Invite
+    def create_invite(self,company_id, customer_id, mobile_number, *args, **kwargs):
+        url = 'http://www.jayscleaners.com/admins/api/create-invite'
+        # attempt to connect to server
+        data = parse.urlencode({'company_id': company_id,
+                                'customer_id': customer_id,
+                                'mobile_number': mobile_number}).encode('utf-8')
+        result = self.make_request_boolean(url, data)
+        if result:
+            pub.sendMessage('invite_callback_completed')
+        else:
+            pub.sendMessage('invite_callback_failed')
+
     # Address
     def address_grab(self, address_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/address-grab'
         # attempt to connect to server
         data = parse.urlencode({'address_id': address_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def create_address(self, address, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/create-address'
         # attempt to connect to server
         data = parse.urlencode({'address': address}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     # Card
     def card_grab(self, card_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/card-grab'
         # attempt to connect to server
         data = parse.urlencode({'card_id': card_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def card_grab_root(self, root_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/card-grab-root'
         # attempt to connect to server
         data = parse.urlencode({'root_id': root_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def update_card(self, card_id, cards, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/inventories-by-company'
         # attempt to connect to server
         data = parse.urlencode({'card_id': card_id, 'cards': json.dumps(cards)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def create_card(self, cards, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/create-card'
         # attempt to connect to server
         data = parse.urlencode({'cards': json.dumps(cards)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     # Color
     def colors_query(self, company_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/colors-query'
         # attempt to connect to server
         data = parse.urlencode({'company_id': company_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Company
     def company_grab(self, company_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/company-grab'
         # attempt to connect to server
         data = parse.urlencode({'company_id': company_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is 0:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Credit
     def create_credit(self, credits, *args, **kwargs):
-
         url = 'http://www.jayscleaners.com/admins/api/create-credit'
         # attempt to connect to server
         data = parse.urlencode({'credits': json.dumps(credits)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def edit_credit(self, customer_id, credit, *args, **kwargs):
-
         url = 'http://www.jayscleaners.com/admins/api/edit-credit'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'credits': credit}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def credit_query(self, customer_id, *args, **kwargs):
-
         url = 'http://www.jayscleaners.com/admins/api/credit-query'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Custid
     def check_mark(self, mark, *args, **kwargs):
-
         url = 'http://www.jayscleaners.com/admins/api/check-mark'
         # attempt to connect to server
         data = parse.urlencode({'mark': mark}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is 0:
-                return False
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def create_mark(self, mark, company_id, customer_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/create-mark'
         # attempt to connect to server
         data = parse.urlencode({'mark': mark, 'company_id': company_id, 'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def delete_mark(self, mark, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/delete-mark'
         # attempt to connect to server
         data = parse.urlencode({'mark': mark}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def marks_query(self, customer_id, status, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/marks-query'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'status': status}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # delivery
     def delivery_grab(self, delivery_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/delivery-grab'
         # attempt to connect to server
         data = parse.urlencode({'delivery_id': delivery_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Discount
     def discount_grab(self, discount_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/discount-grab'
         # attempt to connect to server
         data = parse.urlencode({'discount_id': discount_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def discount_grab_by_company(self, company_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/discount-grab-by-company'
         # attempt to connect to server
         data = parse.urlencode({'company_id': str(company_id)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def discount_query(self, company_id, start_date, end_date, inventory_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/discount-query'
@@ -383,77 +179,27 @@ class Sync:
             'start_date': start_date,
             'end_date': end_date,
             'inventory_id': inventory_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Invoice
     def create_invoice(self, invoice, items, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/create-invoice'
         # attempt to connect to server
         data = parse.urlencode({'invoice': json.dumps(invoice), 'items': json.dumps(items)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-
-            if data_1['status'] is False:
-                return False
-            else:
-                return data_1['invoice']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def edit_invoice(self, invoice_id, invoice, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/edit-invoice'
         # attempt to connect to server
         data = parse.urlencode({'invoice': json.dumps(invoice), 'invoice_id': invoice_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-
-            if data_1['status'] is False:
-                return False
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def invoices_grab(self, customer_id, *args, **kwargs):
         self.customer_id = customer_id
         url = 'http://www.jayscleaners.com/admins/api/sync-customer'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def invoices_grab_count(self, customer_id, *args, **kwargs):
         self.customer_id = customer_id
@@ -467,7 +213,6 @@ class Sync:
             data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
             return data_1
 
-
         except urllib.error.URLError as e:
             print(e.reason)  # could not save this time around because no internet, move on
             return 0
@@ -477,127 +222,43 @@ class Sync:
         url = 'http://www.jayscleaners.com/admins/api/invoice-grab-pickup'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def invoice_get_totals(self, invoices, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/invoice-get-totals'
         # attempt to connect to server
         data = parse.urlencode({'invoices': json.dumps(invoices)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def invoice_grab_id(self, invoice_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/invoice-grab'
         # attempt to connect to server
         data = parse.urlencode({'invoice_id': invoice_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def invoice_grab_id_with_trashed(self, invoice_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/invoice-grab-with-trashed'
         # attempt to connect to server
         data = parse.urlencode({'invoice_id': invoice_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def invoice_query_transaction_id(self, transaction_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/invoice-query-transaction-id'
         # attempt to connect to server
         data = parse.urlencode({'transaction_id': transaction_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def invoice_search_history(self, customer_id, start, end, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/invoice-search-history'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'start': start, 'end': end}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def remove_invoice_by_transaction(self, invoice_id, status, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/remove-invoice-by-transaction'
         # attempt to connect to server
         data = parse.urlencode({'invoice_id': invoice_id, 'status': status}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def update_invoice_pickup(self, invoice_id, invoice, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/update-invoice-pickup'
@@ -621,496 +282,174 @@ class Sync:
         url = 'http://www.jayscleaners.com/admins/api/restore-invoice'
         # attempt to connect to server
         data = parse.urlencode({'invoice_id': invoice_id, 'status': status}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def rack_invoice(self, racks, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/rack-invoice'
         # attempt to connect to server
         data = parse.urlencode({'racks': json.dumps(racks)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            print(data_1)
-            if data_1['status'] is False:
-                return data_1['data']
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def remove_racks_from_list(self, racks, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/remove-racks-from-list'
         # attempt to connect to server
         data = parse.urlencode({'racks': json.dumps(racks)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            print(data_1)
-            if data_1 is False:
-                return False
-            return True
-
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def delete_invoice(self, invoice_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/delete-invoice'
         # attempt to connect to server
         data = parse.urlencode({'invoice_id': invoice_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            print(data_1)
-            if data_1['status'] is False:
-                return False
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     # InvoiceItem
     def create_invoice_item(self, items, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/create-invoice-item'
         # attempt to connect to server
         data = parse.urlencode({'items': json.dumps(items)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            print(data_1)
-            if data_1['status'] is 0:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def invoice_item_discount_find(self, invoice_id, inventory_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/invoice-item-discount-find'
         # attempt to connect to server
         data = parse.urlencode({'invoice_id': invoice_id, 'inventory_id': inventory_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def invoice_item_discount_find_item_id(self, invoice_id, item_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/invoice-item-discount-find-item-id'
         # attempt to connect to server
         data = parse.urlencode({'invoice_id': invoice_id, 'item_id': item_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def invoice_item_grab(self, item_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/invoice-item-grab'
         # attempt to connect to server
         data = parse.urlencode({'item_id': item_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is 0:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def edit_invoice_item(self, invoice_item_id, invoice_items, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/edit-invoice-item'
         # attempt to connect to server
         data = parse.urlencode(
             {'invoice_item_id': invoice_item_id, 'invoice_items': json.dumps(invoice_items)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def delete_invoice_items(self, rows, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/delete-invoice-items'
         # attempt to connect to server
         data = parse.urlencode({'rows': json.dumps(rows)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     # Inventory
     def inventory_grab(self, inventory_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/inventory-grab'
         # attempt to connect to server
         data = parse.urlencode({'inventory_id': inventory_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is 0:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def inventories_by_company(self, company_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/inventories-by-company'
         # attempt to connect to server
         data = parse.urlencode({'company_id': company_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # InventoryItem
     def inventory_items_grab(self, item_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/item-grab'
         # attempt to connect to server
         data = parse.urlencode({'item_id': item_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is 0:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def delete_inventory_item(self, item_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/delete-inventory-item'
         # attempt to connect to server
         data = parse.urlencode({'item_id': item_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     # Memo
     def memos_query(self, company_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/memos-query'
         # attempt to connect to server
         data = parse.urlencode({'company_id': company_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Profile
     def create_profile(self, profile, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/create-card'
         # attempt to connect to server
         data = parse.urlencode({'profile': json.dumps(profile)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def profiles_query(self, company_id, customer_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/profiles-query'
         # attempt to connect to server
         data = parse.urlencode({'company_id': company_id, 'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Schedule
     def create_schedule(self, schedule, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/create-schedule'
         # attempt to connect to server
         data = parse.urlencode({'schedule': json.dumps(schedule)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def schedule_query(self, query, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/schedule-query'
         # attempt to connect to server
         data = parse.urlencode({'query': query}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def schedule_grab(self, id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/schedule-grab'
         # attempt to connect to server
         data = parse.urlencode({'id': id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Tax
     def taxes_query(self, company_id, status, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/taxes-query'
         # attempt to connect to server
         data = parse.urlencode({'company_id': company_id, 'status': status}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Transaction
     def create_transaction(self, customer_id, transaction, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/create-transaction'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'transaction': json.dumps(transaction)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def update_transaction(self, customer_id, transaction, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/update-transaction'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'transaction': json.dumps(transaction)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def last_transaction_grab(self, customer_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/last-transaction-grab'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def transaction_grab(self, transaction_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/transaction-grab'
         # attempt to connect to server
         data = parse.urlencode({'transaction_id': transaction_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def transaction_query(self, customer_id, *args, **kwargs):
         print(customer_id)
         url = 'http://www.jayscleaners.com/admins/api/transaction-query'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def transaction_payment_query(self, customer_id, *args, **kwargs):
         print(customer_id)
         url = 'http://www.jayscleaners.com/admins/api/transaction-payment-query'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return data_1['data']
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def pay_account(self, transaction_ids, tendered, customer_id, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/pay-account'
@@ -1118,149 +457,53 @@ class Sync:
         data = parse.urlencode(
             {'transaction_ids': json.dumps(transaction_ids), 'tendered': tendered, 'customer_id': customer_id}).encode(
             'utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def pay_account_customer(self, customer_id, balance, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/pay-account-customer'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'balance': json.dumps(balance)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     # Users
     def update_customer_pickup(self, customer_id, customer, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/update-customer-pickup'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'customer': json.dumps(customer)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def update_customer_account_total(self, customer_id, account_total, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/update-customer-account-total'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'account_total': account_total}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def update_customer_credits(self, customer_id, credits, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/update-customer-credits'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'credits': credits}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is not False:
-                return True
-            else:
-                return False
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def customer_delete(self, customer_id, *args, **kwargs):
         self.customer_id = customer_id
         url = 'http://www.jayscleaners.com/admins/api/delete-customer'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def customer_add(self, users, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/add-customer'
         # attempt to connect to server
         data = parse.urlencode({'users': json.dumps(users)}).encode('utf-8')
         req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def customer_edit(self, customer_id, users, *args, **kwargs):
         self.customer_id = customer_id
         url = 'http://www.jayscleaners.com/admins/api/edit-customer'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id, 'users': json.dumps(users)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is 0:
-                return False
-            else:
-                return True
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_boolean(url, data)
 
     def customers_grab(self, query, *args, **kwargs):
         url = 'http://www.jayscleaners.com/admins/api/sc/{}'.format(query)
@@ -1284,24 +527,13 @@ class Sync:
         url = 'http://www.jayscleaners.com/admins/api/customers-in'
         # attempt to connect to server
         data = parse.urlencode({'ids': json.dumps(ids)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     def customers_row_cap(self, query, *args, **kwargs):
-        list = query.split()
-        print(list)
+        data_list = query.split()
         url = 'http://www.jayscleaners.com/admins/api/customers-row-cap'
         # attempt to connect to server
-        data = parse.urlencode({'list': json.dumps(list)}).encode('utf-8')
+        data = parse.urlencode({'list': json.dumps(data_list)}).encode('utf-8')
         req = request.Request(url=url, data=data)  # this will make the method "POST"
         try:
             r = request.urlopen(req)
@@ -1316,42 +548,18 @@ class Sync:
             print(e.reason)  # could not save this time around because no internet, move on
             return False
 
-    def customers_search_results(self, query,*args, **kwargs):
-        list = query.split()
-        print(list)
+    def customers_search_results(self, query, *args, **kwargs):
+        data_list = query.split()
         url = 'http://www.jayscleaners.com/admins/api/cust-search-results'
         # attempt to connect to server
-        data = parse.urlencode({'list': json.dumps(list)}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is True:
-                return data_1['data']
-            else:
-                return False
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        data = parse.urlencode({'list': json.dumps(data_list)}).encode('utf-8')
+        return self.make_request_value(url, data)
 
     def check_account(self, customer_id, *args, **kwargs):
-
         url = 'http://www.jayscleaners.com/admins/api/check-account'
         # attempt to connect to server
         data = parse.urlencode({'customer_id': customer_id}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Zipcode
     def zipcode_query(self, zipcode, *args, **kwargs):
@@ -1359,22 +567,9 @@ class Sync:
         url = 'http://www.jayscleaners.com/admins/api/zipcode-query'
         # attempt to connect to server
         data = parse.urlencode({'zipcode': zipcode}).encode('utf-8')
-        req = request.Request(url=url, data=data)  # this will make the method "POST"
-        try:
-            # r = request.urlopen(url)
-            r = request.urlopen(req)
-            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
-            if data_1['status'] is False:
-                return False
-            else:
-                return data_1['data']
-
-        except urllib.error.URLError as e:
-            print(e.reason)  # could not save this time around because no internet, move on
-            return False
+        return self.make_request_value(url, data)
 
     # Last
-
     def db_sync(self, company_id, *args, **kwargs):
         self.company_id = company_id
 
@@ -1450,7 +645,6 @@ class Sync:
                 self.server_at = dt
                 # data = {'server_at': dt}
                 Company().server_at_update_special(saved_server_time)
-
 
         except urllib.error.URLError as e:
             print(e.reason)  # could not save this time around because no internet, move on
@@ -1576,3 +770,35 @@ class Sync:
 
     def auto_update(selfs):
         pass
+
+    @staticmethod
+    def make_request_boolean(url, data, *args, **kwargs):
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return True
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False
+
+    @staticmethod
+    def make_request_value(url, data, *args, **kwargs):
+        req = request.Request(url=url, data=data)  # this will make the method "POST"
+        try:
+            # r = request.urlopen(url)
+            r = request.urlopen(req)
+            data_1 = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
+            if data_1['status'] is not False:
+                return data_1['data']
+            else:
+                return False
+
+        except urllib.error.URLError as e:
+            print(e.reason)  # could not save this time around because no internet, move on
+            return False

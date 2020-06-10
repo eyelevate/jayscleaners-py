@@ -96,6 +96,7 @@
                     row_force_default: True
                     row_default_height:sp(32)
                     cols: 1
+
                     BottomLeftFormLabel:
                         id: cust_info_label
                         text: "Customer Info"
@@ -106,6 +107,12 @@
                         id: customer_mark_l
                         text: ""
                         font_size: '20sp'
+
+                    Button:
+                        text:'Invite'
+                        font_size:sp(20)
+                        on_press: root.invite_popup_setup()
+
                     BottomLeftFormLabel:
                         text: "ID"
 
