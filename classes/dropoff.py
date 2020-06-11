@@ -149,6 +149,7 @@ class DropoffScreen(Screen):
         # self.sync_inventory_items()
         self.inventory_panel.clear_widgets()
         self.colors_table_main.clear_widgets()
+        self.get_colors_main()
         self.adjust_summary_table = None
         self.adjust_individual_table = None
         try:
@@ -184,13 +185,14 @@ class DropoffScreen(Screen):
         sessions.put('_itemId', value=None)
         self.deleted_rows = []
         self.memo_list = []
-        try:
-            p = threading.Thread(target=self.get_inventory)
-            q = threading.Thread(target=self.get_colors_main)
-            q.start()
-            p.start()
-        except RuntimeError as e:
-            pass
+
+        # try:
+        #     p = threading.Thread(target=self.get_inventory)
+        #     q = threading.Thread(target=self.get_colors_main)
+        #     q.start()
+        #     p.start()
+        # except RuntimeError as e:
+        #     pass
 
         self.in_progress = []
 
@@ -208,6 +210,8 @@ class DropoffScreen(Screen):
                 self.starch = Static.get_starch_by_code(customer['starch'])
         else:
             self.starch = Static.get_starch_by_code(None)
+        self.get_inventory()
+
 
     def set_result_status(self):
         sessions.put('_searchResultsStatus', value=True)
@@ -241,7 +245,7 @@ class DropoffScreen(Screen):
             for color in colors:
                 if color['name'] == 'White':
                     color_btn = Button(markup=True,
-                                       text='[color="#000000"][b]{color_name}[/b][/color]'.format(
+                                       text='[color=000000][b]{color_name}[/b][/color]'.format(
                                            color_name=color['name']))
                 else:
                     color_btn = Button(markup=True,
