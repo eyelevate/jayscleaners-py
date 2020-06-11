@@ -1814,6 +1814,7 @@ class DropoffScreen(Screen):
         companies = Company()
         pr = Printer()
         comps = SYNC.company_grab(sessions.get('_companyId')['value'])
+        laundry_to_print = []
         if comps:
             companies.id = comps['id']
             companies.name = comps['name']
