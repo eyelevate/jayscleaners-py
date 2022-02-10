@@ -1,0 +1,177 @@
+<HistoryScreen>:
+    id: screen_history
+    name:"history"
+    history_table_rv: history_table_rv
+    history_invoice_items_table_rv: history_invoice_items_table_rv
+    invs_results_ti: invs_results_ti
+    invoice_details_btn: invoice_details_btn
+    on_enter: root.reset()
+    on_pre_enter: root.attach()
+    on_leave: root.detach()
+    BoxLayout:
+        orientation: 'horizontal'
+        pos_hint: {'top':1}
+        size_hint: 1,0.8
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint:(0.4,1)
+            GridLayout:
+                id:invoices_table
+                cols: 6
+                rows: 1
+                size_hint_y:None
+                size_hint_x: 1
+                spacing: 2
+                height: self.minimum_height
+                row_force_default: True
+                row_default_height: dp(25)
+
+                Button:
+                    markup: True
+                    text: "[color=000000][b]ID[/b][/color]"
+                    background_rgba: 1,1,1,1
+                    background_normal: ''
+
+                Button:
+                    markup: True
+                    text: "[color=000000][b]Loc[/b][/color]"
+                    background_rgba: 1,1,1,1
+                    background_normal: ''
+
+                Button:
+                    markup: True
+                    text: "[color=000000][b]Due[/b][/color]"
+                    background_rgba: 1,1,1,1
+                    background_normal: ''
+                Button:
+                    markup: True
+                    text: "[color=000000][b]Rack[/b][/color]"
+                    background_rgba: 1,1,1,1
+                    background_normal: ''
+
+                Button:
+                    markup: True
+                    text: "[color=000000][b]Qty[/b][/color]"
+                    background_rgba: 1,1,1,1
+                    background_normal: ''
+
+                Button:
+                    markup: True
+                    text: "[color=000000][b]Total[/b][/color]"
+                    background_rgba: 1,1,1,1
+                    background_normal: ''
+
+            HistoryTableRV:
+                id: history_table_rv
+                size_hint_x: 1
+                spacing: 1
+                row_force_default: True
+                row_default_height: dp(30)
+
+        BoxLayout:
+            orientation: 'vertical'
+            pos_hint:{'top':1}
+            size_hint_x: 0.1
+            Button:
+                id: delete_invoice_btn
+                font_size:sp(20)
+                on_release: root.delete_invoice_confirm()
+                text: "Delete"
+                disabled: False
+            Button:
+                id: undo_btn
+                font_size:sp(20)
+                on_release: root.undo_invoice_confirm()
+                text: "Undo"
+                disabled: False
+            Button:
+                id: reprint_btn
+                font_size:sp(20)
+                on_release: root.reprint_popup()
+                text: "Reprint"
+                disabled: False
+            Button:
+                id: invoice_details_btn
+                font_size:sp(20)
+                on_release: app.root.current = "invoice_details"
+                text: "Details"
+                disabled: True
+        BoxLayout:
+            orientation: 'vertical'
+            pos_hint:{'top':1}
+            size_hint:(0.5,1)
+            GridLayout:
+                cols: 3
+                rows: 1
+                size_hint_y:None
+                size_hint_x: 1
+                spacing: 2
+                height: self.minimum_height
+                row_force_default: True
+                row_default_height: dp(25)
+                Label:
+                    markup: True
+                    text: "[color=000000][b]Qty[/b][/color]"
+                    size_hint_x: 0.2
+                    canvas.before:
+                        Color:
+                            rgba: 1, 1, 1, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+
+                Label:
+                    markup: True
+                    text: "[color=000000][b]Item[/b][/color]"
+                    size_hint_x: 0.6
+                    canvas.before:
+                        Color:
+                            rgba: 1, 1, 1, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+
+                Label:
+                    markup: True
+                    text: "[color=000000][b]Subtotal[/b][/color]"
+                    size_hint_x: 0.2
+                    canvas.before:
+                        Color:
+                            rgba: 1, 1, 1, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+            HistoryItemsTableRV:
+                id: history_invoice_items_table_rv
+                size_hint_x: 1
+                spacing: 1
+                row_force_default: True
+                row_default_height: dp(30)
+    BoxLayout:
+        size_hint: 1,0.2
+        orientation: 'vertical'
+        CenterVerticalTextInput:
+            id:invs_results_ti
+            size_hint: 1, 0.5
+            markup: True
+            hint_text: 'Search Invoice'
+            focus: True
+            on_text_validate: root.set_search_filter()
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1, 0.5
+            Button:
+                on_press: root.hard_reset()
+                on_release: root.reset()
+                font_size:sp(20)
+                text: "[color=FFFACD]Refresh Page[/color]"
+                markup: True
+                disabled: False
+            Button:
+                id: cancel
+                on_press: root.open_popup()
+                on_release: app.root.current = "search"
+                font_size:sp(20)
+                text: "[color=00FF1B]Done[/color]"
+                markup: True
+                disabled: False

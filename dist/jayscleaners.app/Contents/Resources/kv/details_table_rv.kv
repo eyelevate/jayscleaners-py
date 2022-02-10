@@ -1,0 +1,27 @@
+<DetailsTableLabel>:
+    id: details_table_label
+    markup: True
+    font_size:sp(14)
+    disabled: False
+    text_size: self.size
+    valign: 'middle'
+    halign: 'center'
+    background_color: [0,0,0,1]
+    canvas.before:
+        Color:
+            rgba: [1,1,1,1]
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<DetailsTableRV@RecycleView>:
+    viewclass: 'DetailsTableLabel'
+    SelectableRecycleGridLayout:
+        id: details_table_rv
+        bar_width: dp(5)
+        default_size: None, dp(50)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        spacing: 2
+        cols:3

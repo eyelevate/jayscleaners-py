@@ -327,7 +327,7 @@ class HistoryScreen(Screen):
 
                 for invoice_item in inv_items:
                     item_id = invoice_item['item_id']
-                    inventory = invoice_item['inventory']
+                    inventory = invoice_item['inventory'] if 'inventory' in invoice_item else []
                     inventory_item = invoice_item['inventory_item']
                     inventory_id = invoice_item['inventory_id']
                     item_name = invoice_item['inventory_item']['name'] if 'name' in invoice_item['inventory_item'] else ''

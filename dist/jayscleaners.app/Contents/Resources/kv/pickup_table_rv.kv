@@ -1,0 +1,22 @@
+<PickupTableButton>:
+    id: pickup_table_button
+    markup: True
+    font_size:sp(14)
+    markup: True
+    disabled: False
+    text_size: self.size
+    valign: 'middle'
+    halign: 'center'
+
+<PickupTableRV@RecycleView>:
+    viewclass: 'PickupTableButton'
+    SelectableRecycleGridLayout:
+        bar_width: dp(5)
+        size_hint_y: None
+        height: self.minimum_height
+        row_force_default: True,
+        row_default_height: sp(60)
+        default_size: None, dp(60)
+        default_size_hint: 1, None
+        cols:5
+        spacing:1

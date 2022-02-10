@@ -1,0 +1,469 @@
+<PickupScreen>:
+    id: screen_pickup
+    name:"pickup"
+    quantity_label: quantity_label
+    subtotal_label: subtotal_label
+    tax_label: tax_label
+    total_label: total_label
+    total_credit: total_credit
+    due_label: due_label
+    calc_total: calc_total
+    credit_card_data_layout: credit_card_data_layout
+    instore_button: instore_button
+    online_button: online_button
+    check_number: check_number
+    payment_panel: payment_panel
+    credit_card_header: credit_card_header
+    payment_account_header: payment_account_header
+    discount_label: discount_label
+    total_discount: total_discount
+    pickup_table_rv: pickup_table_rv
+    on_enter: root.reset()
+    on_pre_enter: root.attach()
+    on_leave: root.detach()
+
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1,0.9
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint: 0.5, 1
+                GridLayout:
+                    cols:5
+                    rows:1
+                    height: self.minimum_height
+                    size_hint: 1, 0.1
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]#[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Qty[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Due[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Rack[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        text: "[color=000000][b]Subtotal[/b][/color]"
+                        font_size:'15sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                RelativeLayout:
+                    size_hint: 1, 0.6
+                    pos_hint:{'top':1}
+                    PickupTableRV:
+                        id: pickup_table_rv
+                        pos_hint:{'top':1}
+                GridLayout:
+                    pos_hint:{'bottom':1}
+                    size_hint: 1, 0.3
+                    cols: 2
+                    rows: 7
+                    Label:
+                        markup: True
+                        size_hint_x: 0.7
+                        text: '[color=000000][b]Quantity[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: quantity_label
+                        markup: True
+                        size_hint_x: 0.3
+                        text: '[color=000000]0[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        size_hint_x: 0.7
+                        text: '[color=000000][b]Subtotal[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: subtotal_label
+                        markup: True
+                        size_hint_x: 0.3
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: discount_label
+                        markup: True
+                        size_hint_x: 0.7
+                        text: '[ref=discount_set][color=FF0000][b]Discount[/b][/color][/ref]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: total_discount
+                        markup: True
+                        size_hint_x: 0.3
+                        text: '[color=FF0000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        size_hint_x: 0.7
+                        text: '[color=000000][b]Tax[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: tax_label
+                        markup: True
+                        size_hint_x: 0.3
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        size_hint_x: 0.7
+                        text: '[color=000000][b]Total[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: total_label
+                        markup: True
+                        size_hint_x: 0.3
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        markup: True
+                        size_hint_x: 0.7
+                        text: '[color=000000][b]Credit[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: total_credit
+                        markup: True
+                        size_hint_x: 0.3
+                        text: '[color=0AAC00]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+
+                    Label:
+                        markup: True
+                        size_hint_x: 0.7
+                        text: '[color=000000][b]Due[/b][/color]'
+                        text_size: self.size
+                        halign: 'right'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        id: due_label
+                        markup: True
+                        size_hint_x: 0.3
+                        text: '[color=000000]$0.00[/color]'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        font_size:'15sp'
+                        padding_x: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+
+
+
+
+
+            BoxLayout:
+                size_hint: 0.5,1
+                orientation: 'vertical'
+                TabbedPanel:
+                    id: payment_panel
+                    size_hint: 1,0.3
+                    do_default_tab: False
+                    TabbedPanelItem:
+                        id: credit_card_header
+                        text: 'Credit Card'
+                        on_release: root.select_payment_type('cc')
+                        BoxLayout:
+                            orientation: 'vertical'
+                            GridLayout:
+                                size_hint: 1,0.4
+                                cols: 2
+                                rows: 1
+                                ToggleButton:
+                                    id: instore_button
+                                    on_release: root.select_card_location('1')
+                                    group:'g1'
+                                    text: 'In-Store'
+                                    state: 'down'
+                                ToggleButton:
+                                    id: online_button
+                                    on_release: root.select_card_location('2')
+                                    group:'g1'
+                                    text: 'Online'
+                            BoxLayout:
+                                orientation: 'vertical'
+                                id: credit_card_data_layout
+
+
+                    TabbedPanelItem:
+                        text: 'Cash'
+                        on_release: root.select_payment_type('ca')
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            Button:
+                                markup: True
+                                text: '[color=0AAC00][b]$10[/b][/color]'
+                                on_release: root.cash_tendered('10')
+                            Button:
+                                markup: True
+                                text: '[color=0AAC00][b]$20[/b][/color]'
+                                on_release: root.cash_tendered('20')
+                            Button:
+                                markup: True
+                                text: '[color=0AAC00][b]$50[/b][/color]'
+                                on_release: root.cash_tendered('50')
+                            Button:
+                                markup: True
+                                text: '[color=0AAC00][b]$100[/b][/color]'
+                                on_release: root.cash_tendered('100')
+                    TabbedPanelItem:
+                        text: 'Check'
+                        on_release: root.select_payment_type('ch')
+                        GridLayout:
+                            cols: 2
+                            rows: 1
+                            row_force_default: True
+                            row_default_height: '50sp'
+                            Label:
+                                text: 'Check #'
+                            CenterVerticalTextInput:
+                                id: check_number
+                                multiline: False
+                                hint_text: 'eg 4123'
+
+                    TabbedPanelItem:
+                        id: payment_account_header
+                        on_release: root.select_payment_type('ac')
+                        text: 'Account'
+                        Label:
+                            text: 'This is an account customer.'
+                BoxLayout:
+                    size_hint: 1,0.7
+                    orientation: 'vertical'
+                    CenteredLabel:
+                        id: calc_total
+                        size_hint: 1,0.2
+                        markup: True
+                        text: '[color=000000][b]$0.00[/b][/color]'
+                    GridLayout:
+                        size_hint: 1,0.8
+                        cols: 3
+                        rows: 4
+                        Button:
+                            on_release: root.calculator_amounts('7')
+                            markup: True
+                            text: '7'
+                        Button:
+                            on_release: root.calculator_amounts('8')
+                            markup: True
+                            text: '8'
+                        Button:
+                            on_release: root.calculator_amounts('9')
+                            markup: True
+                            text: '9'
+                        Button:
+                            on_release: root.calculator_amounts('4')
+                            markup: True
+                            text: '4'
+                        Button:
+                            on_release: root.calculator_amounts('5')
+                            markup: True
+                            text: '5'
+                        Button:
+                            on_release: root.calculator_amounts('6')
+                            markup: True
+                            text: '6'
+                        Button:
+                            on_release: root.calculator_amounts('1')
+                            markup: True
+                            text: '1'
+                        Button:
+                            on_release: root.calculator_amounts('2')
+                            markup: True
+                            text: '2'
+                        Button:
+                            on_release: root.calculator_amounts('3')
+                            markup: True
+                            text: '3'
+                        Button:
+                            on_release: root.calculator_amounts('0')
+                            markup: True
+                            text: '0'
+                        Button:
+                            on_release: root.calculator_amounts('00')
+                            markup: True
+                            text: '00'
+                        Button:
+                            on_release: root.calculator_amounts('C')
+                            markup: True
+                            text: '[color=FF0000][b]C[/b][/color]'
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1,0.1
+            Button:
+                markup: True
+                text: 'Cancel'
+                on_press: root.set_result_status()
+                on_release: app.root.current = "search"
+            Button:
+                on_release: root.pay_popup_create()
+                markup: True
+                text: 'Pay'

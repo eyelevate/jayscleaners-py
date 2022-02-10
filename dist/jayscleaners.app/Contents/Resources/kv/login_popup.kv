@@ -1,0 +1,51 @@
+<LoginPopup@Popup>:
+    id: login_popup
+    size_hint: (None, None)
+    size: (sp(400), sp(250))
+    title: 'Login'
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: (1, 1)
+        GridLayout:
+            rows: 3
+            cols: 1
+            row_force_default: True
+            row_default_height: sp(40)
+            size_hint: (1, 0.6)
+            CenterVerticalTextInput:
+                id: login_username_input
+                height: sp(72)
+                write_tab: False
+                hint_text: 'Username'
+                focus: True
+            CenterVerticalTextInput:
+                id: login_password_input
+                write_tab: False
+                height: sp(72)
+                password: True
+                hint_text: 'Password'
+                focus: True
+            BoxLayout:
+                orientation:'horizontal'
+                size_hint: (1, 0.2)
+                CenteredLabel:
+                    padding: [5, ( self.height - self.line_height ) / 2]
+                    halign: 'left'
+                    text: "[color=5e5e5e]remember me[/color]"
+                    height: sp(72)
+                    font_size: sp(20)
+                Remember:
+                    size_hint: (0.8, 1)
+                    height: sp(72)
+                    id: login_remember_me
+        BoxLayout:
+            orientation:'horizontal'
+            size_hint: (1, 0.2)
+            Button:
+                text: "Cancel"
+                font_size: sp(20)
+                on_release: login_popup.dismiss()
+            Button:
+                id: login_button
+                text: "Login"
+                font_size: sp(20)

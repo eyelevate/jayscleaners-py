@@ -140,14 +140,14 @@ class InvoiceDetailsScreen(Screen):
             if transactions:
                 payment_type = transactions['type']
                 discount_pre = float(transactions['discount']) if transactions['discount'] else 0
-                discount_total = discount_pre + 0
+                discount_total = float(discount_pre + 0)
                 if not account_check:
                     tendered_total = transactions['tendered'] if transactions['tendered'] else 0
                 else:
                     tendered_total = 'account'
                 if payment_type == 1:
                     transaction_type = 'Credit'
-                    tendered = invoices['total'] - discount_total if not account_check else 0
+                    # tendered = float(invoices['total']) - discount_total if not account_check else 0
 
                 elif payment_type == 2:
                     transaction_type = 'Cash'

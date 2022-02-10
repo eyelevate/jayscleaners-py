@@ -1,0 +1,101 @@
+<RackScreen>:
+    id: screen_rack
+    rack_table_rv: rack_table_rv
+    invoice_number: invoice_number
+    rack_number: rack_number
+    name:"rack"
+    on_pre_enter: root.attach()
+    on_leave: root.detach()
+    on_enter: root.reset()
+
+    BoxLayout:
+        orientation: 'horizontal'
+        pos_hint: {'top':1}
+        size_hint: 1,0.9
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.3,1
+            GridLayout:
+                id: rack_form
+                size_hint:1,0.5
+                cols: 1
+                rows: 8
+                row_force_default: True
+                row_default_height:'50sp'
+                Label:
+                    markup: True
+                    text: 'Invoice #'
+                CenterVerticalTextInput:
+                    id: invoice_number
+                    multiline: False
+                    on_text_validate: root.set_invoice_number()
+                Label:
+                    markup: True
+                    text: 'Rack'
+                CenterVerticalTextInput:
+                    id: rack_number
+                    multiline: False
+                    on_text_validate: root.set_rack_number()
+                Label:
+                    markup: True
+                    text: ''
+                Button:
+                    text: '[color=ff0000]Hard Reset Form[/color]'
+                    markup: True
+                    on_press: root.open_reset_popup()
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.7, 1
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            GridLayout:
+                size_hint_y:None
+                size_hint_x: 1
+                height: self.minimum_height
+                cols:4
+                rows:1
+                row_force_default: True
+                row_default_height:dp(25)
+                CenteredLabel:
+                    text: '[color=000000]#[/color]'
+                    font_size: sp(15)
+                    text_size: self.size
+                CenteredLabel:
+                    text: '[color=000000]Invoice #[/color]'
+                    font_size: sp(15)
+                    text_size: self.size
+                CenteredLabel:
+                    text: '[color=000000]Rack #[/color]'
+                    font_size: sp(15)
+                    text_size: self.size
+                CenteredLabel:
+                    text: '[color=000000]Action[/color]'
+                    font_size: sp(15)
+                    text_size: self.size
+            RackTableRV:
+                id: rack_table_rv
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1,0.1
+        Button:
+            id: cancel
+            on_press: root.open_popup()
+            on_release: root.set_result_status()
+            on_release: app.root.current = "search"
+            font_size:'20sp'
+            text: "Cancel"
+            disabled: False
+        Button:
+            id: cancel
+            on_press: root.open_popup()
+            on_release: root.save_racks()
+            on_release: app.root.current = "search"
+            font_size:'20sp'
+            markup: True
+            text: "[color=32CD32][b]Save[/b][/color]"
+            disabled: False

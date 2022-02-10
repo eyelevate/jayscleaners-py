@@ -1,0 +1,26 @@
+<InventoryItemsButton>:
+    id: inventory_item_button
+    markup: True
+    disabled: False
+    text_size: self.size
+    valign: 'bottom'
+    halign: 'center'
+    font_size:sp(17)
+    Image:
+        id: item_image
+        size: sp(50),sp(50)
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y + sp(20)
+        allow_stretch: True
+
+
+<InventoryItemRecycleView@RecycleView>:
+    viewclass: 'InventoryItemsButton'
+    SelectableRecycleGridLayout:
+        bar_width: dp(5)
+        default_size: sp(150), sp(150)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'horizontal'
+        cols:4

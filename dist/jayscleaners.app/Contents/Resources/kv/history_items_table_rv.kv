@@ -1,0 +1,21 @@
+<HistoryInvoiceItemsTableButton>:
+    id: history_items_table_button
+    markup: True
+    font_size:sp(14)
+    markup: True
+    disabled: False
+    text_size: self.size
+    valign: 'middle'
+    halign: 'center'
+
+<HistoryItemsTableRV@RecycleView>:
+    viewclass: 'HistoryInvoiceItemsTableButton'
+    SelectableRecycleGridLayout:
+        id: history_grid_rv
+        bar_width: dp(5)
+        default_size: None, dp(50)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        spacing: 0
+        cols:3
