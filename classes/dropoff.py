@@ -313,7 +313,7 @@ class DropoffScreen(Screen):
                 new = []
                 for x in inventory_items:
                     new.append({
-                        'text': '[b]{}[/b]\n[i]{}[/i]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
+                        'text': '[color=#FFFFFF][b]{}[/b]\n[i]{}[/i][/color]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
                         'item_id': x['id'],
                         'Image': {
                             'source': '{}'.format(iitems.get_image_src(x['image'])),
@@ -858,7 +858,7 @@ class DropoffScreen(Screen):
                 background_color = (0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
                     0.89803922, 0.89803922, 0.89803922, 1)
                 background_normal = ''
-                text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
+                text_color = '#FFFFFF' if idx == self.item_selected_row else '000000'
                 item_name = items['item_name']
                 item_color = items['color']
                 item_memo = items['memo']

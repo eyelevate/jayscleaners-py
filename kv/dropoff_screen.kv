@@ -38,51 +38,51 @@
             Label:
                 id: qty_count_label
                 markup:True
-                text: '1'
+                text: '[color=#FFFFFF]1[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(1)
-                text: '1'
+                text: '[color=#FFFFFF]1[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(2)
-                text: '2'
+                text: '[color=#FFFFFF]2[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(3)
-                text: '3'
+                text: '[color=#FFFFFF]3[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(4)
-                text: '4'
+                text: '[color=#FFFFFF]4[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(5)
-                text: '5'
+                text: '[color=#FFFFFF]5[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(6)
-                text: '6'
+                text: '[color=#FFFFFF]6[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(7)
-                text: '7'
+                text: '[color=#FFFFFF]7[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(8)
-                text: '8'
+                text: '[color=#FFFFFF]8[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(9)
-                text: '9'
+                text: '[color=#FFFFFF]9[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty(0)
-                text: '0'
+                text: '[color=#FFFFFF]10[/color]'
             Button:
                 markup: True
                 on_release: root.set_qty('C')
-                text: 'C'
+                text: '[color=#FFFFFF]C[/color]'
         BoxLayout:
             orientation: 'horizontal'
             size_hint: 1,0.9
@@ -94,27 +94,27 @@
 
                 TabbedPanelItem:
                     id: dryclean_tab
-                    text: 'Dry Clean'
+                    text: '[color=#FFFFFF]Dry Clean[/color]'
                     InventoryItemRecycleView:
                         id: dryclean_rv
                 TabbedPanelItem:
                     id: laundry_tab
-                    text: 'Laundry'
+                    text: '[color=#FFFFFF]Laundry[/color]'
                     InventoryItemRecycleView:
                         id: laundry_rv
                 TabbedPanelItem:
                     id: alterations_tab
-                    text: 'Alterations'
+                    text: '[color=#FFFFFF]Alterations[/color]'
                     InventoryItemRecycleView:
                         id: alterations_rv
                 TabbedPanelItem:
                     id: household_tab
-                    text: 'Household'
+                    text: '[color=#FFFFFF]Household[/color]'
                     InventoryItemRecycleView:
                         id: household_rv
                 TabbedPanelItem:
                     id: other_tab
-                    text: 'Other'
+                    text: '[color=#FFFFFF]Other[/color]'
                     InventoryItemRecycleView:
                         id: other_rv
             RelativeLayout:
@@ -419,25 +419,25 @@
             size_hint: 1,0.1
             Button:
                 markup:True
-                text:'Cancel'
+                text:'[color=#FFFFFF]Cancel[/color]'
                 on_press: root.set_result_status()
                 on_release: app.root.current = "search"
             Button:
                 id: date_picker
                 markup:True
-                text:'6/4 Tue'
+                text:'[color=#FFFFFF]6/4 Tue[/color]'
                 on_release: root.make_calendar()
             Button:
                 markup: True
-                text:'+/- Memo,Color'
+                text:'[color=#FFFFFF]+/- Memo,Color[/color]'
                 on_release: root.make_memo_color()
             Button:
                 markup: True
-                text: 'Adjust'
+                text: '[color=#FFFFFF]Adjust[/color]'
                 on_release: root.make_adjust()
 
             Button:
                 markup: True
-                text: 'Print'
+                text: '[color=#FFFFFF]Print[/color]'
                 on_release: root.print_selection()
 

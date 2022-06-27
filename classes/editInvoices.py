@@ -322,11 +322,11 @@ class EditInvoiceScreen(Screen):
             for color in colors:
                 if color['name'] == 'White':
                     color_btn = Button(markup=True,
-                                       text='[color="#000000"][b]{color_name}[/b][/color]'.format(color_name=color['name']),
+                                       text='[color=#000000][b]{color_name}[/b][/color]'.format(color_name=color['name']),
                                        on_release=partial(self.color_selected_main, color['name']))
                 else:
                     color_btn = Button(markup=True,
-                                       text='[b]{color_name}[/b]'.format(color_name=color['name']),
+                                       text='[color=#FFFFFF][b]{color_name}[/b][/color]'.format(color_name=color['name']),
                                        on_release=partial(self.color_selected_main, color['name']))
                 color_btn.background_normal = ''
                 color_btn.background_color = Static.color_rgba(color['name'])
@@ -389,7 +389,7 @@ class EditInvoiceScreen(Screen):
                 for x in inventory_items:
 
                     new.append({
-                        'text': '[b]{}[/b]\n[i]{}[/i]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
+                        'text': '[color=#FFFFFF][b]{}[/b]\n[i]{}[/i][/color]'.format(x['name'], '${:,.2f}'.format(Decimal(x['price']))),
                         'item_id': x['id'],
                         'Image': {
                             'source': '{}'.format(iitems.get_image_src(x['image'])),
@@ -920,7 +920,7 @@ class EditInvoiceScreen(Screen):
                 background_color = (0.36862745, 0.36862745, 0.36862745, 1) if idx == self.item_selected_row else (
                     0.89803922, 0.89803922, 0.89803922, 1)
                 background_normal = ''
-                text_color = 'e5e5e5' if idx == self.item_selected_row else '000000'
+                text_color = 'ffffff' if idx == self.item_selected_row else '000000'
                 item_name = items['item_name']
                 item_color = items['color']
                 item_memo = items['memo']
