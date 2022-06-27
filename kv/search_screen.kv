@@ -56,7 +56,7 @@
         Button:
             on_release: app.root.current = "rack"
             font_size:'20sp'
-            text: "[color=FFFFFF]Rack[/color]"
+            text: "[color=ffffff]Rack[/color]"
         Button:
             on_release: app.root.current = "main"
             font_size:'20sp'
@@ -323,7 +323,7 @@
                     id: reprint_btn
                     on_release: root.reprint_popup()
                     font_size:'20sp'
-                    text: "[color=FFFFFF]Reprint[/color]"
+                    text: "[color=ffffff]Reprint[/color]"
                     disabled: True
 
 
@@ -332,14 +332,14 @@
                     font_size:'20sp'
                     on_release: root.open_popup()
                     on_release: app.root.current = "edit_invoice"
-                    text: "[color=FFFFFF]Edit[/color]"
+                    text: "[color=ffffff]Edit[/color]"
                     disabled: True
                 Button:
                     id: history_btn
                     font_size:'20sp'
                     on_release: root.open_popup()
                     on_release: app.root.current = "history"
-                    text: "[color=FFFFFF]History[/co"
+                    text: "[color=ffffff]History[/co"
                     disabled: True
 
 
@@ -351,22 +351,22 @@
         Button:
             on_release: app.root.current = "new_customer"
             font_size:'20sp'
-            text: "[color=FFFFFF]New[/color]"
+            text: "[color=ffffff]New[/color]"
         Button:
             id: edit_customer_btn
             on_release: app.root.current = "edit_customer"
             font_size:'15sp'
-            text: "[color=FFFFFF]Edit Customer[/color]"
+            text: "[color=ffffff]Edit Customer[/color]"
             disabled: True
         Button:
             on_release: app.root.current = 'last10'
             font_size:'20sp'
-            text: "[color=FFFFFF]Last 10[/color]"
+            text: "[color=ffffff]Last 10[/color]"
 
         Button:
             id: quick_btn
             font_size:'20sp'
-            text: "[color=FFFFFF]Quick[/color]"
+            text: "[color=ffffff]Quick[/color]"
             disabled: True
             on_release: root.quick_popup()
         Button:
@@ -374,12 +374,12 @@
             on_release: root.open_popup()
             on_release: app.root.current = "pickup"
             font_size:'20sp'
-            text: "[color=FFFFFF]Pickup[/color]"
+            text: "[color=ffffff]Pickup[/color]"
             disabled: True
         Button:
             id: dropoff_btn
             on_release: root.open_popup()
             on_release: app.root.current = "dropoff"
             font_size:'20sp'
-            text: "[color=FFFFFF]Dropoff[/color]"
+            text: "[color=ffffff]Dropoff[/color]"
             disabled: True
