@@ -366,24 +366,21 @@
             on_release: app.root.current = "new_customer"
             font_size:'20sp'
             text: "[color=ffffff]New[/color]"
-            background_color: (0.369, 0.369, 0.369, 1)
-            color: (1, 1, 1, 1)
+            background_color: (0, 0, 0, 1)
+            text_color: (1, 1, 1, 1)
             markup: True
         Button:
             id: edit_customer_btn
             on_release: app.root.current = "edit_customer"
             font_size:'15sp'
             text: "[color=ffffff]Edit Customer[/color]"
-            background_color: (0.369, 0.369, 0.369, 1)
-            color: (1, 1, 1, 1)
-            markup: True
             disabled: True
         Button:
             on_release: app.root.current = 'last10'
             font_size:'20sp'
             text: "[color=ffffff]Last 10[/color]"
             color: (1, 1, 1, 1)
-            background_color: (0.369, 0.369, 0.369, 1)
+            background_color: (0, 0, 0, 1)
             markup: True
 
         Button:
@@ -391,7 +388,7 @@
             font_size:'20sp'
             text: "[color=ffffff]Quick[/color]"
             color: (1, 1, 1, 1)
-            background_color: (0.369, 0.369, 0.369, 1)
+            background_color: (0, 0, 0, 1)
             markup: True
             disabled: True
             on_release: root.quick_popup()
@@ -402,7 +399,7 @@
             font_size:'20sp'
             text: "[color=ffffff]Pickup[/color]"
             color: (1, 1, 1, 1)
-            background_color: (0.369, 0.369, 0.369, 1)
+            background_color: (0, 0, 0, 1)
             markup: True
             disabled: True
         Button:
@@ -412,6 +409,6 @@
             font_size:'20sp'
             text: "[color=ffffff]Dropoff[/color]"
             color: (1, 1, 1, 1)
-            background_color: (0.369, 0.369, 0.369, 1)
+            background_color: (0, 0, 0, 1)
             markup: True
             disabled: True
