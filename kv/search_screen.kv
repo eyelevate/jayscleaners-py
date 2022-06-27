@@ -31,6 +31,7 @@
     on_enter: root.reset()
     on_pre_enter: root.attach()
     on_leave: root.detach()
+    button_background_color: Color
 
     BoxLayout:
         orientation: 'horizontal'
@@ -49,7 +50,7 @@
             font_size:'20sp'
             text: "[color=ffffff]Search[/color]"
             markup: True
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
         Button:
             on_release: root.barcode_popup()
@@ -57,21 +58,21 @@
             disabled: False
             text: "[color=ffffff]Barcode[/color]"
             markup: True
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
         Button:
             on_release: app.root.current = "rack"
             font_size:'20sp'
             text: "[color=ffffff]Rack[/color]"
             markup: True
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
         Button:
             on_release: app.root.current = "main"
             font_size:'20sp'
             text: "[color=ffffff]Main[/color]"
             markup: True
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
     Popup:
         id: search_popup
@@ -336,7 +337,7 @@
                     on_release: root.reprint_popup()
                     font_size:'20sp'
                     text: "[color=ffffff]Reprint[/color]"
-                    background_color: (108, 122, 137, 1)
+                    background_color: (0.369, 0.369, 0.369, 1)
                     background_normal: ''
                     markup: True
                     disabled: True
@@ -348,7 +349,7 @@
                     on_release: root.open_popup()
                     on_release: app.root.current = "edit_invoice"
                     text: "[color=ffffff]Edit[/color]"
-                    background_color: (108, 122, 137, 1)
+                    background_color: (0.369, 0.369, 0.369, 1)
                     background_normal: ''
                     markup: True
                     disabled: True
@@ -358,7 +359,7 @@
                     on_release: root.open_popup()
                     on_release: app.root.current = "history"
                     text: "[color=ffffff]History[/color]"
-                    background_color: (108, 122, 137, 1)
+                    background_color: (0.369, 0.369, 0.369, 1)
                     background_normal: ''
                     markup: True
                     disabled: True
@@ -373,7 +374,7 @@
             on_release: app.root.current = "new_customer"
             font_size:'20sp'
             text: "[color=ffffff]New[/color]"
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
             markup: True
         Button:
@@ -381,7 +382,7 @@
             on_release: app.root.current = "edit_customer"
             font_size:'15sp'
             text: "[color=ffffff]Edit Customer[/color]"
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
             markup: True
             disabled: True
@@ -389,7 +390,7 @@
             on_release: app.root.current = 'last10'
             font_size:'20sp'
             text: "[color=ffffff]Last 10[/color]"
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
             markup: True
 
@@ -397,7 +398,7 @@
             id: quick_btn
             font_size:'20sp'
             text: "[color=ffffff]Quick[/color]"
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
             markup: True
             disabled: True
@@ -408,7 +409,7 @@
             on_release: app.root.current = "pickup"
             font_size:'20sp'
             text: "[color=ffffff]Pickup[/color]"
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
             markup: True
             disabled: True
@@ -418,7 +419,7 @@
             on_release: app.root.current = "dropoff"
             font_size:'20sp'
             text: "[color=ffffff]Dropoff[/color]"
-            background_color: (108, 122, 137, 1)
+            background_color: (0.369, 0.369, 0.369, 1)
             background_normal: ''
             markup: True
             disabled: True
