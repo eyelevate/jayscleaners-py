@@ -90,6 +90,7 @@ class RackScreen(Screen):
                 selected_rgba = [0.369, 0.369, 0.369, 1] if selected else [0.826, 0.826, 0.826, 1]
                 self.rack_rows.append({
                     'text': '[color={}]{}[/color]'.format(selected_color,idx),
+                    'markup': True,
                     'column': 1,
                     'invoice_id': invoice_number,
                     'background_color': selected_rgba,
@@ -97,6 +98,7 @@ class RackScreen(Screen):
                 })
                 self.rack_rows.append({
                     'text': '[color={}]{}[/color]'.format(selected_color, '{0:06d}'.format(int(invoice_number))),
+                    'markup': True,
                     'column': 2,
                     'invoice_id': invoice_number,
                     'background_color': selected_rgba,
@@ -104,6 +106,7 @@ class RackScreen(Screen):
                 })
                 self.rack_rows.append({
                     'text': '[color={}]{}[/color]'.format(selected_color, rack_number if rack_number else ''),
+                    'markup': True,
                     'column': 3,
                     'invoice_id': invoice_number,
                     'background_color': selected_rgba,
@@ -111,6 +114,7 @@ class RackScreen(Screen):
                 })
                 self.rack_rows.append({
                     'text': '[color=ffffff]remove[/color]',
+                    'markup': True,
                     'column': 4,
                     'invoice_id': invoice_number,
                     'background_color': [1,0,0,1],

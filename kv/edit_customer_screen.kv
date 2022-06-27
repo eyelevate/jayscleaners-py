@@ -33,6 +33,7 @@
         TabbedPanelItem:
             id: tab_new_customer
             text: '[color=ffffff]General[/color]'
+            markup: True
             BoxLayout:
                 orientation: 'vertical'
                 RelativeLayout:
@@ -153,16 +154,19 @@
                         on_release: app.root.current = "search"
                         font_size:'20sp'
                         text: "[color=ffffff]Cancel[/color]"
+                        markup: True
                         disabled: False
                     Button:
                         id: save
                         on_release: root.validate()
                         text: "[color=ffffff]Save[/color]"
+                        markup: True
                         font_size:'20sp'
                         disabled: False
         TabbedPanelItem:
             id: tab_delivery_customer
             text: '[color=ffffff]Delivery[/color]'
+            markup: True
             BoxLayout:
                 orientation: 'vertical'
                 RelativeLayout:
@@ -224,16 +228,19 @@
                         on_release: app.root.current = "search"
                         font_size:'20sp'
                         text: "[color=ffffff]Cancel[/color]"
+                        markup: True
                         disabled: False
                     Button:
                         id: save
                         on_release: root.validate()
                         text: "[color=ffffff]Save[/color]"
+                        markup: True
                         font_size:'20sp'
                         disabled: False
         TabbedPanelItem:
             id: tab_account_customer
             text: '[color=ffffff]Account[/color]'
+            markup: True
             BoxLayout:
                 orientation: 'vertical'
                 RelativeLayout:
@@ -300,16 +307,19 @@
                         on_release: app.root.current = "search"
                         font_size:'20sp'
                         text: "[color=ffffff]Cancel[/color]"
+                        markup: True
                         disabled: False
                     Button:
                         id: save
                         on_release: root.validate()
                         text: "[color=ffffff]Save[/color]"
+                        markup: True
                         font_size:'20sp'
                         disabled: False
         TabbedPanelItem:
             id: tab_marks
             text: '[color=ffffff]Shirt Marks[/color]'
+            markup: True
             BoxLayout:
                 orientation: 'vertical'
                 GridLayout:
@@ -362,10 +372,12 @@
                         on_release: app.root.current = "search"
                         font_size:'20sp'
                         text: "[color=ffffff]Cancel[/color]"
+                        markup: True
                         disabled: False
                     Button:
                         id: save
                         on_release: root.validate()
                         text: "[color=ffffff]Save[/color]"
+                        markup: True
                         font_size:'20sp'
                         disabled: False

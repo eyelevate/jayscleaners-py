@@ -363,6 +363,7 @@ class HistoryScreen(Screen):
                     for key, value in items.items():
                         self.history_inventory_items[invoice_id].append({
                             'text': '[color=ffffff]{}[/color]'.format(value['quantity']),
+                            'markup': True,
                             'size_hint_x': 0.2,
                             'id': key
                         })
@@ -377,6 +378,7 @@ class HistoryScreen(Screen):
 
                         self.history_inventory_items[invoice_id].append({
                             'text': '[color=ffffff]${:,.2f}[/color]'.format(value['total']),
+                            'markup': True,
                             'size_hint_x': 0.2,
                             'id': key
                         })

@@ -32,6 +32,7 @@
                     padding: [5, ( self.height - self.line_height ) / 2]
                     halign: 'left'
                     text: "[color=ffffff]remember me[/color]"
+                    markup: True
                     height: sp(72)
                     font_size: sp(20)
                 Remember:
@@ -43,9 +44,11 @@
             size_hint: (1, 0.2)
             Button:
                 text: "[color=ffffff]Cancel[/color]"
+                markup: True
                 font_size: sp(20)
                 on_release: login_popup.dismiss()
             Button:
                 id: login_button
                 text: "[color=ffffff]Login[/color]"
+                markup: True
                 font_size: sp(20)

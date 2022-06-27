@@ -71,16 +71,19 @@ class PrinterScreen(Screen):
                               size_hint_x=0.1,
                               size_hint_y=None,
                               text='[color=ffffff]{}[/color]'.format(idx),
+                              markup= True,
                               on_press=partial(self.edit_printer_popup, printer_id))
                 col2 = Button(markup=True,
                               size_hint_x=0.7,
                               size_hint_y=None,
                               text='[color=ffffff]{}[/color]'.format(printer['name']),
+                              markup= True,
                               on_press=partial(self.edit_printer_popup, printer_id))
                 col3 = Button(markup=True,
                               size_hint_x=0.2,
                               size_hint_y=None,
                               text='[color=ffffff]{}[/color]'.format(printer['type']),
+                              markup= True,
                               on_press=partial(self.edit_printer_popup, printer_id))
                 self.printer_table.add_widget(col1)
                 self.printer_table.add_widget(col2)
