@@ -359,6 +359,11 @@ vendor_id = ?,product_id = ?,type = ?, status = ?, updated_at = ? WHERE id = ?''
                 'productId': 15361,
                 '_vendorId': hex(0x0419),
                 '_productId': hex(0x3c01)
+            }, {
+                'vendorId': 5380,
+                'productId': 89,
+                '_vendorId': hex(0x1504),
+                '_productId': hex(0x0059)
             }],
             'zebra': [{
                 'vendorId': 1133,
