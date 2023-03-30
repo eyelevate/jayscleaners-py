@@ -161,41 +161,42 @@ class MainScreen(Screen):
     def reconnect_printers(self):
 
         os = platform.system()
-        backend = Printer().backend_location(os)
-        print('backend = {}'.format(backend))
-        known_devices = Printer().printer_list()
-        if 'epson' in known_devices:
-
-            epson_known_device = known_devices['epson']
-            for unknown_device in epson_known_device:
-                productId = unknown_device['_productId']
-                vendorId = unknown_device['_vendorId']
-                device = self.print_setup(hex(int(vendorId, 16)), hex(int(productId, 16)), backend)
-                if device:
-                    print('successfully printed and saving epson device')
-                    if self.print_setup_test(device, 'epson'):
-                        self.receipt_status.canvas_set('connected')
-                        pub.sendMessage('set_epson_printer', device=device)
-                        sessions.put('_connectedDevices', epson={'productId': productId,
-                                                                 'vendorId': vendorId,
-                                                                 'backend': backend})
-                        break
-        if 'bixolon' in known_devices:
-            bixolon_known_device = known_devices['bixolon']
-            for unknown_device in bixolon_known_device:
-                productId = unknown_device['_productId']
-                vendorId = unknown_device['_vendorId']
-                device = self.print_setup_tag(hex(int(vendorId, 16)), hex(int(productId, 16)), backend)
-                if device:
-                    print('successfully printed and saving bixolon device')
-                    if self.print_setup_test(device, 'bixolon'):
-                        self.tags_status.canvas_set('connected')
-                        pub.sendMessage('set_bixolon_printer', device=device)
-                        # sessions.put('_bixolon', bixolon=device)
-                        sessions.put('_connectedDevices', bixolon={'productId': productId,
-                                                                   'vendorId': vendorId,
-                                                                   'backend': backend})
-                        break
+        # TODO: uncomment this before submitting to commit
+        # backend = Printer().backend_location(os)
+        # print('backend = {}'.format(backend))
+        # known_devices = Printer().printer_list()
+        # if 'epson' in known_devices:
+        #
+        #     epson_known_device = known_devices['epson']
+        #     for unknown_device in epson_known_device:
+        #         productId = unknown_device['_productId']
+        #         vendorId = unknown_device['_vendorId']
+        #         device = self.print_setup(hex(int(vendorId, 16)), hex(int(productId, 16)), backend)
+        #         if device:
+        #             print('successfully printed and saving epson device')
+        #             if self.print_setup_test(device, 'epson'):
+        #                 self.receipt_status.canvas_set('connected')
+        #                 pub.sendMessage('set_epson_printer', device=device)
+        #                 sessions.put('_connectedDevices', epson={'productId': productId,
+        #                                                          'vendorId': vendorId,
+        #                                                          'backend': backend})
+        #                 break
+        # if 'bixolon' in known_devices:
+        #     bixolon_known_device = known_devices['bixolon']
+        #     for unknown_device in bixolon_known_device:
+        #         productId = unknown_device['_productId']
+        #         vendorId = unknown_device['_vendorId']
+        #         device = self.print_setup_tag(hex(int(vendorId, 16)), hex(int(productId, 16)), backend)
+        #         if device:
+        #             print('successfully printed and saving bixolon device')
+        #             if self.print_setup_test(device, 'bixolon'):
+        #                 self.tags_status.canvas_set('connected')
+        #                 pub.sendMessage('set_bixolon_printer', device=device)
+        #                 # sessions.put('_bixolon', bixolon=device)
+        #                 sessions.put('_connectedDevices', bixolon={'productId': productId,
+        #                                                            'vendorId': vendorId,
+        #                                                            'backend': backend})
+        #                 break
 
     def print_setup_test(self, printer, type):
         try:

@@ -49,26 +49,22 @@
             font_size:'20sp'
             text: "[color=ffffff]Search[/color]"
             markup: True
-            background_color: (0.369, 0.369, 0.369, 1)
         Button:
             on_release: root.barcode_popup()
             font_size:'20sp'
             disabled: False
             text: "[color=ffffff]Barcode[/color]"
             markup: True
-            background_color: (0.369, 0.369, 0.369, 1)
         Button:
             on_release: app.root.current = "rack"
             font_size:'20sp'
             text: "[color=ffffff]Rack[/color]"
             markup: True
-            background_color: (0.369, 0.369, 0.369, 1)
         Button:
             on_release: app.root.current = "main"
             font_size:'20sp'
             text: "[color=ffffff]Main[/color]"
             markup: True
-            background_color: (0.369, 0.369, 0.369, 1)
     Popup:
         id: search_popup
         on_parent: if self.parent == screen_search: screen_search.remove_widget(self)
@@ -115,6 +111,12 @@
                         id: customer_mark_l
                         text: ""
                         font_size: '20sp'
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
 
                     Button:
                         text:'Invite to Nuclei'
@@ -332,7 +334,6 @@
                     on_release: root.reprint_popup()
                     font_size:'20sp'
                     text: "[color=ffffff]Reprint[/color]"
-                    background_color: (0.369, 0.369, 0.369, 1)
                     markup: True
                     disabled: True
 
@@ -343,7 +344,6 @@
                     on_release: root.open_popup()
                     on_release: app.root.current = "edit_invoice"
                     text: "[color=ffffff]Edit[/color]"
-                    background_color: (0.369, 0.369, 0.369, 1)
                     markup: True
                     disabled: True
                 Button:
@@ -352,7 +352,6 @@
                     on_release: root.open_popup()
                     on_release: app.root.current = "history"
                     text: "[color=ffffff]History[/color]"
-                    background_color: (0.369, 0.369, 0.369, 1)
                     markup: True
                     disabled: True
 
@@ -366,7 +365,6 @@
             on_release: app.root.current = "new_customer"
             font_size:'20sp'
             text: "[color=ffffff]New[/color]"
-            background_color: (0, 0, 0, 1)
             markup: True
         Button:
             id: edit_customer_btn
@@ -379,7 +377,6 @@
             on_release: app.root.current = 'last10'
             font_size:'20sp'
             text: "[color=ffffff]Last 10[/color]"
-            background_color: (0, 0, 0, 1)
             markup: True
 
         Button:
@@ -387,7 +384,6 @@
             font_size:'20sp'
             text: "[color=ffffff]Quick[/color]"
             color: (1, 1, 1, 1)
-            background_color: (0, 0, 0, 1)
             markup: True
             disabled: True
             on_release: root.quick_popup()
@@ -397,8 +393,6 @@
             on_release: app.root.current = "pickup"
             font_size:'20sp'
             text: "[color=ffffff]Pickup[/color]"
-            color: (1, 1, 1, 1)
-            background_color: (0, 0, 0, 1)
             markup: True
             disabled: True
         Button:
@@ -407,7 +401,5 @@
             on_release: app.root.current = "dropoff"
             font_size:'20sp'
             text: "[color=ffffff]Dropoff[/color]"
-            color: (1, 1, 1, 1)
-            background_color: (0, 0, 0, 1)
             markup: True
             disabled: True
